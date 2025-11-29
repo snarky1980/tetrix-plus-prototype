@@ -1,0 +1,22 @@
+# Render Blueprint for Backend
+# Upload this in Render dashboard or use render.yaml for IaC
+
+services:
+  - type: web
+    name: tetrix-plus-backend
+    env: node
+    region: oregon # or closest to users
+    plan: free # upgrade to starter for production
+    buildCommand: cd backend && npm ci && npx prisma generate && npm run build
+    startCommand: cd backend && npx prisma migrate deploy && npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false # set manually in Render dashboard
+      - key: JWT_SECRET
+        generateValue: true # Render auto-generates secure secret
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: FRONTEND_URL
+        value: https://snarky1980.github.io

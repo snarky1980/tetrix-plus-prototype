@@ -325,6 +325,52 @@ Les fichiers sont générés dans `frontend/dist/`.
 
 ---
 
+## 🚀 Déploiement GitHub
+
+### Frontend (GitHub Pages)
+Le frontend est déployé automatiquement sur GitHub Pages via `.github/workflows/deploy-frontend.yml`.
+
+**URL de production** : `https://snarky1980.github.io/tetrix-plus-prototype/`
+
+À chaque push sur `main`, le workflow :
+1. Build le frontend avec Vite
+2. Upload l'artifact vers GitHub Pages
+3. Déploie sur l'environnement `github-pages`
+
+### Backend (Render.com)
+Le backend doit être déployé sur un service cloud (Render, Railway, Fly.io).
+
+**Configuration Render** :
+1. Connecter ce repo GitHub à Render.com
+2. Créer un nouveau Web Service :
+   - **Build Command** : `cd backend && npm ci && npx prisma generate && npm run build`
+   - **Start Command** : `cd backend && npx prisma migrate deploy && npm start`
+3. Ajouter les variables d'environnement dans le dashboard Render :
+   ```
+   DATABASE_URL=postgresql://user:pass@host:port/db
+   JWT_SECRET=<généré par Render ou manuellement>
+   NODE_ENV=production
+   PORT=3001
+   FRONTEND_URL=https://snarky1980.github.io
+   ```
+4. Copier l'URL du service déployé (ex: `https://tetrix-plus-backend.onrender.com`)
+
+**Configurer l'URL backend dans le frontend** :
+```bash
+# Éditer frontend/.env.production
+VITE_API_URL=https://tetrix-plus-backend.onrender.com/api
+```
+Puis commit et push pour redéclencher le déploiement Pages.
+
+**Fichiers de déploiement** :
+- `render.yaml` : Blueprint IaC pour Render
+- `.github/workflows/deploy-backend.yml` : Trigger optionnel via deploy hook
+- `Procfile` : Alternative pour Heroku-like platforms
+
+Voir `DEPLOYMENT.md` pour détails complets.
+
+---
+
 ## 🔧 Points d'attention
 
 ### Choix d'Agent 1 (Architecte)
