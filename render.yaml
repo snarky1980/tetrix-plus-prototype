@@ -6,6 +6,7 @@ services:
     plan: free
     # Use workspace-aware installs/builds so lockfile at repo root is honored
     buildCommand: |
+      export NPM_CONFIG_PRODUCTION=false
       npm ci 
       npm run prisma:generate --workspace=backend
       npm run build --workspace=backend
