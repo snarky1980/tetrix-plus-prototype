@@ -1,0 +1,269 @@
+# Architecture Tetrix PLUS - Vue d'ensemble
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│                         TETRIX PLUS                                  │
+│                  Application Web Full-Stack                          │
+└──────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                              FRONTEND                                   │
+│                    React 18 + TypeScript + Vite                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌───────────────┐  ┌───────────────┐  ┌────────────────┐            │
+│  │   Connexion   │  │   Dashboard   │  │   Dashboard    │            │
+│  │               │  │   Traducteur  │  │   Conseiller   │            │
+│  └───────────────┘  └───────────────┘  └────────────────┘            │
+│         │                   │                    │                     │
+│         └───────────────────┴────────────────────┘                     │
+│                             │                                          │
+│                    ┌────────▼────────┐                                 │
+│                    │  AuthContext    │  (JWT, Session)                │
+│                    └────────┬────────┘                                 │
+│                             │                                          │
+│              ┌──────────────┼──────────────┐                          │
+│              │              │              │                          │
+│      ┌───────▼──────┐ ┌────▼─────┐ ┌──────▼──────┐                   │
+│      │ authService  │ │ traducteur│ │  planning   │                   │
+│      │              │ │  Service  │ │  Service    │                   │
+│      └──────────────┘ └───────────┘ └─────────────┘                   │
+│              │              │              │                          │
+│              └──────────────┼──────────────┘                          │
+│                             │                                          │
+│                        ┌────▼─────┐                                    │
+│                        │  Axios   │  (HTTP Client)                    │
+│                        └────┬─────┘                                    │
+│                             │                                          │
+└─────────────────────────────┼──────────────────────────────────────────┘
+                              │
+                    HTTP/JSON │ (JWT Bearer Token)
+                              │
+┌─────────────────────────────▼──────────────────────────────────────────┐
+│                             BACKEND                                     │
+│                  Node.js + Express + TypeScript                         │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐  │
+│  │                       MIDDLEWARE LAYER                           │  │
+│  ├──────────────────────────────────────────────────────────────────┤  │
+│  │  • authentifier()      → Vérifie JWT                            │  │
+│  │  • verifierRole()      → Vérifie permissions                    │  │
+│  │  • valider()           → Validation Zod                         │  │
+│  │  • gestionnaireErreurs → Capture erreurs                        │  │
+│  └──────────────────────────────────────────────────────────────────┘  │
+│                              │                                          │
+│  ┌───────────────────────────▼──────────────────────────────────────┐  │
+│  │                        ROUTES LAYER                              │  │
+│  ├──────────────────────────────────────────────────────────────────┤  │
+│  │  /api/auth/*            → authRoutes                            │  │
+│  │  /api/traducteurs/*     → traducteurRoutes                      │  │
+│  │  /api/clients/*         → clientRoutes                          │  │
+│  │  /api/sous-domaines/*   → sousDomaineRoutes                     │  │
+│  │  /api/taches/*          → tacheRoutes                           │  │
+│  │  /api/planning-global   → planningRoutes                        │  │
+│  │  /api/ajustements/*     → planningRoutes                        │  │
+│  └──────────────────────────┬───────────────────────────────────────┘  │
+│                              │                                          │
+│  ┌───────────────────────────▼──────────────────────────────────────┐  │
+│  │                     CONTROLLERS LAYER                            │  │
+│  ├──────────────────────────────────────────────────────────────────┤  │
+│  │  authController          → connexion, inscription               │  │
+│  │  traducteurController    → CRUD traducteurs                     │  │
+│  │  paireLinguistiqueCtrl   → Gestion paires                       │  │
+│  │  clientController        → CRUD clients                         │  │
+│  │  sousDomaineController   → CRUD sous-domaines                   │  │
+│  │  tacheController         → CRUD tâches                          │  │
+│  │  planningController      → Planning + blocages                  │  │
+│  └──────────────────────────┬───────────────────────────────────────┘  │
+│                              │                                          │
+│                              │                                          │
+│                       ┌──────▼───────┐                                  │
+│                       │    Prisma    │  (ORM)                          │
+│                       │    Client    │                                  │
+│                       └──────┬───────┘                                  │
+│                              │                                          │
+└──────────────────────────────┼──────────────────────────────────────────┘
+                               │
+                     SQL       │
+                               │
+┌──────────────────────────────▼──────────────────────────────────────────┐
+│                          BASE DE DONNÉES                                │
+│                       PostgreSQL 14+                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌─────────────────┐              │
+│  │ utilisateurs │  │ traducteurs  │  │ paires_linguist.│              │
+│  │              │  │              │  │                 │              │
+│  │ • email      │  │ • nom        │  │ • langueSource  │              │
+│  │ • motDePasse │  │ • division   │  │ • langueCible   │              │
+│  │ • role       │  │ • domaines[] │  │                 │              │
+│  └──────┬───────┘  └──────┬───────┘  └────────┬────────┘              │
+│         │                 │                    │                       │
+│         │ 1:1             │ 1:N                │                       │
+│         └─────────────────┘                    │                       │
+│                                                │                       │
+│  ┌──────────────┐  ┌──────────────┐  ┌────────▼─────────┐             │
+│  │   clients    │  │sous_domaines │  │     taches       │             │
+│  │              │  │              │  │                  │             │
+│  │ • nom        │  │ • nom        │  │ • description    │             │
+│  │ • sousDom[]  │  │ • domParent  │  │ • heuresTotal    │             │
+│  └──────┬───────┘  └──────┬───────┘  │ • dateEcheance   │             │
+│         │                 │          │ • statut         │             │
+│         │                 │          └────────┬─────────┘             │
+│         └─────────────────┘                   │                       │
+│                                               │ 1:N                   │
+│                                               │                       │
+│                                      ┌────────▼────────┐              │
+│                                      │ ajustements_    │              │
+│                                      │    temps        │              │
+│                                      │                 │              │
+│                                      │ • date          │              │
+│                                      │ • heures (float)│              │
+│                                      │ • type          │              │
+│                                      │   (TACHE/BLOCAGE)              │
+│                                      └─────────────────┘              │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
+
+
+══════════════════════════════════════════════════════════════════════════
+                           FLUX D'AUTHENTIFICATION
+══════════════════════════════════════════════════════════════════════════
+
+User                Frontend              Backend               Database
+  │                    │                     │                     │
+  ├─ Saisit email/pwd ─┤                     │                     │
+  │                    ├─ POST /auth/connexion                     │
+  │                    │                     ├─ Cherche utilisateur ┤
+  │                    │                     │                     │
+  │                    │                     │◄────── Utilisateur ──┤
+  │                    │                     │                     │
+  │                    │                     ├─ Vérifie hash bcrypt─┤
+  │                    │                     │                     │
+  │                    │                     ├─ Génère JWT token ───┤
+  │                    │◄────── { token } ───┤                     │
+  │                    │                     │                     │
+  ├◄─ Stocke token ────┤                     │                     │
+  │    localStorage    │                     │                     │
+
+
+══════════════════════════════════════════════════════════════════════════
+                         FLUX CRÉATION DE TÂCHE
+══════════════════════════════════════════════════════════════════════════
+
+Conseiller          Frontend              Backend               Database
+  │                    │                     │                     │
+  ├─ Remplit formulaire┤                     │                     │
+  ├─ Clique "Répartir"─┤                     │                     │
+  │                    ├─ POST /taches       │                     │
+  │                    │   + Bearer token    │                     │
+  │                    │                     ├─ Vérifie JWT ───────┤
+  │                    │                     │                     │
+  │                    │                     ├─ Vérifie role ──────┤
+  │                    │                     │   (CONSEILLER)      │
+  │                    │                     │                     │
+  │                    │                     ├─ Crée tâche ────────►
+  │                    │                     │                     │
+  │                    │                     ├─ Crée ajustements ──►
+  │                    │                     │   (répartition)     │
+  │                    │                     │                     │
+  │                    │◄─── { tache } ──────┤                     │
+  ├◄─ Affiche planning ┤                     │                     │
+
+
+══════════════════════════════════════════════════════════════════════════
+                           STACK & VERSIONS
+══════════════════════════════════════════════════════════════════════════
+
+Backend:
+  • Node.js 20+
+  • Express 4.18
+  • TypeScript 5.3
+  • Prisma 5.7
+  • PostgreSQL 14+
+  • JWT (jsonwebtoken 9.0)
+  • Bcrypt 5.1
+  • Zod 3.22
+
+Frontend:
+  • React 18.2
+  • TypeScript 5.3
+  • Vite 5.0
+  • React Router 6.20
+  • Axios 1.6
+  • date-fns 3.0
+
+
+══════════════════════════════════════════════════════════════════════════
+                          MODÈLE DE DONNÉES RÉSUMÉ
+══════════════════════════════════════════════════════════════════════════
+
+Utilisateur (1:1) ──► Traducteur (1:N) ──► PaireLinguistique
+                           │
+                           │ (1:N)
+                           ▼
+                        Tache (N:1) ──► Client
+                           │            SousDomaine
+                           │            PaireLinguistique
+                           │ (1:N)
+                           ▼
+                    AjustementTemps
+                    (TACHE ou BLOCAGE)
+
+
+══════════════════════════════════════════════════════════════════════════
+                              RÔLES & PERMISSIONS
+══════════════════════════════════════════════════════════════════════════
+
+┌──────────┬─────────────────┬────────────────┬─────────────────────────┐
+│   Rôle   │   Traducteurs   │    Tâches      │      Planning           │
+├──────────┼─────────────────┼────────────────┼─────────────────────────┤
+│  ADMIN   │ CRUD complet    │ CRUD complet   │ Vue globale + individuel│
+│          │ + paires ling.  │                │ Créer blocages          │
+├──────────┼─────────────────┼────────────────┼─────────────────────────┤
+│CONSEILLER│ Lecture + filtres│ CRUD complet  │ Vue globale + individuel│
+│          │                 │                │ Créer blocages          │
+├──────────┼─────────────────┼────────────────┼─────────────────────────┤
+│TRADUCTEUR│ Aucun           │ Lecture seule  │ Vue perso uniquement    │
+│          │                 │ (ses tâches)   │ Créer/suppr blocages    │
+└──────────┴─────────────────┴────────────────┴─────────────────────────┘
+
+
+══════════════════════════════════════════════════════════════════════════
+                        RÈGLES MÉTIER PRINCIPALES
+══════════════════════════════════════════════════════════════════════════
+
+✓ Format décimal strict : 1.25h, 0.50h, 7.5h (Float)
+✓ Capacité journalière : somme(ajustements) ≤ capaciteHeuresParJour
+✓ Répartition JAT : partir de l'échéance, remonter jour par jour
+✓ Unicité : une seule paire linguistique identique par traducteur
+✓ Soft delete : champ "actif" au lieu de DELETE
+✓ Code couleur : vert (libre) | orange (presque plein) | rouge (plein)
+
+
+══════════════════════════════════════════════════════════════════════════
+                           ÉTAT DU PROJET
+══════════════════════════════════════════════════════════════════════════
+
+Agent 1 (Architecte)         ✅ COMPLÉTÉ
+  • Structure projet
+  • Backend API complet
+  • Base de données Prisma
+  • Authentification JWT
+  • Frontend structure
+  • Documentation
+
+Agent 2 (UI Integrator)      ⏳ EN ATTENTE
+  • Import thème echo-BT-CTD
+  • Design system
+  • Composants UI
+
+Agent 3 (Business Logic)     ⏳ EN ATTENTE
+  • Algorithme JAT
+  • Validations métier
+  • Filtres avancés
+
+
+══════════════════════════════════════════════════════════════════════════
+```
