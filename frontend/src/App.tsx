@@ -6,6 +6,9 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Connexion from './pages/Connexion';
 import DashboardTraducteur from './pages/DashboardTraducteur';
 import DashboardConseiller from './pages/DashboardConseiller';
+import PlanningGlobal from './pages/PlanningGlobal';
+import TacheCreationEtape1 from './pages/TacheCreationEtape1';
+import TacheCreationEtape2 from './pages/TacheCreationEtape2';
 import DashboardAdmin from './pages/DashboardAdmin';
 
 /**
@@ -80,6 +83,31 @@ function App() {
             element={
               <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
                 <DashboardConseiller />
+              </RouteProtegee>
+            }
+          />
+          {/* Sous-routes conseiller (placeholder) */}
+          <Route
+            path="/conseiller/planning-global"
+            element={
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
+                <PlanningGlobal />
+              </RouteProtegee>
+            }
+          />
+          <Route
+            path="/conseiller/creation-tache"
+            element={
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
+                <TacheCreationEtape1 />
+              </RouteProtegee>
+            }
+          />
+          <Route
+            path="/conseiller/creation-tache/repartition"
+            element={
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
+                <TacheCreationEtape2 />
               </RouteProtegee>
             }
           />

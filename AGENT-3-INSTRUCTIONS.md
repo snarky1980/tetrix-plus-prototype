@@ -1,5 +1,33 @@
 # Instructions pour Agent 3 — Business Logic
 
+> Note revue qualité: Consultez le guide `AGENT-4-GUIDE-REVUE.md` une fois vos développements terminés. Il contient la checklist détaillée que l’Agent 4 utilisera pour valider (logique métier, sécurité, performance, accessibilité, tests). Préparez vos livrables en conséquence pour réduire les retours.
+
+## 🚀 Préambule de démarrage
+
+Compilation frontend vérifiée (build Vite OK) et backend déjà opérationnel. Vous pouvez démarrer immédiatement la logique métier sans modifier l'architecture ni le design system.
+
+Commandes de démarrage rapides:
+```bash
+# Backend
+cd backend
+npm install
+npm run dev
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Base de données: exécutez migrations et seed si non déjà faits:
+```bash
+cd backend
+npx prisma migrate dev
+npm run prisma:seed
+```
+
+Ne changez pas les variables CSS ni le fichier `tailwind.config.js`. Concentrez-vous sur services, contrôleurs et hooks.
+
 ## 🎯 Mission exclusive
 
 Vous êtes responsable **UNIQUEMENT** de la logique métier. Ne touchez PAS à :

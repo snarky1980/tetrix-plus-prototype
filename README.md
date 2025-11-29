@@ -7,7 +7,7 @@ Application web complète de gestion de planification pour traducteurs, remplaç
 ## 📋 Vue d'ensemble
 
 **Version** : 1.0.0  
-**Statut** : Agent 1 (Architecte) - ✅ COMPLÉTÉ
+**Statut** : Pré-production READY (voir audit Agent 4)
 
 Tetrix PLUS permet de :
 - Gérer ~500 traducteurs avec leurs compétences linguistiques
@@ -15,6 +15,14 @@ Tetrix PLUS permet de :
 - Bloquer du temps (blocages)
 - Visualiser les plannings individuels et globaux
 - Filtrer par division, client, domaine, paire linguistique, période
+- Déploiement statique (GitHub Pages) + API séparée
+
+### 📑 Documents clés
+- Audit Performance & Accessibilité : `AUDIT-PERF-ACCESSIBILITE.md`
+- Guide déploiement : `DEPLOYMENT.md`
+
+### ✅ Readiness
+Audit du 2025-11-29 : application jugée **Pré-production READY**. Restant avant Production : pagination planning global, logging structuré, rate limiting, landmarks sémantiques, tests contrôleurs.
 
 ---
 
@@ -37,6 +45,8 @@ Tetrix PLUS permet de :
 - React Router v6 (navigation)
 - Axios (requêtes HTTP)
 - date-fns (manipulation de dates)
+ - Tailwind CSS (tokens utilitaires)
+ - clsx (composition de classes)
 
 **Structure**
 ```
@@ -170,11 +180,22 @@ FRONTEND_URL=http://localhost:5173
 # Dans le dossier backend/
 npx prisma migrate dev --name init
 npx prisma generate
+npm run prisma:seed
 ```
 
 Cela crée toutes les tables et génère le client Prisma.
 
-### 5. (Optionnel) Créer un utilisateur admin
+### 5. Vérifier données de seed
+
+Le script `npm run prisma:seed` crée :
+- 1 utilisateur ADMIN (`admin@tetrix.com` / mot de passe à changer)
+- 1 utilisateur CONSEILLER (`conseiller@tetrix.com`)
+- 1 traducteur démonstration + paires linguistiques (EN↔FR)
+- 1 client + sous-domaines (`COMPLIANCE`, `REPORTING`)
+
+Modifiez les mots de passe immédiatement en production.
+
+### 6. (Optionnel) Créer un utilisateur admin manuel
 
 Option A : Utiliser Prisma Studio
 ```bash
@@ -195,7 +216,7 @@ VALUES (
 );
 ```
 
-### 6. Démarrer le projet
+### 7. Démarrer le projet
 
 En mode développement (racine du projet) :
 ```bash
@@ -317,11 +338,13 @@ Les fichiers sont générés dans `frontend/dist/`.
 
 ### Ce qui reste à faire
 
-**Agent 2 — UI Integrator**
-- Importer le thème visuel depuis https://github.com/snarky1980/echo-BT-CTD
-- Créer le design system (couleurs, typographie, composants réutilisables)
-- Implémenter les calendriers, modals, filtres visuels
-- Appliquer les principes UX/UI de la spec (3 clics max, gros boutons, code couleur)
+**Agent 2 — UI Integrator** ✅ PARTIEL
+- Thème visuel inspiré de https://github.com/snarky1980/echo-BT-CTD importé (couleurs, radius, structure)
+- Design system de base : Button, Card, Input, Select, Modal, Layout
+- Accessibilité initiale (focus visible, aria-labels, contraste)
+- Code couleur disponibilité (vert / orange / rouge)
+- Pages refactorisées avec composants réutilisables
+- Reste à faire : calendrier interactif, grille réelle planning, notifications toast
 
 **Agent 3 — Business Logic**
 - Implémenter l'algorithme de répartition "Juste-à-temps" (JAT)
@@ -350,12 +373,51 @@ Les fichiers sont générés dans `frontend/dist/`.
 - Routes protégées par rôle
 - Frontend : structure, services API, contexte auth, pages squelettes
 
-**Agent 2 (UI Integrator)** ⏳ EN ATTENTE
-- Importer thème echo-BT-CTD
-- Créer design system + composants
-- Ne PAS toucher à la logique métier
+**Agent 2 (UI Integrator)** ⚙️ EN PROGRÈS
+- Design tokens + composants de base implémentés
+- Pas de logique métier ajoutée
+- Prochaine étape : vues dynamiques (calendrier, grille planning), éventuel système de notifications
 
 **Agent 3 (Business Logic)** ⏳ EN ATTENTE
+## 🎨 Design System (Agent 2)
+
+### Fichiers clés
+- `frontend/src/index.css` : Variables CSS & directives Tailwind
+- `frontend/tailwind.config.js` : Extension couleurs/radius
+- `frontend/src/components/ui/*` : Composants UI réutilisables (sans logique métier)
+- `frontend/src/components/layout/AppLayout.tsx` : En-tête + pied de page cohérents
+
+### Couleurs
+| Rôle | Valeur |
+|------|--------|
+| Fond | `#fefbe8` |
+| Texte principal | `#2c3d50` |
+| Secondaire / Accent | `#aca868` |
+| Muted | `#e0f2fe` |
+| Libre | `#16a34a` |
+| Presque plein | `#ea580c` |
+| Plein / surcharge | `#dc2626` |
+
+### Composants
+- **Button** (`variant`: primaire, secondaire, outline, ghost, danger)
+- **Card** (Header, Title, Content)
+- **Input / Select** (champs formulaires de base)
+- **Modal** (dialog accessible, fermeture ESC / backdrop)
+- **AppLayout** (structure de l'application, header + footer)
+
+### Accessibilité
+- Focus visible (outline + ring)
+- Aria-labels sur actions isolées
+- Contrastes élevés (texte foncé sur fond très clair)
+
+### Personnalisation
+Modifier les variables dans `:root` (`index.css`). Ajouter toute nouvelle couleur dans `tailwind.config.js` sous `theme.extend.colors` pour bénéficier des utilitaires.
+
+### Extensions futures proposées
+- Système de toast (succès/erreur/info)
+- Badge statut tâche (PLANIFIÉE / EN COURS / TERMINÉE)
+- Composant calendrier interactif (drag & drop JAT ou manuel) – logique Agent 3
+
 - Répartition automatique (JAT)
 - Validations métier
 - Filtres complexes

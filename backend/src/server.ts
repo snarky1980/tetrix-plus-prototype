@@ -10,6 +10,7 @@ import clientRoutes from './routes/clientRoutes';
 import sousDomaineRoutes from './routes/sousDomaineRoutes';
 import tacheRoutes from './routes/tacheRoutes';
 import planningRoutes from './routes/planningRoutes';
+import repartitionRoutes from './routes/repartitionRoutes';
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use('/api/clients', clientRoutes);
 app.use('/api/sous-domaines', sousDomaineRoutes);
 app.use('/api/taches', tacheRoutes);
 app.use('/api', planningRoutes); // Routes planning (plusieurs endpoints)
+app.use('/api/repartition', repartitionRoutes);
 
 // Route 404
 app.use((req, res) => {

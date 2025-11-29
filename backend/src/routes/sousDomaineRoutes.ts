@@ -5,6 +5,8 @@ import {
   mettreAJourSousDomaine,
 } from '../controllers/sousDomaineController';
 import { authentifier, verifierRole } from '../middleware/auth';
+import { valider } from '../middleware/validation';
+import { creerSousDomaineSchema, mettreAJourSousDomaineSchema } from '../validation/schemas';
 
 const router = Router();
 
@@ -22,13 +24,13 @@ router.get('/', verifierRole('ADMIN', 'CONSEILLER'), obtenirSousDomaines);
  * Créer un nouveau sous-domaine
  * Accessible par : Admin uniquement
  */
-router.post('/', verifierRole('ADMIN'), creerSousDomaine);
+router.post('/', verifierRole('ADMIN'), valider(creerSousDomaineSchema), creerSousDomaine);
 
 /**
  * PUT /api/sous-domaines/:id
  * Mettre à jour un sous-domaine
  * Accessible par : Admin uniquement
  */
-router.put('/:id', verifierRole('ADMIN'), mettreAJourSousDomaine);
+router.put('/:id', verifierRole('ADMIN'), valider(mettreAJourSousDomaineSchema), mettreAJourSousDomaine);
 
 export default router;

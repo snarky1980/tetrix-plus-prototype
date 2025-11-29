@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { calculerCouleurDisponibilite } from '../services/planningService';
+import { verifierCapaciteJournaliere } from '../services/capaciteService';
 
 /**
  * Obtenir le planning d'un traducteur
@@ -108,9 +110,12 @@ export const obtenirPlanning = async (
     }
 
     // Convertir en array et trier par date
-    const planning = Object.values(planningParDate).sort((a: any, b: any) => 
-      a.date.localeCompare(b.date)
-    );
+    const planning = Object.values(planningParDate)
+      .sort((a: any, b: any) => a.date.localeCompare(b.date))
+      .map((jour: any) => {
+        const couleur = calculerCouleurDisponibilite(jour.heuresTotal, jour.capacite);
+        return { ...jour, couleur };
+      });
 
     res.json({
       traducteur,
@@ -136,8 +141,20 @@ export const creerBlocage = async (
 ): Promise<void> => {
   try {
     const { traducteurId, date, heures } = req.body;
-
-    // Note: La validation de capacité sera implémentée par Agent 3
+    if (!traducteurId || !date || !heures) {
+      res.status(400).json({ erreur: 'traducteurId, date et heures sont requis' });
+      return;
+    }
+    try {
+      const cap = await verifierCapaciteJournaliere(traducteurId, new Date(date), heures);
+      if (cap.depassement) {
+        res.status(400).json({ erreur: `Capacité dépassée le ${date} (actuelles ${cap.heuresActuelles.toFixed(2)} + nouvelles ${heures} > ${cap.capacite}).` });
+        return;
+      }
+    } catch (e: any) {
+      res.status(400).json({ erreur: e.message || 'Erreur vérification capacité' });
+      return;
+    }
     const blocage = await prisma.ajustementTemps.create({
       data: {
         traducteurId,
@@ -264,9 +281,22 @@ export const obtenirPlanningGlobal = async (
           heuresParDate[dateStr] = (heuresParDate[dateStr] || 0) + ajust.heures;
         }
 
+        // Construire structure dates avec couleur + disponibilité
+        const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number }> = {};
+        Object.entries(heuresParDate).forEach(([dateStr, heures]) => {
+          const capacite = traducteur.capaciteHeuresParJour;
+            const couleur = calculerCouleurDisponibilite(heures as number, capacite);
+            dates[dateStr] = {
+              heures: heures as number,
+              couleur,
+              capacite,
+              disponible: Math.max(capacite - (heures as number), 0),
+            };
+        });
+
         return {
           traducteur,
-          heuresParDate,
+          dates,
         };
       })
     );

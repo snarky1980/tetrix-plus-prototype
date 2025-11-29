@@ -7,6 +7,8 @@ import {
   supprimerTache,
 } from '../controllers/tacheController';
 import { authentifier, verifierRole } from '../middleware/auth';
+import { valider } from '../middleware/validation';
+import { creerTacheSchema, mettreAJourTacheSchema } from '../validation/schemas';
 
 const router = Router();
 
@@ -31,14 +33,14 @@ router.get('/:id', verifierRole('ADMIN', 'CONSEILLER'), obtenirTache);
  * Créer une nouvelle tâche
  * Accessible par : Admin, Conseiller
  */
-router.post('/', verifierRole('ADMIN', 'CONSEILLER'), creerTache);
+router.post('/', verifierRole('ADMIN', 'CONSEILLER'), valider(creerTacheSchema), creerTache);
 
 /**
  * PUT /api/taches/:id
  * Mettre à jour une tâche
  * Accessible par : Admin, Conseiller
  */
-router.put('/:id', verifierRole('ADMIN', 'CONSEILLER'), mettreAJourTache);
+router.put('/:id', verifierRole('ADMIN', 'CONSEILLER'), valider(mettreAJourTacheSchema), mettreAJourTache);
 
 /**
  * DELETE /api/taches/:id

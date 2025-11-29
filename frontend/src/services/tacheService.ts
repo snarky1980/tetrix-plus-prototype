@@ -36,8 +36,9 @@ export const tacheService = {
    */
   async mettreAJourTache(
     id: string,
-    tache: Partial<Tache> & { 
-      repartition?: { date: string; heures: number }[] 
+    tache: Partial<Tache> & {
+      repartition?: { date: string; heures: number }[];
+      repartitionAuto?: boolean;
     }
   ): Promise<Tache> {
     const { data } = await api.put<Tache>(`/taches/${id}`, tache);

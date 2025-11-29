@@ -98,6 +98,7 @@ export interface JourPlanning {
   heuresBlocages: number;
   heuresTotal: number;
   disponible: number;
+  couleur?: 'libre' | 'presque-plein' | 'plein';
   taches: {
     id: string;
     description: string;
@@ -137,7 +138,12 @@ export interface PlanningGlobal {
       division: string;
       capaciteHeuresParJour: number;
     };
-    heuresParDate: Record<string, number>;
+    dates: Record<string, {
+      heures: number;
+      couleur: 'libre' | 'presque-plein' | 'plein';
+      capacite: number;
+      disponible: number;
+    }>;
   }[];
 }
 
@@ -151,6 +157,7 @@ export interface CreerTacheForm {
   heuresTotal: number;
   dateEcheance: string;
   repartition?: { date: string; heures: number }[];
+  repartitionAuto?: boolean;
 }
 
 export interface CreerBlocageForm {

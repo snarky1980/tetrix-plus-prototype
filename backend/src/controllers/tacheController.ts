@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { repartitionJusteATemps, validerRepartition, RepartitionItem } from '../services/repartitionService';
+import { verifierCapaciteJournaliere } from '../services/capaciteService';
 
 /**
  * Obtenir les tâches avec filtres
@@ -118,7 +120,32 @@ export const creerTache = async (
       heuresTotal,
       dateEcheance,
       repartition, // Array de { date, heures }
+      repartitionAuto, // bool: utiliser JAT si true et pas de répartition fournie
     } = req.body;
+
+    if (!traducteurId || !paireLinguistiqueId || !description || !heuresTotal || !dateEcheance) {
+      res.status(400).json({ erreur: 'Champs requis manquants (traducteurId, paireLinguistiqueId, description, heuresTotal, dateEcheance).' });
+      return;
+    }
+
+    let repartitionEffective: RepartitionItem[] | undefined = undefined;
+    if (repartition && Array.isArray(repartition) && repartition.length > 0) {
+      // Validation répartition manuelle
+      const { valide, erreurs } = await validerRepartition(traducteurId, repartition, heuresTotal);
+      if (!valide) {
+        res.status(400).json({ erreur: 'Répartition invalide', details: erreurs });
+        return;
+      }
+      repartitionEffective = repartition;
+    } else if (repartitionAuto) {
+      // Génération JAT
+      try {
+        repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, new Date(dateEcheance));
+      } catch (e: any) {
+        res.status(400).json({ erreur: e.message || 'Erreur JAT' });
+        return;
+      }
+    }
 
     const tache = await prisma.$transaction(async (tx) => {
       // Créer la tâche
@@ -136,9 +163,9 @@ export const creerTache = async (
         },
       });
 
-      // Créer les ajustements de temps si une répartition est fournie
-      if (repartition && Array.isArray(repartition)) {
-        for (const ajust of repartition) {
+      // Créer les ajustements de temps si une répartition (manuelle ou auto) est définie
+      if (repartitionEffective) {
+        for (const ajust of repartitionEffective) {
           await tx.ajustementTemps.create({
             data: {
               traducteurId,
@@ -198,7 +225,35 @@ export const mettreAJourTache = async (
       dateEcheance,
       statut,
       repartition,
+      repartitionAuto,
     } = req.body;
+
+    // Récupérer tâche existante (pour validations JAT / manuelle en ignorance)
+    const existante = await prisma.tache.findUnique({ where: { id } });
+    if (!existante) {
+      res.status(404).json({ erreur: 'Tâche non trouvée' });
+      return;
+    }
+
+    let repartitionEffective: RepartitionItem[] | undefined = undefined;
+    const heuresCible = heuresTotal || existante.heuresTotal;
+    const echeanceCible = dateEcheance ? new Date(dateEcheance) : existante.dateEcheance;
+
+    if (repartition && Array.isArray(repartition) && repartition.length > 0) {
+      const { valide, erreurs } = await validerRepartition(existante.traducteurId, repartition, heuresCible, id);
+      if (!valide) {
+        res.status(400).json({ erreur: 'Répartition invalide', details: erreurs });
+        return;
+      }
+      repartitionEffective = repartition;
+    } else if (repartitionAuto) {
+      try {
+        repartitionEffective = await repartitionJusteATemps(existante.traducteurId, heuresCible, echeanceCible);
+      } catch (e: any) {
+        res.status(400).json({ erreur: e.message || 'Erreur JAT' });
+        return;
+      }
+    }
 
     const tache = await prisma.$transaction(async (tx) => {
       // Mettre à jour la tâche
@@ -212,18 +267,12 @@ export const mettreAJourTache = async (
         },
       });
 
-      // Si nouvelle répartition fournie, supprimer l'ancienne et créer la nouvelle
-      if (repartition && Array.isArray(repartition)) {
-        // Supprimer les anciens ajustements
+      // Si répartition (auto ou manuelle) définie, remplacer les ajustements
+      if (repartitionEffective) {
         await tx.ajustementTemps.deleteMany({
-          where: {
-            tacheId: id,
-            type: 'TACHE',
-          },
+          where: { tacheId: id, type: 'TACHE' },
         });
-
-        // Créer les nouveaux ajustements
-        for (const ajust of repartition) {
+        for (const ajust of repartitionEffective) {
           await tx.ajustementTemps.create({
             data: {
               traducteurId: tacheMiseAJour.traducteurId,
