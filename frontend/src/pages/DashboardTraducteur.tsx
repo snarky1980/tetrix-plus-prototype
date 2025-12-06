@@ -1,59 +1,99 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
-import { useState } from 'react';
+import { Input } from '../components/ui/Input';
+import { FormField } from '../components/ui/FormField';
 import { useAuth } from '../contexts/AuthContext';
 import { usePlanning } from '../hooks/usePlanning';
 import { formatHeures } from '../lib/format';
 import { JourDetail } from '../components/ui/JourDetail';
+import api from '../services/api';
 
 /**
- * Dashboard Traducteur - Structure de base
- * Agent 2 appliquera le design
- * Agent 3 implémentera la logique métier
+ * Dashboard Traducteur - Planning personnel et blocage de temps
  */
 const DashboardTraducteur: React.FC = () => {
   const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
+  const [blocageData, setBlocageData] = useState({ date: '', heures: 0 });
+  const [submitting, setSubmitting] = useState(false);
+  const [erreur, setErreur] = useState('');
   const { utilisateur } = useAuth();
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
-  const { planning, loading, error } = usePlanning(utilisateur?.traducteurId, { dateDebut: dateISO(aujourdHui), dateFin: dateISO(fin) });
+  const { planning, loading, error, refetch } = usePlanning(utilisateur?.traducteurId, { 
+    dateDebut: dateISO(aujourdHui), 
+    dateFin: dateISO(fin) 
+  });
 
   const resume = useMemo(() => {
-    if (!planning) return { taches: 0, blocages: 0, libre: 0 };
-    const jour0 = planning.planning[0];
-    if (!jour0) return { taches: 0, blocages: 0, libre: 0 };
-    return {
-      taches: jour0.heuresTaches,
-      blocages: jour0.heuresBlocages,
-      libre: jour0.disponible,
-    };
+    if (!planning) return { taches: 0, blocages: 0, libre: 0, capacite: 0 };
+    const totaux = planning.planning.reduce((acc, jour) => ({
+      taches: acc.taches + jour.heuresTaches,
+      blocages: acc.blocages + jour.heuresBlocages,
+      libre: acc.libre + jour.disponible,
+      capacite: acc.capacite + jour.capacite,
+    }), { taches: 0, blocages: 0, libre: 0, capacite: 0 });
+    return totaux;
   }, [planning]);
+
+  const handleCreerBlocage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!utilisateur?.traducteurId) return;
+    
+    setSubmitting(true);
+    setErreur('');
+
+    try {
+      await api.post('/planning/ajustements', {
+        traducteurId: utilisateur.traducteurId,
+        date: blocageData.date,
+        heures: blocageData.heures,
+        type: 'BLOCAGE',
+      });
+      setOuvrirBlocage(false);
+      setBlocageData({ date: '', heures: 0 });
+      refetch();
+    } catch (err: any) {
+      setErreur(err.response?.data?.erreur || 'Erreur lors de la création du blocage');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <AppLayout titre="Mon planning">
       <Card>
-        <CardHeader><CardTitle>Résumé quotidien</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Résumé hebdomadaire (7 jours)</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4" aria-label="Résumé des heures">
-            <div className="card-base p-3 rounded-md text-center" aria-label="Heures tâches planifiées">
+          <div className="grid grid-cols-4 gap-4">
+            <div className="p-3 rounded-md text-center bg-blue-50">
+              <p className="text-xs text-muted">Capacité</p>
+              <p className="text-lg font-semibold">{formatHeures(resume.capacite)} h</p>
+            </div>
+            <div className="p-3 rounded-md text-center bg-purple-50">
               <p className="text-xs text-muted">Tâches</p>
-              <p className="text-lg font-semibold" aria-live="polite">{formatHeures(resume.taches)} h</p>
+              <p className="text-lg font-semibold">{formatHeures(resume.taches)} h</p>
             </div>
-            <div className="card-base p-3 rounded-md text-center" aria-label="Heures blocages">
+            <div className="p-3 rounded-md text-center bg-orange-50">
               <p className="text-xs text-muted">Blocages</p>
-              <p className="text-lg font-semibold" aria-live="polite">{formatHeures(resume.blocages)} h</p>
+              <p className="text-lg font-semibold">{formatHeures(resume.blocages)} h</p>
             </div>
-            <div className="card-base p-3 rounded-md text-center" aria-label="Heures libres">
-              <p className="text-xs text-muted">Libre</p>
-              <p className="text-lg font-semibold" aria-live="polite">{formatHeures(resume.libre)} h</p>
+            <div className="p-3 rounded-md text-center bg-green-50">
+              <p className="text-xs text-muted">Disponible</p>
+              <p className="text-lg font-semibold">{formatHeures(resume.libre)} h</p>
             </div>
           </div>
-          <Button className="mt-4" full variant="secondaire" aria-label="Ouvrir la fenêtre de blocage" onClick={() => setOuvrirBlocage(true)}>Bloquer du temps</Button>
-          <p className="text-muted text-sm mt-3">Les données réelles seront injectées par Agent 3.</p>
+          <Button 
+            className="mt-4" 
+            full 
+            variant="secondaire" 
+            onClick={() => setOuvrirBlocage(true)}
+          >
+            + Bloquer du temps
+          </Button>
         </CardContent>
       </Card>
 
@@ -87,28 +127,57 @@ const DashboardTraducteur: React.FC = () => {
       </Card>
 
       <Modal
-        titre="Blocage de temps"
+        titre="Bloquer du temps"
         ouvert={ouvrirBlocage}
         onFermer={() => setOuvrirBlocage(false)}
         ariaDescription="Formulaire pour bloquer des heures sur une journée"
       >
-        <p className="text-sm text-muted mb-3">Action: bloquer une journée complète ou un nombre d'heures décimal.</p>
-        <div className="space-y-3">
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Date (à venir)</span>
-            <input disabled className="border border-border rounded-md px-3 py-2 text-sm bg-muted" placeholder="Sélectionner" />
-          </label>
-          <label className="flex flex-col gap-1 text-sm">
-            <span>Heures (décimal)</span>
-            <input disabled className="border border-border rounded-md px-3 py-2 text-sm bg-muted" placeholder="0.00" />
-          </label>
-          <div className="flex items-center gap-2 text-sm">
-            <input type="checkbox" disabled aria-label="Bloquer journée complète" />
-            <span>Journée complète</span>
+        <form onSubmit={handleCreerBlocage}>
+          {erreur && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              {erreur}
+            </div>
+          )}
+          
+          <p className="text-sm text-muted mb-4">
+            Bloquez du temps pour vos activités personnelles, formations, réunions, etc.
+          </p>
+
+          <FormField label="Date" required>
+            <Input
+              type="date"
+              value={blocageData.date}
+              onChange={e => setBlocageData({ ...blocageData, date: e.target.value })}
+              required
+              min={dateISO(aujourdHui)}
+            />
+          </FormField>
+
+          <FormField label="Heures à bloquer" required>
+            <Input
+              type="number"
+              step="0.25"
+              min="0"
+              value={blocageData.heures || ''}
+              onChange={e => setBlocageData({ ...blocageData, heures: parseFloat(e.target.value) || 0 })}
+              required
+              placeholder="7.5"
+            />
+          </FormField>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={() => setOuvrirBlocage(false)}
+            >
+              Annuler
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Création...' : 'Créer blocage'}
+            </Button>
           </div>
-          <Button variant="primaire" disabled aria-label="Enregistrer blocage">Enregistrer</Button>
-        </div>
-        <p className="text-xs text-muted mt-4">Validation capacité journalière ajoutée par Agent 3.</p>
+        </form>
       </Modal>
     </AppLayout>
   );

@@ -2,13 +2,12 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 
-// Pages (seront créées par Agent 2 et Agent 3)
+// Pages
 import Connexion from './pages/Connexion';
 import DashboardTraducteur from './pages/DashboardTraducteur';
 import DashboardConseiller from './pages/DashboardConseiller';
 import PlanningGlobal from './pages/PlanningGlobal';
-import TacheCreationEtape1 from './pages/TacheCreationEtape1';
-import TacheCreationEtape2 from './pages/TacheCreationEtape2';
+import TacheCreation from './pages/TacheCreation';
 import DashboardAdmin from './pages/DashboardAdmin';
 
 /**
@@ -60,7 +59,7 @@ const RedirectionDashboard: React.FC = () => {
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/tetrix-plus-prototype">
         <Routes>
           {/* Route publique */}
           <Route path="/connexion" element={<Connexion />} />
@@ -99,15 +98,7 @@ function App() {
             path="/conseiller/creation-tache"
             element={
               <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
-                <TacheCreationEtape1 />
-              </RouteProtegee>
-            }
-          />
-          <Route
-            path="/conseiller/creation-tache/repartition"
-            element={
-              <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
-                <TacheCreationEtape2 />
+                <TacheCreation />
               </RouteProtegee>
             }
           />

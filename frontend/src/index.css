@@ -3,28 +3,42 @@
 @tailwind utilities;
 
 :root {
-  --radius: 0.625rem;
-  --background: #fefbe8;
-  --foreground: #1f2d38; /* assombri pour contraste */
-  --card: #ffffff;
-  --card-foreground: #1f2d38;
-  --popover: #ffffff;
-  --popover-foreground: #1f2d38;
-  --primary: #1f2d38;
+  /* Echo BT-CTD Theme - Main Interface */
+  --radius: 0.75rem; /* 12px like echo theme */
+  
+  /* Primary Colors - Navy Blue */
+  --primary: #2c3d50;
   --primary-foreground: #ffffff;
-  /* Orange accessible (contrast sur fond clair > 4.5) */
-  --secondary: #b45309; /* remplacé ancien #aca868 */
-  --secondary-foreground: #ffffff;
-  --muted: #e0f2fe;
-  --muted-foreground: #1f2d38;
-  --accent: #b45309;
+  
+  /* Secondary Colors - Sage/Gold */
+  --secondary: #aca868;
+  --secondary-foreground: #2c3d50;
+  --tb-sage: #b5af70;
+  
+  /* Accent - Teal */
+  --accent: #5a88b5;
   --accent-foreground: #ffffff;
-  --border: #d0d8dd;
-  --ring: #1f2d38;
+  --tb-teal: #059669;
+  
+  /* Backgrounds */
+  --background: #f8fafc;
+  --card: #ffffff;
+  --card-foreground: #2c3d50;
+  --popover: #ffffff;
+  --popover-foreground: #2c3d50;
+  
+  /* Muted/Borders */
+  --foreground: #2c3d50;
+  --muted: #64748b;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --ring: #2c3d50;
+  
+  /* Status Colors */
   --success-bg: #f0fdf4;
   --success-border: #86efac;
   --warning-bg: #fff7ed;
-  --warning-border: #fbbf24; /* jaune soutenu */
+  --warning-border: #fbbf24;
   --danger-bg: #fef2f2;
   --danger-border: #f87171;
   /* États disponibilité */
