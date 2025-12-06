@@ -33,7 +33,9 @@ api.interceptors.response.use(
       // Token invalide ou expiré
       localStorage.removeItem('token');
       localStorage.removeItem('utilisateur');
-      window.location.href = '/connexion';
+      // Utiliser le basename configuré dans vite.config.ts
+      const basename = import.meta.env.BASE_URL || '/';
+      window.location.href = `${basename}connexion`;
     }
     return Promise.reject(error);
   }
