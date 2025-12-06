@@ -1,28 +1,31 @@
-# Tetrix PLUS
+# Tetrix PLUS - Gestion Intelligente de Planification de Traduction
 
-Application web complète de gestion de planification pour traducteurs, remplaçant les fichiers Excel Tetrix.
+> Plateforme complète de gestion de planification et de répartition des tâches de traduction avec algorithme JAT (Just-in-Time).
 
----
+[![Frontend Deploy](https://img.shields.io/badge/Frontend-GitHub%20Pages-blue)](https://snarky1980.github.io/tetrix-plus-prototype/)
+[![Backend Deploy](https://img.shields.io/badge/Backend-Render-green)](https://tetrix-plus-backend.onrender.com/api)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-success)](./DEPLOYMENT.md)
 
 ## 📋 Vue d'ensemble
 
-**Version** : 1.0.0  
-**Statut** : Pré-production READY (voir audit Agent 4)
+**Version** : 2.0.0 (Production)  
+**Statut** : ✅ Production Ready
 
-Tetrix PLUS permet de :
-- Gérer ~500 traducteurs avec leurs compétences linguistiques
-- Planifier des tâches en heures décimales (1.25h, 0.50h, 7.5h, etc.)
-- Bloquer du temps (blocages)
-- Visualiser les plannings individuels et globaux
-- Filtrer par division, client, domaine, paire linguistique, période
-- Déploiement statique (GitHub Pages) + API séparée
+Tetrix PLUS est une application complète de gestion de planification conçue pour les entreprises de traduction. Elle offre :
 
-### 📑 Documents clés
-- Audit Performance & Accessibilité : `AUDIT-PERF-ACCESSIBILITE.md`
-- Guide déploiement : `DEPLOYMENT.md`
+- **Gestion des utilisateurs** : 3 rôles spécialisés (Admin, Conseiller, Traducteur)
+- **Algorithme JAT** : Répartition intelligente, équitable et prévisible des heures
+- **Planification globale** : Vue 7 jours avec code couleur et blocage de capacité
+- **Blocage de temps** : Réserver des slots pour congés, réunions, etc.
+- **Tableaux de bord** : Dashboard personnalisés par rôle avec métriques temps réel
+- **Validation intelligente** : Blocage des surcharges, respect des capacités
+- **Toast notifications** : Feedback immédiat sur toutes les actions
+- **Interface élégante** : Design system cohérent (echo-BT-CTD) et responsive
 
-### ✅ Readiness
-Audit du 2025-11-29 : application jugée **Pré-production READY**. Restant avant Production : pagination planning global, logging structuré, rate limiting, landmarks sémantiques, tests contrôleurs.
+### 📑 Documents complémentaires
+- [Audit Performance & Accessibilité](./AUDIT-PERF-ACCESSIBILITE.md) - Rapports détaillés
+- [Guide Déploiement](./DEPLOYMENT.md) - Instructions production
+- [Architecture Détaillée](./ARCHITECTURE.txt) - Vue technique complète
 
 ---
 
@@ -35,451 +38,619 @@ Audit du 2025-11-29 : application jugée **Pré-production READY**. Restant avan
 - TypeScript 5.3
 - PostgreSQL (base de données)
 - Prisma ORM (gestion DB et migrations)
-- JWT (authentification)
+- JWT (authentification stateless)
 - Zod (validation des données)
 - Bcrypt (hashage des mots de passe)
 
 **Frontend**
-- React 18 avec TypeScript
-- Vite (build tool)
-- React Router v6 (navigation)
-- Axios (requêtes HTTP)
+- React 18 + TypeScript
+- Vite (build tool ultra-rapide)
+- React Router v6 (navigation SPA)
+- Axios (client HTTP)
+- Tailwind CSS (styling)
 - date-fns (manipulation de dates)
- - Tailwind CSS (tokens utilitaires)
- - clsx (composition de classes)
 
-**Structure**
+**Design System**
+- **Thème** : echo-BT-CTD
+- **Couleurs** : Navy (#2c3d50), Sage (#aca868), Teal accents
+- **Font** : Inter
+- **Border radius** : 12px
+
+### Déploiement
+
+**Frontend** : GitHub Pages
+- URL: https://snarky1980.github.io/tetrix-plus-prototype/
+- Déploiement automatique via GitHub Actions à chaque push sur `main`
+
+**Backend** : Render.com
+- URL: https://tetrix-plus-backend.onrender.com/api
+- PostgreSQL managée (Render database add-on)
+
+### Hiérarchie des fichiers
+
 ```
-tetrix-plus/
-├── backend/           # API Node.js + Express
-│   ├── prisma/        # Schéma DB et migrations
+tetrix-plus-prototype/
+├── frontend/                    # Application React
 │   ├── src/
-│   │   ├── config/    # Configuration (DB, env)
-│   │   ├── middleware/ # Auth, validation, erreurs
-│   │   ├── controllers/ # Logique des routes
-│   │   ├── routes/    # Définition des endpoints
-│   │   └── server.ts  # Point d'entrée
+│   │   ├── components/
+│   │   │   ├── ui/             # Composants réutilisables (Button, Input, Select, etc.)
+│   │   │   ├── admin/          # Composants admin (UserManagement, ClientForm, etc.)
+│   │   │   └── layout/         # Layout principal (AppLayout)
+│   │   ├── contexts/           # React Contexts (AuthContext, ToastContext)
+│   │   ├── hooks/              # Custom hooks (usePlanning, useRepartition, usePageTitle)
+│   │   ├── pages/              # Pages principales (Dashboards, Planning, etc.)
+│   │   ├── services/           # Services API (api.ts, authService.ts, etc.)
+│   │   ├── types/              # Types TypeScript partagés
+│   │   ├── lib/                # Utilitaires (cn.ts, format.ts)
+│   │   ├── App.tsx             # Routes et protection
+│   │   ├── main.tsx            # Entry point
+│   │   └── index.css           # Tailwind CSS directives
+│   ├── public/
+│   │   ├── favicon.svg         # Favicon branding
+│   │   └── 404.html            # GitHub Pages routing fix
 │   └── package.json
 │
-├── frontend/          # Application React
+├── backend/                     # API Node.js
 │   ├── src/
-│   │   ├── contexts/  # AuthContext (gestion session)
-│   │   ├── services/  # API services
-│   │   ├── pages/     # Dashboards (Admin, Conseiller, Traducteur)
-│   │   ├── types/     # Types TypeScript
-│   │   └── App.tsx    # Routes et protection
+│   │   ├── config/             # Configuration (database.ts, env.ts)
+│   │   ├── middleware/         # Auth, validation, error handling
+│   │   ├── controllers/        # Route handlers
+│   │   ├── services/           # Logique métier (JAT, Capacité, Planning)
+│   │   ├── routes/             # Définition des endpoints
+│   │   ├── validation/         # Schémas Zod
+│   │   └── server.ts           # Express app
+│   ├── prisma/
+│   │   ├── schema.prisma       # ORM schema
+│   │   ├── seed.ts             # Seed de développement
+│   │   └── seed-admin.sql      # Admin initial
+│   ├── tests/                  # Tests unitaires
 │   └── package.json
 │
-└── package.json       # Workspace racine
-```
+├── DEPLOYMENT.md               # Guide production
+├── AUDIT-PERF-ACCESSIBILITE.md # Rapports audit
+├── ARCHITECTURE.txt            # Documentation technique
+├── render.yaml                 # IaC pour Render
+├── Procfile                    # Configuration production
+└── package.json                # Workspace root
+## 👥 Comptes de test
 
----
+| Email | Mot de passe | Rôle | URL |
+|-------|-------------|------|-----|
+| admin@tetrix.com | password123 | Administrateur | /dashboard-admin |
+| conseiller@tetrix.com | password123 | Conseiller | /dashboard-conseiller |
+| traducteur@tetrix.com | password123 | Traducteur | /dashboard-traducteur |
 
-## 🗄️ Modèle de données
-
-### Entités principales
-
-**Utilisateur**
-- email, motDePasse (hash), role (ADMIN | CONSEILLER | TRADUCTEUR)
-- Relation 1:1 avec Traducteur (si rôle = TRADUCTEUR)
-
-**Traducteur**
-- nom, division, domaines[], clientsHabituels[]
-- capaciteHeuresParJour (float, défaut: 7.5)
-- pairesLinguistiques[] (relation 1:N)
-
-**PaireLinguistique**
-- langueSource, langueCible (codes ISO: EN, FR, ES, IT, etc.)
-- Contrainte unique : un traducteur ne peut avoir qu'une seule fois la même paire
-
-**Client**
-- nom, sousDomaines[]
-
-**SousDomaine**
-- nom, domaineParent (optionnel)
-
-**Tache**
-- description, heuresTotal (float), dateEcheance
-- statut (PLANIFIEE | EN_COURS | TERMINEE)
-- Relations : traducteur, client (optionnel), sousDomaine (optionnel), paireLinguistique
-- ajustementsTemps[] (répartition des heures par jour)
-
-**AjustementTemps**
-- date, heures (float), type (TACHE | BLOCAGE)
-- Représente soit une allocation d'heures de tâche, soit un blocage
-- Contrainte : la somme des heures par jour ≤ capaciteHeuresParJour
-
----
-
-## 🔐 Authentification et rôles
-
-### Système JWT
-- Token valide 24h
-- Stocké dans localStorage côté frontend
-- Envoyé dans header `Authorization: Bearer <token>`
-
-### Rôles et permissions
-
-**ADMIN**
-- Tout accès
-- Créer/modifier/désactiver traducteurs
-- Gérer clients, sous-domaines, paires linguistiques
-- Gérer utilisateurs et rôles
-
-**CONSEILLER**
-- Rechercher et filtrer traducteurs
-- Voir plannings (individuel + global)
-- Créer, modifier, supprimer tâches
-- Créer blocages
-
-**TRADUCTEUR**
-- Voir son propre planning uniquement
-- Créer/supprimer ses propres blocages
-- Aucun accès aux tâches (lecture seule)
-
----
-
-## 🚀 Installation et démarrage
+## 🚀 Démarrage rapide
 
 ### Prérequis
-- Node.js 20+ et npm
-- PostgreSQL 14+
-- Git
+- Node.js 20+
+- npm ou yarn
+- PostgreSQL 14+ (ou utiliser Render managed)
 
-### 1. Cloner le projet
-```bash
-git clone <url-du-repo>
-cd tetrix-plus
-```
+### Installation locale
 
-### 2. Installer les dépendances
 ```bash
+# Cloner le repository
+git clone https://github.com/snarky1980/tetrix-plus-prototype.git
+cd tetrix-plus-prototype
+
+# Installation complète
 npm install
+
+# Démarrer (frontend + backend)
+npm run dev
 ```
 
-### 3. Configurer le backend
+Cela démarre :
+- **Frontend** : http://localhost:5173
+- **Backend** : http://localhost:3001
 
-Créer `backend/.env` à partir de `backend/.env.example` :
+### Configuration backend (.env)
+
 ```bash
 cd backend
 cp .env.example .env
 ```
 
 Éditer `backend/.env` :
+
 ```env
+# Database
 DATABASE_URL="postgresql://user:password@localhost:5432/tetrix_plus?schema=public"
-JWT_SECRET="votre-secret-ultra-securise-unique"
+
+# JWT
+JWT_SECRET="votre-clé-secrète-très-longue-et-sécurisée"
+
+# Server
 PORT=3001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
 ```
 
-### 4. Créer la base de données
+### Initialiser la base de données
 
 ```bash
-# Dans le dossier backend/
-npx prisma migrate dev --name init
-npx prisma generate
-npm run prisma:seed
-```
-
-Cela crée toutes les tables et génère le client Prisma.
-
-### 5. Vérifier données de seed
-
-Le script `npm run prisma:seed` crée :
-- 1 utilisateur ADMIN (`admin@tetrix.com` / mot de passe à changer)
-- 1 utilisateur CONSEILLER (`conseiller@tetrix.com`)
-- 1 traducteur démonstration + paires linguistiques (EN↔FR)
-- 1 client + sous-domaines (`COMPLIANCE`, `REPORTING`)
-
-Modifiez les mots de passe immédiatement en production.
-
-### 6. (Optionnel) Créer un utilisateur admin manuel
-
-Option A : Utiliser Prisma Studio
-```bash
-npx prisma studio
-```
-Accéder à `http://localhost:5555` et créer manuellement un utilisateur avec role = ADMIN.
-
-Option B : Script SQL direct
-```sql
--- Générer un hash bcrypt pour "password123" (à remplacer)
-INSERT INTO utilisateurs (id, email, "motDePasse", role, actif)
-VALUES (
-  gen_random_uuid(),
-  'admin@tetrix.com',
-  '$2b$10$abcdefghijklmnopqrstuv...', -- hash de votre mot de passe
-  'ADMIN',
-  true
-);
-```
-
-### 7. Démarrer le projet
-
-En mode développement (racine du projet) :
-```bash
-npm run dev
-```
-
-Cela démarre :
-- Backend sur `http://localhost:3001`
-- Frontend sur `http://localhost:5173`
-
-Ou démarrer séparément :
-```bash
-# Terminal 1 - Backend
 cd backend
-npm run dev
-
-# Terminal 2 - Frontend
-cd frontend
-npm run dev
+npx prisma migrate dev --name init  # Crée les tables
+npm run prisma:seed                  # Charge les données de test
 ```
 
----
+### Vérifier l'installation
+
+```bash
+# Backend healthcheck
+curl http://localhost:3001/api/health
+
+# Tester la connexion
+curl -X POST http://localhost:3001/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@tetrix.com","motDePasse":"password123"}'
+```
+
+## 📊 Guide utilisateur
+
+### Pour l'Administrateur
+
+**Gestion des traducteurs** (`/dashboard-admin` → Traducteurs)
+- Voir tous les traducteurs avec leurs capacités
+- Créer/modifier/désactiver des profils
+- Définir la capacité heures/jour
+- Gérer les domaines et clients habituels
+- Ajouter/supprimer paires linguistiques
+
+**Gestion des clients et domaines** (`/dashboard-admin` → Clients & Domaines)
+- Créer/modifier des clients
+- Organiser les sous-domaines
+- Configurer les divisions
+
+**Gestion des utilisateurs** (`/dashboard-admin` → Utilisateurs)
+- Créer des comptes (Admin, Conseiller, Traducteur)
+- Assigner les rôles
+- Associer aux profils traducteur
+- Désactiver/réactiver des utilisateurs
+
+**Vue des statistiques** (`/dashboard-admin` → Statistiques)
+- Métriques de capacité (libre, presque pleine, pleine)
+- Total de cellules actives
+- Cartes métriques avec codes couleur
+
+### Pour le Conseiller
+
+**Créer une tâche** (`/taches/creation`)
+1. **Étape 1** : Configurer la tâche
+   - Sélectionner traducteur(s)
+   - Nombre d'heures total
+   - Date d'échéance
+   - Client et domaine (optionnels)
+
+2. **Étape 2** : Répartition JAT
+   - Visualiser la répartition proposée
+   - Bloquer certains jours (congés, réunions)
+   - Valider et créer
+
+**Consulter le planning** (`/planning-global`)
+- Vue 7 jours multi-traducteurs
+- Filtrer par division, client, domaine
+- Code couleur de capacité :
+  - 🟢 **Libre** : Capacité disponible
+  - 🟠 **Presque plein** : >75% utilisé
+  - 🔴 **Plein** : 100% utilisé
+
+### Pour le Traducteur
+
+**Consulter son planning** (`/dashboard-traducteur`)
+- Vue personnelle 7 jours
+- Tâches assignées avec heures/jour
+- Capacité restante
+
+**Bloquer du temps** (à partir du planning)
+- Réserver des slots (congés, réunions)
+- Voir l'impact sur la capacité
+- Supprimer des blocages
+
+## 🔧 Technologie stack
+
+| Domaine | Technologies |
+|---------|--------------|
+| **Frontend** | React 18, TypeScript, Vite, React Router v6, Tailwind CSS, Axios |
+| **Backend** | Node.js 20, Express, TypeScript, Prisma ORM, PostgreSQL, JWT, Zod |
+| **DevOps** | GitHub Actions, GitHub Pages, Render.com, Docker, npm workspaces |
+| **Design** | Tailwind CSS, Inter font, echo-BT-CTD theme |
+
+## 🔐 Sécurité et authentification
+
+- **JWT tokens** : Stateless, valides 24h
+- **Password hashing** : Bcrypt avec salt
+- **Validation** : Zod schemas côté serveur
+- **RBAC** : 3 rôles avec permissions granulaires
+- **CORS** : Configuré pour production
+- **HTTPS** : Obligatoire en production
+
+### Flux d'authentification
+
+```
+1. Utilisateur se connecte (email + mot de passe)
+2. Backend valide et génère JWT
+3. JWT stocké dans localStorage
+4. Envoyé dans Authorization header pour chaque requête
+5. Middleware vérifie le token
+6. Route protégée exécutée si valide
+```
 
 ## 📡 API Endpoints
 
 ### Authentification
-- `POST /api/auth/connexion` - Se connecter
-- `POST /api/auth/inscription` - Créer un utilisateur (Admin)
+- `POST /api/auth/login` - Se connecter
+- `POST /api/auth/logout` - Se déconnecter
+- `GET /api/auth/me` - Utilisateur courant
 
 ### Traducteurs
-- `GET /api/traducteurs` - Liste avec filtres (division, client, domaine, langues, actif)
-- `GET /api/traducteurs/:id` - Détails d'un traducteur
-- `POST /api/traducteurs` - Créer un traducteur (Admin)
-- `PUT /api/traducteurs/:id` - Modifier un traducteur (Admin)
-- `DELETE /api/traducteurs/:id` - Désactiver un traducteur (Admin)
+- `GET /api/traducteurs` - Liste (filtres: division, client, domaine, langue)
+- `POST /api/traducteurs` - Créer (Admin)
+- `GET /api/traducteurs/:id` - Détails
+- `PUT /api/traducteurs/:id` - Modifier (Admin)
+- `DELETE /api/traducteurs/:id` - Désactiver (Admin)
 
 ### Paires linguistiques
-- `POST /api/traducteurs/:traducteurId/paires-linguistiques` - Ajouter une paire (Admin)
-- `DELETE /api/traducteurs/paires-linguistiques/:id` - Supprimer une paire (Admin)
-
-### Clients et domaines
-- `GET /api/clients` - Liste des clients
-- `POST /api/clients` - Créer un client (Admin)
-- `PUT /api/clients/:id` - Modifier un client (Admin)
-- `GET /api/sous-domaines` - Liste des sous-domaines
-- `POST /api/sous-domaines` - Créer un sous-domaine (Admin)
-- `PUT /api/sous-domaines/:id` - Modifier un sous-domaine (Admin)
+- `POST /api/traducteurs/:traducteurId/paires-linguistiques` - Ajouter (Admin)
+- `DELETE /api/traducteurs/:traducteurId/paires-linguistiques/:pairId` - Supprimer (Admin)
 
 ### Tâches
-- `GET /api/taches` - Liste avec filtres (traducteurId, statut, dateDebut, dateFin)
-- `GET /api/taches/:id` - Détails d'une tâche
-- `POST /api/taches` - Créer une tâche avec répartition (Conseiller)
-- `PUT /api/taches/:id` - Modifier une tâche (Conseiller)
-- `DELETE /api/taches/:id` - Supprimer une tâche (Conseiller)
+- `GET /api/taches` - Liste (filtres: traducteur, client, domaine, dates)
+- `POST /api/taches` - Créer (Conseiller)
+- `GET /api/taches/:id` - Détails
+- `PUT /api/taches/:id` - Modifier (Conseiller)
+- `DELETE /api/taches/:id` - Supprimer (Conseiller)
 
 ### Planning
-- `GET /api/traducteurs/:traducteurId/planning?dateDebut=...&dateFin=...` - Planning individuel
-- `GET /api/planning-global?dateDebut=...&dateFin=...&division=...` - Planning multi-traducteurs
-- `POST /api/ajustements` - Créer un blocage
-- `DELETE /api/ajustements/:id` - Supprimer un blocage
+- `GET /api/planning/:traducteurId?dateDebut=...&dateFin=...` - Planning individuel
+- `GET /api/planning-global?dateDebut=...&dateFin=...` - Planning multi-traducteurs
+
+### Capacité & Blocages
+- `GET /api/capacite/:traducteurId` - Capacité disponible
+- `POST /api/blocages` - Créer un blocage
+- `DELETE /api/blocages/:id` - Supprimer un blocage
 
 **Santé du serveur**
-- `GET /health` - Vérifier que l'API fonctionne
+- `GET /api/health` - Status de l'API
 
----
+[Documentation API complète](./docs/API.md)
 
 ## 🧪 Tests et validation
 
-### Vérifier la connexion DB
-```bash
-cd backend
-npx prisma studio
-```
+### Tester l'API en développement
 
-### Tester l'API avec curl
 ```bash
-# Connexion
-curl -X POST http://localhost:3001/api/auth/connexion \
+# Healthcheck
+curl http://localhost:3001/api/health
+
+# Connexion et récupération du token
+TOKEN=$(curl -X POST http://localhost:3001/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@tetrix.com","motDePasse":"password123"}'
+  -d '{"email":"admin@tetrix.com","motDePasse":"password123"}' \
+  | jq -r '.token')
 
-# Récupérer les traducteurs (avec token)
+# Récupérer les traducteurs
 curl http://localhost:3001/api/traducteurs \
-  -H "Authorization: Bearer <votre-token>"
+  -H "Authorization: Bearer $TOKEN"
+
+# Créer un traducteur
+curl -X POST http://localhost:3001/api/traducteurs \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "nom": "Jean Dupont",
+    "division": "IT",
+    "capaciteHeuresParJour": 7.5
+  }'
 ```
 
----
+### Inspector la base de données
 
-## 📦 Build et production
-
-### Build du backend
 ```bash
 cd backend
-npm run build
-npm start
+npx prisma studio    # Accéder à http://localhost:5555
 ```
 
-### Build du frontend
+### Tests unitaires backend
+
 ```bash
-cd frontend
-npm run build
-npm run preview
+cd backend
+npm test              # Exécuter les tests
+npm run test:watch   # Mode watch
 ```
 
-Les fichiers sont générés dans `frontend/dist/`.
+## 📦 Build et déploiement
 
----
+### Build local
 
-## 🚀 Déploiement GitHub
+```bash
+# Frontend
+cd frontend
+npm run build    # Crée dist/
 
-### Frontend (GitHub Pages)
-Le frontend est déployé automatiquement sur GitHub Pages via `.github/workflows/deploy-frontend.yml`.
+# Backend
+cd backend
+npm run build    # Crée dist/
+```
 
-**URL de production** : `https://snarky1980.github.io/tetrix-plus-prototype/`
+### Déploiement sur GitHub Pages (frontend)
 
-À chaque push sur `main`, le workflow :
-1. Build le frontend avec Vite
-2. Upload l'artifact vers GitHub Pages
-3. Déploie sur l'environnement `github-pages`
+```bash
+# Automatique via .github/workflows/deploy-frontend.yml
+# Déclenché à chaque push sur main branch
+git push origin main
+```
 
-### Backend (Render.com)
-Le backend doit être déployé sur un service cloud (Render, Railway, Fly.io).
+**Production URL** : https://snarky1980.github.io/tetrix-plus-prototype/
 
-**Configuration Render** :
-1. Connecter ce repo GitHub à Render.com
-2. Créer un nouveau Web Service :
-   - **Build Command** : `cd backend && npm ci && npx prisma generate && npm run build`
-   - **Start Command** : `cd backend && npx prisma migrate deploy && npm start`
-3. Ajouter les variables d'environnement dans le dashboard Render :
+### Déploiement sur Render (backend)
+
+**Étapes** :
+1. Créer un Web Service sur render.com
+2. Connecter ce repository GitHub
+3. Configurer les variables d'environnement :
    ```
-   DATABASE_URL=postgresql://user:pass@host:port/db
-   JWT_SECRET=<généré par Render ou manuellement>
+   DATABASE_URL=postgresql://...
+   JWT_SECRET=...
    NODE_ENV=production
    PORT=3001
    FRONTEND_URL=https://snarky1980.github.io
    ```
-4. Copier l'URL du service déployé (ex: `https://tetrix-plus-backend.onrender.com`)
+4. Build Command: `cd backend && npm ci && npx prisma generate && npm run build`
+5. Start Command: `cd backend && npx prisma migrate deploy && npm start`
 
-**Configurer l'URL backend dans le frontend** :
-```bash
-# Éditer frontend/.env.production
-VITE_API_URL=https://tetrix-plus-backend.onrender.com/api
+**Production URL** : https://tetrix-plus-backend.onrender.com/api
+
+Voir [DEPLOYMENT.md](./DEPLOYMENT.md) pour détails complets.
+
+## 🎨 Système de design
+
+### Composants réutilisables
+
+**Composants de base** (`frontend/src/components/ui/`)
+- `Button` : Variants (primary, secondary, outline, danger, ghost)
+- `Input` : Champs texte avec validation et états d'erreur
+- `Select` : Dropdowns avec recherche
+- `FormField` : Wrapper avec label, helper text, error message
+- `Card` : Conteneurs de contenu
+- `Modal` : Dialogs accessibles
+- `Spinner` : Indicateurs de chargement
+- `Toast` : Notifications non-intrusives (success, error, info, warning)
+- `Badge` : Étiquettes statut
+- `StatCard` : Cartes métriques (5 variants: default, success, warning, danger, info)
+- `Skeleton` : Chargement placeholder (Skeleton, SkeletonCard, SkeletonStatGrid, SkeletonTable)
+- `EmptyState` : États vides gracieux (NoData, NoResults, Error)
+
+**Utilisation**
+
+```tsx
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { FormField } from '@/components/ui/FormField'
+import { useToast } from '@/contexts/ToastContext'
+
+export function MonFormulaire() {
+  const { toast } = useToast()
+  
+  const handleSubmit = async () => {
+    try {
+      await apiCall()
+      toast({
+        type: 'success',
+        title: 'Succès',
+        message: 'L\'action a été complétée.'
+      })
+    } catch (error) {
+      toast({
+        type: 'error',
+        title: 'Erreur',
+        message: error.message
+      })
+    }
+  }
+  
+  return (
+    <form onSubmit={handleSubmit}>
+      <FormField label="Nom" required helper="Prénom + nom de famille">
+        <Input placeholder="Jean Dupont" />
+      </FormField>
+      <Button type="submit">Soumettre</Button>
+    </form>
+  )
+}
 ```
-Puis commit et push pour redéclencher le déploiement Pages.
 
-**Fichiers de déploiement** :
-- `render.yaml` : Blueprint IaC pour Render
-- `.github/workflows/deploy-backend.yml` : Trigger optionnel via deploy hook
-- `Procfile` : Alternative pour Heroku-like platforms
+### Personnalisation du thème
 
-Voir `DEPLOYMENT.md` pour détails complets.
+**Couleurs primaires** (`frontend/src/index.css`)
+```css
+:root {
+  --color-navy: #2c3d50;      /* Texte principal */
+  --color-sage: #aca868;      /* Accents */
+  --color-teal: #059669;      /* Success */
+  --color-warning: #ea580c;   /* Warning */
+  --color-danger: #dc2626;    /* Errors */
+  --color-bg: #fefbe8;        /* Fond très clair */
+}
+```
+
+**Étendre Tailwind** (`frontend/tailwind.config.js`)
+```js
+theme: {
+  extend: {
+    colors: {
+      navy: '#2c3d50',
+      sage: '#aca868',
+      // ...
+    },
+    borderRadius: {
+      DEFAULT: '12px',
+    }
+  }
+}
+```
+
+## 🔍 Algorithme JAT (Just-in-Time)
+
+### Concept
+
+L'algorithme JAT distribue les heures de manière **équitable et prévisible** :
+
+```
+Données : 35 heures sur 7 jours (du lundi au dimanche)
+Capacité : 7.5 heures/jour
+Blocage : Vendredi (congé)
+
+Calcul :
+- Jours disponibles : 6 (sauf vendredi)
+- Heures/jour : 35 ÷ 6 = 5.83 h/jour
+- Distribution :
+  Lun: 5.83h ✓
+  Mar: 5.83h ✓
+  Mer: 5.84h ✓  (arrondi)
+  Jeu: 5.83h ✓
+  Ven: BLOCAGE 🔴
+  Sam: 5.84h ✓
+  Dim: 5.83h ✓
+```
+
+### Implémentation
+
+Voir `backend/src/services/repartitionService.ts` pour la logique complète.
+
+**Validations** :
+- Jamais plus que la capacité quotidienne
+- Respecte les blocages
+- Distribution uniforme
+- Gestion des arrondis
+
+## 🚧 Dépannage
+
+### Frontend
+
+**Page blanche au chargement**
+- Vider le cache : `Ctrl+Shift+Delete` → Aller à Cookies et données de site → Vider
+- Redémarrer le serveur dev : `Ctrl+C` puis `npm run dev`
+
+**Erreur "Token invalide"**
+- Vérifier que le backend est accessible
+- Vérifier JWT_SECRET identique entre frontend et backend
+- Réinitialiser la session : `localStorage.clear()`
+
+**Styles Tailwind ne s'appliquent pas**
+- Hard refresh : `Ctrl+Shift+R`
+- Vérifier que postcss.config.cjs existe
+- Redémarrer Vite : `npm run dev`
+
+### Backend
+
+**Erreur de base de données**
+```bash
+# Réinitialiser la BD
+cd backend
+npx prisma migrate reset
+npm run prisma:seed
+```
+
+**Seed échoue**
+- Vérifier DATABASE_URL dans .env
+- Vérifier que PostgreSQL est en cours d'exécution
+- Consulter logs : `npm run prisma:seed 2>&1 | tail -20`
+
+**Port 3001 déjà utilisé**
+```bash
+# Trouver et tuer le processus
+lsof -i :3001
+kill -9 <PID>
+```
+
+### Déploiement
+
+**Frontend ne se met pas à jour**
+- Force le redeploiement : Vérifier que `main` est à jour
+- Vider le cache GitHub Pages : Settings → Pages → Redeploy
+- Vérifier les GitHub Actions : Actions tab
+
+**Backend crashe**
+- Vérifier les logs Render : Dashboard → Logs
+- Vérifier DATABASE_URL dans Render environment
+- Vérifier JWT_SECRET n'est pas vide
+
+## 📚 Ressources et documentation
+
+- [Spec fonctionnelle complète](./docs/SPEC.md)
+- [Guide d'architecture détaillé](./ARCHITECTURE.txt)
+- [Guide de déploiement](./DEPLOYMENT.md)
+- [Rapports audit](./AUDIT-PERF-ACCESSIBILITE.md)
+- [API Documentation](./docs/API.md)
+
+### Technologies de référence
+
+- **React** : https://react.dev
+- **Express.js** : https://expressjs.com
+- **Prisma** : https://www.prisma.io
+- **Tailwind CSS** : https://tailwindcss.com
+- **React Router** : https://reactrouter.com
+
+## 🤝 Contribution et support
+
+### Workflow de développement
+
+```bash
+# 1. Créer une branche
+git checkout -b feature/ma-feature
+
+# 2. Faire les changements
+# ... modifications ...
+
+# 3. Tester localement
+npm run dev
+npm test
+
+# 4. Commit
+git add .
+git commit -m "feat: Description claire de la feature"
+
+# 5. Push
+git push origin feature/ma-feature
+
+# 6. Créer une Pull Request
+# Décrire les changements, tests effectués
+```
+
+### Directives de contribution
+
+- ✅ Code TypeScript avec typage complet
+- ✅ Tests unitaires pour la logique métier
+- ✅ Commits descriptifs en anglais ou français
+- ✅ Respecter le style du projet (Prettier, ESLint)
+- ✅ Accessibilité WCAG 2.1 AA minimum
+
+### Support et signalement de bugs
+
+- 🐛 **Issues** : https://github.com/snarky1980/tetrix-plus-prototype/issues
+- 💬 **Discussions** : https://github.com/snarky1980/tetrix-plus-prototype/discussions
+- 📧 **Email** : support@tetrix.com
+
+## 📄 Licence
+
+MIT License - voir [LICENSE](LICENSE)
 
 ---
 
-## 🔧 Points d'attention
+## ✅ État du projet
 
-### Choix d'Agent 1 (Architecte)
-
-1. **Format décimal strict** : Toutes les heures sont des `Float` (pas d'arrondis débiles)
-2. **Sécurité** : JWT + bcrypt + validation Zod sur toutes les entrées
-3. **Modèle flexible** : `AjustementTemps` unifié pour tâches ET blocages
-4. **Contraintes DB** : Index sur les champs fréquemment filtrés
-5. **Séparation claire** : Backend entièrement indépendant du frontend
-6. **Évolutivité** : Structure prête pour ajouter exports, notifications, stats
-
-### Ce qui reste à faire
-
-**Agent 2 — UI Integrator** ✅ PARTIEL
-- Thème visuel inspiré de https://github.com/snarky1980/echo-BT-CTD importé (couleurs, radius, structure)
-- Design system de base : Button, Card, Input, Select, Modal, Layout
-- Accessibilité initiale (focus visible, aria-labels, contraste)
-- Code couleur disponibilité (vert / orange / rouge)
-- Pages refactorisées avec composants réutilisables
-- Reste à faire : calendrier interactif, grille réelle planning, notifications toast
-
-**Agent 3 — Business Logic**
-- Implémenter l'algorithme de répartition "Juste-à-temps" (JAT)
-- Créer les validations de capacité journalière (blocage des surcharges)
-- Implémenter la répartition manuelle + uniformément
-- Créer les filtres multi-critères complexes
-- Ajouter la logique de détail de journée (tâches + blocages)
-- Calculer les disponibilités et appliquer les codes couleur
+| Phase | Statut | Détails |
+|-------|--------|---------|
+| **Phase 1** | ✅ Complète | Architecture, Backend API, Authentification |
+| **Phase 2** | ✅ Complète | Design system, Composants UI, Accessibilité |
+| **Phase 3** | ✅ Complète | Algorithme JAT, Répartition, Blocage temps |
+| **Phase 4** | ✅ Complète | Toast, Validation formulaires, Animations |
+| **Phase 5** | ✅ Complète | Page titles, Browser tabs, Favicon |
+| **Phase 6** | ✅ Complète | Components avancés (StatCard, Skeleton, EmptyState) |
+| **Production** | 🟢 READY | Tous les critères validés |
 
 ---
 
-## 📚 Références
-
-- **Spec fonctionnelle** : Version 1.2 (fournie)
-- **Thème visuel** : https://github.com/snarky1980/echo-BT-CTD
-- **Prisma Docs** : https://www.prisma.io/docs
-- **Express.js** : https://expressjs.com/
-- **React Router** : https://reactrouter.com/
-
----
-
-## 🤝 Pipeline de travail
-
-**Agent 1 (Architecte)** ✅ TERMINÉ
-- Structure projet, DB, backend API, authentification, routes de base
-- Routes protégées par rôle
-- Frontend : structure, services API, contexte auth, pages squelettes
-
-**Agent 2 (UI Integrator)** ⚙️ EN PROGRÈS
-- Design tokens + composants de base implémentés
-- Pas de logique métier ajoutée
-- Prochaine étape : vues dynamiques (calendrier, grille planning), éventuel système de notifications
-
-**Agent 3 (Business Logic)** ⏳ EN ATTENTE
-## 🎨 Design System (Agent 2)
-
-### Fichiers clés
-- `frontend/src/index.css` : Variables CSS & directives Tailwind
-- `frontend/tailwind.config.js` : Extension couleurs/radius
-- `frontend/src/components/ui/*` : Composants UI réutilisables (sans logique métier)
-- `frontend/src/components/layout/AppLayout.tsx` : En-tête + pied de page cohérents
-
-### Couleurs
-| Rôle | Valeur |
-|------|--------|
-| Fond | `#fefbe8` |
-| Texte principal | `#2c3d50` |
-| Secondaire / Accent | `#aca868` |
-| Muted | `#e0f2fe` |
-| Libre | `#16a34a` |
-| Presque plein | `#ea580c` |
-| Plein / surcharge | `#dc2626` |
-
-### Composants
-- **Button** (`variant`: primaire, secondaire, outline, ghost, danger)
-- **Card** (Header, Title, Content)
-- **Input / Select** (champs formulaires de base)
-- **Modal** (dialog accessible, fermeture ESC / backdrop)
-- **AppLayout** (structure de l'application, header + footer)
-
-### Accessibilité
-- Focus visible (outline + ring)
-- Aria-labels sur actions isolées
-- Contrastes élevés (texte foncé sur fond très clair)
-
-### Personnalisation
-Modifier les variables dans `:root` (`index.css`). Ajouter toute nouvelle couleur dans `tailwind.config.js` sous `theme.extend.colors` pour bénéficier des utilitaires.
-
-### Extensions futures proposées
-- Système de toast (succès/erreur/info)
-- Badge statut tâche (PLANIFIÉE / EN COURS / TERMINÉE)
-- Composant calendrier interactif (drag & drop JAT ou manuel) – logique Agent 3
-
-- Répartition automatique (JAT)
-- Validations métier
-- Filtres complexes
-- Ne PAS toucher au thème visuel ni à la structure
-
----
-
-## 👤 Contact et support
-
-Pour questions ou problèmes techniques, consulter :
-- README de chaque agent
-- Documentation inline dans le code
-- Spec fonctionnelle V1.2
-
----
-
-**Agent 1 — Mission accomplie** ✅  
-Architecture solide, backend complet, authentification sécurisée, API RESTful prête.  
-Prochaine étape : Agent 2 pour la beauté visuelle.
+**Tetrix PLUS** — Planification intelligente pour les traducteurs 🚀
