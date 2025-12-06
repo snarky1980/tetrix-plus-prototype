@@ -3,6 +3,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { FormField } from '../ui/FormField';
+import { useToast } from '../../contexts/ToastContext';
 import { Traducteur, PaireLinguistique } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
 
@@ -19,6 +20,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
   onFermer,
   onSauvegarder,
 }) => {
+  const { addToast } = useToast();
   const [formData, setFormData] = useState({
     nom: '',
     division: '',
@@ -144,14 +146,14 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         });
 
         // Mettre à jour les paires linguistiques
-        // Note: Il faudrait une API pour gérer ça proprement
         for (const paire of paires) {
           await traducteurService.ajouterPaireLinguistique(traducteur.id, paire);
         }
+        addToast(`Traducteur ${formData.nom} mis à jour avec succès`, 'success');
       } else {
         // Création
         if (!formData.email || !formData.motDePasse) {
-          setErreur('Email et mot de passe requis pour un nouveau traducteur');
+          addToast('Email et mot de passe requis pour un nouveau traducteur', 'error');
           setLoading(false);
           return;
         }
@@ -166,12 +168,15 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         for (const paire of paires) {
           await traducteurService.ajouterPaireLinguistique(nouveauTraducteur.id, paire);
         }
+        addToast(`Traducteur ${formData.nom} créé avec succès`, 'success');
       }
 
       onSauvegarder();
       onFermer();
     } catch (err: any) {
-      setErreur(err.response?.data?.erreur || 'Erreur lors de la sauvegarde');
+      const message = err.response?.data?.erreur || 'Erreur lors de la sauvegarde';
+      addToast(message, 'error');
+      setErreur(message);
     } finally {
       setLoading(false);
     }
