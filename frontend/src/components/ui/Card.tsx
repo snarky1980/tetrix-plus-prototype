@@ -2,7 +2,7 @@ import React from 'react';
 import { cn } from '../../lib/cn';
 
 export const Card: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...rest }) => (
-  <div className={cn('card-base p-5 fade-in', className)} {...rest}>{children}</div>
+  <div className={cn('bg-card rounded-[12px] border border-border p-6 shadow-sm', className)} {...rest}>{children}</div>
 );
 
 export const CardHeader: React.FC<React.HTMLAttributes<HTMLDivElement>> = ({ className, children, ...rest }) => (

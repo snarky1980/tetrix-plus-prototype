@@ -10,11 +10,11 @@ interface BadgeProps {
 }
 
 const variantClasses: Record<BadgeVariant, string> = {
-  default: 'bg-gray-100 text-gray-800',
-  success: 'bg-green-100 text-green-800',
-  warning: 'bg-orange-100 text-orange-800',
-  danger: 'bg-red-100 text-red-800',
-  info: 'bg-blue-100 text-blue-800',
+  default: 'bg-gray-100 text-primary border border-primary/20',
+  success: 'bg-green-50 text-primary border border-green-200',
+  warning: 'bg-orange-50 text-primary border border-orange-200',
+  danger: 'bg-red-50 text-primary border border-red-200',
+  info: 'bg-blue-50 text-primary border border-blue-200',
 };
 
 export const Badge: React.FC<BadgeProps> = ({ 
@@ -25,7 +25,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
+        'inline-flex items-center px-3 py-1 rounded-lg text-xs font-semibold',
         variantClasses[variant],
         className
       )}
