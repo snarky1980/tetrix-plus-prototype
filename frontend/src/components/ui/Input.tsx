@@ -1,15 +1,24 @@
 import React from 'react';
 import { cn } from '../../lib/cn';
 
-type InputProps = React.InputHTMLAttributes<HTMLInputElement>;
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  error?: boolean;
+}
 
-export const Input: React.FC<InputProps> = ({ className, ...rest }) => {
+export const Input: React.FC<InputProps> = ({ className, error, disabled, ...rest }) => {
   return (
     <input
       className={cn(
-        'flex w-full rounded-md border border-primary bg-white px-3 py-2 text-sm text-primary placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary disabled:opacity-50',
+        'flex w-full rounded-lg border-2 bg-white px-3 py-2.5 text-sm text-primary placeholder:text-muted',
+        'transition-colors duration-200',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1',
+        error
+          ? 'border-red-400 focus-visible:border-red-500 focus-visible:ring-red-400'
+          : 'border-gray-300 focus-visible:border-primary focus-visible:ring-primary hover:border-gray-400',
+        disabled && 'opacity-60 cursor-not-allowed bg-gray-50',
         className
       )}
+      disabled={disabled}
       {...rest}
     />
   );

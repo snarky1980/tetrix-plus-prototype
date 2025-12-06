@@ -4,6 +4,7 @@ import { cn } from '../../lib/cn';
 interface FormFieldProps {
   label: string;
   error?: string;
+  helper?: string;
   required?: boolean;
   children: React.ReactNode;
   className?: string;
@@ -12,19 +13,26 @@ interface FormFieldProps {
 export const FormField: React.FC<FormFieldProps> = ({
   label,
   error,
+  helper,
   required,
   children,
   className
 }) => {
   return (
     <div className={cn('mb-4', className)}>
-      <label className="block text-sm font-medium mb-1">
+      <label className="block text-sm font-semibold mb-2 text-gray-700">
         {label}
-        {required && <span className="text-red-600 ml-1">*</span>}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       {children}
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <p className="mt-1.5 text-sm text-red-600 flex items-center gap-1">
+          <span className="inline-block">✕</span>
+          {error}
+        </p>
+      )}
+      {helper && !error && (
+        <p className="mt-1.5 text-sm text-gray-500">{helper}</p>
       )}
     </div>
   );
