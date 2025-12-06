@@ -101,3 +101,43 @@ export const inscription = async (req: Request, res: Response): Promise<void> =>
     res.status(500).json({ erreur: 'Erreur lors de l\'inscription' });
   }
 };
+
+/**
+ * Réinitialiser le mot de passe d'un utilisateur
+ * PUT /api/auth/reinitialiser-mot-de-passe/:id
+ */
+export const reinitialiserMotDePasse = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { nouveauMotDePasse } = req.body;
+
+    if (!nouveauMotDePasse || nouveauMotDePasse.length < 6) {
+      res.status(400).json({ erreur: 'Le mot de passe doit contenir au moins 6 caractères' });
+      return;
+    }
+
+    // Vérifier que l'utilisateur existe
+    const utilisateur = await prisma.utilisateur.findUnique({
+      where: { id },
+    });
+
+    if (!utilisateur) {
+      res.status(404).json({ erreur: 'Utilisateur non trouvé' });
+      return;
+    }
+
+    // Hasher le nouveau mot de passe
+    const motDePasseHash = await bcrypt.hash(nouveauMotDePasse, 10);
+
+    // Mettre à jour le mot de passe
+    await prisma.utilisateur.update({
+      where: { id },
+      data: { motDePasse: motDePasseHash },
+    });
+
+    res.json({ message: 'Mot de passe réinitialisé avec succès' });
+  } catch (error) {
+    console.error('Erreur réinitialisation mot de passe:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la réinitialisation du mot de passe' });
+  }
+};

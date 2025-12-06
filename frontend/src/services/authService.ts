@@ -40,4 +40,13 @@ export const authService = {
   estAuthentifie(): boolean {
     return !!localStorage.getItem('token');
   },
+
+  /**
+   * Réinitialiser le mot de passe d'un utilisateur
+   */
+  async reinitialiserMotDePasse(utilisateurId: string, nouveauMotDePasse: string): Promise<void> {
+    await api.put(`/auth/reinitialiser-mot-de-passe/${utilisateurId}`, {
+      nouveauMotDePasse,
+    });
+  },
 };

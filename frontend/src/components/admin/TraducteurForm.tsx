@@ -6,6 +6,7 @@ import { FormField } from '../ui/FormField';
 import { useToast } from '../../contexts/ToastContext';
 import { Traducteur, PaireLinguistique } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
+import { authService } from '../../services/authService';
 
 interface TraducteurFormProps {
   traducteur?: Traducteur;
@@ -158,6 +159,24 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     setPaires(paires.filter((_, i) => i !== index));
   };
 
+  const handleReinitialiserMotDePasse = async (nouveauMotDePasse: string) => {
+    if (!traducteur?.utilisateurId) {
+      addToast('Impossible de trouver l\'utilisateur associé', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authService.reinitialiserMotDePasse(traducteur.utilisateurId, nouveauMotDePasse);
+      addToast('Mot de passe réinitialisé avec succès', 'success');
+    } catch (error: any) {
+      const message = error.response?.data?.erreur || 'Erreur lors de la réinitialisation du mot de passe';
+      addToast(message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErreur('');
@@ -262,7 +281,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           />
         </FormField>
 
-        {!traducteur && (
+        {!traducteur ? (
           <>
             <FormField label="Email" required helper="Adresse email professionnelle">
               <Input
@@ -287,6 +306,23 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
               />
             </FormField>
           </>
+        ) : (
+          <FormField label="Mot de passe" helper="Réinitialiser le mot de passe du traducteur">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const nouveauMdp = prompt('Entrez le nouveau mot de passe (minimum 6 caractères):');
+                if (nouveauMdp && nouveauMdp.length >= 6) {
+                  handleReinitialiserMotDePasse(nouveauMdp);
+                } else if (nouveauMdp) {
+                  addToast('Le mot de passe doit contenir au moins 6 caractères', 'error');
+                }
+              }}
+            >
+              Réinitialiser le mot de passe
+            </Button>
+          </FormField>
         )}
 
         <FormField label="Capacité heures/jour" required helper="Heures disponibles par jour (ex: 7.5)">

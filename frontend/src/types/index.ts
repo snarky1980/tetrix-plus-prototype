@@ -30,6 +30,7 @@ export interface Traducteur {
   notes?: string; // Notes diverses (ex: en congé le mercredi)
   capaciteHeuresParJour: number;
   actif: boolean;
+  utilisateurId: string; // ID de l'utilisateur associé
   pairesLinguistiques: PaireLinguistique[];
 }
 

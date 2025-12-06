@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { connexion, inscription } from '../controllers/authController';
+import { connexion, inscription, reinitialiserMotDePasse } from '../controllers/authController';
 import { valider } from '../middleware/validation';
+import { authentifier } from '../middleware/auth';
 import { z } from 'zod';
 
 const router = Router();
@@ -21,6 +22,12 @@ const inscriptionSchema = z.object({
   }),
 });
 
+const reinitialiserMotDePasseSchema = z.object({
+  body: z.object({
+    nouveauMotDePasse: z.string().min(6, 'Le mot de passe doit contenir au moins 6 caractères'),
+  }),
+});
+
 /**
  * POST /api/auth/connexion
  * Connexion utilisateur
@@ -32,5 +39,11 @@ router.post('/connexion', valider(connexionSchema), connexion);
  * Inscription (Admin uniquement en production)
  */
 router.post('/inscription', valider(inscriptionSchema), inscription);
+
+/**
+ * PUT /api/auth/reinitialiser-mot-de-passe/:id
+ * Réinitialiser le mot de passe d'un utilisateur (Admin uniquement)
+ */
+router.put('/reinitialiser-mot-de-passe/:id', authentifier, valider(reinitialiserMotDePasseSchema), reinitialiserMotDePasse);
 
 export default router;
