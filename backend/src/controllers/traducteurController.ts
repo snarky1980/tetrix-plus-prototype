@@ -11,7 +11,7 @@ export const obtenirTraducteurs = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { division, client, domaine, langueSource, langueCible, actif } = req.query;
+    const { division, client, domaine, typeTexte, langueSource, langueCible, actif } = req.query;
 
     const where: any = {};
 
@@ -29,6 +29,10 @@ export const obtenirTraducteurs = async (
 
     if (domaine) {
       where.domaines = { has: domaine as string };
+    }
+
+    if (typeTexte) {
+      where.typesTextes = { has: typeTexte as string };
     }
 
     // Filtre par paire linguistique
@@ -115,6 +119,7 @@ export const creerTraducteur = async (
       division,
       domaines,
       clientsHabituels,
+      typesTextes,
       capaciteHeuresParJour,
     } = req.body;
 
@@ -140,6 +145,7 @@ export const creerTraducteur = async (
           division,
           domaines: domaines || [],
           clientsHabituels: clientsHabituels || [],
+          typesTextes: typesTextes || [],
           capaciteHeuresParJour: capaciteHeuresParJour || 7.5,
           utilisateurId: utilisateur.id,
         },
@@ -179,6 +185,7 @@ export const mettreAJourTraducteur = async (
       division,
       domaines,
       clientsHabituels,
+      typesTextes,
       capaciteHeuresParJour,
       actif,
     } = req.body;
@@ -190,6 +197,7 @@ export const mettreAJourTraducteur = async (
         ...(division && { division }),
         ...(domaines && { domaines }),
         ...(clientsHabituels && { clientsHabituels }),
+        ...(typesTextes && { typesTextes }),
         ...(capaciteHeuresParJour && { capaciteHeuresParJour }),
         ...(actif !== undefined && { actif }),
       },

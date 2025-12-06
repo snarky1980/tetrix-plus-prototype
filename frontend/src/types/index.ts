@@ -24,6 +24,7 @@ export interface Traducteur {
   division: string;
   domaines: string[];
   clientsHabituels: string[];
+  typesTextes: string[];
   capaciteHeuresParJour: number;
   actif: boolean;
   pairesLinguistiques: PaireLinguistique[];

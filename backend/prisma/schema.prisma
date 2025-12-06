@@ -45,6 +45,7 @@ model Traducteur {
   division                String
   domaines                String[] // Liste de domaines
   clientsHabituels        String[] // Liste de noms de clients (optionnel)
+  typesTextes             String[] @default([]) // Types de textes spécialisés (SAI, contrats, jugements, etc.)
   capaciteHeuresParJour   Float    @default(7.5) // Heures décimales
   actif                   Boolean  @default(true)
   

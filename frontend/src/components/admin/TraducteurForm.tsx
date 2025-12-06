@@ -29,10 +29,12 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     capaciteHeuresParJour: 7.5,
     domaines: [] as string[],
     clientsHabituels: [] as string[],
+    typesTextes: [] as string[],
     actif: true,
   });
   const [domaineInput, setDomaineInput] = useState('');
   const [clientInput, setClientInput] = useState('');
+  const [typeTexteInput, setTypeTexteInput] = useState('');
   const [paires, setPaires] = useState<Omit<PaireLinguistique, 'id'>[]>([]);
   const [paireInput, setPaireInput] = useState({ source: '', cible: '' });
   const [loading, setLoading] = useState(false);
@@ -48,6 +50,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         capaciteHeuresParJour: traducteur.capaciteHeuresParJour,
         domaines: [...traducteur.domaines],
         clientsHabituels: [...traducteur.clientsHabituels],
+        typesTextes: [...(traducteur.typesTextes || [])],
         actif: traducteur.actif,
       });
       setPaires(
@@ -65,6 +68,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         capaciteHeuresParJour: 7.5,
         domaines: [],
         clientsHabituels: [],
+        typesTextes: [],
         actif: true,
       });
       setPaires([]);
@@ -103,6 +107,23 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     setFormData({
       ...formData,
       clientsHabituels: formData.clientsHabituels.filter(c => c !== client),
+    });
+  };
+
+  const ajouterTypeTexte = () => {
+    if (typeTexteInput.trim() && !formData.typesTextes.includes(typeTexteInput.trim())) {
+      setFormData({
+        ...formData,
+        typesTextes: [...formData.typesTextes, typeTexteInput.trim()],
+      });
+      setTypeTexteInput('');
+    }
+  };
+
+  const retirerTypeTexte = (typeTexte: string) => {
+    setFormData({
+      ...formData,
+      typesTextes: formData.typesTextes.filter(t => t !== typeTexte),
     });
   };
 
@@ -306,6 +327,37 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
                   type="button"
                   onClick={() => retirerClient(c)}
                   className="hover:text-green-900"
+                >
+                  ✕
+                </button>
+              </span>
+            ))}
+          </div>
+        </FormField>
+
+        <FormField label="Types de textes" helper="Types de textes spécialisés (SAI, contrats, jugements, etc.)">
+          <div className="flex gap-2 mb-2">
+            <Input
+              value={typeTexteInput}
+              onChange={e => setTypeTexteInput(e.target.value)}
+              placeholder="Ajouter un type de texte..."
+              onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), ajouterTypeTexte())}
+            />
+            <Button type="button" variant="outline" onClick={ajouterTypeTexte}>
+              Ajouter
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {formData.typesTextes.map(t => (
+              <span
+                key={t}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 rounded text-sm"
+              >
+                {t}
+                <button
+                  type="button"
+                  onClick={() => retirerTypeTexte(t)}
+                  className="hover:text-amber-900"
                 >
                   ✕
                 </button>
