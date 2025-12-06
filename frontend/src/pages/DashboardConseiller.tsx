@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/Table';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/Spinner';
+import { StatCard } from '../components/ui/StatCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { tacheService } from '../services/tacheService';
@@ -27,6 +28,21 @@ const DashboardConseiller: React.FC = () => {
 
   const [taches, setTaches] = useState<Tache[]>([]);
   const [loadingTaches, setLoadingTaches] = useState(true);
+
+  // Calculer les statistiques
+  const stats = useMemo(() => {
+    if (loadingTaches || !taches.length) {
+      return { total: 0, planifiees: 0, enCours: 0, terminees: 0, heuresTotal: 0 };
+    }
+    
+    const total = taches.length;
+    const planifiees = taches.filter(t => t.statut === 'PLANIFIEE').length;
+    const enCours = taches.filter(t => t.statut === 'EN_COURS').length;
+    const terminees = taches.filter(t => t.statut === 'TERMINEE').length;
+    const heuresTotal = taches.reduce((sum, t) => sum + (t.heuresTotal || 0), 0);
+    
+    return { total, planifiees, enCours, terminees, heuresTotal };
+  }, [taches, loadingTaches]);
 
   useEffect(() => {
     chargerTaches();
@@ -118,6 +134,40 @@ const DashboardConseiller: React.FC = () => {
   return (
     <AppLayout titre="Gestion de la planification">
       <div className="space-y-6">
+        {/* Statistiques */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCard 
+            title="Total de tâches" 
+            value={stats.total} 
+            icon="📊" 
+            variant="default" 
+          />
+          <StatCard 
+            title="Planifiées" 
+            value={stats.planifiees} 
+            icon="📝" 
+            variant="info" 
+          />
+          <StatCard 
+            title="En cours" 
+            value={stats.enCours} 
+            icon="⏱️" 
+            variant="warning" 
+          />
+          <StatCard 
+            title="Terminées" 
+            value={stats.terminees} 
+            icon="✅" 
+            variant="success" 
+          />
+          <StatCard 
+            title="Heures total" 
+            value={stats.heuresTotal.toFixed(1)} 
+            icon="⏰" 
+            variant="default" 
+          />
+        </div>
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">

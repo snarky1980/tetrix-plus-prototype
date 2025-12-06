@@ -11,6 +11,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   subtitle?: string;
+  suffix?: string;
   className?: string;
 }
 
@@ -42,6 +43,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   variant = 'default',
   trend,
   subtitle,
+  suffix,
   className,
 }) => {
   return (
@@ -56,7 +58,9 @@ export const StatCard: React.FC<StatCardProps> = ({
         <div className="flex-1">
           <p className="text-sm font-medium text-gray-600 mb-2">{title}</p>
           <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-gray-900">{value}</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {value}{suffix && <span className="text-lg ml-1">{suffix}</span>}
+            </p>
             {trend && (
               <span
                 className={cn(

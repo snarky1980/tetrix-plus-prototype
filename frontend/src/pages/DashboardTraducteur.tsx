@@ -5,6 +5,7 @@ import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { FormField } from '../components/ui/FormField';
+import { StatCard } from '../components/ui/StatCard';
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanning } from '../hooks/usePlanning';
@@ -41,6 +42,12 @@ const DashboardTraducteur: React.FC = () => {
     return totaux;
   }, [planning]);
 
+  // Calculer le pourcentage d'utilisation
+  const percentageUtilise = useMemo(() => {
+    if (resume.capacite === 0) return 0;
+    return ((resume.taches + resume.blocages) / resume.capacite) * 100;
+  }, [resume]);
+
   const handleCreerBlocage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!utilisateur?.traducteurId) return;
@@ -67,35 +74,65 @@ const DashboardTraducteur: React.FC = () => {
 
   return (
     <AppLayout titre="Mon planning">
+      {/* Statistiques */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard 
+          title="Capacité totale" 
+          value={formatHeures(resume.capacite)} 
+          icon="📊" 
+          variant="info"
+          suffix=" h"
+        />
+        <StatCard 
+          title="Tâches assignées" 
+          value={formatHeures(resume.taches)} 
+          icon="📝" 
+          variant="warning"
+          suffix=" h"
+        />
+        <StatCard 
+          title="Temps bloqué" 
+          value={formatHeures(resume.blocages)} 
+          icon="🚫" 
+          variant="default"
+          suffix=" h"
+        />
+        <StatCard 
+          title="Temps disponible" 
+          value={formatHeures(resume.libre)} 
+          icon="✅" 
+          variant={percentageUtilise >= 100 ? 'danger' : percentageUtilise >= 75 ? 'warning' : 'success'}
+          suffix=" h"
+        />
+      </div>
+
       <Card>
         <CardHeader><CardTitle>Résumé hebdomadaire (7 jours)</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="p-3 rounded-md text-center bg-blue-50">
-              <p className="text-xs text-muted">Capacité</p>
-              <p className="text-lg font-semibold">{formatHeures(resume.capacite)} h</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted">Utilisation globale</span>
+              <span className="font-semibold">{percentageUtilise.toFixed(0)}%</span>
             </div>
-            <div className="p-3 rounded-md text-center bg-purple-50">
-              <p className="text-xs text-muted">Tâches</p>
-              <p className="text-lg font-semibold">{formatHeures(resume.taches)} h</p>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className={`h-2 rounded-full transition-all ${
+                  percentageUtilise >= 100 ? 'bg-red-600' : 
+                  percentageUtilise >= 75 ? 'bg-orange-500' : 
+                  'bg-green-500'
+                }`}
+                style={{ width: `${Math.min(percentageUtilise, 100)}%` }}
+              />
             </div>
-            <div className="p-3 rounded-md text-center bg-orange-50">
-              <p className="text-xs text-muted">Blocages</p>
-              <p className="text-lg font-semibold">{formatHeures(resume.blocages)} h</p>
-            </div>
-            <div className="p-3 rounded-md text-center bg-green-50">
-              <p className="text-xs text-muted">Disponible</p>
-              <p className="text-lg font-semibold">{formatHeures(resume.libre)} h</p>
-            </div>
+            <Button 
+              className="mt-4" 
+              full 
+              variant="secondaire" 
+              onClick={() => setOuvrirBlocage(true)}
+            >
+              + Bloquer du temps
+            </Button>
           </div>
-          <Button 
-            className="mt-4" 
-            full 
-            variant="secondaire" 
-            onClick={() => setOuvrirBlocage(true)}
-          >
-            + Bloquer du temps
-          </Button>
         </CardContent>
       </Card>
 

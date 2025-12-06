@@ -1,6 +1,6 @@
 # Tetrix PLUS - Gestion Intelligente de Planification de Traduction
 
-> Plateforme complète de gestion de planification et de répartition des tâches de traduction avec algorithme JAT (Just-in-Time).
+> Plateforme complète de gestion de planification et de répartition des tâches de traduction avec algorithme JAT (Juste-à-Temps, ou "Just-in-Time") : un algorithme de répartition intelligente, équitable et prévisible des tâches de traduction.
 
 [![Frontend Deploy](https://img.shields.io/badge/Frontend-GitHub%20Pages-blue)](https://snarky1980.github.io/tetrix-plus-prototype/)
 [![Backend Deploy](https://img.shields.io/badge/Backend-Render-green)](https://tetrix-plus-backend.onrender.com/api)
@@ -314,7 +314,7 @@ curl -X POST http://localhost:3001/api/auth/login \
 **Santé du serveur**
 - `GET /api/health` - Status de l'API
 
-[Documentation API complète](./docs/API.md)
+
 
 ## 🧪 Tests et validation
 
