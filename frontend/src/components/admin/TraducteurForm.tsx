@@ -191,37 +191,40 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           </div>
         )}
 
-        <FormField label="Nom" required>
+        <FormField label="Nom" required helper="Le nom complet du traducteur">
           <Input
             value={formData.nom}
             onChange={e => setFormData({ ...formData, nom: e.target.value })}
             required
             placeholder="Jean Dupont"
+            error={!formData.nom && formData !== undefined}
           />
         </FormField>
 
-        <FormField label="Division" required>
+        <FormField label="Division" required helper="Zone géographique ou région (Nord, Sud, Est, Ouest)">
           <Input
             value={formData.division}
             onChange={e => setFormData({ ...formData, division: e.target.value })}
             required
             placeholder="Nord, Sud, Est, Ouest..."
+            error={!formData.division && formData !== undefined}
           />
         </FormField>
 
         {!traducteur && (
           <>
-            <FormField label="Email" required>
+            <FormField label="Email" required helper="Adresse email professionnelle">
               <Input
                 type="email"
                 value={formData.email}
                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                 required
                 placeholder="jean.dupont@tetrix.com"
+                error={!formData.email && formData !== undefined}
               />
             </FormField>
 
-            <FormField label="Mot de passe" required>
+            <FormField label="Mot de passe" required helper="Minimum 6 caractères">
               <Input
                 type="password"
                 value={formData.motDePasse}
@@ -229,12 +232,13 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
                 required
                 minLength={6}
                 placeholder="••••••••"
+                error={!formData.motDePasse && formData !== undefined}
               />
             </FormField>
           </>
         )}
 
-        <FormField label="Capacité heures/jour" required>
+        <FormField label="Capacité heures/jour" required helper="Heures disponibles par jour (ex: 7.5)">
           <Input
             type="number"
             step="0.25"
@@ -244,6 +248,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
               setFormData({ ...formData, capaciteHeuresParJour: parseFloat(e.target.value) })
             }
             required
+            error={formData.capaciteHeuresParJour <= 0}
           />
         </FormField>
 
@@ -359,10 +364,10 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         </FormField>
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer}>
+          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>
             Annuler
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" loading={loading}>
             {loading ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>

@@ -249,7 +249,7 @@ const UserForm: React.FC<{
           </div>
         )}
 
-        <FormField label="Email" required>
+        <FormField label="Email" required helper="Adresse email unique pour la connexion">
           <Input
             type="email"
             value={formData.email}
@@ -257,11 +257,12 @@ const UserForm: React.FC<{
             required
             disabled={!!utilisateur}
             placeholder="utilisateur@tetrix.com"
+            error={!formData.email && formData !== undefined}
           />
         </FormField>
 
         {!utilisateur && (
-          <FormField label="Mot de passe" required>
+          <FormField label="Mot de passe" required helper="Minimum 6 caractères">
             <Input
               type="password"
               value={formData.motDePasse}
@@ -269,11 +270,12 @@ const UserForm: React.FC<{
               required
               minLength={6}
               placeholder="••••••••"
+              error={!formData.motDePasse && formData !== undefined}
             />
           </FormField>
         )}
 
-        <FormField label="Rôle" required>
+        <FormField label="Rôle" required helper="Rôle de l'utilisateur dans le système">
           <Select
             value={formData.role}
             onChange={e =>
@@ -291,7 +293,7 @@ const UserForm: React.FC<{
         </FormField>
 
         {formData.role === 'TRADUCTEUR' && (
-          <FormField label="Traducteur associé">
+          <FormField label="Traducteur associé" helper="Sélectionner le profil de traducteur">
             <Select
               value={formData.traducteurId}
               onChange={e => setFormData({ ...formData, traducteurId: e.target.value })}
@@ -309,10 +311,10 @@ const UserForm: React.FC<{
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer}>
+          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>
             Annuler
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" loading={loading}>
             {loading ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>

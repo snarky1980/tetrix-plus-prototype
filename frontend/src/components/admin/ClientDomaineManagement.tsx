@@ -293,12 +293,13 @@ const ClientForm: React.FC<{
           </div>
         )}
 
-        <FormField label="Nom du client" required>
+        <FormField label="Nom du client" required helper="Nom unique du client">
           <Input
             value={nom}
             onChange={e => setNom(e.target.value)}
             required
             placeholder="Nom du client"
+            error={!nom && nom !== ''}
           />
         </FormField>
 
@@ -316,10 +317,10 @@ const ClientForm: React.FC<{
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer}>
+          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>
             Annuler
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" loading={loading}>
             {loading ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
@@ -394,20 +395,21 @@ const DomaineForm: React.FC<{
           </div>
         )}
 
-        <FormField label="Nom du domaine" required>
+        <FormField label="Nom du domaine" required helper="Ex: Juridique, Médical, Technique">
           <Input
             value={nom}
             onChange={e => setNom(e.target.value)}
             required
             placeholder="Juridique, Médical, Technique..."
+            error={!nom && nom !== ''}
           />
         </FormField>
 
-        <FormField label="Domaine parent (optionnel)">
+        <FormField label="Domaine parent (optionnel)" helper="Laisser vide si domaine principal">
           <Input
             value={domaineParent}
             onChange={e => setDomaineParent(e.target.value)}
-            placeholder="Laisser vide si domaine principal"
+            placeholder="Domaine parent"
           />
         </FormField>
 
@@ -425,10 +427,10 @@ const DomaineForm: React.FC<{
         )}
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer}>
+          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>
             Annuler
           </Button>
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" loading={loading}>
             {loading ? 'Sauvegarde...' : 'Sauvegarder'}
           </Button>
         </div>
