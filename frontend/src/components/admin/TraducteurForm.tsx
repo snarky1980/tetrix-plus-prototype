@@ -184,9 +184,9 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
 
   return (
     <Modal titre={traducteur ? 'Modifier traducteur' : 'Nouveau traducteur'} ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="space-y-4">
         {erreur && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+          <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
             {erreur}
           </div>
         )}
@@ -363,7 +363,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           </label>
         </FormField>
 
-        <div className="flex justify-end gap-2 mt-6">
+        <div className="flex justify-end gap-2 pt-4 border-t border-border sticky bottom-0 bg-card -mx-6 px-6 -mb-4 pb-4">
           <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>
             Annuler
           </Button>

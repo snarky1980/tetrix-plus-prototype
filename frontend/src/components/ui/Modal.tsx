@@ -68,13 +68,13 @@ export const Modal: React.FC<ModalProps> = ({ titre, ouvert, onFermer, children,
       aria-describedby={ariaDescription ? titre + '-desc' : undefined}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onFermer} aria-hidden="true" />
-      <div ref={containerRef} className={cn('relative w-full max-w-lg rounded-[14px] bg-card border border-border shadow-lg p-6 space-y-4')}>
-        <div className="flex items-start justify-between">
+      <div ref={containerRef} className={cn('relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-[14px] bg-card border border-border shadow-lg')}>
+        <div className="flex items-start justify-between p-6 pb-4 border-b border-border shrink-0">
           <h2 className="text-lg font-semibold">{titre}</h2>
           <Button variant="ghost" aria-label="Fermer le dialogue" onClick={onFermer}>✕</Button>
         </div>
-        {ariaDescription && <p id={titre + '-desc'} className="text-sm text-muted">{ariaDescription}</p>}
-        <div>{children}</div>
+        {ariaDescription && <p id={titre + '-desc'} className="text-sm text-muted px-6 pt-2">{ariaDescription}</p>}
+        <div className="overflow-y-auto flex-1 px-6 py-4">{children}</div>
       </div>
     </div>
   );
