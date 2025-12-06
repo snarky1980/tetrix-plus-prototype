@@ -5,7 +5,8 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
-import { LoadingSpinner } from '../ui/Spinner';
+import { SkeletonTable } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { TraducteurForm } from './TraducteurForm';
 import { Traducteur } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
@@ -197,7 +198,17 @@ export const TraducteurManagement: React.FC = () => {
           </div>
 
           {loading ? (
-            <LoadingSpinner message="Chargement des traducteurs..." />
+            <SkeletonTable />
+          ) : traducteursFiltres.length === 0 ? (
+            <EmptyState 
+              icon="👥"
+              title="Aucun traducteur trouvé"
+              description="Créez votre premier traducteur pour commencer"
+              action={{
+                label: '+ Créer un traducteur',
+                onClick: handleNouveauTraducteur
+              }}
+            />
           ) : (
             <>
               <div className="mb-2 text-sm text-muted">

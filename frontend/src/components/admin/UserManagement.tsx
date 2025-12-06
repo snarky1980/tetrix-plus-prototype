@@ -7,7 +7,8 @@ import { Modal } from '../ui/Modal';
 import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
-import { LoadingSpinner } from '../ui/Spinner';
+import { SkeletonTable } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { useToast } from '../../contexts/ToastContext';
 import { Utilisateur, Traducteur } from '../../types';
 import { utilisateurService } from '../../services/utilisateurService';
@@ -140,7 +141,17 @@ export const UserManagement: React.FC = () => {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <LoadingSpinner message="Chargement des utilisateurs..." />
+            <SkeletonTable />
+          ) : utilisateurs.length === 0 ? (
+            <EmptyState 
+              icon="👤"
+              title="Aucun utilisateur"
+              description="Créez votre premier utilisateur pour commencer"
+              action={{
+                label: '+ Créer un utilisateur',
+                onClick: handleNouvelUtilisateur
+              }}
+            />
           ) : (
             <>
               <div className="mb-2 text-sm text-muted">

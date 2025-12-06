@@ -6,6 +6,8 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { FormField } from '../components/ui/FormField';
 import { StatCard } from '../components/ui/StatCard';
+import { SkeletonCard } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanning } from '../hooks/usePlanning';
@@ -139,28 +141,34 @@ const DashboardTraducteur: React.FC = () => {
       <Card>
         <CardHeader><CardTitle>Calendrier simplifié (7 jours)</CardTitle></CardHeader>
         <CardContent>
-          <div className="grid grid-cols-7 gap-2" aria-label="Calendrier 7 jours">
-            {planning?.planning.map((jour) => (
-              <JourDetail
-                key={jour.date}
-                date={jour.date}
-                heuresTotal={jour.heuresTotal}
-                capacite={jour.capacite}
-                heuresTaches={jour.heuresTaches}
-                heuresBlocages={jour.heuresBlocages}
-                couleur={jour.couleur || 'libre'}
-              />
-            ))}
-            {(!planning || planning.planning.length === 0) && !loading && (
-              Array.from({ length: 7 }).map((_, i) => (
-                <div key={i} className="flex flex-col items-center justify-center p-3 rounded-md border border-border bg-white min-h-[90px]">
-                  <span className="text-xs font-medium">Jour {i + 1}</span>
-                  <span className="mt-2 px-2 py-1 rounded text-xs bg-muted text-foreground/70" aria-label="Disponibilité">—</span>
-                </div>
-              ))
-            )}
-          </div>
-          {loading && <p className="text-xs text-muted mt-2">Chargement...</p>}
+          {loading ? (
+            <div className="grid grid-cols-7 gap-2">
+              {Array.from({ length: 7 }).map((_, i) => (
+                <SkeletonCard key={i} />
+              ))}
+            </div>
+          ) : (!planning || planning.planning.length === 0) ? (
+            <EmptyState 
+              icon="📅"
+              title="Aucun planning disponible"
+              description="Votre planning n'a pas encore été généré pour cette période"
+            />
+          ) : (
+            <div className="grid grid-cols-7 gap-2" aria-label="Calendrier 7 jours">
+              {planning?.planning.map((jour) => (
+                <JourDetail
+                  key={jour.date}
+                  date={jour.date}
+                  heuresTotal={jour.heuresTotal}
+                  capacite={jour.capacite}
+                  heuresTaches={jour.heuresTaches}
+                  heuresBlocages={jour.heuresBlocages}
+                  couleur={jour.couleur || 'libre'}
+                />
+              ))}
+            </div>
+          )}
+          {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
         </CardContent>
       </Card>

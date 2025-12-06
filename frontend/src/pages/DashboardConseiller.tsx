@@ -5,8 +5,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/Table';
 import { Badge } from '../components/ui/Badge';
-import { LoadingSpinner } from '../components/ui/Spinner';
 import { StatCard } from '../components/ui/StatCard';
+import { LoadingSpinner } from '../components/ui/Spinner';
+import { SkeletonTable } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { tacheService } from '../services/tacheService';
@@ -193,7 +195,17 @@ const DashboardConseiller: React.FC = () => {
           </CardHeader>
           <CardContent>
             {loadingTaches ? (
-              <LoadingSpinner message="Chargement des tâches..." />
+              <SkeletonTable />
+            ) : taches.length === 0 ? (
+              <EmptyState 
+                icon="📝"
+                title="Aucune tâche créée"
+                description="Créez votre première tâche pour commencer la planification"
+                action={{
+                  label: '+ Nouvelle tâche',
+                  onClick: () => navigate('/conseiller/creation-tache')
+                }}
+              />
             ) : (
               <>
                 <div className="mb-2 text-sm text-muted">

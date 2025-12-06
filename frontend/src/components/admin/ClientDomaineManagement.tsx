@@ -6,7 +6,8 @@ import { Modal } from '../ui/Modal';
 import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
-import { LoadingSpinner } from '../ui/Spinner';
+import { SkeletonTable } from '../ui/Skeleton';
+import { EmptyState } from '../ui/EmptyState';
 import { useToast } from '../../contexts/ToastContext';
 import { Client, SousDomaine } from '../../types';
 import { clientService } from '../../services/clientService';
@@ -177,7 +178,21 @@ export const ClientDomaineManagement: React.FC = () => {
   ];
 
   if (loading) {
-    return <LoadingSpinner message="Chargement..." />;
+    return <SkeletonTable />;
+  }
+
+  if (clients.length === 0 && sousDomaines.length === 0) {
+    return (
+      <EmptyState 
+        icon="🏢"
+        title="Aucun client ou domaine"
+        description="Commencez par créer des clients et des domaines"
+        action={{
+          label: '+ Créer un client',
+          onClick: handleNouveauClient
+        }}
+      />
+    );
   }
 
   return (
