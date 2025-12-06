@@ -15,7 +15,7 @@ import { Tache } from '../types';
  * Dashboard Conseiller - Gestion des tâches et planification
  */
 const DashboardConseiller: React.FC = () => {
-  usePageTitle('Tetrix PLUS Conseiller', 'Créez et gérez les tâches de traduction');
+  usePageTitle('Conseiller Tetrix PLUS', 'Créez et gérez les tâches de traduction');
   const navigate = useNavigate();
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);

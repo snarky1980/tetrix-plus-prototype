@@ -14,7 +14,7 @@ type Section = 'overview' | 'traducteurs' | 'clients-domaines' | 'utilisateurs';
  * Dashboard Admin - Interface complète de gestion
  */
 const DashboardAdmin: React.FC = () => {
-  usePageTitle('Tetrix PLUS Admin', 'Gérez les utilisateurs, traducteurs et planifications');
+  usePageTitle('Admin', 'Gérez les utilisateurs, traducteurs et planifications');
   const [section, setSection] = useState<Section>('overview');
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
