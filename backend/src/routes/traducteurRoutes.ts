@@ -5,6 +5,9 @@ import {
   creerTraducteur,
   mettreAJourTraducteur,
   desactiverTraducteur,
+  bloquerTemps,
+  obtenirBlocages,
+  supprimerBlocage,
 } from '../controllers/traducteurController';
 import {
   ajouterPaireLinguistique,
@@ -83,5 +86,26 @@ router.delete(
   valider(supprimerPaireLinguistiqueSchema),
   supprimerPaireLinguistique
 );
+
+/**
+ * POST /api/traducteurs/:id/bloquer-temps
+ * Bloquer du temps pour un traducteur
+ * Accessible par : Admin, Conseiller
+ */
+router.post('/:id/bloquer-temps', verifierRole('ADMIN', 'CONSEILLER'), bloquerTemps);
+
+/**
+ * GET /api/traducteurs/:id/blocages
+ * Obtenir les blocages de temps d'un traducteur
+ * Accessible par : Admin, Conseiller
+ */
+router.get('/:id/blocages', verifierRole('ADMIN', 'CONSEILLER'), obtenirBlocages);
+
+/**
+ * DELETE /api/traducteurs/blocages/:blocageId
+ * Supprimer un blocage de temps
+ * Accessible par : Admin, Conseiller
+ */
+router.delete('/blocages/:blocageId', verifierRole('ADMIN', 'CONSEILLER'), supprimerBlocage);
 
 export default router;
