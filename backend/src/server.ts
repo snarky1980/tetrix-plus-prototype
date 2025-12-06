@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import bcrypt from 'bcrypt';
+import { PrismaClient, Role } from '@prisma/client';
 import { config } from './config/env';
 import { gestionnaireErreurs } from './middleware/errorHandler';
 
@@ -13,6 +15,7 @@ import planningRoutes from './routes/planningRoutes';
 import repartitionRoutes from './routes/repartitionRoutes';
 
 const app = express();
+const prisma = new PrismaClient();
 
 // ============================================
 // MIDDLEWARES GLOBAUX
@@ -43,6 +46,62 @@ if (config.nodeEnv === 'development') {
 // Route de santé
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Endpoint d'initialisation (pour seeder la base en production)
+app.post('/api/init', async (req, res) => {
+  try {
+    console.log('🌱 Initialisation de la base de données...');
+
+    // Admin user
+    const adminEmail = 'admin@tetrix.com';
+    let admin = await prisma.utilisateur.findUnique({ where: { email: adminEmail } });
+    if (!admin) {
+      const hash = await bcrypt.hash('password123', 10);
+      admin = await prisma.utilisateur.create({
+        data: { email: adminEmail, motDePasse: hash, role: Role.ADMIN, actif: true },
+      });
+      console.log('✓ Admin créé');
+    } else {
+      console.log('↻ Admin déjà présent');
+    }
+
+    // Conseiller
+    const conseillerEmail = 'conseiller@tetrix.com';
+    let conseiller = await prisma.utilisateur.findUnique({ where: { email: conseillerEmail } });
+    if (!conseiller) {
+      const hash = await bcrypt.hash('password123', 10);
+      conseiller = await prisma.utilisateur.create({
+        data: { email: conseillerEmail, motDePasse: hash, role: Role.CONSEILLER, actif: true },
+      });
+      console.log('✓ Conseiller créé');
+    }
+
+    // Traducteur
+    const tradEmail = 'traducteur@tetrix.com';
+    let tradUser = await prisma.utilisateur.findUnique({ where: { email: tradEmail } });
+    if (!tradUser) {
+      const hash = await bcrypt.hash('password123', 10);
+      tradUser = await prisma.utilisateur.create({
+        data: { email: tradEmail, motDePasse: hash, role: Role.TRADUCTEUR, actif: true },
+      });
+      console.log('✓ Traducteur créé');
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Base de données initialisée',
+      users: {
+        admin: adminEmail,
+        conseiller: conseillerEmail,
+        traducteur: tradEmail,
+        password: 'password123'
+      }
+    });
+  } catch (error: any) {
+    console.error('Erreur init:', error);
+    res.status(500).json({ erreur: error.message });
+  }
 });
 
 // Routes API
