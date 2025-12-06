@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { useToast, ToastType } from '../contexts/ToastContext';
-import { cn } from '../lib/cn';
+import { useToast, ToastType } from '../../contexts/ToastContext';
+import { cn } from '../../lib/cn';
 
 const toastStyles: Record<ToastType, string> = {
   success: 'bg-green-50 border-green-200 text-green-800',
