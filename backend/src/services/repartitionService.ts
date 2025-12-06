@@ -9,11 +9,16 @@ const MAX_LOOKBACK_DAYS = 90; // Sécurité pour éviter boucle infinie
 export async function repartitionJusteATemps(
   traducteurId: string,
   heuresTotal: number,
-  dateEcheance: Date
+  dateEcheance: Date,
+  debug = false
 ): Promise<RepartitionItem[]> {
+  if (debug) console.debug(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheance.toISOString()}`);
+  
   if (heuresTotal <= 0) throw new Error('heuresTotal doit être > 0');
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
+  
+  if (debug) console.debug(`[JAT] Traducteur: ${traducteur.nom}, capacité=${traducteur.capaciteHeuresParJour}h/jour`);
 
   const aujourdHui = new Date();
   // Normaliser à minuit pour comparaison de jours
@@ -37,6 +42,13 @@ export async function repartitionJusteATemps(
     const iso = a.date.toISOString().split('T')[0];
     heuresParJour[iso] = (heuresParJour[iso] || 0) + a.heures;
   }
+  
+  if (debug && ajustements.length > 0) {
+    console.debug(`[JAT] Ajustements existants trouvés: ${ajustements.length}`);
+    Object.entries(heuresParJour).forEach(([date, heures]) => {
+      console.debug(`  ${date}: ${heures}h utilisées`);
+    });
+  }
 
   // Calculer capacité totale disponible sur la fenêtre
   const totalJours = differenceInCalendarDays(echeance, aujourdHui) + 1;
@@ -47,8 +59,14 @@ export async function repartitionJusteATemps(
     const utilisees = heuresParJour[iso] || 0;
     capaciteDisponibleGlobale += Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
   }
+  
+  if (debug) {
+    console.debug(`[JAT] Fenêtre: ${totalJours} jours (${aujourdHui.toISOString().split('T')[0]} à ${echeance.toISOString().split('T')[0]})`);
+    console.debug(`[JAT] Capacité disponible totale: ${capaciteDisponibleGlobale.toFixed(2)}h`);
+  }
+  
   if (heuresTotal - 1e-6 > capaciteDisponibleGlobale) {
-    throw new Error('Capacité insuffisante dans la plage pour heuresTotal demandées');
+    throw new Error(`Capacité insuffisante dans la plage pour heuresTotal demandées (demandé: ${heuresTotal}h, disponible: ${capaciteDisponibleGlobale.toFixed(2)}h)`);
   }
 
   // Allocation JAT (remplir à rebours depuis l'échéance)
@@ -72,8 +90,18 @@ export async function repartitionJusteATemps(
     iterations++;
   }
   if (restant > 0) throw new Error('Impossible de répartir toutes les heures (capacité insuffisante après allocation).');
+  
   // Retourner trié chronologiquement asc (pour cohérence frontend)
-  return resultat.sort((a,b) => a.date.localeCompare(b.date));
+  const resultTrie = resultat.sort((a,b) => a.date.localeCompare(b.date));
+  
+  if (debug) {
+    console.debug(`[JAT] Répartition finale (${resultTrie.length} jours):`);
+    const totalAlloue = resultTrie.reduce((s, r) => s + r.heures, 0);
+    resultTrie.forEach(r => console.debug(`  ${r.date}: ${r.heures.toFixed(2)}h`));
+    console.debug(`[JAT] Total alloué: ${totalAlloue.toFixed(2)}h (demandé: ${heuresTotal}h)`);
+  }
+  
+  return resultTrie;
 }
 
 // Répartition uniforme entre dateDebut et dateFin incluses
