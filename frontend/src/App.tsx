@@ -1,6 +1,8 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { ToastProvider } from './contexts/ToastContext';
+import { ToastContainer } from './components/ui/Toast';
 
 // Pages
 import Connexion from './pages/Connexion';
@@ -58,9 +60,11 @@ const RedirectionDashboard: React.FC = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter basename="/tetrix-plus-prototype">
-        <Routes>
+    <ToastProvider>
+      <AuthProvider>
+        <BrowserRouter basename="/tetrix-plus-prototype">
+          <ToastContainer />
+          <Routes>
           {/* Route publique */}
           <Route path="/connexion" element={<Connexion />} />
 
@@ -117,6 +121,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </ToastProvider>
   );
 }
 
