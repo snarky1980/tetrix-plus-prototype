@@ -7,8 +7,10 @@ export const traducteurService = {
    */
   async obtenirTraducteurs(params?: {
     division?: string;
+    classification?: string;
     client?: string;
     domaine?: string;
+    typeTexte?: string;
     langueSource?: string;
     langueCible?: string;
     actif?: boolean;

@@ -24,6 +24,8 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
   const [formData, setFormData] = useState({
     nom: '',
     division: '',
+    classification: 'TR2' as string,
+    horaire: '' as string,
     email: '',
     motDePasse: '',
     capaciteHeuresParJour: 7.5,
@@ -45,6 +47,8 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
       setFormData({
         nom: traducteur.nom,
         division: traducteur.division,
+        classification: traducteur.classification || 'TR2',
+        horaire: traducteur.horaire || '',
         email: '',
         motDePasse: '',
         capaciteHeuresParJour: traducteur.capaciteHeuresParJour,
@@ -63,6 +67,8 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
       setFormData({
         nom: '',
         division: '',
+        classification: 'TR2',
+        horaire: '',
         email: '',
         motDePasse: '',
         capaciteHeuresParJour: 7.5,
@@ -229,6 +235,27 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
             required
             placeholder="Nord, Sud, Est, Ouest..."
             error={!formData.division && formData !== undefined}
+          />
+        </FormField>
+
+        <FormField label="Classification" required helper="Niveau de compétence du traducteur">
+          <select
+            value={formData.classification}
+            onChange={e => setFormData({ ...formData, classification: e.target.value })}
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
+            required
+          >
+            <option value="TR1">TR1</option>
+            <option value="TR2">TR2</option>
+            <option value="TR3">TR3</option>
+          </select>
+        </FormField>
+
+        <FormField label="Horaire" helper="Plage horaire de travail (ex: 9h-17h, 8h30-16h30) - Optionnel">
+          <Input
+            value={formData.horaire}
+            onChange={e => setFormData({ ...formData, horaire: e.target.value })}
+            placeholder="9h-17h"
           />
         </FormField>
 

@@ -43,6 +43,8 @@ model Traducteur {
   id                      String   @id @default(uuid())
   nom                     String
   division                String
+  classification          String   // TR1, TR2, TR3 (obligatoire)
+  horaire                 String?  // Optionnel: "9h-17h", "8h30-16h30"
   domaines                String[] // Liste de domaines
   clientsHabituels        String[] // Liste de noms de clients (optionnel)
   typesTextes             String[] @default([]) // Types de textes spécialisés (SAI, contrats, jugements, etc.)

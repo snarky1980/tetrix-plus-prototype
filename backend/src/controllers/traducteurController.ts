@@ -11,7 +11,7 @@ export const obtenirTraducteurs = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { division, client, domaine, typeTexte, langueSource, langueCible, actif } = req.query;
+    const { division, classification, client, domaine, typeTexte, langueSource, langueCible, actif } = req.query;
 
     const where: any = {};
 
@@ -21,6 +21,10 @@ export const obtenirTraducteurs = async (
 
     if (division) {
       where.division = division as string;
+    }
+
+    if (classification) {
+      where.classification = classification as string;
     }
 
     if (client) {
@@ -117,6 +121,8 @@ export const creerTraducteur = async (
       email,
       motDePasse,
       division,
+      classification,
+      horaire,
       domaines,
       clientsHabituels,
       typesTextes,
@@ -143,6 +149,8 @@ export const creerTraducteur = async (
         data: {
           nom,
           division,
+          classification,
+          horaire: horaire || null,
           domaines: domaines || [],
           clientsHabituels: clientsHabituels || [],
           typesTextes: typesTextes || [],
@@ -183,6 +191,8 @@ export const mettreAJourTraducteur = async (
     const {
       nom,
       division,
+      classification,
+      horaire,
       domaines,
       clientsHabituels,
       typesTextes,
@@ -195,6 +205,8 @@ export const mettreAJourTraducteur = async (
       data: {
         ...(nom && { nom }),
         ...(division && { division }),
+        ...(classification && { classification }),
+        ...(horaire !== undefined && { horaire }),
         ...(domaines && { domaines }),
         ...(clientsHabituels && { clientsHabituels }),
         ...(typesTextes && { typesTextes }),

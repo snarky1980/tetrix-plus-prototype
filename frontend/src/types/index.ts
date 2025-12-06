@@ -22,6 +22,8 @@ export interface Traducteur {
   id: string;
   nom: string;
   division: string;
+  classification: string; // TR1, TR2, TR3
+  horaire?: string; // Optionnel: "9h-17h", "8h30-16h30"
   domaines: string[];
   clientsHabituels: string[];
   typesTextes: string[];
