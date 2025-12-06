@@ -7,11 +7,13 @@ import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { LoadingSpinner } from '../ui/Spinner';
+import { useToast } from '../../contexts/ToastContext';
 import { Client, SousDomaine } from '../../types';
 import { clientService } from '../../services/clientService';
 import { sousDomaineService } from '../../services/sousDomaineService';
 
 export const ClientDomaineManagement: React.FC = () => {
+  const { addToast } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
   const [sousDomaines, setSousDomaines] = useState<SousDomaine[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,8 +57,9 @@ export const ClientDomaineManagement: React.FC = () => {
     try {
       await clientService.supprimerClient(id);
       await chargerDonnees();
+      addToast('Client supprimé avec succès', 'success');
     } catch (err) {
-      alert('Erreur lors de la suppression');
+      addToast('Erreur lors de la suppression du client', 'error');
     }
   };
 
@@ -75,8 +78,9 @@ export const ClientDomaineManagement: React.FC = () => {
     try {
       await sousDomaineService.supprimerSousDomaine(id);
       await chargerDonnees();
+      addToast('Domaine supprimé avec succès', 'success');
     } catch (err) {
-      alert('Erreur lors de la suppression');
+      addToast('Erreur lors de la suppression du domaine', 'error');
     }
   };
 

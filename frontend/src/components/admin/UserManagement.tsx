@@ -8,11 +8,13 @@ import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { LoadingSpinner } from '../ui/Spinner';
+import { useToast } from '../../contexts/ToastContext';
 import { Utilisateur, Traducteur } from '../../types';
 import { utilisateurService } from '../../services/utilisateurService';
 import { traducteurService } from '../../services/traducteurService';
 
 export const UserManagement: React.FC = () => {
+  const { addToast } = useToast();
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
   const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,8 +56,9 @@ export const UserManagement: React.FC = () => {
     try {
       await utilisateurService.desactiverUtilisateur(id);
       await chargerDonnees();
+      addToast('Utilisateur désactivé avec succès', 'success');
     } catch (err) {
-      alert('Erreur lors de la désactivation');
+      addToast('Erreur lors de la désactivation de l\'utilisateur', 'error');
     }
   };
 
