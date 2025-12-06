@@ -6,6 +6,7 @@ import { Button } from '../components/ui/Button';
 import { DataTable } from '../components/ui/Table';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/Spinner';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { tacheService } from '../services/tacheService';
 import { Tache } from '../types';
@@ -14,6 +15,7 @@ import { Tache } from '../types';
  * Dashboard Conseiller - Gestion des tâches et planification
  */
 const DashboardConseiller: React.FC = () => {
+  usePageTitle('Tetrix PLUS Conseiller', 'Créez et gérez les tâches de traduction');
   const navigate = useNavigate();
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);

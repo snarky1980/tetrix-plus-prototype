@@ -2,10 +2,12 @@ import React, { useState, useMemo } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useRepartition } from '../hooks/useRepartition';
 import { Input } from '../components/ui/Input';
 
 const TacheCreationEtape2: React.FC = () => {
+  usePageTitle('Tetrix PLUS Répartition', 'Définissez la répartition des heures');
   const [heuresTotal, setHeuresTotal] = useState(0);
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');

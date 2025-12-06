@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { TraducteurManagement } from '../components/admin/TraducteurManagement';
 import { ClientDomaineManagement } from '../components/admin/ClientDomaineManagement';
@@ -13,6 +14,7 @@ type Section = 'overview' | 'traducteurs' | 'clients-domaines' | 'utilisateurs';
  * Dashboard Admin - Interface complète de gestion
  */
 const DashboardAdmin: React.FC = () => {
+  usePageTitle('Tetrix PLUS Admin', 'Gérez les utilisateurs, traducteurs et planifications');
   const [section, setSection] = useState<Section>('overview');
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);

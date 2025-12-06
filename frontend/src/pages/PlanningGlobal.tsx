@@ -2,11 +2,13 @@ import React, { useMemo } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { formatHeures } from '../lib/format';
 // import { useAuth } from '../contexts/AuthContext';
 
 const PlanningGlobal: React.FC = () => {
+  usePageTitle('Tetrix PLUS Planning', 'Consultez le planning global des traductions');
   // const { utilisateur } = useAuth(); // réservé pour filtres par rôle
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);

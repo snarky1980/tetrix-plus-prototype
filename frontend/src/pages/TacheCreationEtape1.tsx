@@ -3,10 +3,12 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { useRepartition } from '../hooks/useRepartition';
 import { Input } from '../components/ui/Input';
 
 const TacheCreationEtape1: React.FC = () => {
+  usePageTitle('Tetrix PLUS Création Tâche', 'Créez une nouvelle tâche de traduction');
   const [heuresTotal, setHeuresTotal] = useState(0);
   const [dateEcheance, setDateEcheance] = useState('');
   const traducteurId = 'demo'; // Placeholder jusqu'à intégration vraie sélection

@@ -6,6 +6,7 @@ import { Modal } from '../components/ui/Modal';
 import { Input } from '../components/ui/Input';
 import { FormField } from '../components/ui/FormField';
 import { useAuth } from '../contexts/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanning } from '../hooks/usePlanning';
 import { formatHeures } from '../lib/format';
 import { JourDetail } from '../components/ui/JourDetail';
@@ -15,6 +16,7 @@ import api from '../services/api';
  * Dashboard Traducteur - Planning personnel et blocage de temps
  */
 const DashboardTraducteur: React.FC = () => {
+  usePageTitle('Tetrix PLUS Traducteur', 'Consultez votre planning et bloquez votre temps');
   const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
   const [blocageData, setBlocageData] = useState({ date: '', heures: 0 });
   const [submitting, setSubmitting] = useState(false);

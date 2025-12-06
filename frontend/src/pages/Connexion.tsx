@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 /**
  * Page de connexion
- * Design simple - Agent 2 appliquera le thème visuel
  */
 const Connexion: React.FC = () => {
+  usePageTitle('Tetrix PLUS - Connexion', 'Accédez à votre compte Tetrix PLUS');
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [erreur, setErreur] = useState('');
