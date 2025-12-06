@@ -10,7 +10,7 @@ export const traducteurService = {
     classification?: string;
     client?: string;
     domaine?: string;
-    typeTexte?: string;
+    specialisation?: string;
     langueSource?: string;
     langueCible?: string;
     actif?: boolean;

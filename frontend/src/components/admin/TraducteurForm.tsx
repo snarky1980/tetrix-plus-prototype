@@ -31,12 +31,13 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     capaciteHeuresParJour: 7.5,
     domaines: [] as string[],
     clientsHabituels: [] as string[],
-    typesTextes: [] as string[],
+    specialisations: [] as string[],
+    notes: '' as string,
     actif: true,
   });
   const [domaineInput, setDomaineInput] = useState('');
   const [clientInput, setClientInput] = useState('');
-  const [typeTexteInput, setTypeTexteInput] = useState('');
+  const [specialisationInput, setSpecialisationInput] = useState('');
   const [paires, setPaires] = useState<Omit<PaireLinguistique, 'id'>[]>([]);
   const [paireInput, setPaireInput] = useState({ source: '', cible: '' });
   const [loading, setLoading] = useState(false);
@@ -54,7 +55,8 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         capaciteHeuresParJour: traducteur.capaciteHeuresParJour,
         domaines: [...traducteur.domaines],
         clientsHabituels: [...traducteur.clientsHabituels],
-        typesTextes: [...(traducteur.typesTextes || [])],
+        specialisations: [...(traducteur.specialisations || [])],
+        notes: traducteur.notes || '',
         actif: traducteur.actif,
       });
       setPaires(
@@ -74,7 +76,8 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         capaciteHeuresParJour: 7.5,
         domaines: [],
         clientsHabituels: [],
-        typesTextes: [],
+        specialisations: [],
+        notes: '',
         actif: true,
       });
       setPaires([]);
@@ -116,20 +119,20 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     });
   };
 
-  const ajouterTypeTexte = () => {
-    if (typeTexteInput.trim() && !formData.typesTextes.includes(typeTexteInput.trim())) {
+  const ajouterSpecialisation = () => {
+    if (specialisationInput.trim() && !formData.specialisations.includes(specialisationInput.trim())) {
       setFormData({
         ...formData,
-        typesTextes: [...formData.typesTextes, typeTexteInput.trim()],
+        specialisations: [...formData.specialisations, specialisationInput.trim()],
       });
-      setTypeTexteInput('');
+      setSpecialisationInput('');
     }
   };
 
-  const retirerTypeTexte = (typeTexte: string) => {
+  const retirerSpecialisation = (specialisation: string) => {
     setFormData({
       ...formData,
-      typesTextes: formData.typesTextes.filter(t => t !== typeTexte),
+      specialisations: formData.specialisations.filter(s => s !== specialisation),
     });
   };
 
@@ -228,12 +231,12 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           />
         </FormField>
 
-        <FormField label="Division" required helper="Zone géographique ou région (Nord, Sud, Est, Ouest)">
+        <FormField label="Division" required helper="Domaine de travail (Droit, Science et technologie, CISR, etc.)">
           <Input
             value={formData.division}
             onChange={e => setFormData({ ...formData, division: e.target.value })}
             required
-            placeholder="Nord, Sud, Est, Ouest..."
+            placeholder="Droit, Science et technologie, CISR..."
             error={!formData.division && formData !== undefined}
           />
         </FormField>
@@ -362,28 +365,28 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           </div>
         </FormField>
 
-        <FormField label="Types de textes" helper="Types de textes spécialisés (SAI, contrats, jugements, etc.)">
+        <FormField label="Spécialisations" helper="Spécialisations du traducteur (Immigration, Juridique, Médical, etc.)">
           <div className="flex gap-2 mb-2">
             <Input
-              value={typeTexteInput}
-              onChange={e => setTypeTexteInput(e.target.value)}
-              placeholder="Ajouter un type de texte..."
-              onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), ajouterTypeTexte())}
+              value={specialisationInput}
+              onChange={e => setSpecialisationInput(e.target.value)}
+              placeholder="Ajouter une spécialisation..."
+              onKeyPress={e => e.key === 'Enter' && (e.preventDefault(), ajouterSpecialisation())}
             />
-            <Button type="button" variant="outline" onClick={ajouterTypeTexte}>
+            <Button type="button" variant="outline" onClick={ajouterSpecialisation}>
               Ajouter
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {formData.typesTextes.map(t => (
+            {formData.specialisations.map(s => (
               <span
-                key={t}
+                key={s}
                 className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-800 rounded text-sm"
               >
-                {t}
+                {s}
                 <button
                   type="button"
-                  onClick={() => retirerTypeTexte(t)}
+                  onClick={() => retirerSpecialisation(s)}
                   className="hover:text-amber-900"
                 >
                   ✕
@@ -391,6 +394,16 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
               </span>
             ))}
           </div>
+        </FormField>
+
+        <FormField label="Notes" helper="Notes diverses (ex: en congé le mercredi, un vendredi sur trois)">
+          <textarea
+            value={formData.notes}
+            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+            placeholder="Ajouter des notes..."
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card min-h-[80px] resize-y"
+            rows={3}
+          />
         </FormField>
 
         <FormField label="Paires linguistiques">

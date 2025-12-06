@@ -42,12 +42,13 @@ enum Role {
 model Traducteur {
   id                      String   @id @default(uuid())
   nom                     String
-  division                String
+  division                String   // Droit, Science et technologie, CISR, etc.
   classification          String   // TR1, TR2, TR3 (obligatoire)
   horaire                 String?  // Optionnel: "9h-17h", "8h30-16h30"
   domaines                String[] // Liste de domaines
   clientsHabituels        String[] // Liste de noms de clients (optionnel)
-  typesTextes             String[] @default([]) // Types de textes spécialisés (SAI, contrats, jugements, etc.)
+  specialisations         String[] @default([]) // Spécialisations (immigration, juridique, médical, etc.)
+  notes                   String?  // Notes diverses (ex: en congé le mercredi, un vendredi sur trois)
   capaciteHeuresParJour   Float    @default(7.5) // Heures décimales
   actif                   Boolean  @default(true)
   

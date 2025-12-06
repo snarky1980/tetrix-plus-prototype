@@ -21,12 +21,13 @@ export interface PaireLinguistique {
 export interface Traducteur {
   id: string;
   nom: string;
-  division: string;
+  division: string; // Droit, Science et technologie, CISR, etc.
   classification: string; // TR1, TR2, TR3
   horaire?: string; // Optionnel: "9h-17h", "8h30-16h30"
   domaines: string[];
   clientsHabituels: string[];
-  typesTextes: string[];
+  specialisations: string[]; // Immigration, juridique, médical, etc.
+  notes?: string; // Notes diverses (ex: en congé le mercredi)
   capaciteHeuresParJour: number;
   actif: boolean;
   pairesLinguistiques: PaireLinguistique[];

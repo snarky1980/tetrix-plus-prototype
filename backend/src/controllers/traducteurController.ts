@@ -11,7 +11,7 @@ export const obtenirTraducteurs = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { division, classification, client, domaine, typeTexte, langueSource, langueCible, actif } = req.query;
+    const { division, classification, client, domaine, specialisation, langueSource, langueCible, actif } = req.query;
 
     const where: any = {};
 
@@ -35,8 +35,8 @@ export const obtenirTraducteurs = async (
       where.domaines = { has: domaine as string };
     }
 
-    if (typeTexte) {
-      where.typesTextes = { has: typeTexte as string };
+    if (specialisation) {
+      where.specialisations = { has: specialisation as string };
     }
 
     // Filtre par paire linguistique
@@ -125,7 +125,8 @@ export const creerTraducteur = async (
       horaire,
       domaines,
       clientsHabituels,
-      typesTextes,
+      specialisations,
+      notes,
       capaciteHeuresParJour,
     } = req.body;
 
@@ -153,7 +154,8 @@ export const creerTraducteur = async (
           horaire: horaire || null,
           domaines: domaines || [],
           clientsHabituels: clientsHabituels || [],
-          typesTextes: typesTextes || [],
+          specialisations: specialisations || [],
+          notes: notes || null,
           capaciteHeuresParJour: capaciteHeuresParJour || 7.5,
           utilisateurId: utilisateur.id,
         },
@@ -195,7 +197,8 @@ export const mettreAJourTraducteur = async (
       horaire,
       domaines,
       clientsHabituels,
-      typesTextes,
+      specialisations,
+      notes,
       capaciteHeuresParJour,
       actif,
     } = req.body;
@@ -209,7 +212,8 @@ export const mettreAJourTraducteur = async (
         ...(horaire !== undefined && { horaire }),
         ...(domaines && { domaines }),
         ...(clientsHabituels && { clientsHabituels }),
-        ...(typesTextes && { typesTextes }),
+        ...(specialisations && { specialisations }),
+        ...(notes !== undefined && { notes }),
         ...(capaciteHeuresParJour && { capaciteHeuresParJour }),
         ...(actif !== undefined && { actif }),
       },
