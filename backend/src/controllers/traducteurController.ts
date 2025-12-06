@@ -303,7 +303,9 @@ export const bloquerTemps = async (
       },
     });
 
-    console.log(`[TIME BLOCK] Créé pour ${traducteur.nom}: ${heures}h le ${dateObj.toISOString().split('T')[0]}${raison ? ` (${raison})` : ''}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[TIME BLOCK] Créé pour ${traducteur.nom}: ${heures}h le ${dateObj.toISOString().split('T')[0]}${raison ? ` (${raison})` : ''}`);
+    }
 
     res.status(201).json({
       message: 'Temps bloqué avec succès',
@@ -390,7 +392,9 @@ export const supprimerBlocage = async (
       where: { id: blocageId },
     });
 
-    console.log(`[TIME BLOCK] Supprimé: ${blocage.heures}h le ${blocage.date.toISOString().split('T')[0]}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[TIME BLOCK] Supprimé: ${blocage.heures}h le ${blocage.date.toISOString().split('T')[0]}`);
+    }
 
     res.json({ message: 'Blocage supprimé avec succès' });
   } catch (error) {

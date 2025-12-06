@@ -12,13 +12,13 @@ export async function repartitionJusteATemps(
   dateEcheance: Date,
   debug = false
 ): Promise<RepartitionItem[]> {
-  if (debug) console.log(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheance.toISOString()}`);
+  if (debug) console.debug(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheance.toISOString()}`);
   
   if (heuresTotal <= 0) throw new Error('heuresTotal doit être > 0');
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
   
-  if (debug) console.log(`[JAT] Traducteur: ${traducteur.nom}, capacité=${traducteur.capaciteHeuresParJour}h/jour`);
+  if (debug) console.debug(`[JAT] Traducteur: ${traducteur.nom}, capacité=${traducteur.capaciteHeuresParJour}h/jour`);
 
   const aujourdHui = new Date();
   // Normaliser à minuit pour comparaison de jours
@@ -44,9 +44,9 @@ export async function repartitionJusteATemps(
   }
   
   if (debug && ajustements.length > 0) {
-    console.log(`[JAT] Ajustements existants trouvés: ${ajustements.length}`);
+    console.debug(`[JAT] Ajustements existants trouvés: ${ajustements.length}`);
     Object.entries(heuresParJour).forEach(([date, heures]) => {
-      console.log(`  ${date}: ${heures}h utilisées`);
+      console.debug(`  ${date}: ${heures}h utilisées`);
     });
   }
 
@@ -61,8 +61,8 @@ export async function repartitionJusteATemps(
   }
   
   if (debug) {
-    console.log(`[JAT] Fenêtre: ${totalJours} jours (${aujourdHui.toISOString().split('T')[0]} à ${echeance.toISOString().split('T')[0]})`);
-    console.log(`[JAT] Capacité disponible totale: ${capaciteDisponibleGlobale.toFixed(2)}h`);
+    console.debug(`[JAT] Fenêtre: ${totalJours} jours (${aujourdHui.toISOString().split('T')[0]} à ${echeance.toISOString().split('T')[0]})`);
+    console.debug(`[JAT] Capacité disponible totale: ${capaciteDisponibleGlobale.toFixed(2)}h`);
   }
   
   if (heuresTotal - 1e-6 > capaciteDisponibleGlobale) {
@@ -95,10 +95,10 @@ export async function repartitionJusteATemps(
   const resultTrie = resultat.sort((a,b) => a.date.localeCompare(b.date));
   
   if (debug) {
-    console.log(`[JAT] Répartition finale (${resultTrie.length} jours):`);
+    console.debug(`[JAT] Répartition finale (${resultTrie.length} jours):`);
     const totalAlloue = resultTrie.reduce((s, r) => s + r.heures, 0);
-    resultTrie.forEach(r => console.log(`  ${r.date}: ${r.heures.toFixed(2)}h`));
-    console.log(`[JAT] Total alloué: ${totalAlloue.toFixed(2)}h (demandé: ${heuresTotal}h)`);
+    resultTrie.forEach(r => console.debug(`  ${r.date}: ${r.heures.toFixed(2)}h`));
+    console.debug(`[JAT] Total alloué: ${totalAlloue.toFixed(2)}h (demandé: ${heuresTotal}h)`);
   }
   
   return resultTrie;
