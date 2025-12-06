@@ -23,7 +23,7 @@ const DashboardTraducteur: React.FC = () => {
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
-  const { planning, loading, error, refetch } = usePlanning(utilisateur?.traducteurId, { 
+  const { planning, loading, error, refresh } = usePlanning(utilisateur?.traducteurId, { 
     dateDebut: dateISO(aujourdHui), 
     dateFin: dateISO(fin) 
   });
@@ -55,7 +55,7 @@ const DashboardTraducteur: React.FC = () => {
       });
       setOuvrirBlocage(false);
       setBlocageData({ date: '', heures: 0 });
-      refetch();
+      refresh();
     } catch (err: any) {
       setErreur(err.response?.data?.erreur || 'Erreur lors de la création du blocage');
     } finally {
