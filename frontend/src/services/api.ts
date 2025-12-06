@@ -1,6 +1,9 @@
 import axios, { AxiosError } from 'axios';
 
+// Configuration de l'URL de l'API depuis les variables d'environnement
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+console.log('API URL:', API_URL); // Debug: vérifier l'URL utilisée
 
 // Instance Axios configurée
 const api = axios.create({
