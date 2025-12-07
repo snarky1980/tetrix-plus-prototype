@@ -141,6 +141,7 @@ export interface PlanningGlobal {
       id: string;
       nom: string;
       division: string;
+      classification: string;
       capaciteHeuresParJour: number;
     };
     dates: Record<string, {

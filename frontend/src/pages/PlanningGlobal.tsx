@@ -314,10 +314,10 @@ const PlanningGlobal: React.FC = () => {
               {[7, 14, 30].map((val) => (
                 <Button
                   key={val}
-                  variant={pending.range === val ? 'primaire' : 'outline'}
+                  variant={applied.range === val ? 'primaire' : 'outline'}
                   onClick={() => {
-                    updateField('range', val as 7 | 14 | 30);
-                    handleApply();
+                    setPending((prev) => ({ ...prev, range: val as 7 | 14 | 30 }));
+                    setApplied((prev) => ({ ...prev, range: val as 7 | 14 | 30 }));
                   }}
                   className="px-3 py-1.5 text-xs"
                 >
@@ -327,8 +327,8 @@ const PlanningGlobal: React.FC = () => {
               <Button
                 variant="outline"
                 onClick={() => {
-                  updateField('start', today);
-                  handleApply();
+                  setPending((prev) => ({ ...prev, start: today }));
+                  setApplied((prev) => ({ ...prev, start: today }));
                 }}
                 className="px-3 py-1.5 text-xs ml-2"
                 title="Revenir à aujourd'hui"
@@ -404,7 +404,7 @@ const PlanningGlobal: React.FC = () => {
                           <div className="truncate font-medium">
                             {ligne.traducteur.nom}
                           </div>
-                          <div className="text-[10px] text-muted">{ligne.traducteur.division}</div>
+                          <div className="text-[10px] text-muted">{ligne.traducteur.division} · {ligne.traducteur.classification}</div>
                         </button>
                       </td>
                       {days.map((iso) => {

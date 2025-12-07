@@ -290,6 +290,7 @@ export const obtenirPlanningGlobal = async (
         id: true,
         nom: true,
         division: true,
+        classification: true,
         capaciteHeuresParJour: true,
       },
       orderBy: { nom: 'asc' },
