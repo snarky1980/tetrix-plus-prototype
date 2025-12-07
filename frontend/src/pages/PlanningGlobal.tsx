@@ -1,12 +1,16 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { TagInput } from '../components/ui/TagInput';
+import { Select } from '../components/ui/Select';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { formatHeures } from '../lib/format';
+import { clientService } from '../services/clientService';
+import { sousDomaineService } from '../services/sousDomaineService';
+import { traducteurService } from '../services/traducteurService';
 // import { useAuth } from '../contexts/AuthContext';
 
 const PlanningGlobal: React.FC = () => {
@@ -36,6 +40,16 @@ const PlanningGlobal: React.FC = () => {
   });
 
   const [applied, setApplied] = useState<Filters>(pending);
+
+  const [options, setOptions] = useState({
+    divisions: [] as string[],
+    clients: [] as string[],
+    domaines: [] as string[],
+    languesSource: [] as string[],
+    languesCible: [] as string[],
+  });
+  const [loadingOptions, setLoadingOptions] = useState(false);
+  const [optionsError, setOptionsError] = useState<string | null>(null);
 
   const endDate = useMemo(() => {
     const base = new Date(applied.start || today);
@@ -87,6 +101,37 @@ const PlanningGlobal: React.FC = () => {
     setPending((prev) => ({ ...prev, [key]: value } as Filters));
   };
 
+  useEffect(() => {
+    const loadOptions = async () => {
+      setLoadingOptions(true);
+      setOptionsError(null);
+      try {
+        const [clients, sousDomaines, traducteurs] = await Promise.all([
+          clientService.obtenirClients(true),
+          sousDomaineService.obtenirSousDomaines(true),
+          traducteurService.obtenirTraducteurs({ actif: true }),
+        ]);
+
+        const divisions = Array.from(new Set(traducteurs.map(t => t.division))).sort();
+        const domaines = Array.from(new Set([
+          ...traducteurs.flatMap(t => t.domaines || []),
+          ...sousDomaines.map(sd => sd.nom),
+        ])).sort();
+        const languesSource = Array.from(new Set(traducteurs.flatMap(t => t.pairesLinguistiques?.map(p => p.langueSource) || []))).sort();
+        const languesCible = Array.from(new Set(traducteurs.flatMap(t => t.pairesLinguistiques?.map(p => p.langueCible) || []))).sort();
+        const clientNoms = clients.map(c => c.nom).sort();
+
+        setOptions({ divisions, domaines, languesSource, languesCible, clients: clientNoms });
+      } catch (e: any) {
+        setOptionsError(e?.message || 'Erreur chargement listes');
+      } finally {
+        setLoadingOptions(false);
+      }
+    };
+
+    loadOptions();
+  }, []);
+
   return (
     <AppLayout titre="Planning global">
       <Card>
@@ -96,35 +141,66 @@ const PlanningGlobal: React.FC = () => {
           <div className="grid gap-3 md:grid-cols-3 mt-4" aria-label="Filtres planning">
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="division">Division</label>
-              <Input id="division" value={pending.division} placeholder="Ex: EMTC, EMTD" onChange={(e) => updateField('division', e.target.value)} />
+              <Select
+                id="division"
+                value={pending.division}
+                onChange={(e) => updateField('division', e.target.value)}
+                disabled={loadingOptions}
+              >
+                <option value="">Toutes</option>
+                {options.divisions.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </Select>
             </div>
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="client">Client</label>
-              <Input id="client" value={pending.client} placeholder="Nom client" onChange={(e) => updateField('client', e.target.value)} />
+              <Select
+                id="client"
+                value={pending.client}
+                onChange={(e) => updateField('client', e.target.value)}
+                disabled={loadingOptions}
+              >
+                <option value="">Tous</option>
+                {options.clients.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </Select>
             </div>
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="domaine">Domaine / Sous-domaine</label>
               <TagInput
                 value={pending.domaines}
                 onChange={(vals) => updateField('domaines', vals)}
-                placeholder="Ex: IMM, CRIM, Tech"
+                placeholder={loadingOptions ? 'Chargement...' : 'Choisir ou saisir'}
               />
+              {options.domaines.length > 0 && (
+                <div className="text-[11px] text-muted">
+                  Suggestions : {options.domaines.slice(0, 6).join(', ')}{options.domaines.length > 6 ? '…' : ''}
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="langueSource">Langue source</label>
               <TagInput
                 value={pending.languesSource}
                 onChange={(vals) => updateField('languesSource', vals)}
-                placeholder="Ex: EN"
+                placeholder="Choisir ou saisir"
               />
+              {options.languesSource.length > 0 && (
+                <div className="text-[11px] text-muted">Suggestions : {options.languesSource.slice(0,6).join(', ')}{options.languesSource.length > 6 ? '…' : ''}</div>
+              )}
             </div>
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="langueCible">Langue cible</label>
               <TagInput
                 value={pending.languesCible}
                 onChange={(vals) => updateField('languesCible', vals)}
-                placeholder="Ex: FR"
+                placeholder="Choisir ou saisir"
               />
+              {options.languesCible.length > 0 && (
+                <div className="text-[11px] text-muted">Suggestions : {options.languesCible.slice(0,6).join(', ')}{options.languesCible.length > 6 ? '…' : ''}</div>
+              )}
             </div>
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="start">Date de début</label>
@@ -158,10 +234,13 @@ const PlanningGlobal: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4 flex-wrap">
+          <div className="flex gap-2 mt-4 flex-wrap items-center">
             <Button variant="primaire" onClick={handleApply} loading={loading} aria-label="Appliquer filtres">Appliquer</Button>
             <Button variant="outline" onClick={handleReset} disabled={loading} aria-label="Réinitialiser filtres">Réinitialiser</Button>
             <Button variant="ghost" onClick={refresh} loading={loading} aria-label="Rafraîchir">Rafraîchir</Button>
+            <Button variant="ghost" onClick={() => updateField('start', today)} disabled={loading} aria-label="Recentrer sur aujourd'hui">Aujourd'hui</Button>
+            {loadingOptions && <span className="text-sm text-muted">Chargement des listes…</span>}
+            {optionsError && <span className="text-sm text-red-600">{optionsError}</span>}
             {error && <span className="text-sm text-red-600">{error}</span>}
           </div>
         </CardContent>
