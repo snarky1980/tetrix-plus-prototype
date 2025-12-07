@@ -24,7 +24,7 @@ const PlanningGlobal: React.FC = () => {
   type Filters = {
     start: string;
     range: 7 | 14 | 30;
-    division: string;
+    divisions: string[];
     client: string;
     domaines: string[];
     languesSource: string[];
@@ -34,7 +34,7 @@ const PlanningGlobal: React.FC = () => {
   const [pending, setPending] = useState<Filters>({
     start: today,
     range: 7,
-    division: '',
+    divisions: [],
     client: '',
     domaines: [],
     languesSource: [],
@@ -64,7 +64,7 @@ const PlanningGlobal: React.FC = () => {
     () => ({
       dateDebut: applied.start,
       dateFin: endDate,
-      division: applied.division || undefined,
+      division: applied.divisions.length ? applied.divisions.join(',') : undefined,
       client: applied.client || undefined,
       domaine: applied.domaines.length ? applied.domaines.join(',') : undefined,
       langueSource: applied.languesSource.length ? applied.languesSource.join(',') : undefined,
@@ -91,12 +91,54 @@ const PlanningGlobal: React.FC = () => {
 
   const isToday = (iso: string) => iso === today;
 
+  const isWeekend = (iso: string) => {
+    const d = new Date(iso);
+    const day = d.getDay();
+    return day === 0 || day === 6; // dimanche ou samedi
+  };
+
   const handleApply = () => setApplied(pending);
 
   const handleReset = () => {
-    const next = { ...pending, start: today, range: 7, division: '', client: '', domaines: [], languesSource: [], languesCible: [] } as Filters;
+    const next = { ...pending, start: today, range: 7, divisions: [], client: '', domaines: [], languesSource: [], languesCible: [] } as Filters;
     setPending(next);
     setApplied(next);
+  };
+
+  const toggleDivision = (div: string) => {
+    setPending((prev) => ({
+      ...prev,
+      divisions: prev.divisions.includes(div)
+        ? prev.divisions.filter((d) => d !== div)
+        : [...prev.divisions, div],
+    }));
+  };
+
+  const toggleDomaine = (dom: string) => {
+    setPending((prev) => ({
+      ...prev,
+      domaines: prev.domaines.includes(dom)
+        ? prev.domaines.filter((d) => d !== dom)
+        : [...prev.domaines, dom],
+    }));
+  };
+
+  const toggleLangueSource = (lang: string) => {
+    setPending((prev) => ({
+      ...prev,
+      languesSource: prev.languesSource.includes(lang)
+        ? prev.languesSource.filter((l) => l !== lang)
+        : [...prev.languesSource, lang],
+    }));
+  };
+
+  const toggleLangueCible = (lang: string) => {
+    setPending((prev) => ({
+      ...prev,
+      languesCible: prev.languesCible.includes(lang)
+        ? prev.languesCible.filter((l) => l !== lang)
+        : [...prev.languesCible, lang],
+    }));
   };
 
   const updateField = (key: keyof Filters, value: Filters[keyof Filters]) => {
@@ -138,192 +180,135 @@ const PlanningGlobal: React.FC = () => {
     <AppLayout titre="Planning global">
       <div className="space-y-4">
         {/* Filtres compacts */}
-        <div className="bg-white border border-border rounded-lg p-3 shadow-sm">
-          <div className="flex flex-wrap gap-2 items-center">
-            {/* Presets période */}
-            <div className="flex gap-1">
-              {[7, 14, 30].map((val) => (
-                <Button
-                  key={val}
-                  variant={pending.range === val ? 'primaire' : 'outline'}
-                  onClick={() => updateField('range', val as 7 | 14 | 30)}
-                  className="px-2.5 py-1.5 text-xs"
-                >
-                  {val}j
+        <div className="bg-white border border-border rounded-lg shadow-sm">
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold p-3 hover:bg-gray-50 flex items-center gap-2">
+              🔍 Affichage
+            </summary>
+            <div className="border-t border-border">
+              {/* Accordéon - Divisions */}
+              <details className="border-b border-border">
+                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
+                  Divisions {pending.divisions.length > 0 && <span className="text-primary">({pending.divisions.length} sélectionnées)</span>}
+                </summary>
+                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {options.divisions.map((div) => (
+                    <label key={div} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                      <input
+                        type="checkbox"
+                        checked={pending.divisions.includes(div)}
+                        onChange={() => toggleDivision(div)}
+                        className="w-3.5 h-3.5"
+                      />
+                      <span>{div}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              {/* Accordéon - Client */}
+              <details className="border-b border-border">
+                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
+                  Client {pending.client && <span className="text-primary">({pending.client})</span>}
+                </summary>
+                <div className="p-3 pt-0">
+                  <Select
+                    value={pending.client}
+                    onChange={(e) => updateField('client', e.target.value)}
+                    disabled={loadingOptions}
+                    className="text-xs py-1.5 px-2 w-full"
+                  >
+                    <option value="">Tous clients</option>
+                    {options.clients.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </Select>
+                </div>
+              </details>
+
+              {/* Accordéon - Domaines */}
+              <details className="border-b border-border">
+                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
+                  Domaines {pending.domaines.length > 0 && <span className="text-primary">({pending.domaines.length} sélectionnés)</span>}
+                </summary>
+                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                  {options.domaines.map((dom) => (
+                    <label key={dom} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                      <input
+                        type="checkbox"
+                        checked={pending.domaines.includes(dom)}
+                        onChange={() => toggleDomaine(dom)}
+                        className="w-3.5 h-3.5"
+                      />
+                      <span>{dom}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              {/* Accordéon - Langues source */}
+              <details className="border-b border-border">
+                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
+                  Langues source {pending.languesSource.length > 0 && <span className="text-primary">({pending.languesSource.length} sélectionnées)</span>}
+                </summary>
+                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {options.languesSource.map((lang) => (
+                    <label key={lang} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                      <input
+                        type="checkbox"
+                        checked={pending.languesSource.includes(lang)}
+                        onChange={() => toggleLangueSource(lang)}
+                        className="w-3.5 h-3.5"
+                      />
+                      <span>{lang}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              {/* Accordéon - Langues cible */}
+              <details className="border-b border-border">
+                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
+                  Langues cible {pending.languesCible.length > 0 && <span className="text-primary">({pending.languesCible.length} sélectionnées)</span>}
+                </summary>
+                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {options.languesCible.map((lang) => (
+                    <label key={lang} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                      <input
+                        type="checkbox"
+                        checked={pending.languesCible.includes(lang)}
+                        onChange={() => toggleLangueCible(lang)}
+                        className="w-3.5 h-3.5"
+                      />
+                      <span>{lang}</span>
+                    </label>
+                  ))}
+                </div>
+              </details>
+
+              {/* Boutons d'action */}
+              <div className="p-3 flex gap-2 items-center">
+                <Button variant="primaire" onClick={handleApply} loading={loading} className="px-4 py-2 text-sm">
+                  Appliquer les filtres
                 </Button>
-              ))}
-              <Button variant="ghost" onClick={() => updateField('start', today)} className="px-2.5 py-1.5 text-xs" title="Aujourd'hui">
-                📅
-              </Button>
-            </div>
-
-            <div className="h-6 w-px bg-border"></div>
-
-            <Select
-              value={pending.division}
-              onChange={(e) => updateField('division', e.target.value)}
-              disabled={loadingOptions}
-              className="text-xs py-1.5 px-2 w-auto min-w-[110px]"
-            >
-              <option value="">Toutes divisions</option>
-              {options.divisions.map((d) => <option key={d} value={d}>{d}</option>)}
-            </Select>
-
-            <Select
-              value={pending.client}
-              onChange={(e) => updateField('client', e.target.value)}
-              disabled={loadingOptions}
-              className="text-xs py-1.5 px-2 w-auto min-w-[110px]"
-            >
-              <option value="">Tous clients</option>
-              {options.clients.map((c) => <option key={c} value={c}>{c}</option>)}
-            </Select>
-
-            <Input
-              type="date"
-              value={pending.start}
-              onChange={(e) => updateField('start', e.target.value)}
-              max="9999-12-31"
-              className="text-xs py-1.5 px-2 w-auto"
-            />
-
-            <div className="h-6 w-px bg-border"></div>
-
-            <Button variant="primaire" onClick={handleApply} loading={loading} className="px-3 py-1.5 text-xs">
-              Appliquer
-            </Button>
-            <Button variant="outline" onClick={handleReset} disabled={loading} className="px-3 py-1.5 text-xs">
-              Réinitialiser
-            </Button>
-
-            <div className="ml-auto flex items-center gap-2 text-xs text-muted">
-              {loadingOptions && <span>Chargement…</span>}
-              {optionsError && <span className="text-red-600">{optionsError}</span>}
-              {error && <span className="text-red-600">{error}</span>}
-              {!loading && !error && <span>Du {formatJour(applied.start)} au {formatJour(endDate)}</span>}
-            </div>
-          </div>
-
-          <details className="mt-2">
-            <summary className="cursor-pointer text-xs text-muted hover:text-primary">Filtres avancés (domaines, langues)</summary>
-            <div className="grid gap-2 md:grid-cols-3 mt-2 pt-2 border-t border-border">
-              <div>
-                <label className="text-xs font-medium">Domaines</label>
-                <TagInput value={pending.domaines} onChange={(vals) => updateField('domaines', vals)} placeholder="Ajouter..." />
-              </div>
-              <div>
-                <label className="text-xs font-medium">Langues source</label>
-                <TagInput value={pending.languesSource} onChange={(vals) => updateField('languesSource', vals)} placeholder="Ajouter..." />
-              </div>
-              <div>
-                <label className="text-xs font-medium">Langues cible</label>
-                <TagInput value={pending.languesCible} onChange={(vals) => updateField('languesCible', vals)} placeholder="Ajouter..." />
+                <Button variant="outline" onClick={handleReset} disabled={loading} className="px-4 py-2 text-sm">
+                  Réinitialiser
+                </Button>
+                {loadingOptions && <span className="text-xs text-muted ml-2">Chargement…</span>}
+                {optionsError && <span className="text-xs text-red-600 ml-2">{optionsError}</span>}
+                {error && <span className="text-xs text-red-600 ml-2">{error}</span>}
               </div>
             </div>
           </details>
         </div>
-      <Card>
-        <CardHeader><CardTitle style={{ display: 'none' }}>Filtres</CardTitle></CardHeader>
-        <CardContent style={{ display: 'none' }}>
-          <p className="text-muted text-sm">Affinez par division, client ou langues, et choisissez la période (7 / 14 / 30 jours). Aujourd'hui est surligné en bleu.</p>
-          <div className="grid gap-3 md:grid-cols-3 mt-4" aria-label="Filtres planning">
-            <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="division">Division</label>
-              <Select
-                id="division"
-                value={pending.division}
-                onChange={(e) => updateField('division', e.target.value)}
-                disabled={loadingOptions}
-              >
-                <option value="">Toutes</option>
-                {options.divisions.map((d) => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="client">Client</label>
-              <Select
-                id="client"
-                value={pending.client}
-                onChange={(e) => updateField('client', e.target.value)}
-                disabled={loadingOptions}
-              >
-                <option value="">Tous</option>
-                {options.clients.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </Select>
-            </div>
-            <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="domaine">Domaine / Sous-domaine</label>
-              <TagInput
-                value={pending.domaines}
-                onChange={(vals) => updateField('domaines', vals)}
-                placeholder={loadingOptions ? 'Chargement...' : 'Choisir ou saisir'}
-              />
-              {options.domaines.length > 0 && (
-                <div className="text-[11px] text-muted">
-                  Suggestions : {options.domaines.slice(0, 6).join(', ')}{options.domaines.length > 6 ? '…' : ''}
-                </div>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="langueSource">Langue source</label>
-              <TagInput
-                value={pending.languesSource}
-                onChange={(vals) => updateField('languesSource', vals)}
-                placeholder="Choisir ou saisir"
-              />
-              {options.languesSource.length > 0 && (
-                <div className="text-[11px] text-muted">Suggestions : {options.languesSource.slice(0,6).join(', ')}{options.languesSource.length > 6 ? '…' : ''}</div>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="langueCible">Langue cible</label>
-              <TagInput
-                value={pending.languesCible}
-                onChange={(vals) => updateField('languesCible', vals)}
-                placeholder="Choisir ou saisir"
-              />
-              {options.languesCible.length > 0 && (
-                <div className="text-[11px] text-muted">Suggestions : {options.languesCible.slice(0,6).join(', ')}{options.languesCible.length > 6 ? '…' : ''}</div>
-              )}
-            </div>
-            <div className="flex flex-col gap-1 text-sm">
-              <label htmlFor="start">Date de début</label>
-              <Input
-                id="start"
-                type="date"
-                value={pending.start}
-                onChange={(e) => updateField('start', e.target.value)}
-                max="9999-12-31"
-              />
-            </div>
-          </div>
 
-          <div className="flex flex-wrap gap-2 mt-4 items-center">
-            {[7, 14, 30].map((val) => (
-              <Button
-                key={val}
-                variant={pending.range === val ? 'primaire' : 'outline'}
-                onClick={() => updateField('range', val as 7 | 14 | 30)}
-                className="px-3 py-2 text-sm"
-                aria-pressed={pending.range === val}
-              >
-                {val} jours
-              </Button>
-            ))}
-            <Button variant="ghost" onClick={() => updateField('start', today)} className="px-3 py-2 text-sm">
-              Aujourd'hui
-            </Button>
-            <div className="text-xs text-muted">
-              Du {formatJour(applied.start)} au {formatJour(endDate)}
-            </div>
-          </div>
-
-        </CardContent>
-      </Card>
+      {/* Bouton flottant Ajouter une tâche */}
+      <Button
+        variant="primaire"
+        onClick={() => navigate('/conseiller/taches/nouveau')}
+        className="fixed bottom-6 right-6 z-50 px-6 py-3 text-base shadow-lg hover:shadow-xl transition-shadow"
+        title="Ajouter une nouvelle tâche"
+      >
+        ➥ Ajouter une tâche
+      </Button>
 
       {/* Planning principal */}
       <Card>
@@ -331,19 +316,53 @@ const PlanningGlobal: React.FC = () => {
           <CardTitle>Planning des traducteurs ({planningGlobal?.planning.length || 0})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-2 mb-3 text-xs items-center">
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 border border-green-300">
-              <span className="w-3 h-3 rounded bg-green-500"></span>
-              Libre
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-orange-100 border border-orange-300">
-              <span className="w-3 h-3 rounded bg-orange-500"></span>
-              Presque plein
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-100 border border-red-300">
-              <span className="w-3 h-3 rounded bg-red-600"></span>
-              Plein
-            </span>
+          <div className="flex flex-wrap gap-3 mb-4 items-center">
+            {/* Boutons de plage */}
+            <div className="flex gap-1.5 items-center">
+              <span className="text-xs font-medium text-muted mr-1">Plage :</span>
+              {[7, 14, 30].map((val) => (
+                <Button
+                  key={val}
+                  variant={pending.range === val ? 'primaire' : 'outline'}
+                  onClick={() => {
+                    updateField('range', val as 7 | 14 | 30);
+                    handleApply();
+                  }}
+                  className="px-3 py-1.5 text-xs"
+                >
+                  {val} jours
+                </Button>
+              ))}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  updateField('start', today);
+                  handleApply();
+                }}
+                className="px-3 py-1.5 text-xs ml-2"
+                title="Revenir à aujourd'hui"
+              >
+                📅 Aujourd'hui
+              </Button>
+            </div>
+
+            <div className="h-6 w-px bg-border"></div>
+
+            {/* Légende des couleurs */}
+            <div className="flex gap-2 text-xs items-center">
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 border border-green-300">
+                <span className="w-3 h-3 rounded bg-green-500"></span>
+                Libre
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-orange-100 border border-orange-300">
+                <span className="w-3 h-3 rounded bg-orange-500"></span>
+                Presque plein
+              </span>
+              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-100 border border-red-300">
+                <span className="w-3 h-3 rounded bg-red-600"></span>
+                Plein
+              </span>
+            </div>
           </div>
           <div className="overflow-auto border border-border rounded-lg" style={{ maxHeight: '70vh' }}>
             <table className="w-full border-collapse text-xs">
@@ -358,15 +377,22 @@ const PlanningGlobal: React.FC = () => {
                     const dayNum = d.getDate();
                     const month = d.getMonth() + 1;
                     const isTodayCol = isToday(iso);
+                    const isWeekendCol = isWeekend(iso);
                     return (
                       <th
                         key={iso}
-                        className={`border-r border-border px-2 py-2 text-center font-semibold min-w-[70px] ${isTodayCol ? 'bg-blue-50' : ''}`}
+                        className={`border-r border-border px-2 py-2 text-center font-semibold min-w-[70px] ${
+                          isTodayCol ? 'bg-blue-50' : isWeekendCol ? 'bg-gray-200' : ''
+                        }`}
                       >
-                        <div className={`${isTodayCol ? 'text-blue-700 font-bold' : ''}`}>
+                        <div className={`${
+                          isTodayCol ? 'text-blue-700 font-bold' : isWeekendCol ? 'text-gray-500' : ''
+                        }`}>
                           {dayName.charAt(0).toUpperCase() + dayName.slice(1)}
                         </div>
-                        <div className={`text-[10px] ${isTodayCol ? 'text-blue-600' : 'text-muted'}`}>
+                        <div className={`text-[10px] ${
+                          isTodayCol ? 'text-blue-600' : isWeekendCol ? 'text-gray-400' : 'text-muted'
+                        }`}>
                           {dayNum}/{month}
                         </div>
                       </th>
@@ -393,9 +419,14 @@ const PlanningGlobal: React.FC = () => {
                       {days.map((iso) => {
                         const info = ligne.dates[iso];
                         const isTodayCol = isToday(iso);
+                        const isWeekendCol = isWeekend(iso);
                         let bgClass = 'bg-gray-100';
                         let textClass = 'text-gray-600';
-                        if (info) {
+                        
+                        if (isWeekendCol) {
+                          bgClass = 'bg-gray-300';
+                          textClass = 'text-gray-500';
+                        } else if (info) {
                           if (info.couleur === 'libre') {
                             bgClass = 'bg-green-50';
                             textClass = 'text-green-800';

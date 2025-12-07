@@ -236,17 +236,51 @@ export const obtenirPlanningGlobal = async (
     // Construire les filtres pour les traducteurs
     const whereTraducteur: any = { actif: true };
 
-    if (division) whereTraducteur.division = division as string;
+    if (division) {
+      const divisions = (division as string).split(',').map(d => d.trim());
+      if (divisions.length > 1) {
+        whereTraducteur.division = { in: divisions };
+      } else {
+        whereTraducteur.division = division as string;
+      }
+    }
     if (client) whereTraducteur.clientsHabituels = { has: client as string };
-    if (domaine) whereTraducteur.domaines = { has: domaine as string };
+    if (domaine) {
+      const domaines = (domaine as string).split(',').map(d => d.trim());
+      if (domaines.length > 1) {
+        whereTraducteur.domaines = { hasSome: domaines };
+      } else {
+        whereTraducteur.domaines = { has: domaine as string };
+      }
+    }
 
     if (langueSource || langueCible) {
-      whereTraducteur.pairesLinguistiques = {
-        some: {
-          ...(langueSource && { langueSource: langueSource as string }),
-          ...(langueCible && { langueCible: langueCible as string }),
-        },
-      };
+      const languesSourceArray = langueSource ? (langueSource as string).split(',').map(l => l.trim()) : undefined;
+      const languesCibleArray = langueCible ? (langueCible as string).split(',').map(l => l.trim()) : undefined;
+      
+      if (languesSourceArray && languesSourceArray.length > 1) {
+        whereTraducteur.pairesLinguistiques = {
+          some: {
+            langueSource: { in: languesSourceArray },
+            ...(languesCibleArray && languesCibleArray.length === 1 && { langueCible: langueCible as string }),
+            ...(languesCibleArray && languesCibleArray.length > 1 && { langueCible: { in: languesCibleArray } }),
+          },
+        };
+      } else if (languesCibleArray && languesCibleArray.length > 1) {
+        whereTraducteur.pairesLinguistiques = {
+          some: {
+            ...(langueSource && { langueSource: langueSource as string }),
+            langueCible: { in: languesCibleArray },
+          },
+        };
+      } else {
+        whereTraducteur.pairesLinguistiques = {
+          some: {
+            ...(langueSource && { langueSource: langueSource as string }),
+            ...(langueCible && { langueCible: langueCible as string }),
+          },
+        };
+      }
     }
 
     // Récupérer les traducteurs filtrés
