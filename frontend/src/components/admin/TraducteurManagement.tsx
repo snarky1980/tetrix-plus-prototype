@@ -91,6 +91,13 @@ export const TraducteurManagement: React.FC = () => {
       ),
     },
     {
+      header: 'Classification',
+      accessor: 'classification',
+      render: (val: string) => (
+        <Badge variant="default">{val}</Badge>
+      ),
+    },
+    {
       header: 'Division',
       accessor: 'division',
       render: (val: string) => (
