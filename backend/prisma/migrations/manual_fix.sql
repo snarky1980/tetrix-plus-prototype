@@ -1,34 +1,32 @@
 -- Migration manuelle pour ajouter les champs manquants
 -- À exécuter si les migrations automatiques ont échoué
 
--- Ajouter les nouveaux champs au modèle Traducteur
-ALTER TABLE "Traducteur" 
+-- Ajouter les nouveaux champs au modèle Traducteur (table mappée: "traducteurs")
+ALTER TABLE "traducteurs" 
 ADD COLUMN IF NOT EXISTS "classification" TEXT,
 ADD COLUMN IF NOT EXISTS "horaire" TEXT,
 ADD COLUMN IF NOT EXISTS "notes" TEXT;
 
--- Renommer typesTextes en specialisations (si la colonne existe)
 DO $$ 
 BEGIN
     IF EXISTS (
         SELECT 1 FROM information_schema.columns 
-        WHERE table_name = 'Traducteur' AND column_name = 'typesTextes'
+        WHERE table_name = 'traducteurs' AND column_name = 'typesTextes'
     ) THEN
-        ALTER TABLE "Traducteur" RENAME COLUMN "typesTextes" TO "specialisations";
+        ALTER TABLE "traducteurs" RENAME COLUMN "typesTextes" TO "specialisations";
     END IF;
 END $$;
 
--- Ajouter la colonne specialisations si elle n'existe pas
-ALTER TABLE "Traducteur" 
+ALTER TABLE "traducteurs" 
 ADD COLUMN IF NOT EXISTS "specialisations" TEXT[] DEFAULT '{}';
 
 -- Mettre à jour les enregistrements existants avec des valeurs par défaut
-UPDATE "Traducteur" 
+UPDATE "traducteurs" 
 SET "classification" = 'TR2' 
 WHERE "classification" IS NULL;
 
 -- Rendre la classification obligatoire
-ALTER TABLE "Traducteur" 
+ALTER TABLE "traducteurs" 
 ALTER COLUMN "classification" SET NOT NULL;
 
 -- Vérification
@@ -37,5 +35,5 @@ SELECT
     data_type, 
     is_nullable 
 FROM information_schema.columns 
-WHERE table_name = 'Traducteur' 
+WHERE table_name = 'traducteurs' 
 ORDER BY ordinal_position;
