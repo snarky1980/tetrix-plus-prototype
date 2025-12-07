@@ -189,7 +189,7 @@ const UserForm: React.FC<{
   const [formData, setFormData] = useState({
     email: '',
     motDePasse: '',
-    role: 'TRADUCTEUR' as 'ADMIN' | 'CONSEILLER' | 'TRADUCTEUR',
+    role: 'TRADUCTEUR' as 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR',
     traducteurId: '',
   });
   const [loading, setLoading] = useState(false);
@@ -292,13 +292,14 @@ const UserForm: React.FC<{
             onChange={e =>
               setFormData({
                 ...formData,
-                role: e.target.value as 'ADMIN' | 'CONSEILLER' | 'TRADUCTEUR',
+                role: e.target.value as 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR',
               })
             }
             required
           >
             <option value="TRADUCTEUR">Traducteur</option>
             <option value="CONSEILLER">Conseiller</option>
+            <option value="GESTIONNAIRE">Gestionnaire</option>
             <option value="ADMIN">Administrateur</option>
           </Select>
         </FormField>

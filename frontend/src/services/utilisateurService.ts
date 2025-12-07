@@ -16,7 +16,7 @@ export const utilisateurService = {
   async creerUtilisateur(utilisateur: {
     email: string;
     motDePasse: string;
-    role: 'ADMIN' | 'CONSEILLER' | 'TRADUCTEUR';
+    role: 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR';
     traducteurId?: string;
   }): Promise<Utilisateur> {
     const { data } = await api.post<Utilisateur>('/auth/inscription', utilisateur);
