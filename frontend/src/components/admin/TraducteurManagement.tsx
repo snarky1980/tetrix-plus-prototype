@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
@@ -19,10 +18,10 @@ export const TraducteurManagement: React.FC = () => {
   const [traducteurSelectionne, setTraducteurSelectionne] = useState<Traducteur | undefined>();
   const [filtres, setFiltres] = useState({
     recherche: '',
-    division: '',
-    classification: '',
-    domaine: '',
-    paire: '',
+    divisions: [] as string[],
+    classifications: [] as string[],
+    domaines: [] as string[],
+    paires: [] as string[],
     actif: 'tous',
   });
 
@@ -50,27 +49,25 @@ export const TraducteurManagement: React.FC = () => {
       if (t.actif !== actif) return false;
     }
     
-    // Filtre par division
-    if (filtres.division && t.division !== filtres.division) {
+    // Filtre par divisions (OR logic - au moins une division cochée)
+    if (filtres.divisions.length > 0 && !filtres.divisions.includes(t.division)) {
       return false;
     }
     
-    // Filtre par classification
-    if (filtres.classification && t.classification !== filtres.classification) {
+    // Filtre par classifications (OR logic)
+    if (filtres.classifications.length > 0 && !filtres.classifications.includes(t.classification)) {
       return false;
     }
     
-    // Filtre par domaine
-    if (filtres.domaine && !t.domaines.includes(filtres.domaine)) {
+    // Filtre par domaines (OR logic - au moins un domaine coché)
+    if (filtres.domaines.length > 0 && !t.domaines.some(d => filtres.domaines.includes(d))) {
       return false;
     }
 
-    // Filtre par paire linguistique (source ou cible)
-    if (filtres.paire) {
-      const valeur = filtres.paire.toLowerCase();
-      const match = t.pairesLinguistiques?.some(p =>
-        p.langueSource.toLowerCase().includes(valeur) ||
-        p.langueCible.toLowerCase().includes(valeur)
+    // Filtre par paires linguistiques (OR logic - au moins une paire cochée)
+    if (filtres.paires.length > 0) {
+      const match = t.pairesLinguistiques?.some(p => 
+        filtres.paires.includes(p.langueSource) || filtres.paires.includes(p.langueCible)
       );
       if (!match) return false;
     }
@@ -110,7 +107,7 @@ export const TraducteurManagement: React.FC = () => {
       header: 'Nom',
       accessor: 'nom',
       render: (val: string) => (
-        <div className="font-medium text-primaire">{val}</div>
+        <div className="font-medium text-primaire cursor-pointer">{val}</div>
       ),
     },
     {
@@ -128,36 +125,34 @@ export const TraducteurManagement: React.FC = () => {
       ),
     },
     {
-      header: 'Capacité',
-      accessor: 'capaciteHeuresParJour',
-      render: (val: number) => `${val}h/jour`,
-    },
-    {
       header: 'Domaines',
       accessor: 'domaines',
       render: (val: string[]) => (
         <div className="flex flex-wrap gap-1">
-          {val.slice(0, 3).map((d, i) => (
-            <Badge key={i} variant="info">
+          {val.slice(0, 2).map((d, i) => (
+            <Badge key={i} variant="info" className="text-xs">
               {d}
             </Badge>
           ))}
-          {val.length > 3 && (
-            <Badge variant="default">+{val.length - 3}</Badge>
+          {val.length > 2 && (
+            <Badge variant="default" className="text-xs">+{val.length - 2}</Badge>
           )}
         </div>
       ),
     },
     {
-      header: 'Paires linguistiques',
+      header: 'Paires',
       accessor: 'pairesLinguistiques',
       render: (val: any[]) => (
         <div className="flex flex-wrap gap-1">
-          {val?.map((p, i) => (
-            <Badge key={i} variant="default">
-              {p.langueSource} → {p.langueCible}
+          {val?.slice(0, 2).map((p, i) => (
+            <Badge key={i} variant="default" className="text-xs">
+              {p.langueSource}→{p.langueCible}
             </Badge>
           ))}
+          {val?.length > 2 && (
+            <Badge variant="default" className="text-xs">+{val.length - 2}</Badge>
+          )}
         </div>
       ),
     },
@@ -184,64 +179,127 @@ export const TraducteurManagement: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+          <div className="mb-4">
             <Input
               placeholder="Rechercher par nom..."
               value={filtres.recherche}
               onChange={e => setFiltres({ ...filtres, recherche: e.target.value })}
+              className="mb-3"
             />
-            <Select
-              value={filtres.division}
-              onChange={e => setFiltres({ ...filtres, division: e.target.value })}
-            >
-              <option value="">Toutes les divisions</option>
-              {divisions.map(d => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={filtres.classification}
-              onChange={e => setFiltres({ ...filtres, classification: e.target.value })}
-            >
-              <option value="">Toutes les classifications</option>
-              {classifications.map(c => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={filtres.domaine}
-              onChange={e => setFiltres({ ...filtres, domaine: e.target.value })}
-            >
-              <option value="">Tous les domaines</option>
-              {domaines.map(d => (
-                <option key={d} value={d}>
-                  {d}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={filtres.paire}
-              onChange={e => setFiltres({ ...filtres, paire: e.target.value })}
-            >
-              <option value="">Toutes les paires</option>
-              {paires.map(p => (
-                <option key={p} value={p}>
-                  {p}
-                </option>
-              ))}
-            </Select>
-            <Select
-              value={filtres.actif}
-              onChange={e => setFiltres({ ...filtres, actif: e.target.value })}
-            >
-              <option value="tous">Tous les statuts</option>
-              <option value="actif">Actifs uniquement</option>
-              <option value="inactif">Inactifs uniquement</option>
-            </Select>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              {/* Filtre Classifications */}
+              <div className="border rounded-lg p-3">
+                <h4 className="font-semibold mb-2 text-sm">Classification</h4>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {classifications.map(c => (
+                    <label key={c} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={filtres.classifications.includes(c)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setFiltres({ ...filtres, classifications: [...filtres.classifications, c] });
+                          } else {
+                            setFiltres({ ...filtres, classifications: filtres.classifications.filter(v => v !== c) });
+                          }
+                        }}
+                      />
+                      <span>{c}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtre Divisions */}
+              <div className="border rounded-lg p-3">
+                <h4 className="font-semibold mb-2 text-sm">Division</h4>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {divisions.map(d => (
+                    <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={filtres.divisions.includes(d)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setFiltres({ ...filtres, divisions: [...filtres.divisions, d] });
+                          } else {
+                            setFiltres({ ...filtres, divisions: filtres.divisions.filter(v => v !== d) });
+                          }
+                        }}
+                      />
+                      <span>{d}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtre Domaines */}
+              <div className="border rounded-lg p-3">
+                <h4 className="font-semibold mb-2 text-sm">Domaines</h4>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {domaines.map(d => (
+                    <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={filtres.domaines.includes(d)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setFiltres({ ...filtres, domaines: [...filtres.domaines, d] });
+                          } else {
+                            setFiltres({ ...filtres, domaines: filtres.domaines.filter(v => v !== d) });
+                          }
+                        }}
+                      />
+                      <span>{d}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Filtre Paires linguistiques */}
+              <div className="border rounded-lg p-3">
+                <h4 className="font-semibold mb-2 text-sm">Paires linguistiques</h4>
+                <div className="space-y-1 max-h-32 overflow-y-auto">
+                  {paires.map(p => (
+                    <label key={p} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                      <input
+                        type="checkbox"
+                        checked={filtres.paires.includes(p)}
+                        onChange={e => {
+                          if (e.target.checked) {
+                            setFiltres({ ...filtres, paires: [...filtres.paires, p] });
+                          } else {
+                            setFiltres({ ...filtres, paires: filtres.paires.filter(v => v !== p) });
+                          }
+                        }}
+                      />
+                      <span>{p}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Bouton réinitialiser */}
+            {(filtres.classifications.length > 0 || filtres.divisions.length > 0 || filtres.domaines.length > 0 || filtres.paires.length > 0 || filtres.recherche) && (
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setFiltres({
+                    recherche: '',
+                    divisions: [],
+                    classifications: [],
+                    domaines: [],
+                    paires: [],
+                    actif: 'tous',
+                  })}
+                  className="text-sm"
+                >
+                  Réinitialiser les filtres
+                </Button>
+              </div>
+            )}
           </div>
 
           {loading ? (
