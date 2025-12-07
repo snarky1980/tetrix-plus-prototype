@@ -259,3 +259,124 @@ export const importerDroit = async (req: Request, res: Response): Promise<void> 
     res.status(500).json({ erreur: error.message });
   }
 };
+
+// Traducteurs EM (English and Multilingual) - 26 personnes
+const emTranslators = [
+  { nom: 'Armin-Pereda, Jennifer', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'SOC'], clients: ['Patrimoine'], sousDomaines: ['Littérature', 'Histoire'], specialisations: ['Protected C', 'Secret'] },
+  { nom: 'Balkwill, Janna', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'CRIM SCorr.', 'CRIM Front.'], clients: ['EDSC', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Ballard, Natalie', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: ['SPAC'], sousDomaines: [], specialisations: [] },
+  { nom: 'Brégent, Delphine', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Centomo-Bozzo, Olivia', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN', 'EMP'], clients: ['EDSC', 'FPC'], sousDomaines: [], specialisations: ['Secret'] },
+  { nom: 'Desharats, Sebastian', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Protected C', 'Secret'] },
+  { nom: 'Ducharme, Suzanne', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
+  { nom: 'Forster, Kate', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR', 'SOC'], clients: [], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
+  { nom: 'Fung, Hillary', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: [] },
+  { nom: 'Gow, Francie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT', 'SOC'], clients: [], sousDomaines: ['Littérature', 'Histoire'], specialisations: ['Secret'] },
+  { nom: 'Grant, Gail', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC', 'Patrimoine'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
+  { nom: 'Gueglietta, Daniela', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: [] },
+  { nom: 'Kadnikov, Patrick', classification: 'TR-01', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: ['CLO', 'Patrimoine', 'SPAC'], sousDomaines: [], specialisations: [] },
+  { nom: 'Kratz, Johanna', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Secret'] },
+  { nom: 'LaPalme, Hazel', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [] },
+  { nom: 'lee, Pamela', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'ENV', 'AGRI', 'BIO', 'SCN', 'MED', 'DROIT'], clients: ['EDSC', 'FPC'], sousDomaines: [], specialisations: [] },
+  { nom: 'Mar, Vincent', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: [], sousDomaines: [], specialisations: ['Protected C'] },
+  { nom: 'Mercy, Madeleine', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [] },
+  { nom: 'Oettel, Jason', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'SOC'], clients: ['DFO'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
+  { nom: 'Palles, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Secret'] },
+  { nom: 'Paul, Eloise', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC', 'CLO'], sousDomaines: ['Musique'], specialisations: [] },
+  { nom: 'Tan, Elizabeth', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: ['Protected C'] },
+  { nom: 'Vaughan, Nicholas', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [] },
+  { nom: 'McCarthy, Stephanie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'CLO', 'Patrimoine'], sousDomaines: [], specialisations: [] },
+  { nom: 'Feltes, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [] },
+  { nom: 'Hill, Kara', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [] },
+];
+
+export const importerEM = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const passwordHash = await bcrypt.hash('password123', 10);
+    const results = { success: 0, errors: [] as string[] };
+
+    for (const t of emTranslators) {
+      const email = emailFromName(t.nom);
+      const classification = t.classification;
+      const capacite = 7;
+
+      try {
+        const utilisateur = await prisma.utilisateur.upsert({
+          where: { email },
+          update: {},
+          create: {
+            email,
+            motDePasse: passwordHash,
+            role: Role.TRADUCTEUR,
+            actif: true,
+          },
+        });
+
+        const existingTrad = await prisma.traducteur.findUnique({
+          where: { utilisateurId: utilisateur.id },
+        });
+
+        if (!existingTrad) {
+          await prisma.traducteur.create({
+            data: {
+              nom: t.nom,
+              division: t.division,
+              classification,
+              horaire: '',
+              notes: null,
+              domaines: t.domaines,
+              clientsHabituels: t.clients,
+              specialisations: [...t.specialisations, ...t.sousDomaines],
+              capaciteHeuresParJour: capacite,
+              actif: true,
+              utilisateurId: utilisateur.id,
+              pairesLinguistiques: {
+                create: [{ langueSource: 'FR', langueCible: 'EN' }],
+              },
+            },
+          });
+        } else {
+          await prisma.traducteur.update({
+            where: { utilisateurId: utilisateur.id },
+            data: {
+              nom: t.nom,
+              division: t.division,
+              classification,
+              horaire: '',
+              notes: null,
+              domaines: t.domaines,
+              clientsHabituels: t.clients,
+              specialisations: [...t.specialisations, ...t.sousDomaines],
+              capaciteHeuresParJour: capacite,
+              actif: true,
+            },
+          });
+
+          await prisma.paireLinguistique.deleteMany({
+            where: { traducteurId: existingTrad.id },
+          });
+          await prisma.paireLinguistique.create({
+            data: {
+              traducteurId: existingTrad.id,
+              langueSource: 'FR',
+              langueCible: 'EN',
+            },
+          });
+        }
+
+        results.success++;
+      } catch (err: any) {
+        results.errors.push(`${t.nom}: ${err.message}`);
+      }
+    }
+
+    res.json({
+      message: 'Import EM terminé',
+      total: emTranslators.length,
+      success: results.success,
+      errors: results.errors,
+    });
+  } catch (error: any) {
+    res.status(500).json({ erreur: error.message });
+  }
+};
