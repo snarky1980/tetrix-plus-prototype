@@ -22,6 +22,7 @@ export const TraducteurManagement: React.FC = () => {
     division: '',
     classification: '',
     domaine: '',
+    paire: '',
     actif: 'tous',
   });
 
@@ -63,6 +64,16 @@ export const TraducteurManagement: React.FC = () => {
     if (filtres.domaine && !t.domaines.includes(filtres.domaine)) {
       return false;
     }
+
+    // Filtre par paire linguistique (source ou cible)
+    if (filtres.paire) {
+      const valeur = filtres.paire.toLowerCase();
+      const match = t.pairesLinguistiques?.some(p =>
+        p.langueSource.toLowerCase().includes(valeur) ||
+        p.langueCible.toLowerCase().includes(valeur)
+      );
+      if (!match) return false;
+    }
     
     // Filtre par recherche textuelle
     if (filtres.recherche) {
@@ -80,6 +91,9 @@ export const TraducteurManagement: React.FC = () => {
   const divisions = Array.from(new Set(traducteurs.map(t => t.division))).sort();
   const classifications = Array.from(new Set(traducteurs.map(t => t.classification).filter(Boolean))).sort();
   const domaines = Array.from(new Set(traducteurs.flatMap(t => t.domaines))).sort();
+  const paires = Array.from(new Set(
+    traducteurs.flatMap(t => t.pairesLinguistiques || []).flatMap(p => [p.langueSource, p.langueCible])
+  )).sort();
 
   const handleNouveauTraducteur = () => {
     setTraducteurSelectionne(undefined);
@@ -211,7 +225,7 @@ export const TraducteurManagement: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
             <Input
               placeholder="Rechercher par nom..."
               value={filtres.recherche}
@@ -247,6 +261,17 @@ export const TraducteurManagement: React.FC = () => {
               {domaines.map(d => (
                 <option key={d} value={d}>
                   {d}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={filtres.paire}
+              onChange={e => setFiltres({ ...filtres, paire: e.target.value })}
+            >
+              <option value="">Toutes les paires</option>
+              {paires.map(p => (
+                <option key={p} value={p}>
+                  {p}
                 </option>
               ))}
             </Select>
