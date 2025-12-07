@@ -136,10 +136,96 @@ const PlanningGlobal: React.FC = () => {
 
   return (
     <AppLayout titre="Planning global">
+      <div className="space-y-4">
+        {/* Filtres compacts */}
+        <div className="bg-white border border-border rounded-lg p-3 shadow-sm">
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Presets période */}
+            <div className="flex gap-1">
+              {[7, 14, 30].map((val) => (
+                <Button
+                  key={val}
+                  variant={pending.range === val ? 'primaire' : 'outline'}
+                  onClick={() => updateField('range', val as 7 | 14 | 30)}
+                  className="px-2.5 py-1.5 text-xs"
+                >
+                  {val}j
+                </Button>
+              ))}
+              <Button variant="ghost" onClick={() => updateField('start', today)} className="px-2.5 py-1.5 text-xs" title="Aujourd'hui">
+                📅
+              </Button>
+            </div>
+
+            <div className="h-6 w-px bg-border"></div>
+
+            <Select
+              value={pending.division}
+              onChange={(e) => updateField('division', e.target.value)}
+              disabled={loadingOptions}
+              className="text-xs py-1.5 px-2 w-auto min-w-[110px]"
+            >
+              <option value="">Toutes divisions</option>
+              {options.divisions.map((d) => <option key={d} value={d}>{d}</option>)}
+            </Select>
+
+            <Select
+              value={pending.client}
+              onChange={(e) => updateField('client', e.target.value)}
+              disabled={loadingOptions}
+              className="text-xs py-1.5 px-2 w-auto min-w-[110px]"
+            >
+              <option value="">Tous clients</option>
+              {options.clients.map((c) => <option key={c} value={c}>{c}</option>)}
+            </Select>
+
+            <Input
+              type="date"
+              value={pending.start}
+              onChange={(e) => updateField('start', e.target.value)}
+              max="9999-12-31"
+              className="text-xs py-1.5 px-2 w-auto"
+            />
+
+            <div className="h-6 w-px bg-border"></div>
+
+            <Button variant="primaire" onClick={handleApply} loading={loading} className="px-3 py-1.5 text-xs">
+              Appliquer
+            </Button>
+            <Button variant="outline" onClick={handleReset} disabled={loading} className="px-3 py-1.5 text-xs">
+              Réinitialiser
+            </Button>
+
+            <div className="ml-auto flex items-center gap-2 text-xs text-muted">
+              {loadingOptions && <span>Chargement…</span>}
+              {optionsError && <span className="text-red-600">{optionsError}</span>}
+              {error && <span className="text-red-600">{error}</span>}
+              {!loading && !error && <span>Du {formatJour(applied.start)} au {formatJour(endDate)}</span>}
+            </div>
+          </div>
+
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs text-muted hover:text-primary">Filtres avancés (domaines, langues)</summary>
+            <div className="grid gap-2 md:grid-cols-3 mt-2 pt-2 border-t border-border">
+              <div>
+                <label className="text-xs font-medium">Domaines</label>
+                <TagInput value={pending.domaines} onChange={(vals) => updateField('domaines', vals)} placeholder="Ajouter..." />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Langues source</label>
+                <TagInput value={pending.languesSource} onChange={(vals) => updateField('languesSource', vals)} placeholder="Ajouter..." />
+              </div>
+              <div>
+                <label className="text-xs font-medium">Langues cible</label>
+                <TagInput value={pending.languesCible} onChange={(vals) => updateField('languesCible', vals)} placeholder="Ajouter..." />
+              </div>
+            </div>
+          </details>
+        </div>
       <Card>
-        <CardHeader><CardTitle>Filtres</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-muted text-sm">Affinez par division, client ou langues, et choisissez la période (7 / 14 / 30 jours). Aujourd’hui est surligné en bleu.</p>
+        <CardHeader><CardTitle style={{ display: 'none' }}>Filtres</CardTitle></CardHeader>
+        <CardContent style={{ display: 'none' }}>
+          <p className="text-muted text-sm">Affinez par division, client ou langues, et choisissez la période (7 / 14 / 30 jours). Aujourd'hui est surligné en bleu.</p>
           <div className="grid gap-3 md:grid-cols-3 mt-4" aria-label="Filtres planning">
             <div className="flex flex-col gap-1 text-sm">
               <label htmlFor="division">Division</label>
@@ -236,18 +322,10 @@ const PlanningGlobal: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex gap-2 mt-4 flex-wrap items-center">
-            <Button variant="primaire" onClick={handleApply} loading={loading} aria-label="Appliquer filtres">Appliquer</Button>
-            <Button variant="outline" onClick={handleReset} disabled={loading} aria-label="Réinitialiser filtres">Réinitialiser</Button>
-            <Button variant="ghost" onClick={refresh} loading={loading} aria-label="Rafraîchir">Rafraîchir</Button>
-            <Button variant="ghost" onClick={() => updateField('start', today)} disabled={loading} aria-label="Recentrer sur aujourd'hui">Aujourd'hui</Button>
-            {loadingOptions && <span className="text-sm text-muted">Chargement des listes…</span>}
-            {optionsError && <span className="text-sm text-red-600">{optionsError}</span>}
-            {error && <span className="text-sm text-red-600">{error}</span>}
-          </div>
         </CardContent>
       </Card>
 
+      {/* Planning principal */}
       <Card>
         <CardHeader>
           <CardTitle>Planning des traducteurs ({planningGlobal?.planning.length || 0})</CardTitle>
@@ -375,6 +453,7 @@ const PlanningGlobal: React.FC = () => {
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
         </CardContent>
       </Card>
+      </div>
     </AppLayout>
   );
 };
