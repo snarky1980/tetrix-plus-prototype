@@ -2,7 +2,7 @@
 export interface Utilisateur {
   id: string;
   email: string;
-  role: 'ADMIN' | 'CONSEILLER' | 'TRADUCTEUR';
+  role: 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR';
   traducteurId?: string;
 }
 
