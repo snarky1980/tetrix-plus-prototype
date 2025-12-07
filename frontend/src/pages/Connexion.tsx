@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -10,11 +10,27 @@ const Connexion: React.FC = () => {
   usePageTitle('Tetrix PLUS - Connexion', 'Accédez à votre compte Tetrix PLUS');
   const [email, setEmail] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
+  const [afficherMdp, setAfficherMdp] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [erreur, setErreur] = useState('');
   const [chargement, setChargement] = useState(false);
 
   const { connexion } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const saved = localStorage.getItem('tetrix-remember');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setEmail(parsed.email || '');
+        setMotDePasse(parsed.motDePasse || '');
+        setRememberMe(true);
+      } catch (e) {
+        console.error('Erreur de lecture du stockage local', e);
+      }
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +39,11 @@ const Connexion: React.FC = () => {
 
     try {
       await connexion(email, motDePasse);
+      if (rememberMe) {
+        localStorage.setItem('tetrix-remember', JSON.stringify({ email, motDePasse }));
+      } else {
+        localStorage.removeItem('tetrix-remember');
+      }
       navigate('/');
     } catch (err: any) {
       setErreur(err.response?.data?.erreur || 'Erreur de connexion');
@@ -69,13 +90,45 @@ const Connexion: React.FC = () => {
             <label style={{ display: 'block', marginBottom: '5px' }}>
               Mot de passe
             </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={afficherMdp ? 'text' : 'password'}
+                value={motDePasse}
+                onChange={(e) => setMotDePasse(e.target.value)}
+                required
+                placeholder="••••••••"
+                style={{ width: '100%', paddingRight: '80px' }}
+              />
+              <button
+                type="button"
+                onClick={() => setAfficherMdp(!afficherMdp)}
+                style={{
+                  position: 'absolute',
+                  right: '10px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#4CAF50',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                {afficherMdp ? 'Masquer' : 'Afficher'}
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <input
-              type="password"
-              value={motDePasse}
-              onChange={(e) => setMotDePasse(e.target.value)}
-              required
-              placeholder="••••••••"
+              id="remember"
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
             />
+            <label htmlFor="remember" style={{ cursor: 'pointer' }}>
+              Mémoriser le mot de passe
+            </label>
           </div>
 
           {erreur && (

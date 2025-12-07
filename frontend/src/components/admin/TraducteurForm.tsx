@@ -45,6 +45,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
   const [paireInput, setPaireInput] = useState({ source: '', cible: '' });
   const [loading, setLoading] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [afficherMdp, setAfficherMdp] = useState(false);
 
   useEffect(() => {
     if (traducteur) {
@@ -315,15 +316,25 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
             </FormField>
 
             <FormField label="Mot de passe" required helper="Minimum 6 caractères">
-              <Input
-                type="password"
-                value={formData.motDePasse}
-                onChange={e => setFormData({ ...formData, motDePasse: e.target.value })}
-                required
-                minLength={6}
-                placeholder="••••••••"
-                error={!formData.motDePasse && formData !== undefined}
-              />
+              <div className="relative">
+                <Input
+                  type={afficherMdp ? 'text' : 'password'}
+                  value={formData.motDePasse}
+                  onChange={e => setFormData({ ...formData, motDePasse: e.target.value })}
+                  required
+                  minLength={6}
+                  placeholder="••••••••"
+                  error={!formData.motDePasse && formData !== undefined}
+                  className="pr-20"
+                />
+                <button
+                  type="button"
+                  onClick={() => setAfficherMdp(!afficherMdp)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-primary"
+                >
+                  {afficherMdp ? 'Masquer' : 'Afficher'}
+                </button>
+              </div>
             </FormField>
           </>
         ) : (
