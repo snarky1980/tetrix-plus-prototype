@@ -119,9 +119,17 @@ export const TraducteurManagement: React.FC = () => {
       ),
     },
     {
-      header: 'Paires',
+      header: 'Paires linguistiques',
       accessor: 'pairesLinguistiques',
-      render: (val: any[]) => `${val?.length || 0} paire(s)`,
+      render: (val: any[]) => (
+        <div className="flex flex-wrap gap-1">
+          {val?.map((p, i) => (
+            <Badge key={i} variant="default">
+              {p.langueSource} → {p.langueCible}
+            </Badge>
+          ))}
+        </div>
+      ),
     },
     {
       header: 'Statut',
