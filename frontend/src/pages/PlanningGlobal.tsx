@@ -247,69 +247,112 @@ const PlanningGlobal: React.FC = () => {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Grille multi-traducteurs</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle>Planning des traducteurs ({planningGlobal?.planning.length || 0})</CardTitle>
+        </CardHeader>
         <CardContent>
-          <p className="text-muted text-sm">Chaque cellule: heures réservées / capacité (couleur = état de disponibilité).</p>
-          <div className="flex gap-3 mt-3 text-xs">
-            <span className="px-2 py-1 rounded-md bg-green-500 text-white" aria-label="Libre">Libre</span>
-            <span className="px-2 py-1 rounded-md bg-orange-500 text-white" aria-label="Presque plein">Presque plein</span>
-            <span className="px-2 py-1 rounded-md bg-red-600 text-white" aria-label="Plein ou surcharge">Plein</span>
+          <div className="flex gap-2 mb-3 text-xs items-center">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 border border-green-300">
+              <span className="w-3 h-3 rounded bg-green-500"></span>
+              Libre
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-orange-100 border border-orange-300">
+              <span className="w-3 h-3 rounded bg-orange-500"></span>
+              Presque plein
+            </span>
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-100 border border-red-300">
+              <span className="w-3 h-3 rounded bg-red-600"></span>
+              Plein
+            </span>
           </div>
-          <div className="mt-4 overflow-auto" aria-label="Grille planning">
-            <div className={`grid gap-2 grid-cols-[180px_repeat(${applied.range},_minmax(0,1fr))] min-w-[780px]`}>
-              <div className="text-xs font-semibold" aria-hidden>Traducteur</div>
-              {days.map((iso) => (
-                <div
-                  key={iso}
-                  className={`text-xs font-semibold text-center ${isToday(iso) ? 'bg-primary/10 rounded-md' : ''}`}
-                  aria-hidden
-                >
-                  {formatJour(iso)}
-                </div>
-              ))}
-              {planningGlobal?.planning.map((ligne) => {
-                return (
-                  <React.Fragment key={ligne.traducteur.id}>
-                    <div className="text-xs font-medium truncate" title={ligne.traducteur.nom}>{ligne.traducteur.nom}</div>
-                    {days.map((iso) => {
-                      const info = ligne.dates[iso];
-                      const couleurMap: Record<string, string> = {
-                        libre: 'bg-green-100',
-                        'presque-plein': 'bg-orange-100',
-                        plein: 'bg-red-100',
-                      };
-                      const couleur = info ? couleurMap[info.couleur] : 'bg-muted';
-                      const heures = info ? formatHeures(info.heures) : '0';
-                      const capacite = info ? formatHeures(info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : formatHeures(ligne.traducteur.capaciteHeuresParJour);
-                      return (
-                        <div
-                          key={iso}
-                          className={`relative rounded-md border border-border text-xs h-10 flex flex-col items-center justify-center ${couleur} ${isToday(iso) ? 'ring-1 ring-primary/60' : ''}`}
-                          aria-label={`Traducteur ${ligne.traducteur.nom} ${iso} (${heures} / ${capacite} h)`}
-                          title={`${ligne.traducteur.nom} - ${iso}\n${heures} / ${capacite} h`}
-                        >
-                          <span>{heures} / {capacite}</span>
+          <div className="overflow-auto border border-border rounded-lg" style={{ maxHeight: '70vh' }}>
+            <table className="w-full border-collapse text-xs">
+              <thead className="bg-gray-50 sticky top-0 z-10">
+                <tr>
+                  <th className="border-r border-border px-3 py-2 text-left font-semibold sticky left-0 bg-gray-50 z-20 min-w-[160px]">
+                    Traducteur
+                  </th>
+                  {days.map((iso) => {
+                    const d = new Date(iso);
+                    const dayName = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d);
+                    const dayNum = d.getDate();
+                    const month = d.getMonth() + 1;
+                    const isTodayCol = isToday(iso);
+                    return (
+                      <th
+                        key={iso}
+                        className={`border-r border-border px-2 py-2 text-center font-semibold min-w-[70px] ${isTodayCol ? 'bg-blue-50' : ''}`}
+                      >
+                        <div className={`${isTodayCol ? 'text-blue-700 font-bold' : ''}`}>
+                          {dayName.charAt(0).toUpperCase() + dayName.slice(1)}
                         </div>
-                      );
-                    })}
-                  </React.Fragment>
-                );
-              })}
-              {(!planningGlobal || planningGlobal.planning.length === 0) && !loading && (
-                Array.from({ length: 5 }).map((_, row) => (
-                  <React.Fragment key={row}>
-                    <div className="text-xs font-medium truncate">Traducteur {row + 1}</div>
-                    {days.map((iso, col) => (
-                      <div key={col} className={`relative rounded-md border border-border bg-muted text-xs h-10 flex items-center justify-center ${isToday(iso) ? 'ring-1 ring-primary/60' : ''}`} aria-label={`Traducteur ${row + 1} ${iso}`}>—</div>
-                    ))}
-                  </React.Fragment>
-                ))
-              )}
-            </div>
+                        <div className={`text-[10px] ${isTodayCol ? 'text-blue-600' : 'text-muted'}`}>
+                          {dayNum}/{month}
+                        </div>
+                      </th>
+                    );
+                  })}
+                </tr>
+              </thead>
+              <tbody>
+                {planningGlobal?.planning.map((ligne, idx) => {
+                  return (
+                    <tr key={ligne.traducteur.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
+                      <td className="border-r border-b border-border px-3 py-2 font-medium sticky left-0 bg-inherit z-10">
+                        <div className="truncate" title={ligne.traducteur.nom}>
+                          {ligne.traducteur.nom}
+                        </div>
+                        <div className="text-[10px] text-muted">{ligne.traducteur.division}</div>
+                      </td>
+                      {days.map((iso) => {
+                        const info = ligne.dates[iso];
+                        const isTodayCol = isToday(iso);
+                        let bgClass = 'bg-gray-100';
+                        let textClass = 'text-gray-600';
+                        if (info) {
+                          if (info.couleur === 'libre') {
+                            bgClass = 'bg-green-50';
+                            textClass = 'text-green-800';
+                          } else if (info.couleur === 'presque-plein') {
+                            bgClass = 'bg-orange-50';
+                            textClass = 'text-orange-800';
+                          } else if (info.couleur === 'plein') {
+                            bgClass = 'bg-red-50';
+                            textClass = 'text-red-800';
+                          }
+                        }
+                        const heures = info ? info.heures : 0;
+                        const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
+                        return (
+                          <td
+                            key={iso}
+                            className={`border-r border-b border-border text-center px-1 py-2 ${bgClass} ${isTodayCol ? 'ring-2 ring-inset ring-blue-400' : ''}`}
+                            title={`${ligne.traducteur.nom}\n${iso}\n${heures.toFixed(1)}h / ${capacite.toFixed(1)}h`}
+                          >
+                            <div className={`font-semibold ${textClass}`}>
+                              {heures.toFixed(1)}
+                            </div>
+                            <div className="text-[10px] text-muted">
+                              / {capacite.toFixed(1)}h
+                            </div>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  );
+                })}
+                {(!planningGlobal || planningGlobal.planning.length === 0) && !loading && (
+                  <tr>
+                    <td colSpan={days.length + 1} className="text-center py-8 text-muted">
+                      Aucun traducteur trouvé avec ces critères
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
-          {loading && <p className="text-xs text-muted mt-2">Chargement...</p>}
+          {loading && <p className="text-xs text-muted mt-2">Chargement du planning...</p>}
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
-          <p className="text-xs text-muted mt-3">Pagination à ajouter si &gt; 150 traducteurs (Agent 3).</p>
         </CardContent>
       </Card>
     </AppLayout>
