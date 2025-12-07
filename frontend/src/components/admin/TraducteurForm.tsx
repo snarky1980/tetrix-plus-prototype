@@ -200,9 +200,16 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           actif: formData.actif,
         });
 
-        // Mettre à jour les paires linguistiques
+        // Mettre à jour les paires linguistiques (ignorer les erreurs si la paire existe déjà)
         for (const paire of paires) {
-          await traducteurService.ajouterPaireLinguistique(traducteur.id, paire);
+          try {
+            await traducteurService.ajouterPaireLinguistique(traducteur.id, paire);
+          } catch (err: any) {
+            // Ignorer silencieusement si la paire existe déjà
+            if (!err.response?.data?.erreur?.includes('existe déjà')) {
+              throw err; // Propager les autres erreurs
+            }
+          }
         }
         addToast(`Traducteur ${formData.nom} mis à jour avec succès`, 'success');
       } else {
