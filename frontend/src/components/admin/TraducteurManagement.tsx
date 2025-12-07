@@ -86,11 +86,15 @@ export const TraducteurManagement: React.FC = () => {
     {
       header: 'Nom',
       accessor: 'nom',
-      render: (val: string, row: Traducteur) => (
-        <div>
-          <div className="font-medium">{val}</div>
-          <div className="text-xs text-muted">{row.division}</div>
-        </div>
+      render: (val: string) => (
+        <div className="font-medium">{val}</div>
+      ),
+    },
+    {
+      header: 'Division',
+      accessor: 'division',
+      render: (val: string) => (
+        <Badge variant="info">{val}</Badge>
       ),
     },
     {
