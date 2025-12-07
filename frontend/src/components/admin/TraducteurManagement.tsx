@@ -105,25 +105,12 @@ export const TraducteurManagement: React.FC = () => {
     setModalOuvert(true);
   };
 
-  const handleSupprimerTraducteur = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir désactiver ce traducteur ?')) {
-      return;
-    }
-    try {
-      await traducteurService.desactiverTraducteur(id);
-      await chargerTraducteurs();
-    } catch (err) {
-      console.error('Erreur suppression:', err);
-      alert('Erreur lors de la suppression');
-    }
-  };
-
   const columns = [
     {
       header: 'Nom',
       accessor: 'nom',
       render: (val: string) => (
-        <div className="font-medium">{val}</div>
+        <div className="font-medium text-primaire">{val}</div>
       ),
     },
     {
@@ -181,34 +168,6 @@ export const TraducteurManagement: React.FC = () => {
         <Badge variant={val ? 'success' : 'default'}>
           {val ? 'Actif' : 'Inactif'}
         </Badge>
-      ),
-    },
-    {
-      header: 'Actions',
-      accessor: 'id',
-      render: (_: string, row: Traducteur) => (
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleEditerTraducteur(row);
-            }}
-            className="py-1 px-2 text-xs"
-          >
-            Modifier
-          </Button>
-          <Button
-            variant="danger"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleSupprimerTraducteur(row.id);
-            }}
-            className="py-1 px-2 text-xs"
-          >
-            Désactiver
-          </Button>
-        </div>
       ),
     },
   ];
@@ -306,6 +265,7 @@ export const TraducteurManagement: React.FC = () => {
                 data={traducteursFiltres}
                 columns={columns}
                 emptyMessage="Aucun traducteur trouvé"
+                onRowClick={handleEditerTraducteur}
               />
             </>
           )}
