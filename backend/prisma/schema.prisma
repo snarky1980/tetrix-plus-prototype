@@ -1,6 +1,3 @@
-// Schéma Prisma pour Tetrix PLUS
-// Toutes les heures sont stockées en Float (décimales : 1.25, 0.50, 7.5, etc.)
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,23 +7,122 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================
-// GESTION DES UTILISATEURS ET AUTHENTIFICATION
-// ============================================
-
 model Utilisateur {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  motDePasse       String   // Hash bcrypt
-  role             Role     @default(TRADUCTEUR)
-  actif            Boolean  @default(true)
-  
-  traducteur       Traducteur?
-  
-  creeLe           DateTime @default(now())
-  modifieLe        DateTime @updatedAt
-  
+  id         String      @id @default(uuid())
+  email      String      @unique
+  motDePasse String
+  role       Role        @default(TRADUCTEUR)
+  actif      Boolean     @default(true)
+  creeLe     DateTime    @default(now())
+  modifieLe  DateTime    @updatedAt
+  traducteur Traducteur?
+
   @@map("utilisateurs")
+}
+
+model Traducteur {
+  id                    String              @id @default(uuid())
+  nom                   String
+  division              String
+  domaines              String[]
+  clientsHabituels      String[]
+  capaciteHeuresParJour Float               @default(7.5)
+  actif                 Boolean             @default(true)
+  utilisateurId         String              @unique
+  creeLe                DateTime            @default(now())
+  modifieLe             DateTime            @updatedAt
+  classification        String
+  horaire               String?
+  notes                 String?
+  specialisations       String[]            @default([])
+  ajustementsTemps      AjustementTemps[]
+  pairesLinguistiques   PaireLinguistique[]
+  taches                Tache[]
+  utilisateur           Utilisateur         @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([division])
+  @@index([actif])
+  @@map("traducteurs")
+}
+
+model PaireLinguistique {
+  id           String     @id @default(uuid())
+  langueSource String
+  langueCible  String
+  traducteurId String
+  creeLe       DateTime   @default(now())
+  traducteur   Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+  taches       Tache[]
+
+  @@unique([traducteurId, langueSource, langueCible])
+  @@index([langueSource, langueCible])
+  @@map("paires_linguistiques")
+}
+
+model Client {
+  id           String   @id @default(uuid())
+  nom          String   @unique
+  sousDomaines String[]
+  actif        Boolean  @default(true)
+  creeLe       DateTime @default(now())
+  modifieLe    DateTime @updatedAt
+  taches       Tache[]
+
+  @@map("clients")
+}
+
+model SousDomaine {
+  id            String   @id @default(uuid())
+  nom           String   @unique
+  domaineParent String?
+  actif         Boolean  @default(true)
+  creeLe        DateTime @default(now())
+  modifieLe     DateTime @updatedAt
+  taches        Tache[]
+
+  @@map("sous_domaines")
+}
+
+model Tache {
+  id                  String            @id @default(uuid())
+  description         String
+  heuresTotal         Float
+  dateEcheance        DateTime
+  statut              StatutTache       @default(PLANIFIEE)
+  traducteurId        String
+  clientId            String?
+  sousDomaineId       String?
+  paireLinguistiqueId String
+  creePar             String
+  creeLe              DateTime          @default(now())
+  modifieLe           DateTime          @updatedAt
+  ajustementsTemps    AjustementTemps[]
+  client              Client?           @relation(fields: [clientId], references: [id])
+  paireLinguistique   PaireLinguistique @relation(fields: [paireLinguistiqueId], references: [id])
+  sousDomaine         SousDomaine?      @relation(fields: [sousDomaineId], references: [id])
+  traducteur          Traducteur        @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@index([traducteurId])
+  @@index([dateEcheance])
+  @@index([statut])
+  @@map("taches")
+}
+
+model AjustementTemps {
+  id           String         @id @default(uuid())
+  date         DateTime       @db.Date
+  heures       Float
+  type         TypeAjustement
+  traducteurId String
+  tacheId      String?
+  creePar      String
+  creeLe       DateTime       @default(now())
+  tache        Tache?         @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur     @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, date, tacheId, type])
+  @@index([traducteurId, date])
+  @@map("ajustements_temps")
 }
 
 enum Role {
@@ -35,150 +131,10 @@ enum Role {
   TRADUCTEUR
 }
 
-// ============================================
-// TRADUCTEURS ET COMPÉTENCES
-// ============================================
-
-model Traducteur {
-  id                      String   @id @default(uuid())
-  nom                     String
-  division                String   // Droit, Science et technologie, CISR, etc.
-  classification          String   // TR1, TR2, TR3 (obligatoire)
-  horaire                 String?  // Optionnel: "9h-17h", "8h30-16h30"
-  domaines                String[] // Liste de domaines
-  clientsHabituels        String[] // Liste de noms de clients (optionnel)
-  specialisations         String[] @default([]) // Spécialisations (immigration, juridique, médical, etc.)
-  notes                   String?  // Notes diverses (ex: en congé le mercredi, un vendredi sur trois)
-  capaciteHeuresParJour   Float    @default(7.5) // Heures décimales
-  actif                   Boolean  @default(true)
-  
-  utilisateurId           String   @unique
-  utilisateur             Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-  
-  pairesLinguistiques     PaireLinguistique[]
-  taches                  Tache[]
-  ajustementsTemps        AjustementTemps[]
-  
-  creeLe                  DateTime @default(now())
-  modifieLe               DateTime @updatedAt
-  
-  @@index([division])
-  @@index([actif])
-  @@map("traducteurs")
-}
-
-model PaireLinguistique {
-  id              String   @id @default(uuid())
-  langueSource    String   // Code ISO : EN, FR, ES, IT, etc.
-  langueCible     String   // Code ISO
-  
-  traducteurId    String
-  traducteur      Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
-  
-  taches          Tache[]
-  
-  creeLe          DateTime @default(now())
-  
-  @@unique([traducteurId, langueSource, langueCible])
-  @@index([langueSource, langueCible])
-  @@map("paires_linguistiques")
-}
-
-// ============================================
-// CLIENTS ET DOMAINES
-// ============================================
-
-model Client {
-  id              String   @id @default(uuid())
-  nom             String   @unique
-  sousDomaines    String[] // Liste de sous-domaines
-  actif           Boolean  @default(true)
-  
-  taches          Tache[]
-  
-  creeLe          DateTime @default(now())
-  modifieLe       DateTime @updatedAt
-  
-  @@map("clients")
-}
-
-model SousDomaine {
-  id              String   @id @default(uuid())
-  nom             String   @unique
-  domaineParent   String?  // Optionnel : domaine parent
-  actif           Boolean  @default(true)
-  
-  taches          Tache[]
-  
-  creeLe          DateTime @default(now())
-  modifieLe       DateTime @updatedAt
-  
-  @@map("sous_domaines")
-}
-
-// ============================================
-// TÂCHES
-// ============================================
-
-model Tache {
-  id                      String   @id @default(uuid())
-  description             String
-  heuresTotal             Float    // Heures totales décimales
-  dateEcheance            DateTime
-  statut                  StatutTache @default(PLANIFIEE)
-  
-  traducteurId            String
-  traducteur              Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
-  
-  clientId                String?
-  client                  Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  
-  sousDomaineId           String?
-  sousDomaine             SousDomaine? @relation(fields: [sousDomaineId], references: [id], onDelete: SetNull)
-  
-  paireLinguistiqueId     String
-  paireLinguistique       PaireLinguistique @relation(fields: [paireLinguistiqueId], references: [id], onDelete: Restrict)
-  
-  ajustementsTemps        AjustementTemps[]
-  
-  creePar                 String   // ID utilisateur
-  creeLe                  DateTime @default(now())
-  modifieLe               DateTime @updatedAt
-  
-  @@index([traducteurId])
-  @@index([dateEcheance])
-  @@index([statut])
-  @@map("taches")
-}
-
 enum StatutTache {
   PLANIFIEE
   EN_COURS
   TERMINEE
-}
-
-// ============================================
-// AJUSTEMENTS DE TEMPS (TÂCHES + BLOCAGES)
-// ============================================
-
-model AjustementTemps {
-  id              String   @id @default(uuid())
-  date            DateTime @db.Date
-  heures          Float    // Heures décimales (0.25, 1.75, 7.5, etc.)
-  type            TypeAjustement
-  
-  traducteurId    String
-  traducteur      Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
-  
-  tacheId         String?
-  tache           Tache?     @relation(fields: [tacheId], references: [id], onDelete: Cascade)
-  
-  creePar         String   // ID utilisateur
-  creeLe          DateTime @default(now())
-  
-  @@unique([traducteurId, date, tacheId, type])
-  @@index([traducteurId, date])
-  @@map("ajustements_temps")
 }
 
 enum TypeAjustement {
