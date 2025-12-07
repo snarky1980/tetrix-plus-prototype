@@ -19,7 +19,6 @@ import api from '../services/api';
  * Dashboard Traducteur - Planning personnel et blocage de temps
  */
 const DashboardTraducteur: React.FC = () => {
-  usePageTitle('Traducteur Tetrix PLUS', 'Consultez votre planning et bloquez votre temps');
   const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
   const [blocageData, setBlocageData] = useState({ date: '', heures: 0 });
   const [submitting, setSubmitting] = useState(false);
@@ -32,6 +31,10 @@ const DashboardTraducteur: React.FC = () => {
     dateDebut: dateISO(aujourdHui), 
     dateFin: dateISO(fin) 
   });
+
+  // Mettre à jour le titre de la page avec le nom du traducteur
+  const titreTraducteur = planning?.traducteur?.nom || 'Traducteur';
+  usePageTitle(`${titreTraducteur} - Tetrix PLUS`, 'Consultez votre planning et bloquez votre temps');
 
   const resume = useMemo(() => {
     if (!planning) return { taches: 0, blocages: 0, libre: 0, capacite: 0 };
