@@ -8,6 +8,7 @@ import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { TraducteurForm } from './TraducteurForm';
+// Force rebuild for cache refresh
 import { Traducteur } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
 
