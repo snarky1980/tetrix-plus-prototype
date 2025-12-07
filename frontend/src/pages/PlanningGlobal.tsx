@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -15,6 +16,7 @@ import { traducteurService } from '../services/traducteurService';
 
 const PlanningGlobal: React.FC = () => {
   usePageTitle('Tetrix PLUS Planning', 'Consultez le planning global des traductions');
+  const navigate = useNavigate();
   // const { utilisateur } = useAuth(); // réservé pour filtres par rôle
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
   const today = useMemo(() => dateISO(new Date()), []);
@@ -299,10 +301,16 @@ const PlanningGlobal: React.FC = () => {
                   return (
                     <tr key={ligne.traducteur.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
                       <td className="border-r border-b border-border px-3 py-2 font-medium sticky left-0 bg-inherit z-10">
-                        <div className="truncate" title={ligne.traducteur.nom}>
-                          {ligne.traducteur.nom}
-                        </div>
-                        <div className="text-[10px] text-muted">{ligne.traducteur.division}</div>
+                        <button
+                          onClick={() => navigate(`/admin/traducteurs/${ligne.traducteur.id}`)}
+                          className="text-left w-full hover:text-primary transition-colors cursor-pointer"
+                          title={`Voir la fiche de ${ligne.traducteur.nom}`}
+                        >
+                          <div className="truncate font-medium">
+                            {ligne.traducteur.nom}
+                          </div>
+                          <div className="text-[10px] text-muted">{ligne.traducteur.division}</div>
+                        </button>
                       </td>
                       {days.map((iso) => {
                         const info = ligne.dates[iso];
@@ -327,14 +335,26 @@ const PlanningGlobal: React.FC = () => {
                           <td
                             key={iso}
                             className={`border-r border-b border-border text-center px-1 py-2 ${bgClass} ${isTodayCol ? 'ring-2 ring-inset ring-blue-400' : ''}`}
-                            title={`${ligne.traducteur.nom}\n${iso}\n${heures.toFixed(1)}h / ${capacite.toFixed(1)}h`}
                           >
-                            <div className={`font-semibold ${textClass}`}>
-                              {heures.toFixed(1)}
-                            </div>
-                            <div className="text-[10px] text-muted">
-                              / {capacite.toFixed(1)}h
-                            </div>
+                            <button
+                              onClick={() => {
+                                // Navigate to tasks filtered by traducteur and date
+                                const params = new URLSearchParams({
+                                  traducteurId: ligne.traducteur.id,
+                                  date: iso,
+                                });
+                                navigate(`/conseiller/taches?${params.toString()}`);
+                              }}
+                              className="w-full h-full hover:opacity-80 transition-opacity cursor-pointer"
+                              title={`${ligne.traducteur.nom}\n${iso}\n${heures.toFixed(1)}h / ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
+                            >
+                              <div className={`font-semibold ${textClass}`}>
+                                {heures.toFixed(1)}
+                              </div>
+                              <div className="text-[10px] text-muted">
+                                / {capacite.toFixed(1)}h
+                              </div>
+                            </button>
                           </td>
                         );
                       })}
