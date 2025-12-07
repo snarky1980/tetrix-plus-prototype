@@ -3,16 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { TagInput } from '../components/ui/TagInput';
 import { Select } from '../components/ui/Select';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
-import { formatHeures } from '../lib/format';
 import { clientService } from '../services/clientService';
 import { sousDomaineService } from '../services/sousDomaineService';
 import { traducteurService } from '../services/traducteurService';
-// import { useAuth } from '../contexts/AuthContext';
 
 const PlanningGlobal: React.FC = () => {
   usePageTitle('Tetrix PLUS Planning', 'Consultez le planning global des traductions');
@@ -73,7 +69,7 @@ const PlanningGlobal: React.FC = () => {
     [applied, endDate]
   );
 
-  const { planningGlobal, loading, error, refresh } = usePlanningGlobal(params);
+  const { planningGlobal, loading, error } = usePlanningGlobal(params);
 
   const days = useMemo(() => {
     const base = new Date(applied.start || today);
@@ -83,11 +79,6 @@ const PlanningGlobal: React.FC = () => {
       return dateISO(d);
     });
   }, [applied.start, applied.range, today]);
-
-  const formatJour = (iso: string) => {
-    const d = new Date(iso);
-    return new Intl.DateTimeFormat('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' }).format(d);
-  };
 
   const isToday = (iso: string) => iso === today;
 
