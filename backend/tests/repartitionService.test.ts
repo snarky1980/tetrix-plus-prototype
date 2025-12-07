@@ -33,6 +33,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 5,
+        classification: 'A',
         utilisateur: { create: { email: `jat_${Date.now()}@test.local`, motDePasse: 'x', role: 'TRADUCTEUR' } }
       }
     });
@@ -55,6 +56,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 2,
+        classification: 'A',
         utilisateur: { create: { email: `jat_insuff_${Date.now()}@test.local`, motDePasse: 'x', role: 'TRADUCTEUR' } }
       }
     });
