@@ -260,54 +260,77 @@ export const importerDroit = async (req: Request, res: Response): Promise<void> 
   }
 };
 
-// Traducteurs EM (English and Multilingual) - 26 personnes
+// Traducteurs EM (English and Multilingual) - 26 personnes + 19 ETD2 + 21 EMTD
 const emTranslators = [
-  { nom: 'Armin-Pereda, Jennifer', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'SOC'], clients: ['Patrimoine'], sousDomaines: ['Littérature', 'Histoire'], specialisations: ['Protected C', 'Secret'] },
-  { nom: 'Balkwill, Janna', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'CRIM SCorr.', 'CRIM Front.'], clients: ['EDSC', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Ballard, Natalie', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: ['SPAC'], sousDomaines: [], specialisations: [] },
-  { nom: 'Brégent, Delphine', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Centomo-Bozzo, Olivia', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN', 'EMP'], clients: ['EDSC', 'FPC'], sousDomaines: [], specialisations: ['Secret'] },
-  { nom: 'Desharats, Sebastian', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Protected C', 'Secret'] },
-  { nom: 'Ducharme, Suzanne', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
-  { nom: 'Forster, Kate', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR', 'SOC'], clients: [], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
-  { nom: 'Fung, Hillary', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: [] },
-  { nom: 'Gow, Francie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT', 'SOC'], clients: [], sousDomaines: ['Littérature', 'Histoire'], specialisations: ['Secret'] },
-  { nom: 'Grant, Gail', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC', 'Patrimoine'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
-  { nom: 'Gueglietta, Daniela', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: [] },
-  { nom: 'Kadnikov, Patrick', classification: 'TR-01', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: ['CLO', 'Patrimoine', 'SPAC'], sousDomaines: [], specialisations: [] },
-  { nom: 'Kratz, Johanna', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Secret'] },
-  { nom: 'LaPalme, Hazel', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [] },
-  { nom: 'lee, Pamela', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'ENV', 'AGRI', 'BIO', 'SCN', 'MED', 'DROIT'], clients: ['EDSC', 'FPC'], sousDomaines: [], specialisations: [] },
-  { nom: 'Mar, Vincent', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: [], sousDomaines: [], specialisations: ['Protected C'] },
-  { nom: 'Mercy, Madeleine', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [] },
-  { nom: 'Oettel, Jason', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'SOC'], clients: ['DFO'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [] },
-  { nom: 'Palles, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Secret'] },
-  { nom: 'Paul, Eloise', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC', 'CLO'], sousDomaines: ['Musique'], specialisations: [] },
-  { nom: 'Tan, Elizabeth', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: ['Protected C'] },
-  { nom: 'Vaughan, Nicholas', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [] },
-  { nom: 'McCarthy, Stephanie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'CLO', 'Patrimoine'], sousDomaines: [], specialisations: [] },
-  { nom: 'Feltes, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [] },
-  { nom: 'Hill, Kara', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [] },
+  { nom: 'Armin-Pereda, Jennifer', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'SOC'], clients: ['Patrimoine'], sousDomaines: ['Littérature', 'Histoire'], specialisations: ['Protected C', 'Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Balkwill, Janna', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'CRIM SCorr.', 'CRIM Front.'], clients: ['EDSC', 'CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Ballard, Natalie', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: ['SPAC'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Brégent, Delphine', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Centomo-Bozzo, Olivia', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN', 'EMP'], clients: ['EDSC', 'FPC'], sousDomaines: [], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Desharats, Sebastian', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Protected C', 'Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Ducharme, Suzanne', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Forster, Kate', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR', 'SOC'], clients: [], sousDomaines: ['Littérature', 'Histoire'], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Fung, Hillary', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Gow, Francie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT', 'SOC'], clients: [], sousDomaines: ['Littérature', 'Histoire'], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Grant, Gail', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC', 'Patrimoine'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Gueglietta, Daniela', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Kadnikov, Patrick', classification: 'TR-01', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: ['CLO', 'Patrimoine', 'SPAC'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Kratz, Johanna', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'LaPalme, Hazel', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'lee, Pamela', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'ENV', 'AGRI', 'BIO', 'SCN', 'MED', 'DROIT'], clients: ['EDSC', 'FPC'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Mar, Vincent', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: [], sousDomaines: [], specialisations: ['Protected C'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Mercy, Madeleine', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Oettel, Jason', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'SOC'], clients: ['DFO'], sousDomaines: ['Littérature', 'Histoire'], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Palles, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'DROIT'], clients: [], sousDomaines: [], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Paul, Eloise', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP', 'SOC'], clients: ['EDSC', 'FPC', 'CLO'], sousDomaines: ['Musique'], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Tan, Elizabeth', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: ['Protected C'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Vaughan, Nicholas', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'McCarthy, Stephanie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'CLO', 'Patrimoine'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Feltes, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Hill, Kara', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
   
   // Traduction anglaise 2 (ETD2) - 19 traducteurs
-  { nom: 'Baldakin, Jennifer', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CIRNAC', 'CBSA', 'CISR/IRB', 'PMO'], sousDomaines: [], specialisations: [] },
-  { nom: 'Cavanaugh, Mavis', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['PMO', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Cerutti, Carol', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC'], sousDomaines: [], specialisations: ['Protected C', 'Secret'] },
-  { nom: 'Cox, Trevor', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.', 'MIL TERRE', 'MIL AIR'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Dalrymple, Sarah', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC', 'AUT'], clients: ['Patrimoine', 'VAC', 'CIRNAC'], sousDomaines: [], specialisations: [] },
-  { nom: 'Fraser, Jennifer', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.', 'SOC'], clients: ['CBSA', 'CISR/IRB', 'VAC'], sousDomaines: [], specialisations: [] },
-  { nom: 'Fritz, Monica', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Harries, Emma', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Hentel, Magda', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB', 'Patrimoine'], sousDomaines: [], specialisations: [] },
-  { nom: 'Isailovic, Renata', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Lavigne, Benoit', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC'], sousDomaines: ['Editing'], specialisations: [] },
-  { nom: 'Manktelow, Jennifer', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM', 'MIL TERRE', 'MIL AIR'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'McGivern, Vanessa', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: ['Secret'] },
-  { nom: 'Perles, Michelle', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC', 'PMO'], sousDomaines: [], specialisations: ['Secret'] },
-  { nom: 'Ruddock, Amber', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'EMP'], clients: ['CIRNAC', 'EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [] },
-  { nom: 'Turpin, Laurie', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'EMP'], clients: ['CIRNAC', 'EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [] },
-  { nom: 'Winfield, Stefan', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
-  { nom: 'Winslow, Kimberley', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: ['Secret'] },
+  { nom: 'Baldakin, Jennifer', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CIRNAC', 'CBSA', 'CISR/IRB', 'PMO'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Cavanaugh, Mavis', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['PMO', 'CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Cerutti, Carol', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC'], sousDomaines: [], specialisations: ['Protected C', 'Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Cox, Trevor', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.', 'MIL TERRE', 'MIL AIR'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Dalrymple, Sarah', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC', 'AUT'], clients: ['Patrimoine', 'VAC', 'CIRNAC'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Fraser, Jennifer', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.', 'SOC'], clients: ['CBSA', 'CISR/IRB', 'VAC'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Fritz, Monica', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Harries, Emma', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Hentel, Magda', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB', 'Patrimoine'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Isailovic, Renata', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Lavigne, Benoit', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC'], sousDomaines: ['Editing'], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Manktelow, Jennifer', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM', 'MIL TERRE', 'MIL AIR'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'McGivern, Vanessa', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Perles, Michelle', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC', 'PMO'], sousDomaines: [], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Ruddock, Amber', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'EMP'], clients: ['CIRNAC', 'EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Turpin, Laurie', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'EMP'], clients: ['CIRNAC', 'EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Winfield, Stefan', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Winslow, Kimberley', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: ['Secret'], paires: [{source: 'FR', cible: 'EN'}] },
+  
+  // Multilingue (EMTD) - 21 traducteurs
+  { nom: 'Duquette, Evan', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'TECH', 'TRA', 'MIL TERRE', 'MIL AIR'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Echeverri, Sergio', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'TECH', 'TRA', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'ES', cible: 'EN'}, {source: 'PT', cible: 'EN'}] },
+  { nom: 'Eland, Andrea', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'TECH', 'TRA', 'CRIM SCorr.', 'MIL TERRE', 'MIL AIR'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Hosek Lee, Jane', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG', 'TECH', 'TRA', 'CRIM SCorr.', 'MIL TERRE', 'MIL AIR'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Klamph, Efraim Iederman', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG'], clients: ['Patrimoine', 'DFO'], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Leighton, Heather', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'ES', cible: 'EN'}, {source: 'PT', cible: 'EN'}, {source: 'FR', cible: 'EN'}] },
+  { nom: 'Li, Baoyu', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'ZH', cible: 'EN'}] },
+  { nom: 'Mann, Elizabeth', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'ES', cible: 'EN'}, {source: 'PT', cible: 'EN'}, {source: 'IT', cible: 'EN'}] },
+  { nom: 'McFarlane, Elizabeth', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Mirarabshahi, Seyedsina', classification: 'TR-01', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FA', cible: 'EN'}, {source: 'EN', cible: 'FA'}] },
+  { nom: 'Mullin, Maryann', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'MED'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Oostveen, Karen A', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG', 'TECH', 'TRA'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Pang, Wingshun', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Rabussier, Juliette', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'MED'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'ES', cible: 'FR'}, {source: 'PT', cible: 'FR'}, {source: 'IT', cible: 'FR'}] },
+  { nom: 'Rathjen, Claudia', classification: 'TR-02', division: 'Multilingue', domaines: ['TAG', 'MED'], clients: [], sousDomaines: [], specialisations: ['Secret', 'Protected C'], paires: [{source: 'FR', cible: 'EN'}] },
+  { nom: 'Rubio, Zoubair', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'AR', cible: 'EN'}, {source: 'AR', cible: 'FR'}, {source: 'EN', cible: 'AR'}, {source: 'FR', cible: 'AR'}] },
+  { nom: 'Schultz, Barbara', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'DE', cible: 'EN'}, {source: 'NL', cible: 'EN'}] },
+  { nom: 'Tsuruta, Sayuri', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'JA', cible: 'EN'}, {source: 'EN', cible: 'JA'}] },
+  { nom: 'Urdininea, Frances', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'EN', cible: 'ES'}, {source: 'FR', cible: 'ES'}] },
+  { nom: 'Vega Iraneta, Beatriz De', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'EN', cible: 'ES'}, {source: 'FR', cible: 'ES'}] },
+  { nom: 'Whimster, Peter', classification: 'TR-03', division: 'Multilingue', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [], paires: [{source: 'JA', cible: 'EN'}, {source: 'ZH', cible: 'EN'}] },
 ];
 
 export const importerEM = async (req: Request, res: Response): Promise<void> => {
@@ -351,7 +374,7 @@ export const importerEM = async (req: Request, res: Response): Promise<void> => 
               actif: true,
               utilisateurId: utilisateur.id,
               pairesLinguistiques: {
-                create: [{ langueSource: 'FR', langueCible: 'EN' }],
+                create: t.paires.map(p => ({ langueSource: p.source, langueCible: p.cible })),
               },
             },
           });
@@ -375,13 +398,15 @@ export const importerEM = async (req: Request, res: Response): Promise<void> => 
           await prisma.paireLinguistique.deleteMany({
             where: { traducteurId: existingTrad.id },
           });
-          await prisma.paireLinguistique.create({
-            data: {
-              traducteurId: existingTrad.id,
-              langueSource: 'FR',
-              langueCible: 'EN',
-            },
-          });
+          for (const p of t.paires) {
+            await prisma.paireLinguistique.create({
+              data: {
+                traducteurId: existingTrad.id,
+                langueSource: p.source,
+                langueCible: p.cible,
+              },
+            });
+          }
         }
 
         results.success++;
