@@ -1,3 +1,5 @@
+import { TraducteurForm } from './TraducteurForm';
+import { Traducteur } from '../../types';
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -6,9 +8,6 @@ import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
-import { TraducteurForm } from './TraducteurForm';
-// Force rebuild for cache refresh
-import { Traducteur } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
 
 export const TraducteurManagement: React.FC = () => {
