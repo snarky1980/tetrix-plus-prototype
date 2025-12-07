@@ -288,6 +288,26 @@ const emTranslators = [
   { nom: 'McCarthy, Stephanie', classification: 'TR-02', division: 'Traduction anglaise 1', domaines: ['TAG', 'EMP'], clients: ['EDSC', 'FPC', 'CLO', 'Patrimoine'], sousDomaines: [], specialisations: [] },
   { nom: 'Feltes, Michael', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [] },
   { nom: 'Hill, Kara', classification: 'TR-03', division: 'Traduction anglaise 1', domaines: ['TAG'], clients: [], sousDomaines: [], specialisations: [] },
+  
+  // Traduction anglaise 2 (ETD2) - 19 traducteurs
+  { nom: 'Baldakin, Jennifer', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CIRNAC', 'CBSA', 'CISR/IRB', 'PMO'], sousDomaines: [], specialisations: [] },
+  { nom: 'Cavanaugh, Mavis', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['PMO', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Cerutti, Carol', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC'], sousDomaines: [], specialisations: ['Protected C', 'Secret'] },
+  { nom: 'Cox, Trevor', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.', 'MIL TERRE', 'MIL AIR'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Dalrymple, Sarah', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC', 'AUT'], clients: ['Patrimoine', 'VAC', 'CIRNAC'], sousDomaines: [], specialisations: [] },
+  { nom: 'Fraser, Jennifer', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.', 'SOC'], clients: ['CBSA', 'CISR/IRB', 'VAC'], sousDomaines: [], specialisations: [] },
+  { nom: 'Fritz, Monica', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Harries, Emma', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM', 'ENV', 'AGRI', 'BIO', 'SCN'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Hentel, Magda', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB', 'Patrimoine'], sousDomaines: [], specialisations: [] },
+  { nom: 'Isailovic, Renata', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Lavigne, Benoit', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC'], sousDomaines: ['Editing'], specialisations: [] },
+  { nom: 'Manktelow, Jennifer', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM', 'MIL TERRE', 'MIL AIR'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'McGivern, Vanessa', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: ['Secret'] },
+  { nom: 'Perles, Michelle', classification: 'TR-03', division: 'Traduction anglaise 2', domaines: ['TAG', 'SOC'], clients: ['GAC', 'PMO'], sousDomaines: [], specialisations: ['Secret'] },
+  { nom: 'Ruddock, Amber', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'EMP'], clients: ['CIRNAC', 'EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [] },
+  { nom: 'Turpin, Laurie', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'AUT', 'EMP'], clients: ['CIRNAC', 'EDSC', 'FPC', 'Patrimoine'], sousDomaines: [], specialisations: [] },
+  { nom: 'Winfield, Stefan', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'IMM'], clients: ['CISR/IRB'], sousDomaines: [], specialisations: [] },
+  { nom: 'Winslow, Kimberley', classification: 'TR-02', division: 'Traduction anglaise 2', domaines: ['TAG', 'CRIM SCorr.', 'CRIM Front.'], clients: ['CBSA', 'CISR/IRB'], sousDomaines: [], specialisations: ['Secret'] },
 ];
 
 export const importerEM = async (req: Request, res: Response): Promise<void> => {
