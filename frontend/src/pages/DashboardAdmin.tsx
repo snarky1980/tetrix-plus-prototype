@@ -113,7 +113,7 @@ const DashboardAdmin: React.FC = () => {
               <Card>
                 <CardHeader><CardTitle>Utilisateurs & Rôles</CardTitle></CardHeader>
                 <CardContent>
-                  <p className="text-muted mb-4">Gestion des comptes (ADMIN, CONSEILLER, TRADUCTEUR).</p>
+                  <p className="text-muted mb-4">Gestion des comptes (ADMIN, CONSEILLER, GESTIONNAIRE, TRADUCTEUR).</p>
                   <Button 
                     variant="ghost" 
                     aria-label="Gérer utilisateurs"
