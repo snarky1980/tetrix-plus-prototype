@@ -22,16 +22,18 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
   onSauvegarder,
 }) => {
   const { addToast } = useToast();
+  const DIVISION_OPTIONS = ['CISR', 'Droit', 'Science et technologie', 'Autre'];
+  const CLASSIFICATION_OPTIONS = ['TR-01', 'TR-02', 'TR-03'];
   const [formData, setFormData] = useState({
     nom: '',
-    division: '',
-    classification: 'TR2' as string,
+    division: DIVISION_OPTIONS[0],
+    classification: 'TR-02' as string,
     horaire: '' as string,
     email: '',
-    motDePasse: '',
-    capaciteHeuresParJour: 7.5,
-    domaines: [] as string[],
-    clientsHabituels: [] as string[],
+    motDePasse: 'password123',
+    capaciteHeuresParJour: 7,
+    domaines: ['TAG', 'IMM'] as string[],
+    clientsHabituels: ['CISR'] as string[],
     specialisations: [] as string[],
     notes: '' as string,
     actif: true,
@@ -48,12 +50,12 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     if (traducteur) {
       setFormData({
         nom: traducteur.nom,
-        division: traducteur.division,
-        classification: traducteur.classification || 'TR2',
+        division: traducteur.division || DIVISION_OPTIONS[0],
+        classification: traducteur.classification || 'TR-02',
         horaire: traducteur.horaire || '',
         email: '',
         motDePasse: '',
-        capaciteHeuresParJour: traducteur.capaciteHeuresParJour,
+        capaciteHeuresParJour: traducteur.capaciteHeuresParJour || 7,
         domaines: [...traducteur.domaines],
         clientsHabituels: [...traducteur.clientsHabituels],
         specialisations: [...(traducteur.specialisations || [])],
@@ -69,19 +71,19 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     } else {
       setFormData({
         nom: '',
-        division: '',
-        classification: 'TR2',
+        division: DIVISION_OPTIONS[0],
+        classification: 'TR-02',
         horaire: '',
         email: '',
-        motDePasse: '',
-        capaciteHeuresParJour: 7.5,
-        domaines: [],
-        clientsHabituels: [],
+        motDePasse: 'password123',
+        capaciteHeuresParJour: 7,
+        domaines: ['TAG', 'IMM'],
+        clientsHabituels: ['CISR'],
         specialisations: [],
         notes: '',
         actif: true,
       });
-      setPaires([]);
+      setPaires([{ langueSource: 'EN', langueCible: 'FR' }]);
     }
     setErreur('');
   }, [traducteur, ouvert]);
@@ -188,9 +190,13 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         await traducteurService.mettreAJourTraducteur(traducteur.id, {
           nom: formData.nom,
           division: formData.division,
+          classification: formData.classification,
+          horaire: formData.horaire,
+          notes: formData.notes,
           capaciteHeuresParJour: formData.capaciteHeuresParJour,
           domaines: formData.domaines,
           clientsHabituels: formData.clientsHabituels,
+          specialisations: formData.specialisations,
           actif: formData.actif,
         });
 
@@ -251,13 +257,18 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         </FormField>
 
         <FormField label="Division" required helper="Domaine de travail (Droit, Science et technologie, CISR, etc.)">
-          <Input
+          <select
             value={formData.division}
             onChange={e => setFormData({ ...formData, division: e.target.value })}
+            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             required
-            placeholder="Droit, Science et technologie, CISR..."
-            error={!formData.division && formData !== undefined}
-          />
+          >
+            {DIVISION_OPTIONS.map(option => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
         </FormField>
 
         <FormField label="Classification" required helper="Niveau de compétence du traducteur">
@@ -267,9 +278,11 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             required
           >
-            <option value="TR1">TR1</option>
-            <option value="TR2">TR2</option>
-            <option value="TR3">TR3</option>
+            {CLASSIFICATION_OPTIONS.map(option => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
           </select>
         </FormField>
 

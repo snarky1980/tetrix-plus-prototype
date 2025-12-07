@@ -13,6 +13,7 @@ import sousDomaineRoutes from './routes/sousDomaineRoutes';
 import tacheRoutes from './routes/tacheRoutes';
 import planningRoutes from './routes/planningRoutes';
 import repartitionRoutes from './routes/repartitionRoutes';
+import importRoutes from './routes/importRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -112,6 +113,7 @@ app.use('/api/sous-domaines', sousDomaineRoutes);
 app.use('/api/taches', tacheRoutes);
 app.use('/api', planningRoutes); // Routes planning (plusieurs endpoints)
 app.use('/api/repartition', repartitionRoutes);
+app.use('/api/import', importRoutes);
 
 // Route 404
 app.use((req, res) => {
