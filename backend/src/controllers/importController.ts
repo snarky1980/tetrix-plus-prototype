@@ -42,6 +42,34 @@ const emailFromName = (nom: string) => {
   return stripAccents(raw).replace(/[^a-z0-9.]/g, '') + '@tetrix.com';
 };
 
+const droitTranslators = [
+  // Droit 1
+  { nom: 'Deslippes, Maxime', classification: 'TR-03', horaire: '8h45-19h45', division: 'Droit 1' },
+  { nom: 'Laroche, Christian', classification: 'TR-03', horaire: '8h-16h50', notes: 'congé 1 lun sur 2', division: 'Droit 1' },
+  { nom: 'Leclerc, Claude', classification: 'TR-03', horaire: '7h30-15h30', division: 'Droit 1' },
+  { nom: 'Paquette, Lyne', classification: 'TR-02', horaire: '7h-15h', division: 'Droit 1' },
+  { nom: 'Vincent, Jean-François', classification: 'TR-02', horaire: '8h30-16h30', division: 'Droit 1' },
+  
+  // Droit 2
+  { nom: 'Beauchemin, Priscilla', classification: 'TR-02', horaire: '8h30-16h30', division: 'Droit 2' },
+  { nom: 'Blais, Marie-France', classification: 'TR-02', horaire: '8h-16h', notes: 'détachée jusqu\'en nov.', division: 'Droit 2' },
+  { nom: 'Bissonnette, Julie-Marie', classification: 'TR-03', horaire: '10h-18h', division: 'Droit 2' },
+  { nom: 'Borduas, Mylène', classification: 'TR-02', horaire: '7h30-15h30', division: 'Droit 2' },
+  { nom: 'Champagne, Stéphanie', classification: 'TR-02', horaire: '8h15-16h15', notes: 'marau ven', division: 'Droit 2' },
+  { nom: 'De Angelis, Claudia', classification: 'TR-02', horaire: '8h30-16h30', division: 'Droit 2' },
+  { nom: 'De Lorimier, Maya', classification: 'TR-03', horaire: '7h30-15h30', notes: 'congé lun', division: 'Droit 2' },
+  { nom: 'Foucreault, Luna', classification: 'TR-02', horaire: '8h30-16h30', division: 'Droit 2' },
+  { nom: 'Gelhoas, Mathilde', classification: 'TR-03', horaire: '8h30-16h30', division: 'Droit 2' },
+  { nom: 'Humbert, Alexandra', classification: 'TR-02', horaire: '9h-17h', division: 'Droit 2' },
+  { nom: 'Lampron, Jimmy', classification: 'TR-02', horaire: '8h-16h', division: 'Droit 2' },
+  { nom: 'Mabuishi, Espérance', classification: 'TR-03', horaire: '8h30-16h30', notes: 'congé mer', division: 'Droit 2' },
+  { nom: 'Mardirosian, Alexandros', classification: 'TR-03', horaire: '8h30-16h15', division: 'Droit 2' },
+  { nom: 'Omer, Semra-Denise', classification: 'TR-03', horaire: '7h30-15h30', division: 'Droit 2' },
+  { nom: 'Papadopetrakis, Mélanie', classification: 'TR-02', horaire: '8h30-16h30', division: 'Droit 2' },
+  { nom: 'Tardif, Caroline', classification: 'TR-03', horaire: '8h-16h', division: 'Droit 2' },
+  { nom: 'Tremblay, Geneviève', classification: 'TR-03', horaire: '8h15-16h15', division: 'Droit 2' },
+];
+
 export const importerCISR = async (req: Request, res: Response): Promise<void> => {
   try {
     const passwordHash = await bcrypt.hash('password123', 10);
@@ -129,6 +157,101 @@ export const importerCISR = async (req: Request, res: Response): Promise<void> =
     res.json({
       message: 'Import CISR terminé',
       total: translators.length,
+      success: results.success,
+      errors: results.errors,
+    });
+  } catch (error: any) {
+    res.status(500).json({ erreur: error.message });
+  }
+};
+
+export const importerDroit = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const passwordHash = await bcrypt.hash('password123', 10);
+    const results = { success: 0, errors: [] as string[] };
+
+    for (const t of droitTranslators) {
+      const email = emailFromName(t.nom);
+      const classification = t.classification;
+      const capacite = 7;
+
+      try {
+        const utilisateur = await prisma.utilisateur.upsert({
+          where: { email },
+          update: {},
+          create: {
+            email,
+            motDePasse: passwordHash,
+            role: Role.TRADUCTEUR,
+            actif: true,
+          },
+        });
+
+        const domaines = ['Droit'];
+        const clientsHabituels: string[] = [];
+        const specialisations: string[] = [];
+
+        const existingTrad = await prisma.traducteur.findUnique({
+          where: { utilisateurId: utilisateur.id },
+        });
+
+        if (!existingTrad) {
+          await prisma.traducteur.create({
+            data: {
+              nom: t.nom,
+              division: t.division,
+              classification,
+              horaire: t.horaire || null,
+              notes: t.notes || null,
+              domaines,
+              clientsHabituels,
+              specialisations,
+              capaciteHeuresParJour: capacite,
+              actif: true,
+              utilisateurId: utilisateur.id,
+              pairesLinguistiques: {
+                create: [{ langueSource: 'EN', langueCible: 'FR' }],
+              },
+            },
+          });
+        } else {
+          await prisma.traducteur.update({
+            where: { utilisateurId: utilisateur.id },
+            data: {
+              nom: t.nom,
+              division: t.division,
+              classification,
+              horaire: t.horaire || null,
+              notes: t.notes || null,
+              domaines,
+              clientsHabituels,
+              specialisations,
+              capaciteHeuresParJour: capacite,
+              actif: true,
+            },
+          });
+
+          await prisma.paireLinguistique.deleteMany({
+            where: { traducteurId: existingTrad.id },
+          });
+          await prisma.paireLinguistique.create({
+            data: {
+              traducteurId: existingTrad.id,
+              langueSource: 'EN',
+              langueCible: 'FR',
+            },
+          });
+        }
+
+        results.success++;
+      } catch (err: any) {
+        results.errors.push(`${t.nom}: ${err.message}`);
+      }
+    }
+
+    res.json({
+      message: 'Import Droit terminé',
+      total: droitTranslators.length,
       success: results.success,
       errors: results.errors,
     });

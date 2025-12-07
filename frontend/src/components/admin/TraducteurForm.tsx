@@ -22,7 +22,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
   onSauvegarder,
 }) => {
   const { addToast } = useToast();
-  const DIVISION_OPTIONS = ['CISR', 'Droit', 'Science et technologie', 'Autre'];
+  const DIVISION_OPTIONS = ['CISR', 'Droit 1', 'Droit 2', 'Science et technologie', 'Autre'];
   const CLASSIFICATION_OPTIONS = ['TR-01', 'TR-02', 'TR-03'];
   const [formData, setFormData] = useState({
     nom: '',
