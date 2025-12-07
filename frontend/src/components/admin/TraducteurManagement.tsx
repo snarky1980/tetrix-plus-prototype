@@ -20,20 +20,16 @@ export const TraducteurManagement: React.FC = () => {
   const [filtres, setFiltres] = useState({
     recherche: '',
     division: '',
+    classification: '',
+    domaine: '',
     actif: 'tous',
   });
 
   const chargerTraducteurs = async () => {
     setLoading(true);
     try {
-      const params: any = {};
-      if (filtres.actif !== 'tous') {
-        params.actif = filtres.actif === 'actif';
-      }
-      if (filtres.division) {
-        params.division = filtres.division;
-      }
-      const data = await traducteurService.obtenirTraducteurs(params);
+      // Charger tous les traducteurs, on filtre côté client pour combiner les filtres
+      const data = await traducteurService.obtenirTraducteurs({});
       setTraducteurs(data);
     } catch (err) {
       console.error('Erreur chargement traducteurs:', err);
@@ -44,9 +40,31 @@ export const TraducteurManagement: React.FC = () => {
 
   useEffect(() => {
     chargerTraducteurs();
-  }, [filtres.division, filtres.actif]);
+  }, []);
 
   const traducteursFiltres = traducteurs.filter(t => {
+    // Filtre par statut actif
+    if (filtres.actif !== 'tous') {
+      const actif = filtres.actif === 'actif';
+      if (t.actif !== actif) return false;
+    }
+    
+    // Filtre par division
+    if (filtres.division && t.division !== filtres.division) {
+      return false;
+    }
+    
+    // Filtre par classification
+    if (filtres.classification && t.classification !== filtres.classification) {
+      return false;
+    }
+    
+    // Filtre par domaine
+    if (filtres.domaine && !t.domaines.includes(filtres.domaine)) {
+      return false;
+    }
+    
+    // Filtre par recherche textuelle
     if (filtres.recherche) {
       const recherche = filtres.recherche.toLowerCase();
       return (
@@ -55,10 +73,13 @@ export const TraducteurManagement: React.FC = () => {
         t.domaines.some(d => d.toLowerCase().includes(recherche))
       );
     }
+    
     return true;
   });
 
   const divisions = Array.from(new Set(traducteurs.map(t => t.division))).sort();
+  const classifications = Array.from(new Set(traducteurs.map(t => t.classification).filter(Boolean))).sort();
+  const domaines = Array.from(new Set(traducteurs.flatMap(t => t.domaines))).sort();
 
   const handleNouveauTraducteur = () => {
     setTraducteurSelectionne(undefined);
@@ -190,9 +211,9 @@ export const TraducteurManagement: React.FC = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <Input
-              placeholder="Rechercher par nom, division, domaine..."
+              placeholder="Rechercher par nom..."
               value={filtres.recherche}
               onChange={e => setFiltres({ ...filtres, recherche: e.target.value })}
             />
@@ -202,6 +223,28 @@ export const TraducteurManagement: React.FC = () => {
             >
               <option value="">Toutes les divisions</option>
               {divisions.map(d => (
+                <option key={d} value={d}>
+                  {d}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={filtres.classification}
+              onChange={e => setFiltres({ ...filtres, classification: e.target.value })}
+            >
+              <option value="">Toutes les classifications</option>
+              {classifications.map(c => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={filtres.domaine}
+              onChange={e => setFiltres({ ...filtres, domaine: e.target.value })}
+            >
+              <option value="">Tous les domaines</option>
+              {domaines.map(d => (
                 <option key={d} value={d}>
                   {d}
                 </option>
