@@ -42,6 +42,15 @@ export const TraducteurManagement: React.FC = () => {
     chargerTraducteurs();
   }, []);
 
+  // Générer la liste des paires linguistiques comme couples uniques (ex: EN → FR)
+  const paires = Array.from(
+    new Set(
+      traducteurs
+        .flatMap(t => t.pairesLinguistiques || [])
+        .map(p => `${p.langueSource} → ${p.langueCible}`)
+    )
+  ).sort();
+
   const traducteursFiltres = traducteurs.filter(t => {
     // Filtre par statut actif
     if (filtres.actif !== 'tous') {
@@ -64,10 +73,10 @@ export const TraducteurManagement: React.FC = () => {
       return false;
     }
 
-    // Filtre par paires linguistiques (OR logic - au moins une paire cochée)
+    // Filtre par paires linguistiques (OR logic - au moins une paire complète cochée)
     if (filtres.paires.length > 0) {
       const match = t.pairesLinguistiques?.some(p => 
-        filtres.paires.includes(p.langueSource) || filtres.paires.includes(p.langueCible)
+        filtres.paires.includes(`${p.langueSource} → ${p.langueCible}`)
       );
       if (!match) return false;
     }
@@ -88,9 +97,6 @@ export const TraducteurManagement: React.FC = () => {
   const divisions = Array.from(new Set(traducteurs.map(t => t.division))).sort();
   const classifications = Array.from(new Set(traducteurs.map(t => t.classification).filter(Boolean))).sort();
   const domaines = Array.from(new Set(traducteurs.flatMap(t => t.domaines))).sort();
-  const paires = Array.from(new Set(
-    traducteurs.flatMap(t => t.pairesLinguistiques || []).flatMap(p => [p.langueSource, p.langueCible])
-  )).sort();
 
   const handleNouveauTraducteur = () => {
     setTraducteurSelectionne(undefined);
@@ -261,20 +267,20 @@ export const TraducteurManagement: React.FC = () => {
               <div className="border rounded-lg p-3">
                 <h4 className="font-semibold mb-2 text-sm">Paires linguistiques</h4>
                 <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {paires.map(p => (
-                    <label key={p} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
+                  {paires.map(paire => (
+                    <label key={paire} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
                         type="checkbox"
-                        checked={filtres.paires.includes(p)}
+                        checked={filtres.paires.includes(paire)}
                         onChange={e => {
                           if (e.target.checked) {
-                            setFiltres({ ...filtres, paires: [...filtres.paires, p] });
+                            setFiltres({ ...filtres, paires: [...filtres.paires, paire] });
                           } else {
-                            setFiltres({ ...filtres, paires: filtres.paires.filter(v => v !== p) });
+                            setFiltres({ ...filtres, paires: filtres.paires.filter(v => v !== paire) });
                           }
                         }}
                       />
-                      <span>{p}</span>
+                      <span>{paire}</span>
                     </label>
                   ))}
                 </div>
