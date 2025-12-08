@@ -94,6 +94,9 @@ const PlanificationGlobale: React.FC = () => {
   // Modal statistiques
   const [showStatsModal, setShowStatsModal] = useState(false);
 
+  // Référence pour le scroll horizontal
+  const tableContainerRef = React.useRef<HTMLDivElement>(null);
+
   // Modal ajout de tâche - État complet
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [etapeCreation, setEtapeCreation] = useState(1); // 1 = infos, 2 = répartition
@@ -2665,10 +2668,30 @@ const PlanificationGlobale: React.FC = () => {
         </div>
 
         {/* Zone de tableau avec défilement */}
-        <div className="flex-1 overflow-auto">
-          {loading && <p className="text-xs text-muted text-center py-2">Chargement...</p>}
-          {error && <p className="text-xs text-red-600 text-center py-2">{error}</p>}
-          {!loading && !error && (
+        <div className="relative flex-1">
+          {/* Boutons de navigation horizontale */}
+          <button
+            onClick={() => scrollHorizontal('left')}
+            className="absolute left-[200px] top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-2 shadow-lg transition-all hover:scale-110"
+            title="Défiler vers la gauche (ou utilisez Shift+molette)"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={() => scrollHorizontal('right')}
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-2 shadow-lg transition-all hover:scale-110"
+            title="Défiler vers la droite (ou utilisez Shift+molette)"
+          >
+            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          <div ref={tableContainerRef} className="overflow-auto h-full">
+            {loading && <p className="text-xs text-muted text-center py-2">Chargement...</p>}
+            {error && <p className="text-xs text-red-600 text-center py-2">{error}</p>}
+            {!loading && !error && (
             <table className="w-full border-collapse text-xs">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
@@ -2809,6 +2832,7 @@ const PlanificationGlobale: React.FC = () => {
               </tbody>
             </table>
           )}
+          </div>
         </div>
 
       </div>
