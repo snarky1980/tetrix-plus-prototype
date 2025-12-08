@@ -1598,67 +1598,107 @@ const PlanificationGlobale: React.FC = () => {
           {/* Étape 1 : Informations de base */}
           {etapeCreation === 1 && (
             <div className="space-y-4">
-              {/* Numéro de projet */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Numéro de projet *</label>
-                <Input
-                  type="text"
-                  value={formTache.numeroProjet}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, numeroProjet: e.target.value })}
-                  placeholder="Ex: PROJ-2024-001"
-                  required
-                />
-              </div>
-
-              {/* Traducteur avec recherche */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Traducteur *</label>
-                <Select
-                  value={formTache.traducteurId}
-                  onChange={(e) => setFormTache({ ...formTache, traducteurId: e.target.value })}
-                  required
-                >
-                  <option value="">Rechercher ou sélectionner un traducteur...</option>
-                  {traducteurs.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              {/* Type de tâche */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Type de tâche *</label>
-                <Select
-                  value={formTache.typeTache}
-                  onChange={(e) => setFormTache({ ...formTache, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE' })}
-                  required
-                >
-                  <option value="TRADUCTION">Traduction</option>
-                  <option value="REVISION">Révision</option>
-                  <option value="RELECTURE">Relecture</option>
-                  <option value="AUTRE">Autre</option>
-                </Select>
-              </div>
-
-              {/* Paire linguistique (optionnel) */}
-              {formTache.traducteurId && (
+              {/* Section Champs obligatoires */}
+              <div className="space-y-4 p-4 bg-blue-50 border-2 border-blue-300 rounded">
+                <h3 className="text-sm font-bold text-blue-900 mb-2">📝 Informations obligatoires</h3>
+                
+                {/* Numéro de projet */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Paire linguistique</label>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Numéro de projet <span className="text-red-600">*</span></label>
+                  <Input
+                    type="text"
+                    value={formTache.numeroProjet}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, numeroProjet: e.target.value })}
+                    placeholder="Ex: PROJ-2024-001"
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Traducteur */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Traducteur <span className="text-red-600">*</span></label>
                   <Select
-                    value={formTache.paireLinguistiqueId}
-                    onChange={(e) => setFormTache({ ...formTache, paireLinguistiqueId: e.target.value })}
+                    value={formTache.traducteurId}
+                    onChange={(e) => setFormTache({ ...formTache, traducteurId: e.target.value })}
+                    required
+                    className="border-2 border-blue-300"
                   >
-                    <option value="">Aucune paire linguistique</option>
-                    {pairesDisponibles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.langueSource} → {p.langueCible}
+                    <option value="">Rechercher ou sélectionner un traducteur...</option>
+                    {traducteurs.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
                 </div>
-              )}
+
+                {/* Type de tâche */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Type de tâche <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formTache.typeTache}
+                    onChange={(e) => setFormTache({ ...formTache, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="TRADUCTION">Traduction</option>
+                    <option value="REVISION">Révision</option>
+                    <option value="RELECTURE">Relecture</option>
+                    <option value="AUTRE">Autre</option>
+                  </Select>
+                </div>
+
+                {/* Heures totales */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Heures totales <span className="text-red-600">*</span></label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formTache.heuresTotal}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, heuresTotal: e.target.value })}
+                    placeholder="Ex: 4.5"
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Date d'échéance */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Date d'échéance <span className="text-red-600">*</span></label>
+                  <Input
+                    type="date"
+                    value={formTache.dateEcheance}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateEcheance: e.target.value })}
+                    min={today}
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+              </div>
+
+              {/* Section Champs optionnels */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">📎 Informations optionnelles</h3>
+                
+                {/* Paire linguistique (optionnel) */}
+                {formTache.traducteurId && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Paire linguistique <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                    <Select
+                      value={formTache.paireLinguistiqueId}
+                      onChange={(e) => setFormTache({ ...formTache, paireLinguistiqueId: e.target.value })}
+                    >
+                      <option value="">Aucune paire linguistique</option>
+                      {pairesDisponibles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.langueSource} → {p.langueCible}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
 
               {/* Client (optionnel) */}
               <div>
@@ -1737,77 +1777,39 @@ const PlanificationGlobale: React.FC = () => {
                 />
               </div>
 
-              {/* Type de répartition */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Répartition *</label>
-                <Select
-                  value={formTache.typeRepartition}
-                  onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL' })}
-                  required
-                >
-                  <option value="JUSTE_TEMPS">Juste à temps (JAT)</option>
-                  <option value="EQUILIBRE">Équilibrer sur le temps</option>
-                  <option value="PEPS">Première entrée, première sortie (PEPS)</option>
-                  <option value="MANUEL">Répartition manuelle</option>
-                </Select>
-              </div>
-
-              {/* Dates pour répartition équilibrée */}
-              {formTache.typeRepartition === 'EQUILIBRE' && (
-                <div className="grid grid-cols-2 gap-3 p-3 bg-blue-50 border border-blue-200 rounded">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date de début *</label>
-                    <Input
-                      type="date"
-                      value={formTache.dateDebut}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateDebut: e.target.value })}
-                      min={today}
-                      required
+              {/* Mode de répartition simplifié */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-gray-900 mb-2">⚙️ Mode de répartition <span className="text-red-600">*</span></h3>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'JUSTE_TEMPS' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="JUSTE_TEMPS"
+                      checked={formTache.typeRepartition === 'JUSTE_TEMPS'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'MANUEL' })}
+                      className="mt-1"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date de fin *</label>
-                    <Input
-                      type="date"
-                      value={formTache.dateFin}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateFin: e.target.value })}
-                      min={formTache.dateDebut}
-                      required
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">🤖 Automatique (recommandé)</div>
+                      <div className="text-xs text-gray-600 mt-1">Le système répartit intelligemment les heures jusqu'à l'échéance en fonction de la disponibilité du traducteur.</div>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'MANUEL' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="MANUEL"
+                      checked={formTache.typeRepartition === 'MANUEL'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'MANUEL' })}
+                      className="mt-1"
                     />
-                  </div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">✍️ Manuel</div>
+                      <div className="text-xs text-gray-600 mt-1">Vous choisissez vous-même comment répartir les heures jour par jour.</div>
+                    </div>
+                  </label>
                 </div>
-              )}
-
-              {/* Date de début pour répartition PEPS */}
-              {formTache.typeRepartition === 'PEPS' && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date de début *</label>
-                    <Input
-                      type="date"
-                      value={formTache.dateDebut}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateDebut: e.target.value })}
-                      min={today}
-                      required
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Description du type de répartition */}
-              <div className="p-3 bg-gray-50 border border-gray-200 rounded text-xs text-gray-600">
-                {formTache.typeRepartition === 'JUSTE_TEMPS' && (
-                  <p>📊 <strong>Juste à temps (JAT) :</strong> Optimise en fonction de la charge actuelle du traducteur. Les heures sont réparties de manière intelligente pour maximiser l'utilisation de la capacité disponible.</p>
-                )}
-                {formTache.typeRepartition === 'EQUILIBRE' && (
-                  <p>⚖️ <strong>Équilibré :</strong> Répartit uniformément les heures entre la date de début et la date de fin. Idéal pour une charge de travail constante sur une période définie.</p>
-                )}
-                {formTache.typeRepartition === 'PEPS' && (
-                  <p>🔄 <strong>Première entrée, première sortie (PEPS) :</strong> Commence à la date de début spécifiée et termine à l'échéance. Les heures sont affectées dans l'ordre chronologique.</p>
-                )}
-                {formTache.typeRepartition === 'MANUEL' && (
-                  <p>✍️ <strong>Répartition manuelle :</strong> Vous définissez vous-même les heures pour chaque jour. Idéal pour des situations spécifiques nécessitant un contrôle total.</p>
-                )}
               </div>
 
               <div className="flex gap-2 justify-end pt-4 border-t">
@@ -1860,86 +1862,108 @@ const PlanificationGlobale: React.FC = () => {
               )}
 
               {formTache.typeRepartition === 'MANUEL' ? (
-                <div className="space-y-3">
+                <div className="space-y-3 p-4 bg-purple-50 border-2 border-purple-300 rounded">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold">📝 Répartition manuelle</h3>
+                    <h3 className="text-sm font-bold text-purple-900">📅 Distribution des heures par jour</h3>
                     <Button
-                      variant="outline"
+                      variant="primaire"
                       onClick={() => {
+                        const nextDate = formTache.repartitionManuelle.length > 0
+                          ? new Date(formTache.repartitionManuelle[formTache.repartitionManuelle.length - 1].date)
+                          : new Date(today);
+                        nextDate.setDate(nextDate.getDate() + 1);
                         setFormTache({
                           ...formTache,
                           repartitionManuelle: [
                             ...formTache.repartitionManuelle,
-                            { date: formTache.dateDebut || today, heures: 0 }
+                            { date: dateISO(nextDate), heures: 0 }
                           ]
                         });
                       }}
-                      className="text-xs px-2 py-1"
+                      className="text-xs px-3 py-1.5"
                     >
-                      + Ajouter un jour
+                      ➕ Ajouter un jour
                     </Button>
                   </div>
-                  
-                  <div className="max-h-64 overflow-y-auto space-y-2">
-                    {formTache.repartitionManuelle.map((item, idx) => (
-                      <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded border border-border">
-                        <Input
-                          type="date"
-                          value={item.date}
-                          onChange={(e) => {
-                            const newRep = [...formTache.repartitionManuelle];
-                            newRep[idx].date = e.target.value;
-                            setFormTache({ ...formTache, repartitionManuelle: newRep });
-                          }}
-                          className="text-xs flex-1"
-                        />
-                        <Input
-                          type="number"
-                          step="0.25"
-                          min="0"
-                          value={item.heures}
-                          onChange={(e) => {
-                            const newRep = [...formTache.repartitionManuelle];
-                            newRep[idx].heures = parseFloat(e.target.value) || 0;
-                            setFormTache({ ...formTache, repartitionManuelle: newRep });
-                          }}
-                          className="text-xs w-24"
-                          placeholder="Heures"
-                        />
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            const newRep = formTache.repartitionManuelle.filter((_, i) => i !== idx);
-                            setFormTache({ ...formTache, repartitionManuelle: newRep });
-                          }}
-                          className="text-xs px-2 py-1"
-                        >
-                          ✕
-                        </Button>
-                      </div>
-                    ))}
-                    {formTache.repartitionManuelle.length === 0 && (
-                      <p className="text-xs text-muted text-center py-4">
-                        Cliquez sur "Ajouter un jour" pour définir la répartition
-                      </p>
-                    )}
-                    {formTache.repartitionManuelle.length > 0 && (() => {
-                      const totalManuel = formTache.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
-                      const heuresAttendu = parseFloat(formTache.heuresTotal as string);
-                      const correspondance = Math.abs(totalManuel - heuresAttendu) < 0.01;
-                      
-                      return (
-                        <div className={`p-2 rounded text-xs ${correspondance ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-300'}`}>
-                          <span className="font-medium">Total:</span> {totalManuel.toFixed(2)}h / {heuresAttendu}h
-                          {!correspondance && (
-                            <span className="ml-2 text-orange-600">
-                              ({totalManuel > heuresAttendu ? '+' : ''}{(totalManuel - heuresAttendu).toFixed(2)}h)
-                            </span>
+
+                  {(() => {
+                    const totalManuel = formTache.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+                    const heuresAttendu = parseFloat(formTache.heuresTotal as string) || 0;
+                    const correspondance = Math.abs(totalManuel - heuresAttendu) < 0.01;
+                    const restant = heuresAttendu - totalManuel;
+                    
+                    return (
+                      <div className={`p-3 rounded font-medium text-sm ${correspondance ? 'bg-green-100 border-2 border-green-500 text-green-900' : restant > 0 ? 'bg-yellow-100 border-2 border-yellow-500 text-yellow-900' : 'bg-red-100 border-2 border-red-500 text-red-900'}`}>
+                        <div className="flex justify-between items-center">
+                          <span>Total distribué: <strong>{totalManuel.toFixed(2)}h</strong> / {heuresAttendu.toFixed(2)}h</span>
+                          {correspondance ? (
+                            <span className="text-green-700 text-lg">✅ Complet</span>
+                          ) : restant > 0 ? (
+                            <span className="text-yellow-700">⚠️ Reste {restant.toFixed(2)}h à distribuer</span>
+                          ) : (
+                            <span className="text-red-700">❌ Dépassement de {Math.abs(restant).toFixed(2)}h</span>
                           )}
-                          {correspondance && <span className="ml-2 text-green-600">✓</span>}
                         </div>
-                      );
-                    })()}
+                      </div>
+                    );
+                  })()}
+                  
+                  <div className="max-h-80 overflow-y-auto space-y-2 bg-white p-3 rounded border border-purple-200">
+                    {formTache.repartitionManuelle.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-gray-500 mb-3">Aucun jour défini</p>
+                        <p className="text-xs text-gray-400">Cliquez sur "➕ Ajouter un jour" pour commencer</p>
+                      </div>
+                    ) : (
+                      formTache.repartitionManuelle.map((item, idx) => {
+                        const dateObj = new Date(item.date);
+                        const jourSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][dateObj.getDay()];
+                        return (
+                          <div key={idx} className="flex gap-2 items-center p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
+                            <div className="flex-1 flex gap-2 items-center">
+                              <span className="text-xs font-semibold text-gray-600 w-8">{jourSemaine}</span>
+                              <Input
+                                type="date"
+                                value={item.date}
+                                onChange={(e) => {
+                                  const newRep = [...formTache.repartitionManuelle];
+                                  newRep[idx].date = e.target.value;
+                                  setFormTache({ ...formTache, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm flex-1"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                step="0.25"
+                                min="0"
+                                value={item.heures}
+                                onChange={(e) => {
+                                  const newRep = [...formTache.repartitionManuelle];
+                                  newRep[idx].heures = parseFloat(e.target.value) || 0;
+                                  setFormTache({ ...formTache, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm w-20 text-center font-semibold"
+                                placeholder="0.0"
+                              />
+                              <span className="text-xs text-gray-500">h</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const newRep = formTache.repartitionManuelle.filter((_, i) => i !== idx);
+                                setFormTache({ ...formTache, repartitionManuelle: newRep });
+                              }}
+                              className="text-sm px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                              title="Supprimer ce jour"
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               ) : (
