@@ -71,6 +71,7 @@ const PlanificationGlobale: React.FC = () => {
     dateFin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +14 jours par défaut
     heuresRequises: '',
     client: '',
+    domaine: '',
     langueSource: '',
     langueCible: '',
   });
@@ -288,6 +289,7 @@ const PlanificationGlobale: React.FC = () => {
       dateFin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       heuresRequises: '',
       client: '',
+      domaine: '',
       langueSource: '',
       langueCible: '',
     });
@@ -609,6 +611,19 @@ const PlanificationGlobale: React.FC = () => {
                       <option value="">Tous</option>
                       {options.clients.map((c) => (
                         <option key={c} value={c}>{c}</option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium block mb-1">Domaine</label>
+                    <Select
+                      value={searchCriteria.domaine}
+                      onChange={(e) => setSearchCriteria({ ...searchCriteria, domaine: e.target.value })}
+                      className="text-xs py-1 px-2 w-full"
+                    >
+                      <option value="">Tous</option>
+                      {options.domaines.map((dom) => (
+                        <option key={dom} value={dom}>{dom}</option>
                       ))}
                     </Select>
                   </div>
