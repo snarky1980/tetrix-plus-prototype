@@ -24,15 +24,25 @@ export async function repartitionJusteATemps(
   const aujourdHui = new Date();
   // Normaliser à minuit pour comparaison de jours
   aujourdHui.setHours(0,0,0,0);
+  
+  // Parser la date d'échéance correctement pour éviter les problèmes de timezone
+  // Si dateEcheance est déjà un Date object créé depuis une string ISO, il peut avoir un décalage
   const echeance = new Date(dateEcheance);
-  echeance.setHours(0,0,0,0);
-  if (echeance < aujourdHui) throw new Error('dateEcheance déjà passée');
+  // Forcer la date en heure locale pour éviter le décalage de timezone
+  const echeanceISO = echeance.toISOString().split('T')[0];
+  const [year, month, day] = echeanceISO.split('-').map(Number);
+  const echeanceCorrigee = new Date(year, month - 1, day);
+  echeanceCorrigee.setHours(0,0,0,0);
+  
+  if (debug) console.debug(`[JAT] Échéance reçue: ${dateEcheance}, corrigée: ${echeanceCorrigee.toISOString()}`);
+  
+  if (echeanceCorrigee < aujourdHui) throw new Error('dateEcheance déjà passée');
 
   // Récupérer tous les ajustements entre aujourd'hui et l'échéance (tâches + blocages)
   const ajustements = await prisma.ajustementTemps.findMany({
     where: {
       traducteurId,
-      date: { gte: aujourdHui, lte: echeance }
+      date: { gte: aujourdHui, lte: echeanceCorrigee }
     },
     select: { date: true, heures: true }
   });
@@ -52,7 +62,7 @@ export async function repartitionJusteATemps(
   }
 
   // Calculer capacité totale disponible sur la fenêtre (excluant les weekends)
-  const totalJours = differenceInCalendarDays(echeance, aujourdHui) + 1;
+  const totalJours = differenceInCalendarDays(echeanceCorrigee, aujourdHui) + 1;
   let capaciteDisponibleGlobale = 0;
   for (let i = 0; i < totalJours; i++) {
     const d = addDays(aujourdHui, i);
@@ -64,7 +74,7 @@ export async function repartitionJusteATemps(
   }
   
   if (debug) {
-    console.debug(`[JAT] Fenêtre: ${totalJours} jours (${aujourdHui.toISOString().split('T')[0]} à ${echeance.toISOString().split('T')[0]})`);
+    console.debug(`[JAT] Fenêtre: ${totalJours} jours (${aujourdHui.toISOString().split('T')[0]} à ${echeanceCorrigee.toISOString().split('T')[0]})`);
     console.debug(`[JAT] Capacité disponible totale: ${capaciteDisponibleGlobale.toFixed(2)}h`);
   }
   
@@ -75,7 +85,7 @@ export async function repartitionJusteATemps(
   // Allocation JAT (remplir à rebours depuis l'échéance, en excluant les weekends)
   let restant = heuresTotal;
   const resultat: RepartitionItem[] = [];
-  let courant = echeance;
+  let courant = echeanceCorrigee;
   let iterations = 0;
   while (restant > 0 && iterations < MAX_LOOKBACK_DAYS) {
     if (courant < aujourdHui) break;
