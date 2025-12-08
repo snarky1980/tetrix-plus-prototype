@@ -285,6 +285,18 @@ const PlanificationGlobale: React.FC = () => {
     setShowCustomRangeDialog(false);
   };
 
+  // Navigation horizontale
+  const scrollHorizontal = (direction: 'left' | 'right') => {
+    if (tableContainerRef.current) {
+      const scrollAmount = 300; // pixels
+      const currentScroll = tableContainerRef.current.scrollLeft;
+      tableContainerRef.current.scrollTo({
+        left: direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   const handleApply = () => setApplied(pending);
 
   const handleReset = () => {
@@ -1137,6 +1149,23 @@ const PlanificationGlobale: React.FC = () => {
     };
 
     loadOptions();
+  }, []);
+
+  // Activer le scroll horizontal avec la molette de souris
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Si on scrolle verticalement mais qu'on est au bout, ou si on utilise Shift+molette
+      if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault();
+        container.scrollLeft += e.deltaY;
+      }
+    };
+
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleWheel);
   }, []);
 
   return (
