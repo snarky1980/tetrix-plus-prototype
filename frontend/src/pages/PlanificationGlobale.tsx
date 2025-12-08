@@ -839,7 +839,7 @@ const PlanificationGlobale: React.FC = () => {
     if (!planificationEnrichie) return null;
 
     // Utiliser uniquement les dates visibles (days) et les traducteurs affichés
-    const datesVisiblesSet = new Set(days);
+    const joursOuvrablesVisibles = days.filter(d => !isWeekend(d));
     
     let totalTraducteurs = planificationEnrichie.planification.length;
     let heuresCapaciteTotale = 0;
@@ -860,20 +860,17 @@ const PlanificationGlobale: React.FC = () => {
 
       let heuresTraducteur = 0;
       let capaciteTraducteur = 0;
-      let joursOuvrables = 0;
 
-      // Filtrer uniquement les dates visibles et exclure les weekends
-      Object.entries(ligne.dates).forEach(([dateStr, info]) => {
-        if (datesVisiblesSet.has(dateStr) && !isWeekend(dateStr)) {
-          joursOuvrables++;
-          const heures = info ? info.heures : 0;
-          const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
-          const disponible = capacite - heures; // Ce qui est affiché dans la cellule
-          
-          heuresTraducteur += heures;
-          capaciteTraducteur += capacite;
-          heuresDisponiblesTotales += disponible;
-        }
+      // Parcourir TOUS les jours ouvrables visibles, pas seulement ceux avec des données
+      joursOuvrablesVisibles.forEach((dateStr) => {
+        const info = ligne.dates[dateStr];
+        const heures = info ? info.heures : 0;
+        const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
+        const disponible = capacite - heures; // Ce qui est affiché dans la cellule
+        
+        heuresTraducteur += heures;
+        capaciteTraducteur += capacite;
+        heuresDisponiblesTotales += disponible;
       });
 
       heuresCapaciteTotale += capaciteTraducteur;
