@@ -977,6 +977,7 @@ const PlanificationGlobale: React.FC = () => {
                         }
                         const heures = info ? info.heures : 0;
                         const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
+                        const disponible = capacite - heures;
                         return (
                           <td
                             key={iso}
@@ -997,10 +998,10 @@ const PlanificationGlobale: React.FC = () => {
                                   navigate(`/conseiller/taches?${params.toString()}`);
                                 }}
                                 className="w-full h-full hover:opacity-80 transition-opacity cursor-pointer"
-                                title={`${ligne.traducteur.nom}\n${iso}\n${heures.toFixed(1)}h / ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
+                                title={`${ligne.traducteur.nom}\n${iso}\n${disponible.toFixed(1)}h disponibles sur ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
                               >
                                 <div className={`font-semibold ${textClass}`}>
-                                  {heures.toFixed(1)}
+                                  {disponible.toFixed(1)}
                                 </div>
                                 <div className="text-[10px] text-muted">
                                   / {capacite.toFixed(1)}h
