@@ -2668,27 +2668,31 @@ const PlanificationGlobale: React.FC = () => {
         </div>
 
         {/* Zone de tableau avec défilement */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 overflow-hidden">
           {/* Boutons de navigation horizontale */}
-          <button
-            onClick={() => scrollHorizontal('left')}
-            className="absolute left-[200px] top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-2 shadow-lg transition-all hover:scale-110"
-            title="Défiler vers la gauche (ou utilisez Shift+molette)"
-          >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <button
-            onClick={() => scrollHorizontal('right')}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-30 bg-white/90 hover:bg-white border border-gray-300 rounded-full p-2 shadow-lg transition-all hover:scale-110"
-            title="Défiler vers la droite (ou utilisez Shift+molette)"
-          >
-            <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-          <div ref={tableContainerRef} className="overflow-auto h-full">
+          {!loading && !error && (
+            <>
+              <button
+                onClick={() => scrollHorizontal('left')}
+                className="fixed left-[260px] bottom-[50%] z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-2xl transition-all hover:scale-110 border-2 border-white"
+                title="Défiler vers la gauche (ou utilisez Shift+molette)"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button
+                onClick={() => scrollHorizontal('right')}
+                className="fixed right-8 bottom-[50%] z-50 bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 shadow-2xl transition-all hover:scale-110 border-2 border-white"
+                title="Défiler vers la droite (ou utilisez Shift+molette)"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </>
+          )}
+          <div ref={tableContainerRef} className="overflow-auto h-full w-full">
             {loading && <p className="text-xs text-muted text-center py-2">Chargement...</p>}
             {error && <p className="text-xs text-red-600 text-center py-2">{error}</p>}
             {!loading && !error && (
