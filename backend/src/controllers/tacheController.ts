@@ -27,10 +27,17 @@ export const obtenirTaches = async (
 
     // Si une date spécifique est fournie, filtrer les tâches ayant des ajustements pour cette date
     if (date) {
-      const dateObj = new Date(date as string);
+      // Utiliser une plage pour gérer les problèmes de timezone
+      const dateStr = date as string;
+      const dateDebut = new Date(dateStr + 'T00:00:00.000Z');
+      const dateFin = new Date(dateStr + 'T23:59:59.999Z');
+      
       where.ajustementsTemps = {
         some: {
-          date: dateObj,
+          date: {
+            gte: dateDebut,
+            lte: dateFin
+          },
           type: 'TACHE'
         }
       };

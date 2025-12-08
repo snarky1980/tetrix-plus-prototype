@@ -2433,42 +2433,53 @@ const PlanificationGlobale: React.FC = () => {
               <p className="text-sm text-muted">Aucune tâche pour cette date</p>
             ) : (
               <div className="space-y-2">
-                {celluleSelectionnee.taches.map((tache: any) => (
-                  <div
-                    key={tache.id}
-                    className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-xs font-semibold text-primary">
-                            {tache.numeroProjet}
-                          </span>
-                          <span className="text-xs text-muted">
-                            {tache.typeTache || 'TRADUCTION'}
-                          </span>
-                          <span className="text-xs text-muted">
-                            {tache.paireLinguistique?.langueSource} → {tache.paireLinguistique?.langueCible}
-                          </span>
+                {celluleSelectionnee.taches.map((tache: any) => {
+                  // Trouver les heures pour cette date spécifique
+                  const ajustementCeJour = tache.ajustementsTemps?.find(
+                    (aj: any) => aj.date.split('T')[0] === celluleSelectionnee.date
+                  );
+                  const heuresCeJour = ajustementCeJour ? ajustementCeJour.heures : 0;
+                  
+                  return (
+                    <div
+                      key={tache.id}
+                      className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-semibold text-primary">
+                              {tache.numeroProjet}
+                            </span>
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-semibold">
+                              {heuresCeJour}h ce jour
+                            </span>
+                            <span className="text-xs text-muted">
+                              {tache.typeTache || 'TRADUCTION'}
+                            </span>
+                            <span className="text-xs text-muted">
+                              {tache.paireLinguistique?.langueSource} → {tache.paireLinguistique?.langueCible}
+                            </span>
+                          </div>
+                          <p className="text-sm mb-1">{tache.description}</p>
+                          <div className="flex items-center gap-3 text-xs text-muted">
+                            {tache.client && <span>Client: {tache.client.nom}</span>}
+                            {tache.sousDomaine && <span>Domaine: {tache.sousDomaine.nom}</span>}
+                            <span>Total tâche: {tache.heuresTotal}h</span>
+                            <span>Échéance: {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
+                          </div>
                         </div>
-                        <p className="text-sm mb-1">{tache.description}</p>
-                        <div className="flex items-center gap-3 text-xs text-muted">
-                          {tache.client && <span>Client: {tache.client.nom}</span>}
-                          {tache.sousDomaine && <span>Domaine: {tache.sousDomaine.nom}</span>}
-                          <span>Total: {tache.heuresTotal}h</span>
-                          <span>Échéance: {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
-                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleEditTache(tache.id)}
+                          className="text-xs px-3 py-1 shrink-0"
+                        >
+                          ✏️ Éditer
+                        </Button>
                       </div>
-                      <Button
-                        variant="outline"
-                        onClick={() => handleEditTache(tache.id)}
-                        className="text-xs px-3 py-1 shrink-0"
-                      >
-                        ✏️ Éditer
-                      </Button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
