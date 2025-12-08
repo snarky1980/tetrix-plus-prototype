@@ -25,6 +25,12 @@ const PlanificationGlobale: React.FC = () => {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
+
+  // Helper to safely parse ISO date strings without timezone shift
+  const parseISODate = (dateString: string): Date => {
+    const [year, month, day] = dateString.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  };
   // Calculer la date actuelle sans useMemo pour éviter le cache
   const now = new Date();
   const today = dateISO(now);
@@ -1580,7 +1586,7 @@ const PlanificationGlobale: React.FC = () => {
       <Button
         variant="outline"
         onClick={() => setShowStatsModal(true)}
-        className="fixed bottom-4 right-32 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-white"
+        className="fixed bottom-20 right-4 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-white"
         title="Voir les statistiques de disponibilité"
       >
         📊 Stats
@@ -1590,7 +1596,7 @@ const PlanificationGlobale: React.FC = () => {
       <Button
         variant="outline"
         onClick={chargerAnalyseOptimisation}
-        className="fixed bottom-16 right-4 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
+        className="fixed bottom-10 right-4 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
         title="Optimiser la charge de travail"
       >
         🎯 Tetrix Master
@@ -1915,14 +1921,14 @@ const PlanificationGlobale: React.FC = () => {
                   <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
                   <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
                   <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
-                  <p><span className="font-medium">Échéance:</span> {new Date(formTache.dateEcheance).toLocaleDateString('fr-CA')}</p>
+                  <p><span className="font-medium">Échéance:</span> {parseISODate(formTache.dateEcheance).toLocaleDateString('fr-CA')}</p>
                   <p><span className="font-medium">Répartition:</span> {
                     formTache.typeRepartition === 'JUSTE_TEMPS' ? 'Juste à temps (JAT)' :
                     formTache.typeRepartition === 'EQUILIBRE' ? 'Équilibré' :
                     formTache.typeRepartition === 'PEPS' ? 'PEPS' : 'Manuelle'
                   }</p>
                   {formTache.typeRepartition === 'EQUILIBRE' && (
-                    <p><span className="font-medium">Période:</span> {new Date(formTache.dateDebut).toLocaleDateString('fr-CA')} → {new Date(formTache.dateFin).toLocaleDateString('fr-CA')}</p>
+                    <p><span className="font-medium">Période:</span> {parseISODate(formTache.dateDebut).toLocaleDateString('fr-CA')} → {parseISODate(formTache.dateFin).toLocaleDateString('fr-CA')}</p>
                   )}
                 </div>
               </div>
@@ -2392,7 +2398,7 @@ const PlanificationGlobale: React.FC = () => {
                       <div className="space-y-1.5">
                         {previewJATEdit.map((r, idx) => (
                           <div key={idx} className="flex justify-between items-center text-xs bg-white px-2 py-1 rounded">
-                            <span className="font-medium">{new Date(r.date).toLocaleDateString('fr-CA')}</span>
+                            <span className="font-medium">{parseISODate(r.date).toLocaleDateString('fr-CA')}</span>
                             <span className="text-primary font-semibold">{r.heures}h</span>
                           </div>
                         ))}
@@ -2414,20 +2420,40 @@ const PlanificationGlobale: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex gap-2 justify-end pt-4 border-t">
+              <div className="flex gap-2 justify-between pt-4 border-t">
                 <Button
                   variant="outline"
-                  onClick={() => setEtapeEdition(1)}
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                  onClick={async () => {
+                    if (tacheEnEdition && confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+                      try {
+                        await tacheService.supprimerTache(tacheEnEdition);
+                        setShowEditTaskModal(false);
+                        resetFormEdition();
+                        window.location.reload();
+                      } catch (err: any) {
+                        setErreurEdition(err.message || 'Erreur lors de la suppression');
+                      }
+                    }
+                  }}
                 >
-                  ← Retour
+                  🗑️ Supprimer
                 </Button>
-                <Button
-                  variant="primaire"
-                  onClick={handleUpdateTache}
-                  disabled={submitting || (formEdition.repartitionAuto && (!previewJATEdit || previewJATEdit.length === 0))}
-                >
-                  {submitting ? 'Mise à jour...' : 'Mettre à jour la tâche'}
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEtapeEdition(1)}
+                  >
+                    ← Retour
+                  </Button>
+                  <Button
+                    variant="primaire"
+                    onClick={handleUpdateTache}
+                    disabled={submitting || (formEdition.repartitionAuto && (!previewJATEdit || previewJATEdit.length === 0))}
+                  >
+                    {submitting ? 'Mise à jour...' : 'Mettre à jour la tâche'}
+                  </Button>
+                </div>
               </div>
             </div>
           )}
@@ -2526,7 +2552,7 @@ const PlanificationGlobale: React.FC = () => {
                             )}
                             {tache.client && <span>👤 {tache.client.nom}</span>}
                             <span>⏱️ {tache.heuresTotal}h</span>
-                            <span>📅 {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
+                            <span>📅 {parseISODate(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
                           </div>
                         </div>
                         <Button
@@ -2953,7 +2979,7 @@ const PlanificationGlobale: React.FC = () => {
       {/* Modal Tâches d'une cellule */}
       {celluleSelectionnee && (
         <Modal
-          titre={`📋 ${celluleSelectionnee.traducteurNom} - ${new Date(celluleSelectionnee.date).toLocaleDateString('fr-CA')}`}
+          titre={`📋 ${celluleSelectionnee.traducteurNom} - ${parseISODate(celluleSelectionnee.date).toLocaleDateString('fr-CA')}`}
           ouvert={!!celluleSelectionnee}
           onFermer={() => setCelluleSelectionnee(null)}
           ariaDescription="Liste des tâches pour ce traducteur à cette date"
@@ -2976,7 +3002,7 @@ const PlanificationGlobale: React.FC = () => {
                       {celluleSelectionnee.taches.length} tâche(s) ce jour
                     </h4>
                     <p className="text-xs text-blue-700">
-                      {new Date(celluleSelectionnee.date).toLocaleDateString('fr-FR', { 
+                      {parseISODate(celluleSelectionnee.date).toLocaleDateString('fr-FR', { 
                         weekday: 'long', 
                         year: 'numeric', 
                         month: 'long', 
@@ -3057,7 +3083,7 @@ const PlanificationGlobale: React.FC = () => {
                       )}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                         <span className="text-xs text-muted">
-                          Échéance: {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}
+                          Échéance: {parseISODate(tache.dateEcheance).toLocaleDateString('fr-CA')}
                         </span>
                         <span className="text-xs text-primary font-medium">
                           Voir détails →
@@ -3100,7 +3126,7 @@ const PlanificationGlobale: React.FC = () => {
               </div>
               <div>
                 <span className="font-medium text-muted">Date échéance:</span>
-                <p>{new Date(tacheDetaillee.dateEcheance).toLocaleDateString('fr-CA')}</p>
+                <p>{parseISODate(tacheDetaillee.dateEcheance).toLocaleDateString('fr-CA')}</p>
               </div>
               <div>
                 <span className="font-medium text-muted">Statut:</span>
@@ -3165,7 +3191,7 @@ const PlanificationGlobale: React.FC = () => {
                         .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
                         .map((aj: any, idx: number) => (
                           <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                            <td className="px-3 py-2">{new Date(aj.date).toLocaleDateString('fr-CA')}</td>
+                            <td className="px-3 py-2">{parseISODate(aj.date).toLocaleDateString('fr-CA')}</td>
                             <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
                           </tr>
                         ))}
@@ -3319,7 +3345,7 @@ const PlanificationGlobale: React.FC = () => {
                             <span>{tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
                           )}
                           <span className="font-semibold">{tache.heuresTotal}h</span>
-                          <span>Échéance: {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
+                          <span>Échéance: {parseISODate(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
                         </div>
                       </div>
                     </div>
