@@ -26,7 +26,11 @@ const PlanificationGlobale: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
   // Calculer la date actuelle sans useMemo pour éviter le cache
-  const today = dateISO(new Date());
+  const now = new Date();
+  const today = dateISO(now);
+  console.log('[PlanificationGlobale] Date actuelle:', now.toString());
+  console.log('[PlanificationGlobale] Today ISO:', today);
+  console.log('[PlanificationGlobale] Jour de la semaine:', now.getDay(), ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][now.getDay()]);
 
   type Filters = {
     start: string;
