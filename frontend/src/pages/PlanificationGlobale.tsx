@@ -1586,7 +1586,7 @@ const PlanificationGlobale: React.FC = () => {
       <Button
         variant="outline"
         onClick={() => setShowStatsModal(true)}
-        className="fixed bottom-20 right-4 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-white"
+        className="fixed bottom-4 right-80 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-white"
         title="Voir les statistiques de disponibilité"
       >
         📊 Stats
@@ -1596,7 +1596,7 @@ const PlanificationGlobale: React.FC = () => {
       <Button
         variant="outline"
         onClick={chargerAnalyseOptimisation}
-        className="fixed bottom-10 right-4 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
+        className="fixed bottom-4 right-44 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
         title="Optimiser la charge de travail"
       >
         🎯 Tetrix Master
