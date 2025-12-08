@@ -834,10 +834,13 @@ const PlanificationGlobale: React.FC = () => {
     }
   };
 
-  // Calculer les statistiques de disponibilité
+  // Calculer les statistiques de disponibilité basées sur la vue actuelle
   const calculerStatistiques = () => {
     if (!planificationEnrichie) return null;
 
+    // Utiliser uniquement les dates visibles (days) et les traducteurs affichés
+    const datesVisiblesSet = new Set(days);
+    
     let totalTraducteurs = planificationEnrichie.planification.length;
     let heuresCapaciteTotale = 0;
     let heuresUtilisees = 0;
@@ -858,8 +861,9 @@ const PlanificationGlobale: React.FC = () => {
       let capaciteTraducteur = 0;
       let joursOuvrables = 0;
 
+      // Filtrer uniquement les dates visibles et exclure les weekends
       Object.entries(ligne.dates).forEach(([dateStr, info]) => {
-        if (!isWeekend(dateStr)) {
+        if (datesVisiblesSet.has(dateStr) && !isWeekend(dateStr)) {
           joursOuvrables++;
           const heures = info ? info.heures : 0;
           const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
@@ -2060,12 +2064,22 @@ const PlanificationGlobale: React.FC = () => {
 
           return (
             <div className="space-y-4">
+              {/* Avertissement sur la période */}
+              <div className="bg-blue-50 border border-blue-300 rounded p-3">
+                <p className="text-xs text-blue-700">
+                  ℹ️ <strong>Statistiques basées sur la vue actuelle :</strong> du {applied.start} sur {applied.range} jours
+                  {(applied.divisions.length > 0 || applied.domaines.length > 0 || applied.clients.length > 0 || applied.languesSource.length > 0 || applied.languesCible.length > 0) && (
+                    <span> (avec filtres appliqués)</span>
+                  )}
+                </p>
+              </div>
+
               {/* Vue d'ensemble */}
               <div className="bg-blue-50 border border-blue-200 rounded p-4">
                 <h3 className="font-semibold text-sm mb-3">📈 Vue d'ensemble</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
-                    <p className="text-muted text-xs">Total traducteurs</p>
+                    <p className="text-muted text-xs">Traducteurs affichés</p>
                     <p className="font-bold text-lg">{stats.totalTraducteurs}</p>
                   </div>
                   <div>
@@ -2096,20 +2110,29 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Heures */}
               <div className="bg-gray-50 border border-gray-200 rounded p-4">
-                <h3 className="font-semibold text-sm mb-3">⏰ Capacité</h3>
+                <h3 className="font-semibold text-sm mb-3">⏰ Capacité (période affichée)</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted">Heures totales disponibles</span>
+                    <span className="text-muted">Capacité totale</span>
                     <span className="font-semibold">{stats.heuresCapaciteTotale.toFixed(1)}h</span>
                   </div>
+                  <p className="text-xs text-muted italic">
+                    Somme des capacités de tous les traducteurs affichés sur les jours ouvrables visibles
+                  </p>
                   <div className="flex justify-between">
                     <span className="text-muted">Heures assignées</span>
                     <span className="font-semibold">{stats.heuresUtilisees.toFixed(1)}h</span>
                   </div>
+                  <p className="text-xs text-muted italic">
+                    Somme des heures de tâches assignées sur la période visible
+                  </p>
                   <div className="flex justify-between border-t pt-2">
-                    <span className="text-green-700 font-medium">Heures restantes</span>
+                    <span className="text-green-700 font-medium">Heures disponibles</span>
                     <span className="font-bold text-green-700">{stats.heuresDisponibles.toFixed(1)}h</span>
                   </div>
+                  <p className="text-xs text-muted italic">
+                    Capacité restante pour de nouvelles tâches
+                  </p>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                     <div 
                       className="bg-blue-500 h-2 rounded-full transition-all" 
