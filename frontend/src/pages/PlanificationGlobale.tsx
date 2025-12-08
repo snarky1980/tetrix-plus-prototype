@@ -2444,6 +2444,17 @@ const PlanificationGlobale: React.FC = () => {
             </h2>
             {/* Boutons de plage */}
             <div className="flex gap-0.5 items-center">
+              <Button
+                variant={applied.start === today && applied.range === 7 ? 'primaire' : 'outline'}
+                onClick={() => {
+                  setPending((prev) => ({ ...prev, start: today, range: 7 }));
+                  setApplied((prev) => ({ ...prev, start: today, range: 7 }));
+                }}
+                className="px-2 py-0.5 text-xs"
+                title="Aujourd'hui"
+              >
+                Aujourd'hui
+              </Button>
               {[7, 14, 30].map((val) => (
                 <Button
                   key={val}
