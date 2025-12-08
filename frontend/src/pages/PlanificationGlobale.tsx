@@ -940,15 +940,15 @@ const PlanificationGlobale: React.FC = () => {
                 {planificationEnrichie?.planification.map((ligne, idx) => {
                   const isSearchResult = searchResults.includes(ligne.traducteur.id);
                   return (
-                    <tr key={ligne.traducteur.id} className={isSearchResult ? 'bg-yellow-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50')}>
-                      <td className="border-r border-b border-border px-3 py-2 font-medium sticky left-0 z-10" style={{ backgroundColor: isSearchResult ? '#fef3c7' : 'inherit' }}>
+                    <tr key={ligne.traducteur.id} className={`${isSearchResult ? 'ring-2 ring-yellow-400 ring-inset' : ''} ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
+                      <td className={`border-r border-b border-border px-3 py-2 font-medium sticky left-0 z-10 ${isSearchResult ? 'bg-yellow-200' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}`}>
                         <button
                           onClick={() => navigate(`/admin/traducteurs/${ligne.traducteur.id}`)}
                           className="text-left w-full hover:text-primary transition-colors cursor-pointer"
                           title={`Voir la fiche de ${ligne.traducteur.nom}`}
                         >
-                          <div className="truncate font-medium">
-                            {ligne.traducteur.nom}
+                          <div className={`truncate font-medium ${isSearchResult ? 'text-yellow-900' : ''}`}>
+                            {isSearchResult && '⭐ '}{ligne.traducteur.nom}
                           </div>
                           <div className="text-[10px] text-muted">{ligne.traducteur.division} · {ligne.traducteur.classification}</div>
                         </button>
