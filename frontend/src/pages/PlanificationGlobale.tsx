@@ -12,6 +12,7 @@ import { sousDomaineService } from '../services/sousDomaineService';
 import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
+import optimisationService from '../services/optimisationService';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 
 const PlanificationGlobale: React.FC = () => {
@@ -163,6 +164,13 @@ const PlanificationGlobale: React.FC = () => {
   const [showMesTachesModal, setShowMesTachesModal] = useState(false);
   const [mesTaches, setMesTaches] = useState<any[]>([]);
   const [loadingMesTaches, setLoadingMesTaches] = useState(false);
+
+  // État pour Tetrix Master (optimisation)
+  const [showTetrixMaster, setShowTetrixMaster] = useState(false);
+  const [analyseOptimisation, setAnalyseOptimisation] = useState<any | null>(null);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingOptimisation, setLoadingOptimisation] = useState(false);
+  const [etapeOptimisation, setEtapeOptimisation] = useState<'analyse' | 'suggestions'>('analyse');
 
   // État pour afficher le détail de charge de travail d'un traducteur
   const [showChargeModal, setShowChargeModal] = useState(false);
@@ -732,6 +740,50 @@ const PlanificationGlobale: React.FC = () => {
       setMesTaches([]);
     } finally {
       setLoadingMesTaches(false);
+    }
+  };
+
+  const chargerAnalyseOptimisation = async () => {
+    setLoadingOptimisation(true);
+    setShowTetrixMaster(true);
+    setEtapeOptimisation('analyse');
+    
+    try {
+      const analyse = await optimisationService.analyser(applied.start, endDate);
+      setAnalyseOptimisation(analyse);
+    } catch (err: any) {
+      console.error('Erreur d\'analyse:', err);
+      setAnalyseOptimisation(null);
+    } finally {
+      setLoadingOptimisation(false);
+    }
+  };
+
+  const chargerSuggestions = async () => {
+    setLoadingOptimisation(true);
+    setEtapeOptimisation('suggestions');
+    
+    try {
+      const sug = await optimisationService.suggerer(applied.start, endDate);
+      setSuggestions(sug);
+    } catch (err: any) {
+      console.error('Erreur suggestions:', err);
+      setSuggestions([]);
+    } finally {
+      setLoadingOptimisation(false);
+    }
+  };
+
+  const appliquerSuggestion = async (suggestion: any) => {
+    try {
+      await optimisationService.appliquer(suggestion.tacheId, suggestion.traducteurCibleId);
+      // Recharger l'analyse
+      await chargerAnalyseOptimisation();
+      // Rafraîchir la planification
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Erreur application:', err);
+      alert('Erreur lors de l\'application de la suggestion');
     }
   };
   
@@ -1435,6 +1487,16 @@ const PlanificationGlobale: React.FC = () => {
         </div>
       </div>
         )}
+
+      {/* Bouton flottant Tetrix Master */}
+      <Button
+        variant="outline"
+        onClick={chargerAnalyseOptimisation}
+        className="fixed bottom-4 right-64 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
+        title="Optimiser la charge de travail"
+      >
+        🎯 Tetrix Master
+      </Button>
 
       {/* Bouton flottant Statistiques */}
       <Button
@@ -2976,6 +3038,193 @@ const PlanificationGlobale: React.FC = () => {
               </div>
             </>
           )}
+        </div>
+      </Modal>
+
+      {/* Modal Tetrix Master - Optimisation */}
+      <Modal
+        titre="🎯 Tetrix Master - Optimiseur de charge"
+        ouvert={showTetrixMaster}
+        onFermer={() => setShowTetrixMaster(false)}
+        ariaDescription="Analyseur et optimiseur de la charge de travail"
+      >
+        <div className="space-y-4">
+          {/* Onglets */}
+          <div className="flex gap-2 border-b border-gray-200">
+            <button
+              onClick={() => setEtapeOptimisation('analyse')}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                etapeOptimisation === 'analyse'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted hover:text-gray-700'
+              }`}
+            >
+              📊 Analyse
+            </button>
+            <button
+              onClick={chargerSuggestions}
+              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                etapeOptimisation === 'suggestions'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted hover:text-gray-700'
+              }`}
+              disabled={!analyseOptimisation}
+            >
+              💡 Suggestions
+            </button>
+          </div>
+
+          {loadingOptimisation ? (
+            <div className="text-center py-12">
+              <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+              <p className="text-sm text-muted">Analyse en cours...</p>
+            </div>
+          ) : etapeOptimisation === 'analyse' && analyseOptimisation ? (
+            <div className="space-y-4">
+              {/* Score global */}
+              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-semibold">Score d'équilibre</h3>
+                  <div className="text-3xl font-bold text-primary">{analyseOptimisation.score}/100</div>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <div
+                    className={`h-3 rounded-full transition-all ${
+                      analyseOptimisation.score >= 80 ? 'bg-green-500' :
+                      analyseOptimisation.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
+                    }`}
+                    style={{ width: `${analyseOptimisation.score}%` }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Métriques */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white border border-gray-200 rounded p-3">
+                  <p className="text-xs text-muted mb-1">Écart-type</p>
+                  <p className="text-xl font-bold">{analyseOptimisation.ecartType}%</p>
+                  <p className="text-xs text-muted mt-1">Plus bas = mieux équilibré</p>
+                </div>
+                <div className="bg-white border border-gray-200 rounded p-3">
+                  <p className="text-xs text-muted mb-1">Capacité gaspillée</p>
+                  <p className="text-xl font-bold">{analyseOptimisation.capaciteGaspillee}h</p>
+                  <p className="text-xs text-muted mt-1">Disponibilité non utilisée</p>
+                </div>
+              </div>
+
+              {/* Problèmes détectés */}
+              {analyseOptimisation.problemes.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">⚠️ {analyseOptimisation.problemes.length} problème(s) détecté(s)</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {analyseOptimisation.problemes.map((prob: any, idx: number) => (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded border-l-4 ${
+                          prob.gravite === 'ELEVE' ? 'bg-red-50 border-red-500' :
+                          prob.gravite === 'MOYEN' ? 'bg-orange-50 border-orange-500' :
+                          'bg-yellow-50 border-yellow-500'
+                        }`}
+                      >
+                        <p className="text-sm font-medium">{prob.description}</p>
+                        <p className="text-xs text-muted mt-1">{prob.impact}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Utilisation par traducteur */}
+              <div>
+                <h4 className="font-semibold text-sm mb-2">👥 Utilisation par traducteur</h4>
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {analyseOptimisation.traducteurs.map((trad: any) => (
+                    <div key={trad.id} className="bg-white border border-gray-200 rounded p-3">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium text-sm">{trad.nom}</span>
+                        <span className={`text-sm font-bold ${
+                          trad.tauxUtilisation > 100 ? 'text-red-600' :
+                          trad.tauxUtilisation > 90 ? 'text-orange-600' :
+                          trad.tauxUtilisation < 50 ? 'text-blue-600' :
+                          'text-green-600'
+                        }`}>
+                          {trad.tauxUtilisation.toFixed(0)}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${
+                            trad.tauxUtilisation > 100 ? 'bg-red-500' :
+                            trad.tauxUtilisation > 90 ? 'bg-orange-500' :
+                            trad.tauxUtilisation < 50 ? 'bg-blue-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${Math.min(trad.tauxUtilisation, 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted mt-1">
+                        <span>{trad.heuresAssignees.toFixed(1)}h assignées</span>
+                        <span>{trad.capaciteTotal.toFixed(1)}h capacité</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : etapeOptimisation === 'suggestions' && suggestions.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted">{suggestions.length} suggestion(s) d'amélioration</p>
+              <div className="space-y-3 max-h-96 overflow-y-auto">
+                {suggestions.map((sug: any) => (
+                  <div key={sug.id} className="bg-white border border-gray-200 rounded p-4 hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-sm font-bold text-primary">{sug.tacheNumero}</span>
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                            {sug.heuresTotal}h
+                          </span>
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded">
+                            {sug.type === 'REASSIGNER' ? 'Réassignation' : 'Redistribution'}
+                          </span>
+                        </div>
+                        <div className="space-y-1 text-sm">
+                          <p>
+                            <span className="font-medium">De:</span> {sug.traducteurSourceNom} 
+                            <span className="mx-2">→</span>
+                            <span className="font-medium">À:</span> {sug.traducteurCibleNom}
+                          </p>
+                          <p className="text-xs text-muted">📝 {sug.raison}</p>
+                          <div className="flex gap-4 text-xs mt-2">
+                            <div>
+                              <span className="text-muted">Impact {sug.traducteurSourceNom}:</span>
+                              <span className="ml-1 font-semibold text-green-600">{sug.impactSource}</span>
+                            </div>
+                            <div>
+                              <span className="text-muted">Impact {sug.traducteurCibleNom}:</span>
+                              <span className="ml-1 font-semibold text-green-600">{sug.impactCible}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <Button
+                        variant="primaire"
+                        onClick={() => appliquerSuggestion(sug)}
+                        className="text-xs px-3 py-1 shrink-0"
+                      >
+                        ✓ Appliquer
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : etapeOptimisation === 'suggestions' ? (
+            <div className="text-center py-12">
+              <p className="text-sm text-muted">Aucune suggestion disponible</p>
+              <p className="text-xs text-muted mt-2">La planification semble déjà bien équilibrée</p>
+            </div>
+          ) : null}
         </div>
       </Modal>
 

@@ -14,6 +14,7 @@ import tacheRoutes from './routes/tacheRoutes';
 import planificationRoutes from './routes/planificationRoutes';
 import repartitionRoutes from './routes/repartitionRoutes';
 import importRoutes from './routes/importRoutes';
+import optimisationRoutes from './routes/optimisationRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -114,6 +115,7 @@ app.use('/api/taches', tacheRoutes);
 app.use('/api', planificationRoutes); // Routes planification (plusieurs endpoints)
 app.use('/api/repartition', repartitionRoutes);
 app.use('/api/import', importRoutes);
+app.use('/api/optimisation', optimisationRoutes);
 
 // Route 404
 app.use((req, res) => {
