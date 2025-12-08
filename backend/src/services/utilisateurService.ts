@@ -129,6 +129,16 @@ export class UtilisateurService {
     // Hasher le mot de passe
     const motDePasseHash = await bcrypt.hash(data.motDePasse, 10);
 
+    // Obtenir toutes les divisions actives si aucune division n'est spécifiée
+    let divisionsACreer = data.divisions;
+    if (!divisionsACreer || divisionsACreer.length === 0) {
+      const toutesLesDivisions = await prisma.division.findMany({
+        where: { actif: true },
+        select: { id: true },
+      });
+      divisionsACreer = toutesLesDivisions.map(d => d.id);
+    }
+
     // Créer l'utilisateur avec ses accès aux divisions
     const utilisateur = await prisma.utilisateur.create({
       data: {
@@ -137,16 +147,14 @@ export class UtilisateurService {
         nom: data.nom,
         prenom: data.prenom,
         role: data.role,
-        divisionAccess: data.divisions
-          ? {
-              create: data.divisions.map((divisionId) => ({
-                divisionId,
-                peutLire: true,
-                peutEcrire: data.role === 'GESTIONNAIRE' || data.role === 'ADMIN',
-                peutGerer: data.role === 'ADMIN',
-              })),
-            }
-          : undefined,
+        divisionAccess: {
+          create: divisionsACreer.map((divisionId) => ({
+            divisionId,
+            peutLire: true,
+            peutEcrire: data.role === 'GESTIONNAIRE' || data.role === 'ADMIN',
+            peutGerer: data.role === 'ADMIN',
+          })),
+        },
       },
       include: {
         divisionAccess: {

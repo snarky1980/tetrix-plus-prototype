@@ -4,7 +4,6 @@ import {
   divisionService,
   CreateUtilisateurData,
   UpdateUtilisateurData,
-  DivisionAccessData,
 } from '../services/utilisateurService';
 import { Utilisateur, Division } from '../types';
 import { Card } from '../components/ui/Card';
@@ -12,6 +11,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
+import { DivisionPermissions } from '../components/admin/DivisionPermissions';
 
 type TabType = 'utilisateurs' | 'divisions';
 
@@ -50,8 +50,8 @@ export const GestionProfils: React.FC = () => {
     description: '',
   });
 
-  // Gestion des accès
-  const [accesSelectionnes, setAccesSelectionnes] = useState<DivisionAccessData[]>([]);
+  // Gestion des accès - maintenant géré par le composant DivisionPermissions
+  // const [accesSelectionnes, setAccesSelectionnes] = useState<DivisionAccessData[]>([]);
 
   useEffect(() => {
     chargerDonnees();
@@ -84,13 +84,15 @@ export const GestionProfils: React.FC = () => {
 
   const handleCreerUtilisateur = () => {
     setUtilisateurEnCours(null);
+    // Par défaut, donner accès à toutes les divisions actives
+    const toutesLesDivisions = divisions.filter(d => d.actif !== false).map(d => d.id);
     setFormUtilisateur({
       email: '',
       motDePasse: '',
       nom: '',
       prenom: '',
       role: 'CONSEILLER',
-      divisions: [],
+      divisions: toutesLesDivisions,
     });
     setShowModalUtilisateur(true);
   };
@@ -163,63 +165,7 @@ export const GestionProfils: React.FC = () => {
     }
   };
 
-  const handleGererAcces = async (utilisateur: Utilisateur) => {
-    setUtilisateurEnCours(utilisateur);
-    const acces = utilisateur.divisionAccess || [];
-    setAccesSelectionnes(
-      acces.map((a) => ({
-        divisionId: a.divisionId,
-        peutLire: a.peutLire,
-        peutEcrire: a.peutEcrire,
-        peutGerer: a.peutGerer,
-      }))
-    );
-    setShowModalAcces(true);
-  };
-
-  const handleToggleAcces = (divisionId: string) => {
-    const existe = accesSelectionnes.find((a) => a.divisionId === divisionId);
-    if (existe) {
-      setAccesSelectionnes(accesSelectionnes.filter((a) => a.divisionId !== divisionId));
-    } else {
-      setAccesSelectionnes([
-        ...accesSelectionnes,
-        {
-          divisionId,
-          peutLire: true,
-          peutEcrire: false,
-          peutGerer: false,
-        },
-      ]);
-    }
-  };
-
-  const handleModifierPermission = (
-    divisionId: string,
-    permission: 'peutLire' | 'peutEcrire' | 'peutGerer',
-    valeur: boolean
-  ) => {
-    setAccesSelectionnes(
-      accesSelectionnes.map((a) =>
-        a.divisionId === divisionId ? { ...a, [permission]: valeur } : a
-      )
-    );
-  };
-
-  const handleSauvegarderAcces = async () => {
-    if (!utilisateurEnCours) return;
-
-    setLoading(true);
-    try {
-      await utilisateurService.gererAccesDivisions(utilisateurEnCours.id, accesSelectionnes);
-      setShowModalAcces(false);
-      chargerDonnees();
-    } catch (err: any) {
-      setError(err.response?.data?.erreur || 'Erreur lors de la mise à jour des accès');
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Les fonctions de gestion des accès sont maintenant gérées par le composant DivisionPermissions
 
   const handleCreerDivision = () => {
     setDivisionEnCours(null);
@@ -432,10 +378,13 @@ export const GestionProfils: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-sm text-right space-x-2">
                           <button
-                            onClick={() => handleGererAcces(user)}
-                            className="text-blue-600 hover:text-blue-800"
+                            onClick={() => {
+                              setUtilisateurEnCours(user);
+                              setShowModalAcces(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 font-medium"
                           >
-                            Accès
+                            Permissions
                           </button>
                           <button
                             onClick={() => handleModifierUtilisateur(user)}
@@ -616,6 +565,11 @@ export const GestionProfils: React.FC = () => {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Divisions accessibles
               </label>
+              {!utilisateurEnCours && (
+                <p className="text-xs text-blue-600 mb-2">
+                  ℹ️ Par défaut, toutes les divisions sont sélectionnées pour un nouvel utilisateur
+                </p>
+              )}
               <div className="border rounded-lg p-3 max-h-48 overflow-y-auto space-y-2">
                 {divisions.map((div) => (
                   <label key={div.id} className="flex items-center space-x-2 cursor-pointer">
@@ -661,93 +615,18 @@ export const GestionProfils: React.FC = () => {
         </Modal>
       )}
 
-      {/* Modal Accès */}
-      {showModalAcces && utilisateurEnCours && (
+      {/* Modal Accès aux Divisions */}
+      {showModalAcces && (
         <Modal
           ouvert={showModalAcces}
-          onFermer={() => setShowModalAcces(false)}
-          titre={`Gérer les accès - ${utilisateurEnCours.email}`}
+          onFermer={() => {
+            setShowModalAcces(false);
+            setUtilisateurEnCours(null);
+            chargerDonnees(); // Recharger pour voir les modifications
+          }}
+          titre="Gérer les permissions"
         >
-          <div className="space-y-4">
-            <p className="text-sm text-gray-600">
-              Configurez les permissions d'accès aux divisions pour cet utilisateur.
-            </p>
-
-            <div className="border rounded-lg divide-y">
-              {divisions.map((div) => {
-                const acces = accesSelectionnes.find((a) => a.divisionId === div.id);
-                const aAcces = !!acces;
-
-                return (
-                  <div key={div.id} className="p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <label className="flex items-center space-x-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={aAcces}
-                          onChange={() => handleToggleAcces(div.id)}
-                          className="rounded text-blue-600"
-                        />
-                        <span className="font-medium text-gray-900">{div.nom}</span>
-                        <span className="text-xs text-gray-500">({div.code})</span>
-                      </label>
-                    </div>
-
-                    {aAcces && (
-                      <div className="ml-6 flex items-center space-x-4 text-sm">
-                        <label className="flex items-center space-x-1">
-                          <input
-                            type="checkbox"
-                            checked={acces!.peutLire}
-                            onChange={(e) =>
-                              handleModifierPermission(div.id, 'peutLire', e.target.checked)
-                            }
-                            className="rounded text-blue-600"
-                          />
-                          <span className="text-gray-600">Lire</span>
-                        </label>
-                        <label className="flex items-center space-x-1">
-                          <input
-                            type="checkbox"
-                            checked={acces!.peutEcrire}
-                            onChange={(e) =>
-                              handleModifierPermission(div.id, 'peutEcrire', e.target.checked)
-                            }
-                            className="rounded text-blue-600"
-                          />
-                          <span className="text-gray-600">Écrire</span>
-                        </label>
-                        <label className="flex items-center space-x-1">
-                          <input
-                            type="checkbox"
-                            checked={acces!.peutGerer}
-                            onChange={(e) =>
-                              handleModifierPermission(div.id, 'peutGerer', e.target.checked)
-                            }
-                            className="rounded text-blue-600"
-                          />
-                          <span className="text-gray-600">Gérer</span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="flex justify-end space-x-3 pt-4 border-t">
-              <Button
-                type="button"
-                onClick={() => setShowModalAcces(false)}
-                variant="secondaire"
-              >
-                Annuler
-              </Button>
-              <Button onClick={handleSauvegarderAcces} disabled={loading}>
-                {loading ? 'Enregistrement...' : 'Enregistrer'}
-              </Button>
-            </div>
-          </div>
+          <DivisionPermissions utilisateur={utilisateurEnCours || undefined} />
         </Modal>
       )}
 
