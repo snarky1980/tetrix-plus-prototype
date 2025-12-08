@@ -539,7 +539,12 @@ const PlanificationGlobale: React.FC = () => {
           setErreurPreview('Veuillez sélectionner une date de début et de fin');
           return;
         }
+        if (!formTache.traducteurId) {
+          setErreurPreview('Veuillez sélectionner un traducteur');
+          return;
+        }
         result = await repartitionService.calculerRepartitionEquilibree({
+          traducteurId: formTache.traducteurId,
           heuresTotal: heures,
           dateDebut: formTache.dateDebut,
           dateFin: formTache.dateFin,
@@ -549,14 +554,15 @@ const PlanificationGlobale: React.FC = () => {
           setErreurPreview('Veuillez sélectionner une date de début');
           return;
         }
-        const traducteur = traducteurs.find(t => t.id === formTache.traducteurId);
-        const capaciteParJour = traducteur?.capaciteHeuresParJour || 7.5;
-        
+        if (!formTache.traducteurId) {
+          setErreurPreview('Veuillez sélectionner un traducteur');
+          return;
+        }
         result = await repartitionService.calculerRepartitionPEPS({
+          traducteurId: formTache.traducteurId,
           heuresTotal: heures,
           dateDebut: formTache.dateDebut,
           dateEcheance: formTache.dateEcheance,
-          capaciteParJour,
         });
       } else if (formTache.typeRepartition === 'MANUEL') {
         // Mode manuel : utiliser la répartition saisie par l'utilisateur
@@ -657,7 +663,8 @@ const PlanificationGlobale: React.FC = () => {
       if (formTache.typeRepartition === 'JUSTE_TEMPS') {
         tache.repartitionAuto = true;
       } else if (formTache.typeRepartition === 'MANUEL') {
-        tache.repartitionManuelle = formTache.repartitionManuelle;
+        tache.repartition = formTache.repartitionManuelle;
+        tache.repartitionAuto = false;
       } else {
         // Pour EQUILIBRE et PEPS, utiliser la prévisualisation calculée
         if (previewRepartition && previewRepartition.length > 0) {
@@ -991,7 +998,11 @@ const PlanificationGlobale: React.FC = () => {
         tache.repartitionAuto = true;
       } else if (formEdition.typeRepartition === 'EQUILIBRE') {
         // Calculer la répartition équilibrée
+        if (!formEdition.traducteurId) {
+          throw new Error('Traducteur requis pour la répartition équilibrée');
+        }
         const repartition = await repartitionService.calculerRepartitionEquilibree({
+          traducteurId: formEdition.traducteurId,
           heuresTotal: formEdition.heuresTotal,
           dateDebut: formEdition.dateDebut,
           dateFin: formEdition.dateFin,
@@ -999,18 +1010,19 @@ const PlanificationGlobale: React.FC = () => {
         tache.repartition = repartition;
       } else if (formEdition.typeRepartition === 'PEPS') {
         // Calculer la répartition PEPS avec la capacité du traducteur
-        const traducteur = traducteurs.find(t => t.id === formEdition.traducteurId);
-        const capaciteParJour = traducteur?.capaciteHeuresParJour || 7.5;
-        
+        if (!formEdition.traducteurId) {
+          throw new Error('Traducteur requis pour la répartition PEPS');
+        }
         const repartition = await repartitionService.calculerRepartitionPEPS({
+          traducteurId: formEdition.traducteurId,
           heuresTotal: formEdition.heuresTotal,
           dateDebut: formEdition.dateDebut,
           dateEcheance: formEdition.dateEcheance,
-          capaciteParJour,
         });
         tache.repartition = repartition;
       } else {
-        tache.repartitionManuelle = formEdition.repartitionManuelle;
+        tache.repartition = formEdition.repartitionManuelle;
+        tache.repartitionAuto = false;
       }
 
       const API_URL = import.meta.env.VITE_API_URL || '/api';
