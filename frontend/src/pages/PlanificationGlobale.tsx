@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
@@ -346,29 +345,31 @@ const PlanificationGlobale: React.FC = () => {
 
   return (
     <AppLayout titre="Planification globale">
-      <div className="space-y-4">
-        {/* Filtres compacts */}
-        <div className="bg-white border border-border rounded-lg shadow-sm">
-          <details>
-            <summary className="cursor-pointer text-sm font-semibold p-3 hover:bg-gray-50 flex items-center gap-2">
-              🔍 Affichage
-            </summary>
-            <div className="border-t border-border">
+      <div className="flex gap-4 h-[calc(100vh-8rem)]">
+        {/* Panneau latéral gauche - Contrôles */}
+        <div className="w-80 flex-shrink-0 overflow-y-auto space-y-3">
+          {/* Filtres compacts */}
+          <div className="bg-white border border-border rounded-lg shadow-sm">
+            <details open>
+              <summary className="cursor-pointer text-sm font-semibold p-3 hover:bg-gray-50 flex items-center gap-2">
+                🔍 Affichage
+              </summary>
+              <div className="border-t border-border">
               {/* Accordéon - Divisions */}
               <details className="border-b border-border">
-                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
-                  Divisions {pending.divisions.length > 0 && <span className="text-primary">({pending.divisions.length} sélectionnées)</span>}
+                <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
+                  Divisions {pending.divisions.length > 0 && <span className="text-primary">({pending.divisions.length})</span>}
                 </summary>
-                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                <div className="p-2 pt-0 space-y-1">
                   {options.divisions.map((div) => (
-                    <label key={div} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                    <label key={div} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
                         type="checkbox"
                         checked={pending.divisions.includes(div)}
                         onChange={() => toggleDivision(div)}
-                        className="w-3.5 h-3.5"
+                        className="w-3 h-3"
                       />
-                      <span>{div}</span>
+                      <span className="truncate">{div}</span>
                     </label>
                   ))}
                 </div>
@@ -376,17 +377,17 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Accordéon - Client */}
               <details className="border-b border-border">
-                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
-                  Client {pending.client && <span className="text-primary">({pending.client})</span>}
+                <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
+                  Client {pending.client && <span className="text-primary">✓</span>}
                 </summary>
-                <div className="p-3 pt-0">
+                <div className="p-2 pt-0">
                   <Select
                     value={pending.client}
                     onChange={(e) => updateField('client', e.target.value)}
                     disabled={loadingOptions}
-                    className="text-xs py-1.5 px-2 w-full"
+                    className="text-xs py-1 px-2 w-full"
                   >
-                    <option value="">Tous clients</option>
+                    <option value="">Tous</option>
                     {options.clients.map((c) => <option key={c} value={c}>{c}</option>)}
                   </Select>
                 </div>
@@ -394,19 +395,19 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Accordéon - Domaines */}
               <details className="border-b border-border">
-                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
-                  Domaines {pending.domaines.length > 0 && <span className="text-primary">({pending.domaines.length} sélectionnés)</span>}
+                <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
+                  Domaines {pending.domaines.length > 0 && <span className="text-primary">({pending.domaines.length})</span>}
                 </summary>
-                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                <div className="p-2 pt-0 space-y-1">
                   {options.domaines.map((dom) => (
-                    <label key={dom} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                    <label key={dom} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
                         type="checkbox"
                         checked={pending.domaines.includes(dom)}
                         onChange={() => toggleDomaine(dom)}
-                        className="w-3.5 h-3.5"
+                        className="w-3 h-3"
                       />
-                      <span>{dom}</span>
+                      <span className="truncate">{dom}</span>
                     </label>
                   ))}
                 </div>
@@ -414,19 +415,19 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Accordéon - Langues source */}
               <details className="border-b border-border">
-                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
-                  Langues source {pending.languesSource.length > 0 && <span className="text-primary">({pending.languesSource.length} sélectionnées)</span>}
+                <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
+                  Langues source {pending.languesSource.length > 0 && <span className="text-primary">({pending.languesSource.length})</span>}
                 </summary>
-                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                <div className="p-2 pt-0 space-y-1">
                   {options.languesSource.map((lang) => (
-                    <label key={lang} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                    <label key={lang} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
                         type="checkbox"
                         checked={pending.languesSource.includes(lang)}
                         onChange={() => toggleLangueSource(lang)}
-                        className="w-3.5 h-3.5"
+                        className="w-3 h-3"
                       />
-                      <span>{lang}</span>
+                      <span className="truncate">{lang}</span>
                     </label>
                   ))}
                 </div>
@@ -434,218 +435,223 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Accordéon - Langues cible */}
               <details className="border-b border-border">
-                <summary className="cursor-pointer text-xs font-medium p-3 hover:bg-gray-50">
-                  Langues cible {pending.languesCible.length > 0 && <span className="text-primary">({pending.languesCible.length} sélectionnées)</span>}
+                <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
+                  Langues cible {pending.languesCible.length > 0 && <span className="text-primary">({pending.languesCible.length})</span>}
                 </summary>
-                <div className="p-3 pt-0 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                <div className="p-2 pt-0 space-y-1">
                   {options.languesCible.map((lang) => (
-                    <label key={lang} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1.5 rounded">
+                    <label key={lang} className="flex items-center gap-2 text-xs cursor-pointer hover:bg-gray-50 p-1 rounded">
                       <input
                         type="checkbox"
                         checked={pending.languesCible.includes(lang)}
                         onChange={() => toggleLangueCible(lang)}
-                        className="w-3.5 h-3.5"
+                        className="w-3 h-3"
                       />
-                      <span>{lang}</span>
+                      <span className="truncate">{lang}</span>
                     </label>
                   ))}
                 </div>
               </details>
 
               {/* Boutons d'action */}
-              <div className="p-3 flex gap-2 items-center">
-                <Button variant="primaire" onClick={handleApply} loading={loading} className="px-4 py-2 text-sm">
-                  Appliquer les filtres
+              <div className="p-2 space-y-2">
+                <Button variant="primaire" onClick={handleApply} loading={loading} className="w-full px-3 py-2 text-xs">
+                  ✓ Appliquer
                 </Button>
-                <Button variant="outline" onClick={handleReset} disabled={loading} className="px-4 py-2 text-sm">
-                  Réinitialiser
+                <Button variant="outline" onClick={handleReset} disabled={loading} className="w-full px-3 py-2 text-xs">
+                  ↺ Réinitialiser
                 </Button>
-                {loadingOptions && <span className="text-xs text-muted ml-2">Chargement…</span>}
-                {optionsError && <span className="text-xs text-red-600 ml-2">{optionsError}</span>}
-                {error && <span className="text-xs text-red-600 ml-2">{error}</span>}
+                {loadingOptions && <p className="text-[10px] text-muted">Chargement…</p>}
+                {optionsError && <p className="text-[10px] text-red-600">{optionsError}</p>}
+                {error && <p className="text-[10px] text-red-600">{error}</p>}
               </div>
             </div>
           </details>
         </div>
 
         {/* Vues sauvegardées */}
-        <div className="bg-white border border-border rounded-lg shadow-sm p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold">📌 Vues sauvegardées</h3>
-            <Button
-              variant="outline"
-              onClick={() => setShowSaveDialog(!showSaveDialog)}
-              className="px-3 py-1.5 text-xs"
-            >
-              {showSaveDialog ? 'Annuler' : '💾 Sauvegarder la vue actuelle'}
-            </Button>
-          </div>
-
-          {showSaveDialog && (
-            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded flex gap-2 items-center">
-              <input
-                type="text"
-                value={newViewName}
-                onChange={(e) => setNewViewName(e.target.value)}
-                placeholder="Nom de la vue (ex: Droit - Semaine complète)"
-                className="flex-1 px-3 py-2 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                onKeyPress={(e) => e.key === 'Enter' && saveCurrentView()}
-              />
+        <div className="bg-white border border-border rounded-lg shadow-sm p-2">
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold mb-2 hover:bg-gray-50 p-1 rounded flex items-center gap-2">
+              📌 Vues sauvegardées
+            </summary>
+            <div className="space-y-2">
               <Button
-                variant="primaire"
-                onClick={saveCurrentView}
-                disabled={!newViewName.trim()}
-                className="px-4 py-2 text-sm"
+                variant="outline"
+                onClick={() => setShowSaveDialog(!showSaveDialog)}
+                className="w-full px-3 py-1.5 text-xs"
               >
-                Enregistrer
+                {showSaveDialog ? '✕ Annuler' : '💾 Nouvelle vue'}
               </Button>
-            </div>
-          )}
 
-          {savedViews.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {savedViews.map((view) => (
-                <div
-                  key={view.id}
-                  className="border border-border rounded p-2 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <button
-                      onClick={() => loadView(view)}
-                      className="flex-1 text-left text-sm font-medium hover:text-primary transition-colors"
-                      title="Charger cette vue"
-                    >
-                      {view.nom}
-                    </button>
-                    <button
-                      onClick={() => deleteView(view.id)}
-                      className="text-red-600 hover:text-red-800 text-xs px-1"
-                      title="Supprimer cette vue"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                  <div className="text-[10px] text-muted mt-1">
-                    {view.filtres.divisions.length > 0 && `${view.filtres.divisions.length} division(s)`}
-                    {view.filtres.client && ` · ${view.filtres.client}`}
-                    {` · ${view.filtres.range}j`}
-                  </div>
+              {showSaveDialog && (
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded space-y-2">
+                  <input
+                    type="text"
+                    value={newViewName}
+                    onChange={(e) => setNewViewName(e.target.value)}
+                    placeholder="Nom de la vue..."
+                    className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    onKeyPress={(e) => e.key === 'Enter' && saveCurrentView()}
+                  />
+                  <Button
+                    variant="primaire"
+                    onClick={saveCurrentView}
+                    disabled={!newViewName.trim()}
+                    className="w-full px-3 py-1 text-xs"
+                  >
+                    ✓ Enregistrer
+                  </Button>
                 </div>
-              ))}
+              )}
+
+              {savedViews.length > 0 ? (
+                <div className="space-y-1">
+                  {savedViews.map((view) => (
+                    <div
+                      key={view.id}
+                      className="border border-border rounded p-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-start justify-between gap-1">
+                        <button
+                          onClick={() => loadView(view)}
+                          className="flex-1 text-left text-xs font-medium hover:text-primary transition-colors truncate"
+                          title={view.nom}
+                        >
+                          {view.nom}
+                        </button>
+                        <button
+                          onClick={() => deleteView(view.id)}
+                          className="text-red-600 hover:text-red-800 text-xs"
+                          title="Supprimer"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div className="text-[10px] text-muted mt-0.5 truncate">
+                        {view.filtres.range}j{view.filtres.divisions.length > 0 && ` · ${view.filtres.divisions.length} div`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[10px] text-muted text-center py-2">
+                  Aucune vue sauvegardée
+                </p>
+              )}
             </div>
-          ) : (
-            <p className="text-xs text-muted text-center py-4">
-              Aucune vue sauvegardée. Configurez vos filtres et cliquez sur "Sauvegarder la vue actuelle" pour créer une vue.
-            </p>
-          )}
+          </details>
         </div>
 
         {/* Recherche de disponibilité */}
-        <div className="bg-white border border-border rounded-lg shadow-sm p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold">🔎 Recherche de disponibilité</h3>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setShowSearchDialog(!showSearchDialog);
-                if (showSearchDialog) resetSearch();
-              }}
-              className="px-3 py-1.5 text-xs"
-            >
-              {showSearchDialog ? 'Fermer' : 'Nouvelle recherche'}
-            </Button>
-          </div>
+        <div className="bg-white border border-border rounded-lg shadow-sm p-2">
+          <details>
+            <summary className="cursor-pointer text-sm font-semibold mb-2 hover:bg-gray-50 p-1 rounded flex items-center gap-2">
+              🔎 Recherche
+            </summary>
+            <div className="space-y-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowSearchDialog(!showSearchDialog);
+                  if (showSearchDialog) resetSearch();
+                }}
+                className="w-full px-3 py-1.5 text-xs"
+              >
+                {showSearchDialog ? '✕ Annuler' : '🔍 Nouvelle recherche'}
+              </Button>
 
-          {showSearchDialog && (
-            <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-                <div>
-                  <label className="text-xs font-medium block mb-1">Date</label>
-                  <input
-                    type="date"
-                    value={searchCriteria.date}
-                    onChange={(e) => setSearchCriteria({ ...searchCriteria, date: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
+              {showSearchDialog && (
+                <div className="p-2 bg-green-50 border border-green-200 rounded space-y-2">
+                  <div>
+                    <label className="text-[10px] font-medium block mb-1">Date</label>
+                    <input
+                      type="date"
+                      value={searchCriteria.date}
+                      onChange={(e) => setSearchCriteria({ ...searchCriteria, date: e.target.value })}
+                      className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium block mb-1">Heures *</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0"
+                      value={searchCriteria.heuresRequises}
+                      onChange={(e) => setSearchCriteria({ ...searchCriteria, heuresRequises: e.target.value })}
+                      placeholder="Ex: 4"
+                      className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium block mb-1">Langue source</label>
+                    <Select
+                      value={searchCriteria.langueSource}
+                      onChange={(e) => setSearchCriteria({ ...searchCriteria, langueSource: e.target.value })}
+                      className="text-xs py-1 px-2 w-full"
+                    >
+                      <option value="">Toutes</option>
+                      {options.languesSource.map((lang) => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium block mb-1">Langue cible</label>
+                    <Select
+                      value={searchCriteria.langueCible}
+                      onChange={(e) => setSearchCriteria({ ...searchCriteria, langueCible: e.target.value })}
+                      className="text-xs py-1 px-2 w-full"
+                    >
+                      <option value="">Toutes</option>
+                      {options.languesCible.map((lang) => (
+                        <option key={lang} value={lang}>{lang}</option>
+                      ))}
+                    </Select>
+                  </div>
+                  <div className="space-y-1 pt-1">
+                    <Button
+                      variant="primaire"
+                      onClick={searchAvailability}
+                      disabled={!searchCriteria.heuresRequises}
+                      className="w-full px-3 py-1.5 text-xs"
+                    >
+                      🔍 Rechercher
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={resetSearch}
+                      className="w-full px-3 py-1.5 text-xs"
+                    >
+                      ↺ Réinitialiser
+                    </Button>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1">Heures requises *</label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={searchCriteria.heuresRequises}
-                    onChange={(e) => setSearchCriteria({ ...searchCriteria, heuresRequises: e.target.value })}
-                    placeholder="Ex: 4"
-                    className="w-full px-3 py-2 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1">Langue source (optionnel)</label>
-                  <Select
-                    value={searchCriteria.langueSource}
-                    onChange={(e) => setSearchCriteria({ ...searchCriteria, langueSource: e.target.value })}
-                    className="text-sm py-2 px-2 w-full"
-                  >
-                    <option value="">Toutes</option>
-                    {options.languesSource.map((lang) => (
-                      <option key={lang} value={lang}>{lang}</option>
-                    ))}
-                  </Select>
-                </div>
-                <div>
-                  <label className="text-xs font-medium block mb-1">Langue cible (optionnel)</label>
-                  <Select
-                    value={searchCriteria.langueCible}
-                    onChange={(e) => setSearchCriteria({ ...searchCriteria, langueCible: e.target.value })}
-                    className="text-sm py-2 px-2 w-full"
-                  >
-                    <option value="">Toutes</option>
-                    {options.languesCible.map((lang) => (
-                      <option key={lang} value={lang}>{lang}</option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="primaire"
-                  onClick={searchAvailability}
-                  disabled={!searchCriteria.heuresRequises}
-                  className="px-4 py-2 text-sm"
-                >
-                  🔍 Rechercher
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={resetSearch}
-                  className="px-4 py-2 text-sm"
-                >
-                  Réinitialiser
-                </Button>
-              </div>
-            </div>
-          )}
+              )}
 
-          {searchResults.length > 0 && (
-            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
-              <p className="text-sm font-medium mb-2">
-                ✅ {searchResults.length} traducteur(s) disponible(s) avec {searchCriteria.heuresRequises}h le {new Date(searchCriteria.date).toLocaleDateString('fr-FR')}
-              </p>
-              <p className="text-xs text-muted">
-                Les traducteurs correspondants sont surlignés en jaune dans le tableau ci-dessous.
-              </p>
-            </div>
-          )}
+              {searchResults.length > 0 && (
+                <div className="p-2 bg-blue-50 border border-blue-200 rounded">
+                  <p className="text-xs font-medium">
+                    ✅ {searchResults.length} trouvé(s)
+                  </p>
+                  <p className="text-[10px] text-muted mt-1">
+                    Surlignés en jaune →
+                  </p>
+                </div>
+              )}
 
-          {showSearchDialog && searchResults.length === 0 && searchCriteria.heuresRequises && (
-            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
-              <p className="text-sm text-red-800">
-                ❌ Aucun traducteur disponible avec {searchCriteria.heuresRequises}h le {new Date(searchCriteria.date).toLocaleDateString('fr-FR')}
-              </p>
+              {showSearchDialog && searchResults.length === 0 && searchCriteria.heuresRequises && (
+                <div className="p-2 bg-red-50 border border-red-200 rounded">
+                  <p className="text-xs text-red-800">
+                    ❌ Aucun disponible
+                  </p>
+                </div>
+              )}
             </div>
-          )}
+          </details>
         </div>
+      </div>
 
       {/* Bouton flottant Ajouter une tâche */}
       <Button
@@ -673,7 +679,7 @@ const PlanificationGlobale: React.FC = () => {
             <Input
               type="text"
               value={newTask.numeroProjet}
-              onChange={(e) => setNewTask({ ...newTask, numeroProjet: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTask({ ...newTask, numeroProjet: e.target.value })}
               placeholder="Ex: PRJ-2025-001"
               required
             />
@@ -700,7 +706,7 @@ const PlanificationGlobale: React.FC = () => {
               step="0.5"
               min="0"
               value={newTask.heuresRequises}
-              onChange={(e) => setNewTask({ ...newTask, heuresRequises: e.target.value })}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTask({ ...newTask, heuresRequises: e.target.value })}
               placeholder="Ex: 4"
               required
             />
@@ -712,7 +718,7 @@ const PlanificationGlobale: React.FC = () => {
               <Input
                 type="date"
                 value={newTask.dateDebut}
-                onChange={(e) => setNewTask({ ...newTask, dateDebut: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTask({ ...newTask, dateDebut: e.target.value })}
                 required
               />
             </div>
@@ -721,7 +727,7 @@ const PlanificationGlobale: React.FC = () => {
               <Input
                 type="date"
                 value={newTask.dateFin}
-                onChange={(e) => setNewTask({ ...newTask, dateFin: e.target.value })}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewTask({ ...newTask, dateFin: e.target.value })}
                 min={newTask.dateDebut}
                 required
               />
@@ -775,16 +781,16 @@ const PlanificationGlobale: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Planification principal */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Planification des traducteurs ({planificationEnrichie?.planification.length || 0})</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap gap-3 mb-4 items-center">
+      {/* Panneau principal à droite - Tableau de planification */}
+      <div className="flex-1 bg-white border border-border rounded-lg shadow-sm overflow-hidden flex flex-col">
+        {/* En-tête compact avec contrôles de plage */}
+        <div className="border-b border-border px-3 py-2 flex items-center justify-between bg-gray-50">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold">
+              Planification ({planificationEnrichie?.planification.length || 0} traducteurs)
+            </h2>
             {/* Boutons de plage */}
-            <div className="flex gap-1.5 items-center">
-              <span className="text-xs font-medium text-muted mr-1">Plage :</span>
+            <div className="flex gap-1 items-center">
               {[7, 14, 30].map((val) => (
                 <Button
                   key={val}
@@ -793,9 +799,9 @@ const PlanificationGlobale: React.FC = () => {
                     setPending((prev) => ({ ...prev, range: val as 7 | 14 | 30 }));
                     setApplied((prev) => ({ ...prev, range: val as 7 | 14 | 30 }));
                   }}
-                  className="px-3 py-1.5 text-xs"
+                  className="px-2 py-1 text-xs"
                 >
-                  {val} jours
+                  {val}j
                 </Button>
               ))}
               <Button
@@ -804,32 +810,36 @@ const PlanificationGlobale: React.FC = () => {
                   setPending((prev) => ({ ...prev, start: today }));
                   setApplied((prev) => ({ ...prev, start: today }));
                 }}
-                className="px-3 py-1.5 text-xs ml-2"
-                title="Revenir à aujourd'hui"
+                className="px-2 py-1 text-xs"
+                title="Aujourd'hui"
               >
-                📅 Aujourd'hui
+                📅
               </Button>
             </div>
-
-            <div className="h-6 w-px bg-border"></div>
-
-            {/* Légende des couleurs */}
-            <div className="flex gap-2 text-xs items-center">
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-green-100 border border-green-300">
-                <span className="w-3 h-3 rounded bg-green-500"></span>
-                Libre
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-orange-100 border border-orange-300">
-                <span className="w-3 h-3 rounded bg-orange-500"></span>
-                Presque plein
-              </span>
-              <span className="inline-flex items-center gap-1 px-2 py-1 rounded bg-red-100 border border-red-300">
-                <span className="w-3 h-3 rounded bg-red-600"></span>
-                Plein
-              </span>
-            </div>
           </div>
-          <div className="overflow-auto border border-border rounded-lg" style={{ maxHeight: '70vh' }}>
+
+          {/* Légende des couleurs - compacte */}
+          <div className="flex gap-2 text-[10px] items-center">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100">
+              <span className="w-2 h-2 rounded bg-green-500"></span>
+              Libre
+            </span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-100">
+              <span className="w-2 h-2 rounded bg-orange-500"></span>
+              ≈Plein
+            </span>
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-100">
+              <span className="w-2 h-2 rounded bg-red-600"></span>
+              Plein
+            </span>
+          </div>
+        </div>
+
+        {/* Zone de tableau avec défilement */}
+        <div className="flex-1 overflow-auto">
+          {loading && <p className="text-xs text-muted text-center py-4">Chargement...</p>}
+          {error && <p className="text-xs text-red-600 text-center py-4">{error}</p>}
+          {!loading && !error && (
             <table className="w-full border-collapse text-xs">
               <thead className="bg-gray-50 sticky top-0 z-10">
                 <tr>
@@ -942,20 +952,18 @@ const PlanificationGlobale: React.FC = () => {
                     </tr>
                   );
                 })}
-                {(!planificationEnrichie || planificationEnrichie.planification.length === 0) && !loading && (
+                {(!planificationEnrichie || planificationEnrichie.planification.length === 0) && (
                   <tr>
-                    <td colSpan={days.length + 1} className="text-center py-8 text-muted">
+                    <td colSpan={days.length + 1} className="text-center py-8 text-muted text-xs">
                       Aucun traducteur trouvé avec ces critères
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
-          {loading && <p className="text-xs text-muted mt-2">Chargement de la planification...</p>}
-          {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
-        </CardContent>
-      </Card>
+          )}
+        </div>
+      </div>
       </div>
     </AppLayout>
   );
