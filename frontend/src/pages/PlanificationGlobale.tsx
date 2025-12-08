@@ -121,6 +121,15 @@ const PlanificationGlobale: React.FC = () => {
 
   const { planificationGlobale, loading, error } = usePlanificationGlobal(params);
 
+  // Fonction utilitaire pour détecter les weekends
+  const isWeekend = (iso: string) => {
+    const d = new Date(iso);
+    const day = d.getDay();
+    return day === 0 || day === 6; // dimanche ou samedi
+  };
+
+  const isToday = (iso: string) => iso === today;
+
   // Enrichir planificationGlobale pour inclure les weekends avec données vides
   const planificationEnrichie = useMemo(() => {
     if (!planificationGlobale) return null;
@@ -164,14 +173,6 @@ const PlanificationGlobale: React.FC = () => {
       return dateISO(d);
     });
   }, [applied.start, applied.range, today]);
-
-  const isToday = (iso: string) => iso === today;
-
-  const isWeekend = (iso: string) => {
-    const d = new Date(iso);
-    const day = d.getDay();
-    return day === 0 || day === 6; // dimanche ou samedi
-  };
 
   const handleApply = () => setApplied(pending);
 
