@@ -1582,35 +1582,38 @@ const PlanificationGlobale: React.FC = () => {
       </div>
         )}
 
-      {/* Bouton flottant Statistiques */}
-      <Button
-        variant="outline"
-        onClick={() => setShowStatsModal(true)}
-        className="fixed bottom-4 right-80 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-white"
-        title="Voir les statistiques de disponibilité"
-      >
-        📊 Stats
-      </Button>
+      {/* Groupe de boutons flottants - Coin inférieur droit */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
+        {/* Bouton Statistiques */}
+        <Button
+          variant="outline"
+          onClick={() => setShowStatsModal(true)}
+          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-white"
+          title="Voir les statistiques de disponibilité"
+        >
+          📊 Stats
+        </Button>
 
-      {/* Bouton flottant Tetrix Master */}
-      <Button
-        variant="outline"
-        onClick={chargerAnalyseOptimisation}
-        className="fixed bottom-4 right-44 z-40 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
-        title="Optimiser la charge de travail"
-      >
-        🎯 Tetrix Master
-      </Button>
+        {/* Bouton Tetrix Master */}
+        <Button
+          variant="outline"
+          onClick={chargerAnalyseOptimisation}
+          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
+          title="Optimiser la charge de travail"
+        >
+          🎯 Tetrix Master
+        </Button>
 
-      {/* Bouton flottant Créer une tâche */}
-      <Button
-        variant="primaire"
-        onClick={() => setShowAddTaskModal(true)}
-        className="fixed bottom-4 right-4 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow"
-        title="Créer une nouvelle tâche"
-      >
-        ➕ Créer une tâche
-      </Button>
+        {/* Bouton Créer une tâche */}
+        <Button
+          variant="primaire"
+          onClick={() => setShowAddTaskModal(true)}
+          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105"
+          title="Créer une nouvelle tâche"
+        >
+          ➕ Créer une tâche
+        </Button>
+      </div>
 
       {/* Modal Ajouter une tâche */}
       <Modal
