@@ -1716,7 +1716,7 @@ const PlanificationGlobale: React.FC = () => {
                   </div>
                 )}
 
-              {/* Client (optionnel) */}
+                {/* Client (optionnel) */}
               <div>
                 <label className="block text-sm font-medium mb-1">Client</label>
                 <Select
@@ -1755,42 +1755,17 @@ const PlanificationGlobale: React.FC = () => {
                 />
               </div>
 
-              {/* Commentaire (optionnel) */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Commentaire</label>
-                <textarea
-                  value={formTache.description}
-                  onChange={(e) => setFormTache({ ...formTache, description: e.target.value })}
-                  placeholder="Ajoutez un commentaire ou des détails..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                />
-              </div>
-
-              {/* Heures totales */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Heures totales *</label>
-                <Input
-                  type="number"
-                  step="0.1"
-                  min="0"
-                  value={formTache.heuresTotal}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, heuresTotal: e.target.value })}
-                  placeholder="Ex: 4.5"
-                  required
-                />
-              </div>
-
-              {/* Date d'échéance */}
-              <div>
-                <label className="block text-sm font-medium mb-1">Date d'échéance *</label>
-                <Input
-                  type="date"
-                  value={formTache.dateEcheance}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateEcheance: e.target.value })}
-                  min={today}
-                  required
-                />
+                {/* Commentaire (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Commentaire <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <textarea
+                    value={formTache.description}
+                    onChange={(e) => setFormTache({ ...formTache, description: e.target.value })}
+                    placeholder="Ajoutez un commentaire ou des détails..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  />
+                </div>
               </div>
 
               {/* Mode de répartition simplifié */}
