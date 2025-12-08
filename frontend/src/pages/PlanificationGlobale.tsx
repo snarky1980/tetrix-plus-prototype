@@ -109,16 +109,17 @@ const PlanificationGlobale: React.FC = () => {
     description: '',
     heuresTotal: '',
     dateEcheance: '',
-    typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS',
+    typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL',
     dateDebut: today,
     dateFin: '',
     repartitionAuto: true,
     repartitionManuelle: [] as { date: string; heures: number }[],
   });
 
-  // Preview JAT
-  const [previewJAT, setPreviewJAT] = useState<{ date: string; heures: number }[] | null>(null);
+  // Preview de répartition
+  const [previewRepartition, setPreviewRepartition] = useState<{ date: string; heures: number }[] | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [erreurPreview, setErreurPreview] = useState('');
 
   // Modal édition de tâche
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
@@ -462,7 +463,7 @@ const PlanificationGlobale: React.FC = () => {
       repartitionManuelle: [],
     });
     setPairesDisponibles([]);
-    setPreviewJAT(null);
+    setPreviewRepartition(null);
     setEtapeCreation(1);
     setErreurCreation('');
   };
@@ -476,21 +477,55 @@ const PlanificationGlobale: React.FC = () => {
     }
   }, [formTache.traducteurId, traducteurs]);
 
-  const chargerPreviewJAT = async () => {
+  const chargerPreviewRepartition = async () => {
     const heures = parseFloat(formTache.heuresTotal as string);
-    if (!formTache.traducteurId || heures <= 0 || !formTache.dateEcheance) return;
+    if (heures <= 0) return;
     
     setLoadingPreview(true);
+    setErreurPreview('');
     try {
-      const result = await repartitionService.previewJAT({
-        traducteurId: formTache.traducteurId,
-        heuresTotal: heures,
-        dateEcheance: formTache.dateEcheance,
-      });
-      setPreviewJAT(result);
+      let result: { date: string; heures: number }[] = [];
+      
+      if (formTache.typeRepartition === 'JUSTE_TEMPS') {
+        if (!formTache.traducteurId || !formTache.dateEcheance) return;
+        result = await repartitionService.previewJAT({
+          traducteurId: formTache.traducteurId,
+          heuresTotal: heures,
+          dateEcheance: formTache.dateEcheance,
+        });
+      } else if (formTache.typeRepartition === 'EQUILIBRE') {
+        if (!formTache.dateDebut || !formTache.dateFin) {
+          setErreurPreview('Veuillez sélectionner une date de début et de fin');
+          return;
+        }
+        result = await repartitionService.calculerRepartitionEquilibree({
+          heuresTotal: heures,
+          dateDebut: formTache.dateDebut,
+          dateFin: formTache.dateFin,
+        });
+      } else if (formTache.typeRepartition === 'PEPS') {
+        if (!formTache.dateDebut || !formTache.dateEcheance) {
+          setErreurPreview('Veuillez sélectionner une date de début');
+          return;
+        }
+        const traducteur = traducteurs.find(t => t.id === formTache.traducteurId);
+        const capaciteParJour = traducteur?.capaciteHeuresParJour || 7.5;
+        
+        result = await repartitionService.calculerRepartitionPEPS({
+          heuresTotal: heures,
+          dateDebut: formTache.dateDebut,
+          dateEcheance: formTache.dateEcheance,
+          capaciteParJour,
+        });
+      } else if (formTache.typeRepartition === 'MANUEL') {
+        // Mode manuel : utiliser la répartition saisie par l'utilisateur
+        result = formTache.repartitionManuelle;
+      }
+      
+      setPreviewRepartition(result);
     } catch (err: any) {
-      console.error('Erreur preview JAT:', err);
-      setErreurCreation('Erreur lors du calcul JAT: ' + (err.response?.data?.erreur || err.message));
+      console.error('Erreur preview répartition:', err);
+      setErreurPreview('Erreur : ' + (err.message || 'Calcul impossible'));
     } finally {
       setLoadingPreview(false);
     }
@@ -538,8 +573,9 @@ const PlanificationGlobale: React.FC = () => {
 
   const handleEtape1Suivant = () => {
     if (validerEtape1()) {
-      if (formTache.repartitionAuto) {
-        chargerPreviewJAT();
+      // Calculer la prévisualisation pour tous les modes sauf MANUEL
+      if (formTache.typeRepartition !== 'MANUEL') {
+        chargerPreviewRepartition();
       }
       setEtapeCreation(2);
     }
@@ -550,6 +586,18 @@ const PlanificationGlobale: React.FC = () => {
     setErreurCreation('');
 
     try {
+      // Validation pour répartition manuelle
+      if (formTache.typeRepartition === 'MANUEL') {
+        const totalHeuresManuel = formTache.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+        const heuresAttendu = parseFloat(formTache.heuresTotal as string);
+        
+        if (Math.abs(totalHeuresManuel - heuresAttendu) > 0.01) {
+          setErreurCreation(`Le total des heures (${totalHeuresManuel.toFixed(2)}h) ne correspond pas au total attendu (${heuresAttendu}h)`);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const tache: any = {
         numeroProjet: formTache.numeroProjet,
         traducteurId: formTache.traducteurId,
@@ -567,34 +615,24 @@ const PlanificationGlobale: React.FC = () => {
       // Gérer les différentes méthodes de répartition
       if (formTache.typeRepartition === 'JUSTE_TEMPS') {
         tache.repartitionAuto = true;
-      } else if (formTache.typeRepartition === 'EQUILIBRE') {
-        // Calculer la répartition équilibrée
-        const repartition = await repartitionService.calculerRepartitionEquilibree({
-          heuresTotal: parseFloat(formTache.heuresTotal as string),
-          dateDebut: formTache.dateDebut,
-          dateFin: formTache.dateFin,
-        });
-        tache.repartition = repartition;
-      } else if (formTache.typeRepartition === 'PEPS') {
-        // Calculer la répartition PEPS avec la capacité du traducteur
-        const traducteur = traducteurs.find(t => t.id === formTache.traducteurId);
-        const capaciteParJour = traducteur?.capaciteHeuresParJour || 7.5;
-        
-        const repartition = await repartitionService.calculerRepartitionPEPS({
-          heuresTotal: parseFloat(formTache.heuresTotal as string),
-          dateDebut: formTache.dateDebut,
-          dateEcheance: formTache.dateEcheance,
-          capaciteParJour,
-        });
-        tache.repartition = repartition;
-      } else {
+      } else if (formTache.typeRepartition === 'MANUEL') {
         tache.repartitionManuelle = formTache.repartitionManuelle;
+      } else {
+        // Pour EQUILIBRE et PEPS, utiliser la prévisualisation calculée
+        if (previewRepartition && previewRepartition.length > 0) {
+          tache.repartition = previewRepartition;
+        } else {
+          setErreurCreation('Aucune répartition générée. Veuillez recalculer.');
+          setSubmitting(false);
+          return;
+        }
       }
 
       await tacheService.creerTache(tache);
       
       setShowAddTaskModal(false);
       resetFormTache();
+      setPreviewRepartition(null);
       
       // Rafraîchir la planification
       window.location.reload();
@@ -1551,12 +1589,13 @@ const PlanificationGlobale: React.FC = () => {
                 <label className="block text-sm font-medium mb-1">Répartition *</label>
                 <Select
                   value={formTache.typeRepartition}
-                  onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' })}
+                  onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL' })}
                   required
                 >
                   <option value="JUSTE_TEMPS">Juste à temps (JAT)</option>
                   <option value="EQUILIBRE">Équilibrer sur le temps</option>
                   <option value="PEPS">Première entrée, première sortie (PEPS)</option>
+                  <option value="MANUEL">Répartition manuelle</option>
                 </Select>
               </div>
 
@@ -1613,6 +1652,9 @@ const PlanificationGlobale: React.FC = () => {
                 {formTache.typeRepartition === 'PEPS' && (
                   <p>🔄 <strong>Première entrée, première sortie (PEPS) :</strong> Commence à la date de début spécifiée et termine à l'échéance. Les heures sont affectées dans l'ordre chronologique.</p>
                 )}
+                {formTache.typeRepartition === 'MANUEL' && (
+                  <p>✍️ <strong>Répartition manuelle :</strong> Vous définissez vous-même les heures pour chaque jour. Idéal pour des situations spécifiques nécessitant un contrôle total.</p>
+                )}
               </div>
 
               <div className="flex gap-2 justify-end pt-4 border-t">
@@ -1648,7 +1690,8 @@ const PlanificationGlobale: React.FC = () => {
                   <p><span className="font-medium">Échéance:</span> {new Date(formTache.dateEcheance).toLocaleDateString('fr-CA')}</p>
                   <p><span className="font-medium">Répartition:</span> {
                     formTache.typeRepartition === 'JUSTE_TEMPS' ? 'Juste à temps (JAT)' :
-                    formTache.typeRepartition === 'EQUILIBRE' ? 'Équilibré' : 'PEPS'
+                    formTache.typeRepartition === 'EQUILIBRE' ? 'Équilibré' :
+                    formTache.typeRepartition === 'PEPS' ? 'PEPS' : 'Manuelle'
                   }</p>
                   {formTache.typeRepartition === 'EQUILIBRE' && (
                     <p><span className="font-medium">Période:</span> {new Date(formTache.dateDebut).toLocaleDateString('fr-CA')} → {new Date(formTache.dateFin).toLocaleDateString('fr-CA')}</p>
@@ -1656,43 +1699,142 @@ const PlanificationGlobale: React.FC = () => {
                 </div>
               </div>
 
-              {formTache.repartitionAuto && (
+              {/* Prévisualisation de la répartition */}
+              {erreurPreview && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  {erreurPreview}
+                </div>
+              )}
+
+              {formTache.typeRepartition === 'MANUEL' ? (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold">📝 Répartition manuelle</h3>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setFormTache({
+                          ...formTache,
+                          repartitionManuelle: [
+                            ...formTache.repartitionManuelle,
+                            { date: formTache.dateDebut || today, heures: 0 }
+                          ]
+                        });
+                      }}
+                      className="text-xs px-2 py-1"
+                    >
+                      + Ajouter un jour
+                    </Button>
+                  </div>
+                  
+                  <div className="max-h-64 overflow-y-auto space-y-2">
+                    {formTache.repartitionManuelle.map((item, idx) => (
+                      <div key={idx} className="flex gap-2 items-center bg-white p-2 rounded border border-border">
+                        <Input
+                          type="date"
+                          value={item.date}
+                          onChange={(e) => {
+                            const newRep = [...formTache.repartitionManuelle];
+                            newRep[idx].date = e.target.value;
+                            setFormTache({ ...formTache, repartitionManuelle: newRep });
+                          }}
+                          className="text-xs flex-1"
+                        />
+                        <Input
+                          type="number"
+                          step="0.25"
+                          min="0"
+                          value={item.heures}
+                          onChange={(e) => {
+                            const newRep = [...formTache.repartitionManuelle];
+                            newRep[idx].heures = parseFloat(e.target.value) || 0;
+                            setFormTache({ ...formTache, repartitionManuelle: newRep });
+                          }}
+                          className="text-xs w-24"
+                          placeholder="Heures"
+                        />
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            const newRep = formTache.repartitionManuelle.filter((_, i) => i !== idx);
+                            setFormTache({ ...formTache, repartitionManuelle: newRep });
+                          }}
+                          className="text-xs px-2 py-1"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                    ))}
+                    {formTache.repartitionManuelle.length === 0 && (
+                      <p className="text-xs text-muted text-center py-4">
+                        Cliquez sur "Ajouter un jour" pour définir la répartition
+                      </p>
+                    )}
+                    {formTache.repartitionManuelle.length > 0 && (() => {
+                      const totalManuel = formTache.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+                      const heuresAttendu = parseFloat(formTache.heuresTotal as string);
+                      const correspondance = Math.abs(totalManuel - heuresAttendu) < 0.01;
+                      
+                      return (
+                        <div className={`p-2 rounded text-xs ${correspondance ? 'bg-green-50 border border-green-200' : 'bg-yellow-50 border border-yellow-300'}`}>
+                          <span className="font-medium">Total:</span> {totalManuel.toFixed(2)}h / {heuresAttendu}h
+                          {!correspondance && (
+                            <span className="ml-2 text-orange-600">
+                              ({totalManuel > heuresAttendu ? '+' : ''}{(totalManuel - heuresAttendu).toFixed(2)}h)
+                            </span>
+                          )}
+                          {correspondance && <span className="ml-2 text-green-600">✓</span>}
+                        </div>
+                      );
+                    })()}
+                  </div>
+                </div>
+              ) : (
                 <>
                   {loadingPreview ? (
                     <div className="text-center py-4 text-sm text-muted">
-                      ⏳ Calcul de la répartition JAT...
+                      ⏳ Calcul de la répartition...
                     </div>
-                  ) : previewJAT && previewJAT.length > 0 ? (
+                  ) : previewRepartition && previewRepartition.length > 0 ? (
                     <div className="border border-border rounded overflow-hidden">
-                      <table className="w-full text-xs">
-                        <thead className="bg-gray-100">
-                          <tr>
-                            <th className="text-left px-3 py-2">Date</th>
-                            <th className="text-right px-3 py-2">Heures</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {previewJAT.map((r) => (
-                            <tr key={r.date} className="border-t border-border">
-                              <td className="px-3 py-2">{r.date}</td>
-                              <td className="text-right px-3 py-2">{r.heures.toFixed(2)}h</td>
+                      <div className="bg-gray-100 px-3 py-2 flex items-center justify-between">
+                        <h3 className="text-xs font-semibold">📅 Répartition calculée</h3>
+                        <Button
+                          variant="outline"
+                          onClick={chargerPreviewRepartition}
+                          className="text-xs px-2 py-1"
+                        >
+                          🔄 Recalculer
+                        </Button>
+                      </div>
+                      <div className="max-h-64 overflow-y-auto">
+                        <table className="w-full text-xs">
+                          <thead className="bg-gray-50 sticky top-0">
+                            <tr>
+                              <th className="text-left px-3 py-2">Date</th>
+                              <th className="text-right px-3 py-2">Heures</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                          </thead>
+                          <tbody>
+                            {previewRepartition.map((r) => (
+                              <tr key={r.date} className="border-t border-border">
+                                <td className="px-3 py-2">{r.date}</td>
+                                <td className="text-right px-3 py-2 font-semibold">{r.heures.toFixed(2)}h</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="bg-blue-50 px-3 py-2 border-t text-xs">
+                        <span className="font-medium">Total:</span> {previewRepartition.reduce((s, r) => s + r.heures, 0).toFixed(2)}h sur {previewRepartition.length} jours
+                      </div>
                     </div>
                   ) : (
-                    <div className="text-center py-4 text-sm text-muted">
+                    <div className="text-center py-4 text-sm text-muted border border-dashed border-gray-300 rounded">
                       Aucune répartition générée
                     </div>
                   )}
                 </>
-              )}
-
-              {!formTache.repartitionAuto && (
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-sm">
-                  ⚠️ Répartition manuelle non encore implémentée dans ce modal. Utilisez la répartition automatique.
-                </div>
               )}
 
               <div className="flex gap-2 justify-end pt-4 border-t">
@@ -1705,7 +1847,11 @@ const PlanificationGlobale: React.FC = () => {
                 <Button
                   variant="primaire"
                   onClick={handleSubmitTache}
-                  disabled={submitting || (formTache.repartitionAuto && (!previewJAT || previewJAT.length === 0))}
+                  disabled={
+                    submitting || 
+                    (formTache.typeRepartition === 'MANUEL' && formTache.repartitionManuelle.length === 0) ||
+                    (formTache.typeRepartition !== 'MANUEL' && (!previewRepartition || previewRepartition.length === 0))
+                  }
                 >
                   {submitting ? 'Création...' : 'Créer la tâche'}
                 </Button>
