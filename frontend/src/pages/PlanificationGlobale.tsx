@@ -889,10 +889,6 @@ const PlanificationGlobale: React.FC = () => {
       setErreurEdition('Veuillez sélectionner un traducteur');
       return false;
     }
-    if (!formEdition.paireLinguistiqueId) {
-      setErreurEdition('Veuillez sélectionner une paire linguistique');
-      return false;
-    }
     if (formEdition.heuresTotal <= 0) {
       setErreurEdition('Les heures doivent être supérieures à 0');
       return false;
@@ -2003,13 +1999,12 @@ const PlanificationGlobale: React.FC = () => {
 
               {formEdition.traducteurId && (
                 <div>
-                  <label className="block text-sm font-medium mb-1">Paire linguistique *</label>
+                  <label className="block text-sm font-medium mb-1">Paire linguistique</label>
                   <Select
                     value={formEdition.paireLinguistiqueId}
                     onChange={(e) => setFormEdition({ ...formEdition, paireLinguistiqueId: e.target.value })}
-                    required
                   >
-                    <option value="">Sélectionner une paire...</option>
+                    <option value="">Aucune paire linguistique</option>
                     {pairesDisponibles.map((p) => (
                       <option key={p.id} value={p.id}>
                         {p.langueSource} → {p.langueCible}
