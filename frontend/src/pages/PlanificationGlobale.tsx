@@ -52,7 +52,15 @@ const PlanificationGlobale: React.FC = () => {
     languesCible: [],
   });
 
-  const [applied, setApplied] = useState<Filters>(pending);
+  const [applied, setApplied] = useState<Filters>({
+    start: today,
+    range: 7,
+    divisions: [],
+    clients: [],
+    domaines: [],
+    languesSource: [],
+    languesCible: [],
+  });
 
   const [options, setOptions] = useState({
     divisions: [] as string[],
@@ -1160,6 +1168,14 @@ const PlanificationGlobale: React.FC = () => {
     container.addEventListener('wheel', handleWheel, { passive: false });
     return () => container.removeEventListener('wheel', handleWheel);
   }, []);
+
+  // Forcer la synchronisation de la date au montage du composant
+  useEffect(() => {
+    const currentDate = dateISO(new Date());
+    console.log('[PlanificationGlobale] Synchronisation de la date au montage:', currentDate);
+    setPending(prev => ({ ...prev, start: currentDate }));
+    setApplied(prev => ({ ...prev, start: currentDate }));
+  }, []); // Exécuté une seule fois au montage
 
   return (
     <AppLayout titre="Planification globale" compact>
