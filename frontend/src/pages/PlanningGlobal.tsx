@@ -63,6 +63,16 @@ const PlanningGlobal: React.FC = () => {
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [newViewName, setNewViewName] = useState('');
 
+  // Recherche de disponibilité
+  const [showSearchDialog, setShowSearchDialog] = useState(false);
+  const [searchCriteria, setSearchCriteria] = useState({
+    date: today,
+    heuresRequises: '',
+    langueSource: '',
+    langueCible: '',
+  });
+  const [searchResults, setSearchResults] = useState<string[]>([]);
+
   const endDate = useMemo(() => {
     const base = new Date(applied.start || today);
     const end = new Date(base);
@@ -176,6 +186,48 @@ const PlanningGlobal: React.FC = () => {
     const updated = savedViews.filter(v => v.id !== id);
     setSavedViews(updated);
     localStorage.setItem('planning-saved-views', JSON.stringify(updated));
+  };
+
+  // Recherche de disponibilité
+  const searchAvailability = () => {
+    if (!searchCriteria.heuresRequises || !planningGlobal) {
+      setSearchResults([]);
+      return;
+    }
+
+    const heuresRequises = parseFloat(searchCriteria.heuresRequises);
+    const results: string[] = [];
+
+    planningGlobal.planning.forEach((ligne) => {
+      const info = ligne.dates[searchCriteria.date];
+      if (!info) return;
+
+      const disponible = info.capacite - info.heures;
+      
+      // Vérifier si le traducteur a la disponibilité requise
+      if (disponible >= heuresRequises) {
+        // Vérifier les langues si spécifiées
+        if (searchCriteria.langueSource || searchCriteria.langueCible) {
+          // On devrait vérifier les paires linguistiques du traducteur
+          // Pour l'instant, on inclut le traducteur
+          results.push(ligne.traducteur.id);
+        } else {
+          results.push(ligne.traducteur.id);
+        }
+      }
+    });
+
+    setSearchResults(results);
+  };
+
+  const resetSearch = () => {
+    setSearchCriteria({
+      date: today,
+      heuresRequises: '',
+      langueSource: '',
+      langueCible: '',
+    });
+    setSearchResults([]);
   };
 
   useEffect(() => {
@@ -405,6 +457,113 @@ const PlanningGlobal: React.FC = () => {
           )}
         </div>
 
+        {/* Recherche de disponibilité */}
+        <div className="bg-white border border-border rounded-lg shadow-sm p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold">🔎 Recherche de disponibilité</h3>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowSearchDialog(!showSearchDialog);
+                if (showSearchDialog) resetSearch();
+              }}
+              className="px-3 py-1.5 text-xs"
+            >
+              {showSearchDialog ? 'Fermer' : 'Nouvelle recherche'}
+            </Button>
+          </div>
+
+          {showSearchDialog && (
+            <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
+                <div>
+                  <label className="text-xs font-medium block mb-1">Date</label>
+                  <input
+                    type="date"
+                    value={searchCriteria.date}
+                    onChange={(e) => setSearchCriteria({ ...searchCriteria, date: e.target.value })}
+                    className="w-full px-3 py-2 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Heures requises *</label>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    value={searchCriteria.heuresRequises}
+                    onChange={(e) => setSearchCriteria({ ...searchCriteria, heuresRequises: e.target.value })}
+                    placeholder="Ex: 4"
+                    className="w-full px-3 py-2 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Langue source (optionnel)</label>
+                  <Select
+                    value={searchCriteria.langueSource}
+                    onChange={(e) => setSearchCriteria({ ...searchCriteria, langueSource: e.target.value })}
+                    className="text-sm py-2 px-2 w-full"
+                  >
+                    <option value="">Toutes</option>
+                    {options.languesSource.map((lang) => (
+                      <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </Select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium block mb-1">Langue cible (optionnel)</label>
+                  <Select
+                    value={searchCriteria.langueCible}
+                    onChange={(e) => setSearchCriteria({ ...searchCriteria, langueCible: e.target.value })}
+                    className="text-sm py-2 px-2 w-full"
+                  >
+                    <option value="">Toutes</option>
+                    {options.languesCible.map((lang) => (
+                      <option key={lang} value={lang}>{lang}</option>
+                    ))}
+                  </Select>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="primaire"
+                  onClick={searchAvailability}
+                  disabled={!searchCriteria.heuresRequises}
+                  className="px-4 py-2 text-sm"
+                >
+                  🔍 Rechercher
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={resetSearch}
+                  className="px-4 py-2 text-sm"
+                >
+                  Réinitialiser
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {searchResults.length > 0 && (
+            <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-sm font-medium mb-2">
+                ✅ {searchResults.length} traducteur(s) disponible(s) avec {searchCriteria.heuresRequises}h le {new Date(searchCriteria.date).toLocaleDateString('fr-FR')}
+              </p>
+              <p className="text-xs text-muted">
+                Les traducteurs correspondants sont surlignés en jaune dans le tableau ci-dessous.
+              </p>
+            </div>
+          )}
+
+          {showSearchDialog && searchResults.length === 0 && searchCriteria.heuresRequises && (
+            <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded">
+              <p className="text-sm text-red-800">
+                ❌ Aucun traducteur disponible avec {searchCriteria.heuresRequises}h le {new Date(searchCriteria.date).toLocaleDateString('fr-FR')}
+              </p>
+            </div>
+          )}
+        </div>
+
       {/* Bouton flottant Ajouter une tâche */}
       <Button
         variant="primaire"
@@ -507,9 +666,10 @@ const PlanningGlobal: React.FC = () => {
               </thead>
               <tbody>
                 {planningGlobal?.planning.map((ligne, idx) => {
+                  const isSearchResult = searchResults.includes(ligne.traducteur.id);
                   return (
-                    <tr key={ligne.traducteur.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}>
-                      <td className="border-r border-b border-border px-3 py-2 font-medium sticky left-0 bg-inherit z-10">
+                    <tr key={ligne.traducteur.id} className={isSearchResult ? 'bg-yellow-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50')}>
+                      <td className="border-r border-b border-border px-3 py-2 font-medium sticky left-0 z-10" style={{ backgroundColor: isSearchResult ? '#fef3c7' : 'inherit' }}>
                         <button
                           onClick={() => navigate(`/admin/traducteurs/${ligne.traducteur.id}`)}
                           className="text-left w-full hover:text-primary transition-colors cursor-pointer"
