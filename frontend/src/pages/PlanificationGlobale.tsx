@@ -1939,8 +1939,8 @@ const PlanificationGlobale: React.FC = () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {previewRepartition.map((r) => (
-                              <tr key={r.date} className="border-t border-border">
+                            {previewRepartition.map((r, idx) => (
+                              <tr key={r.date} className={`border-t border-border transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                                 <td className="px-3 py-2">{r.date}</td>
                                 <td className="text-right px-3 py-2 font-semibold">{r.heures.toFixed(2)}h</td>
                               </tr>
@@ -2703,8 +2703,8 @@ const PlanificationGlobale: React.FC = () => {
                 {planificationEnrichie?.planification.map((ligne, idx) => {
                   const isSearchResult = searchResults.includes(ligne.traducteur.id);
                   return (
-                    <tr key={ligne.traducteur.id} className={`${isSearchResult ? 'ring-2 ring-yellow-400 ring-inset' : ''} ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
-                      <td className={`border-r border-b border-border px-2 py-1 font-medium sticky left-0 z-10 ${isSearchResult ? 'bg-yellow-200' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50')}`}>
+                    <tr key={ligne.traducteur.id} className={`group transition-all duration-200 ${isSearchResult ? 'ring-2 ring-yellow-400 ring-inset' : ''} ${idx % 2 === 0 ? 'bg-white hover:bg-blue-50' : 'bg-gray-100 hover:bg-blue-50'} hover:shadow-lg hover:relative hover:z-[5]`}>
+                      <td className={`border-r border-b border-border px-2 py-1 font-medium sticky left-0 z-10 transition-colors ${isSearchResult ? 'bg-yellow-200 group-hover:bg-yellow-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-100')} group-hover:bg-blue-50`}>
                         <button
                           onClick={() => chargerChargeTraducteur(ligne.traducteur)}
                           className="text-left w-full hover:text-primary transition-colors cursor-pointer"
@@ -2970,7 +2970,7 @@ const PlanificationGlobale: React.FC = () => {
                       {tacheDetaillee.ajustementsTemps
                         .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
                         .map((aj: any, idx: number) => (
-                          <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
+                          <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                             <td className="px-3 py-2">{new Date(aj.date).toLocaleDateString('fr-CA')}</td>
                             <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
                           </tr>
