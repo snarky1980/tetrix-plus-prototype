@@ -1768,7 +1768,7 @@ const PlanificationGlobale: React.FC = () => {
                 </div>
               </div>
 
-              {/* Mode de répartition simplifié */}
+              {/* Mode de répartition */}
               <div className="space-y-3">
                 <h3 className="text-sm font-bold text-gray-900 mb-2">⚙️ Mode de répartition <span className="text-red-600">*</span></h3>
                 <div className="space-y-2">
@@ -1778,30 +1778,100 @@ const PlanificationGlobale: React.FC = () => {
                       name="typeRepartition"
                       value="JUSTE_TEMPS"
                       checked={formTache.typeRepartition === 'JUSTE_TEMPS'}
-                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'MANUEL' })}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
                       className="mt-1"
                     />
                     <div className="flex-1">
-                      <div className="font-semibold text-sm">🤖 Automatique (recommandé)</div>
-                      <div className="text-xs text-gray-600 mt-1">Le système répartit intelligemment les heures jusqu'à l'échéance en fonction de la disponibilité du traducteur.</div>
+                      <div className="font-semibold text-sm">📊 Juste à temps (JAT)</div>
+                      <div className="text-xs text-gray-600 mt-1">Optimise en fonction de la charge actuelle. Les heures sont réparties intelligemment pour maximiser l'utilisation de la capacité disponible jusqu'à l'échéance.</div>
                     </div>
                   </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'PEPS' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="PEPS"
+                      checked={formTache.typeRepartition === 'PEPS'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">🔄 Première entrée, première sortie (PEPS)</div>
+                      <div className="text-xs text-gray-600 mt-1">Commence dès que possible et termine à l'échéance. Les heures sont affectées dans l'ordre chronologique.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'EQUILIBRE' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="EQUILIBRE"
+                      checked={formTache.typeRepartition === 'EQUILIBRE'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">⚖️ Équilibré sur le temps</div>
+                      <div className="text-xs text-gray-600 mt-1">Répartit uniformément les heures entre une date de début et de fin. Idéal pour une charge de travail constante.</div>
+                    </div>
+                  </label>
+                  
                   <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'MANUEL' ? '#3b82f6' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="typeRepartition"
                       value="MANUEL"
                       checked={formTache.typeRepartition === 'MANUEL'}
-                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'MANUEL' })}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
                       className="mt-1"
                     />
                     <div className="flex-1">
                       <div className="font-semibold text-sm">✍️ Manuel</div>
-                      <div className="text-xs text-gray-600 mt-1">Vous choisissez vous-même comment répartir les heures jour par jour.</div>
+                      <div className="text-xs text-gray-600 mt-1">Vous définissez vous-même les heures pour chaque jour. Contrôle total de la répartition.</div>
                     </div>
                   </label>
                 </div>
               </div>
+              
+              {/* Champs spécifiques selon le mode */}
+              {formTache.typeRepartition === 'PEPS' && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded">
+                  <label className="block text-sm font-medium mb-1">Date de début</label>
+                  <Input
+                    type="date"
+                    value={formTache.dateDebut}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateDebut: e.target.value })}
+                    min={today}
+                    className="w-full"
+                  />
+                </div>
+              )}
+              
+              {formTache.typeRepartition === 'EQUILIBRE' && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date de début</label>
+                    <Input
+                      type="date"
+                      value={formTache.dateDebut}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateDebut: e.target.value })}
+                      min={today}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date de fin</label>
+                    <Input
+                      type="date"
+                      value={formTache.dateFin}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateFin: e.target.value })}
+                      min={formTache.dateDebut || today}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2 justify-end pt-4 border-t">
                 <Button
