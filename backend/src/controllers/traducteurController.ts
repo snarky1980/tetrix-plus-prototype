@@ -3,6 +3,22 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 
 /**
+ * Synchronise les clients habituels avec la table clients
+ * Crée les clients qui n'existent pas encore
+ */
+const synchroniserClients = async (clientsHabituels: string[]): Promise<void> => {
+  if (!clientsHabituels || clientsHabituels.length === 0) return;
+  
+  for (const nomClient of clientsHabituels) {
+    await prisma.client.upsert({
+      where: { nom: nomClient },
+      update: {}, // Ne pas modifier si existe déjà
+      create: { nom: nomClient, sousDomaines: [] },
+    });
+  }
+};
+
+/**
  * Récupérer la liste des traducteurs avec filtres
  * GET /api/traducteurs
  */
@@ -20,7 +36,12 @@ export const obtenirTraducteurs = async (
     }
 
     if (division) {
-      where.division = division as string;
+      const divisions = (division as string).split(',').map(d => d.trim());
+      if (divisions.length > 1) {
+        where.division = { in: divisions };
+      } else {
+        where.division = division as string;
+      }
     }
 
     if (classification) {
@@ -28,11 +49,21 @@ export const obtenirTraducteurs = async (
     }
 
     if (client) {
-      where.clientsHabituels = { has: client as string };
+      const clients = (client as string).split(',').map(c => c.trim());
+      if (clients.length > 1) {
+        where.clientsHabituels = { hasSome: clients };
+      } else {
+        where.clientsHabituels = { has: client as string };
+      }
     }
 
     if (domaine) {
-      where.domaines = { has: domaine as string };
+      const domaines = (domaine as string).split(',').map(d => d.trim());
+      if (domaines.length > 1) {
+        where.domaines = { hasSome: domaines };
+      } else {
+        where.domaines = { has: domaine as string };
+      }
     }
 
     if (specialisation) {
@@ -80,6 +111,18 @@ export const obtenirTraducteur = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
+
+    // Si l'utilisateur est un traducteur, vérifier qu'il accède à ses propres données
+    if (req.utilisateur?.role === 'TRADUCTEUR') {
+      const traducteurUser = await prisma.traducteur.findFirst({
+        where: { utilisateurId: req.utilisateur.id },
+      });
+
+      if (!traducteurUser || traducteurUser.id !== id) {
+        res.status(403).json({ erreur: 'Accès non autorisé' });
+        return;
+      }
+    }
 
     const traducteur = await prisma.traducteur.findUnique({
       where: { id },
@@ -132,6 +175,17 @@ export const creerTraducteur = async (
 
     // Créer l'utilisateur et le traducteur en une transaction
     const result = await prisma.$transaction(async (tx) => {
+      // Synchroniser les clients habituels avec la table clients
+      if (clientsHabituels && clientsHabituels.length > 0) {
+        for (const nomClient of clientsHabituels) {
+          await tx.client.upsert({
+            where: { nom: nomClient },
+            update: {},
+            create: { nom: nomClient, sousDomaines: [] },
+          });
+        }
+      }
+
       // Hasher le mot de passe
       const bcrypt = require('bcrypt');
       const motDePasseHash = await bcrypt.hash(motDePasse, 10);
@@ -202,6 +256,11 @@ export const mettreAJourTraducteur = async (
       capaciteHeuresParJour,
       actif,
     } = req.body;
+
+    // Synchroniser les clients habituels avec la table clients
+    if (clientsHabituels && clientsHabituels.length > 0) {
+      await synchroniserClients(clientsHabituels);
+    }
 
     const traducteur = await prisma.traducteur.update({
       where: { id },
@@ -424,5 +483,69 @@ export const supprimerBlocage = async (
   } catch (error) {
     console.error('Erreur suppression blocage:', error);
     res.status(500).json({ erreur: 'Erreur lors de la suppression du blocage' });
+  }
+};
+
+/**
+ * Mettre à jour le statut de disponibilité d'un traducteur
+ * PUT /api/traducteurs/:id/disponibilite
+ */
+export const mettreAJourDisponibilite = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { disponiblePourTravail, commentaireDisponibilite } = req.body;
+
+    // Vérifier que le traducteur existe
+    const traducteur = await prisma.traducteur.findUnique({
+      where: { id },
+    });
+
+    if (!traducteur) {
+      res.status(404).json({ erreur: 'Traducteur non trouvé' });
+      return;
+    }
+
+    // Seul le traducteur lui-même peut modifier son statut (ou un admin)
+    if (req.utilisateur?.role !== 'ADMIN') {
+      const traducteurUser = await prisma.traducteur.findFirst({
+        where: { utilisateurId: req.utilisateur!.id },
+      });
+
+      if (!traducteurUser || traducteurUser.id !== id) {
+        res.status(403).json({ erreur: 'Non autorisé à modifier ce statut' });
+        return;
+      }
+    }
+
+    const traducteurMisAJour = await prisma.traducteur.update({
+      where: { id },
+      data: {
+        disponiblePourTravail: disponiblePourTravail ?? traducteur.disponiblePourTravail,
+        commentaireDisponibilite: commentaireDisponibilite !== undefined 
+          ? commentaireDisponibilite 
+          : traducteur.commentaireDisponibilite,
+      },
+      include: {
+        pairesLinguistiques: true,
+        utilisateur: {
+          select: {
+            email: true,
+            actif: true,
+          },
+        },
+      },
+    });
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DISPONIBILITE] ${traducteur.nom}: ${disponiblePourTravail ? '🟢 Cherche du travail' : '⚪ Pas disponible'}${commentaireDisponibilite ? ` - ${commentaireDisponibilite}` : ''}`);
+    }
+
+    res.json(traducteurMisAJour);
+  } catch (error) {
+    console.error('Erreur mise à jour disponibilité:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la mise à jour de la disponibilité' });
   }
 };

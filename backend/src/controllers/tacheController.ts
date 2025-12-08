@@ -13,7 +13,7 @@ export const obtenirTaches = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { traducteurId, statut, dateDebut, dateFin } = req.query;
+    const { traducteurId, statut, dateDebut, dateFin, date } = req.query;
 
     const where: any = {};
 
@@ -25,7 +25,17 @@ export const obtenirTaches = async (
       where.statut = statut as string;
     }
 
-    if (dateDebut || dateFin) {
+    // Si une date spécifique est fournie, filtrer les tâches ayant des ajustements pour cette date
+    if (date) {
+      const dateObj = new Date(date as string);
+      where.ajustementsTemps = {
+        some: {
+          date: dateObj,
+          type: 'TACHE'
+        }
+      };
+    } else if (dateDebut || dateFin) {
+      // Sinon, utiliser la plage de dates d'échéance
       where.dateEcheance = {};
       if (dateDebut) where.dateEcheance.gte = new Date(dateDebut as string);
       if (dateFin) where.dateEcheance.lte = new Date(dateFin as string);
@@ -112,10 +122,12 @@ export const creerTache = async (
 ): Promise<void> => {
   try {
     const {
+      numeroProjet,
       traducteurId,
       clientId,
       sousDomaineId,
       paireLinguistiqueId,
+      typeTache,
       description,
       heuresTotal,
       dateEcheance,
@@ -123,8 +135,8 @@ export const creerTache = async (
       repartitionAuto, // bool: utiliser JAT si true et pas de répartition fournie
     } = req.body;
 
-    if (!traducteurId || !paireLinguistiqueId || !description || !heuresTotal || !dateEcheance) {
-      res.status(400).json({ erreur: 'Champs requis manquants (traducteurId, paireLinguistiqueId, description, heuresTotal, dateEcheance).' });
+    if (!numeroProjet || !traducteurId || !typeTache || !heuresTotal || !dateEcheance) {
+      res.status(400).json({ erreur: 'Champs requis manquants (numeroProjet, traducteurId, typeTache, heuresTotal, dateEcheance).' });
       return;
     }
 
@@ -151,11 +163,14 @@ export const creerTache = async (
       // Créer la tâche
       const nouvelleTache = await tx.tache.create({
         data: {
+          numeroProjet,
           traducteurId,
           clientId: clientId || null,
           sousDomaineId: sousDomaineId || null,
-          paireLinguistiqueId,
-          description,
+          paireLinguistiqueId: paireLinguistiqueId || null,
+          typeTache: typeTache || 'TRADUCTION',
+          specialisation: req.body.specialisation || '',
+          description: description || '',
           heuresTotal,
           dateEcheance: new Date(dateEcheance),
           statut: 'PLANIFIEE',
@@ -220,10 +235,13 @@ export const mettreAJourTache = async (
   try {
     const { id } = req.params;
     const {
+      numeroProjet,
       description,
+      specialisation,
       heuresTotal,
       dateEcheance,
       statut,
+      typeTache,
       repartition,
       repartitionAuto,
     } = req.body;
@@ -260,10 +278,13 @@ export const mettreAJourTache = async (
       const tacheMiseAJour = await tx.tache.update({
         where: { id },
         data: {
-          ...(description && { description }),
+          ...(numeroProjet && { numeroProjet }),
+          ...(description !== undefined && { description }),
+          ...(specialisation !== undefined && { specialisation }),
           ...(heuresTotal && { heuresTotal }),
           ...(dateEcheance && { dateEcheance: new Date(dateEcheance) }),
           ...(statut && { statut }),
+          ...(typeTache && { typeTache }),
         },
       });
 

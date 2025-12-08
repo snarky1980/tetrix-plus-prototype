@@ -46,5 +46,117 @@ export const repartitionService = {
     if (somme !== attendu) erreurs.push(`Somme (${somme}) différente des heures totales (${attendu}).`);
     repartition.forEach(r => { if (r.heures < 0) erreurs.push(`Heures négatives (${r.date}).`); });
     return { valide: erreurs.length === 0, erreurs };
+  },
+
+  // Fonction utilitaire pour vérifier si un jour est un weekend
+  estWeekend(date: Date): boolean {
+    const jour = date.getDay();
+    return jour === 0 || jour === 6; // 0 = dimanche, 6 = samedi
+  },
+
+  // Calculer la répartition équilibrée entre dateDebut et dateFin (excluant weekends)
+  calculerRepartitionEquilibree(params: { heuresTotal: number; dateDebut: string; dateFin: string }): Promise<RepartitionItem[]> {
+    return new Promise((resolve, reject) => {
+      try {
+        const { heuresTotal, dateDebut, dateFin } = params;
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateFin);
+        
+        // Calculer le nombre de jours dans l'intervalle
+        const totalJours = Math.floor((fin.getTime() - debut.getTime()) / (1000*60*60*24)) + 1;
+        if (totalJours <= 0) {
+          reject(new Error('Intervalle de dates invalide'));
+          return;
+        }
+        
+        // Compter uniquement les jours ouvrables (lundi à vendredi)
+        const joursOuvrables: string[] = [];
+        for (let i = 0; i < totalJours; i++) {
+          const dateCourante = new Date(debut.getTime() + i * 86400000);
+          if (!this.estWeekend(dateCourante)) {
+            joursOuvrables.push(dateCourante.toISOString().split('T')[0]);
+          }
+        }
+        
+        if (joursOuvrables.length === 0) {
+          reject(new Error('Aucun jour ouvrable dans l\'intervalle (uniquement des weekends)'));
+          return;
+        }
+        
+        // Répartir uniformément sur les jours ouvrables
+        const heuresParJour = heuresTotal / joursOuvrables.length;
+        const items: RepartitionItem[] = [];
+        let cumul = 0;
+        
+        for (const date of joursOuvrables) {
+          const h = parseFloat(heuresParJour.toFixed(4));
+          cumul += h;
+          items.push({ date, heures: h });
+        }
+        
+        // Ajuster la dernière valeur pour compenser les erreurs d'arrondi
+        const diff = parseFloat((heuresTotal - cumul).toFixed(4));
+        if (Math.abs(diff) >= 0.0001) {
+          items[items.length - 1].heures = parseFloat((items[items.length - 1].heures + diff).toFixed(4));
+        }
+        
+        resolve(items);
+      } catch (error: any) {
+        reject(error);
+      }
+    });
+  },
+
+  // Calculer la répartition PEPS (Première Entrée Première Sortie) - commence à dateDebut
+  calculerRepartitionPEPS(params: { heuresTotal: number; dateDebut: string; dateEcheance: string }): Promise<RepartitionItem[]> {
+    return new Promise((resolve, reject) => {
+      try {
+        const { heuresTotal, dateDebut, dateEcheance } = params;
+        const debut = new Date(dateDebut);
+        const fin = new Date(dateEcheance);
+        
+        // Calculer le nombre de jours dans l'intervalle
+        const totalJours = Math.floor((fin.getTime() - debut.getTime()) / (1000*60*60*24)) + 1;
+        if (totalJours <= 0) {
+          reject(new Error('Intervalle de dates invalide (dateDebut doit être avant dateEcheance)'));
+          return;
+        }
+        
+        // Compter uniquement les jours ouvrables (lundi à vendredi)
+        const joursOuvrables: string[] = [];
+        for (let i = 0; i < totalJours; i++) {
+          const dateCourante = new Date(debut.getTime() + i * 86400000);
+          if (!this.estWeekend(dateCourante)) {
+            joursOuvrables.push(dateCourante.toISOString().split('T')[0]);
+          }
+        }
+        
+        if (joursOuvrables.length === 0) {
+          reject(new Error('Aucun jour ouvrable dans l\'intervalle (uniquement des weekends)'));
+          return;
+        }
+        
+        // Répartir uniformément sur les jours ouvrables (PEPS = distribution uniforme depuis le début)
+        const heuresParJour = heuresTotal / joursOuvrables.length;
+        const items: RepartitionItem[] = [];
+        let cumul = 0;
+        
+        for (const date of joursOuvrables) {
+          const h = parseFloat(heuresParJour.toFixed(4));
+          cumul += h;
+          items.push({ date, heures: h });
+        }
+        
+        // Ajuster la dernière valeur pour compenser les erreurs d'arrondi
+        const diff = parseFloat((heuresTotal - cumul).toFixed(4));
+        if (Math.abs(diff) >= 0.0001) {
+          items[items.length - 1].heures = parseFloat((items[items.length - 1].heures + diff).toFixed(4));
+        }
+        
+        resolve(items);
+      } catch (error: any) {
+        reject(error);
+      }
+    });
   }
 };

@@ -21,27 +21,30 @@ model Utilisateur {
 }
 
 model Traducteur {
-  id                    String              @id @default(uuid())
-  nom                   String
-  division              String
-  domaines              String[]
-  clientsHabituels      String[]
-  capaciteHeuresParJour Float               @default(7.5)
-  actif                 Boolean             @default(true)
-  utilisateurId         String              @unique
-  creeLe                DateTime            @default(now())
-  modifieLe             DateTime            @updatedAt
-  classification        String
-  horaire               String?
-  notes                 String?
-  specialisations       String[]            @default([])
-  ajustementsTemps      AjustementTemps[]
-  pairesLinguistiques   PaireLinguistique[]
-  taches                Tache[]
-  utilisateur           Utilisateur         @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  id                       String              @id @default(uuid())
+  nom                      String
+  division                 String
+  domaines                 String[]
+  clientsHabituels         String[]
+  capaciteHeuresParJour    Float               @default(7.5)
+  actif                    Boolean             @default(true)
+  utilisateurId            String              @unique
+  creeLe                   DateTime            @default(now())
+  modifieLe                DateTime            @updatedAt
+  classification           String
+  horaire                  String?
+  notes                    String?
+  specialisations          String[]            @default([])
+  disponiblePourTravail    Boolean             @default(false)
+  commentaireDisponibilite String?
+  ajustementsTemps         AjustementTemps[]
+  pairesLinguistiques      PaireLinguistique[]
+  taches                   Tache[]
+  utilisateur              Utilisateur         @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@index([division])
   @@index([actif])
+  @@index([disponiblePourTravail])
   @@map("traducteurs")
 }
 
@@ -84,23 +87,26 @@ model SousDomaine {
 }
 
 model Tache {
-  id                  String            @id @default(uuid())
-  description         String
+  id                  String             @id @default(uuid())
+  numeroProjet        String             @default("N/A")
+  description         String             @default("")
+  specialisation      String             @default("")
   heuresTotal         Float
   dateEcheance        DateTime
-  statut              StatutTache       @default(PLANIFIEE)
+  statut              StatutTache        @default(PLANIFIEE)
+  typeTache           TypeTache          @default(TRADUCTION)
   traducteurId        String
   clientId            String?
   sousDomaineId       String?
-  paireLinguistiqueId String
+  paireLinguistiqueId String?
   creePar             String
-  creeLe              DateTime          @default(now())
-  modifieLe           DateTime          @updatedAt
+  creeLe              DateTime           @default(now())
+  modifieLe           DateTime           @updatedAt
   ajustementsTemps    AjustementTemps[]
-  client              Client?           @relation(fields: [clientId], references: [id])
-  paireLinguistique   PaireLinguistique @relation(fields: [paireLinguistiqueId], references: [id])
-  sousDomaine         SousDomaine?      @relation(fields: [sousDomaineId], references: [id])
-  traducteur          Traducteur        @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+  client              Client?            @relation(fields: [clientId], references: [id])
+  paireLinguistique   PaireLinguistique? @relation(fields: [paireLinguistiqueId], references: [id])
+  sousDomaine         SousDomaine?       @relation(fields: [sousDomaineId], references: [id])
+  traducteur          Traducteur         @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
 
   @@index([traducteurId])
   @@index([dateEcheance])
@@ -136,6 +142,13 @@ enum StatutTache {
   PLANIFIEE
   EN_COURS
   TERMINEE
+}
+
+enum TypeTache {
+  TRADUCTION
+  REVISION
+  RELECTURE
+  AUTRE
 }
 
 enum TypeAjustement {

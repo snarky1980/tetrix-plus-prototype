@@ -32,6 +32,8 @@ export interface Traducteur {
   actif: boolean;
   utilisateurId: string; // ID de l'utilisateur associé
   pairesLinguistiques: PaireLinguistique[];
+  disponiblePourTravail: boolean; // Traducteur cherche activement du travail
+  commentaireDisponibilite?: string; // Commentaire optionnel sur la disponibilité
 }
 
 // Types pour les clients et domaines
@@ -51,13 +53,17 @@ export interface SousDomaine {
 
 // Types pour les tâches
 export type StatutTache = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE';
+export type TypeTache = 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE';
 
 export interface Tache {
   id: string;
-  description: string;
+  numeroProjet: string;
+  description?: string;
+  specialisation?: string;
   heuresTotal: number;
   dateEcheance: string;
   statut: StatutTache;
+  typeTache: TypeTache;
   traducteurId: string;
   traducteur?: {
     id: string;
@@ -67,7 +73,7 @@ export interface Tache {
   client?: Client;
   sousDomaineId?: string;
   sousDomaine?: SousDomaine;
-  paireLinguistiqueId: string;
+  paireLinguistiqueId?: string;
   paireLinguistique?: PaireLinguistique;
   ajustementsTemps?: AjustementTemps[];
   creePar: string;
@@ -144,6 +150,9 @@ export interface PlanificationGlobale {
       division: string;
       classification: string;
       capaciteHeuresParJour: number;
+      clientsHabituels?: string[];
+      domaines?: string[];
+      pairesLinguistiques?: PaireLinguistique[];
     };
     dates: Record<string, {
       heures: number;

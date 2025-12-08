@@ -3,6 +3,22 @@ import bcrypt from 'bcrypt';
 import prisma from '../config/database';
 import { Role } from '@prisma/client';
 
+/**
+ * Synchronise les clients habituels avec la table clients
+ * Crée les clients qui n'existent pas encore
+ */
+const synchroniserClients = async (clientsHabituels: string[]): Promise<void> => {
+  if (!clientsHabituels || clientsHabituels.length === 0) return;
+  
+  for (const nomClient of clientsHabituels) {
+    await prisma.client.upsert({
+      where: { nom: nomClient },
+      update: {}, // Ne pas modifier si existe déjà
+      create: { nom: nomClient, sousDomaines: [] },
+    });
+  }
+};
+
 const translators = [
   { nom: 'Ahlgren, Anna', classification: 'TR-02', horaire: '9h-17h' },
   { nom: 'Baillargeon, Véronique', classification: 'TR-03', horaire: '8h30-16h30', notes: 'P.I.' },
@@ -95,6 +111,9 @@ export const importerCISR = async (req: Request, res: Response): Promise<void> =
         const domaines = ['TAG', 'IMM'];
         const clientsHabituels = ['CISR'];
         const specialisations = ['CISR'];
+
+        // Synchroniser les clients avec la table clients
+        await synchroniserClients(clientsHabituels);
 
         const existingTrad = await prisma.traducteur.findUnique({
           where: { utilisateurId: utilisateur.id },
@@ -354,6 +373,9 @@ export const importerEM = async (req: Request, res: Response): Promise<void> => 
             actif: true,
           },
         });
+
+        // Synchroniser les clients avec la table clients
+        await synchroniserClients(t.clients);
 
         const existingTrad = await prisma.traducteur.findUnique({
           where: { utilisateurId: utilisateur.id },

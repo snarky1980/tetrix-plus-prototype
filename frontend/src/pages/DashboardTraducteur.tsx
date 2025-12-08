@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -14,6 +14,8 @@ import { usePlanification } from '../hooks/usePlanification';
 import { formatHeures } from '../lib/format';
 import { JourDetail } from '../components/ui/JourDetail';
 import api from '../services/api';
+import { traducteurService } from '../services/traducteurService';
+import { Traducteur } from '../types';
 
 /**
  * Dashboard Traducteur - Planification personnel et blocage de temps
@@ -23,6 +25,11 @@ const DashboardTraducteur: React.FC = () => {
   const [blocageData, setBlocageData] = useState({ date: '', heures: 0 });
   const [submitting, setSubmitting] = useState(false);
   const [erreur, setErreur] = useState('');
+  const [traducteur, setTraducteur] = useState<Traducteur | null>(null);
+  const [disponibiliteActive, setDisponibiliteActive] = useState(false);
+  const [commentaireDisponibilite, setCommentaireDisponibilite] = useState('');
+  const [savingDisponibilite, setSavingDisponibilite] = useState(false);
+  
   const { utilisateur } = useAuth();
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
@@ -31,6 +38,24 @@ const DashboardTraducteur: React.FC = () => {
     dateDebut: dateISO(aujourdHui), 
     dateFin: dateISO(fin) 
   });
+
+  // Charger les infos du traducteur
+  useEffect(() => {
+    if (utilisateur?.traducteurId) {
+      console.log('[DISPONIBILITE] Chargement des infos du traducteur:', utilisateur.traducteurId);
+      traducteurService.obtenirTraducteur(utilisateur.traducteurId)
+        .then(data => {
+          console.log('[DISPONIBILITE] Données reçues:', data);
+          setTraducteur(data);
+          setDisponibiliteActive(data.disponiblePourTravail);
+          setCommentaireDisponibilite(data.commentaireDisponibilite || '');
+        })
+        .catch(err => {
+          console.error('[DISPONIBILITE] Erreur chargement traducteur:', err);
+          alert(`Erreur: ${err.message || 'Impossible de charger les données du traducteur'}`);
+        });
+    }
+  }, [utilisateur?.traducteurId]);
 
   // Mettre à jour le titre de la page avec le nom du traducteur
   const titreTraducteur = planification?.traducteur?.nom || 'Traducteur';
@@ -77,8 +102,106 @@ const DashboardTraducteur: React.FC = () => {
     }
   };
 
+  const handleToggleDisponibilite = async () => {
+    if (!utilisateur?.traducteurId) {
+      console.error('[DISPONIBILITE] Pas de traducteurId');
+      return;
+    }
+    
+    setSavingDisponibilite(true);
+    const nouvelleValeur = !disponibiliteActive;
+    console.log('[DISPONIBILITE] Toggle vers:', nouvelleValeur);
+
+    try {
+      const result = await traducteurService.mettreAJourDisponibilite(utilisateur.traducteurId, {
+        disponiblePourTravail: nouvelleValeur,
+        commentaireDisponibilite: nouvelleValeur ? commentaireDisponibilite : undefined,
+      });
+      console.log('[DISPONIBILITE] Résultat:', result);
+      setDisponibiliteActive(nouvelleValeur);
+      if (!nouvelleValeur) setCommentaireDisponibilite('');
+    } catch (err: any) {
+      console.error('[DISPONIBILITE] Erreur mise à jour:', err);
+      alert(`Erreur: ${err.response?.data?.erreur || err.message || 'Erreur lors de la mise à jour du statut'}`);
+    } finally {
+      setSavingDisponibilite(false);
+    }
+  };
+
   return (
     <AppLayout titre="Ma planification">
+      {/* Statut de disponibilité */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>🟢 Statut de disponibilité</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium text-sm">Je cherche du travail</p>
+                <p className="text-xs text-muted mt-1">
+                  Les conseillers verront que vous êtes disponible pour recevoir des tâches
+                </p>
+              </div>
+              <button
+                onClick={handleToggleDisponibilite}
+                disabled={savingDisponibilite}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  disponibiliteActive ? 'bg-green-500' : 'bg-gray-300'
+                } ${savingDisponibilite ? 'opacity-50 cursor-not-allowed' : ''}`}
+                role="switch"
+                aria-checked={disponibiliteActive}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    disponibiliteActive ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {disponibiliteActive && (
+              <div className="border-t pt-4">
+                <FormField 
+                  label="Commentaire (optionnel)" 
+                  hint="Ex: Disponible pour révisions urgentes, préférence pour traduction juridique"
+                >
+                  <Input
+                    type="text"
+                    value={commentaireDisponibilite}
+                    onChange={e => setCommentaireDisponibilite(e.target.value)}
+                    placeholder="Précisez vos préférences..."
+                    maxLength={200}
+                  />
+                </FormField>
+                <Button
+                  variant="secondaire"
+                  size="sm"
+                  onClick={async () => {
+                    if (!utilisateur?.traducteurId) return;
+                    setSavingDisponibilite(true);
+                    try {
+                      await traducteurService.mettreAJourDisponibilite(utilisateur.traducteurId, {
+                        disponiblePourTravail: true,
+                        commentaireDisponibilite,
+                      });
+                    } catch (err) {
+                      alert('Erreur lors de la mise à jour');
+                    } finally {
+                      setSavingDisponibilite(false);
+                    }
+                  }}
+                  disabled={savingDisponibilite}
+                >
+                  Enregistrer le commentaire
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard 

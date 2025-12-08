@@ -14,11 +14,14 @@ const repartitionItemSchema = z.object({
 // Tâches
 export const creerTacheSchema = z.object({
   body: z.object({
+    numeroProjet: z.string().min(1, 'Numéro de projet requis'),
     traducteurId: uuid(),
     clientId: uuid().optional(),
     sousDomaineId: uuid().optional(),
-    paireLinguistiqueId: uuid(),
-    description: z.string().min(3, 'Description trop courte'),
+    paireLinguistiqueId: uuid().optional(),
+    typeTache: z.enum(['TRADUCTION', 'REVISION', 'RELECTURE', 'AUTRE']),
+    specialisation: z.string().optional(),
+    description: z.string().optional(),
     heuresTotal: z.number().positive('heuresTotal doit être > 0').max(200, 'heuresTotal trop élevée'),
     dateEcheance: dateISO('dateEcheance'),
     repartition: z.array(repartitionItemSchema).optional(),
@@ -29,10 +32,13 @@ export const creerTacheSchema = z.object({
 export const mettreAJourTacheSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
-    description: z.string().min(3).optional(),
+    numeroProjet: z.string().min(1).optional(),
+    description: z.string().optional(),
+    specialisation: z.string().optional(),
     heuresTotal: z.number().positive().max(200).optional(),
     dateEcheance: dateISO('dateEcheance').optional(),
     statut: z.enum(['PLANIFIEE','EN_COURS','TERMINEE']).optional(),
+    typeTache: z.enum(['TRADUCTION', 'REVISION', 'RELECTURE', 'AUTRE']).optional(),
     repartition: z.array(repartitionItemSchema).optional(),
     repartitionAuto: z.boolean().optional(),
   }),

@@ -245,7 +245,14 @@ export const obtenirPlanificationGlobale = async (
         whereTraducteur.division = division as string;
       }
     }
-    if (client) whereTraducteur.clientsHabituels = { has: client as string };
+    if (client) {
+      const clients = (client as string).split(',').map(c => c.trim());
+      if (clients.length > 1) {
+        whereTraducteur.clientsHabituels = { hasSome: clients };
+      } else {
+        whereTraducteur.clientsHabituels = { has: client as string };
+      }
+    }
     if (domaine) {
       const domaines = (domaine as string).split(',').map(d => d.trim());
       if (domaines.length > 1) {
@@ -293,6 +300,14 @@ export const obtenirPlanificationGlobale = async (
         division: true,
         classification: true,
         capaciteHeuresParJour: true,
+        clientsHabituels: true,
+        domaines: true,
+        pairesLinguistiques: {
+          select: {
+            langueSource: true,
+            langueCible: true,
+          },
+        },
       },
       orderBy: { nom: 'asc' },
     });

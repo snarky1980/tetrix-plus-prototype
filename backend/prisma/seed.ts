@@ -81,14 +81,37 @@ async function main() {
     console.log('↻ Traducteur déjà présent');
   }
 
-  // Sample client
-  const clientName = 'ClientA';
-  const client = await prisma.client.upsert({
-    where: { nom: clientName },
-    update: {},
-    create: { nom: clientName, sousDomaines: ['COMPLIANCE', 'REPORTING'] },
-  });
-  console.log('✓ Client prêt', client.nom);
+  // Clients gouvernementaux canadiens
+  const clientsData = [
+    { nom: 'CBSA', sousDomaines: ['Immigration', 'Douanes'] },
+    { nom: 'CIRNAC', sousDomaines: ['Affaires autochtones'] },
+    { nom: 'CISR', sousDomaines: ['Immigration', 'Réfugiés'] },
+    { nom: 'CISR/IRB', sousDomaines: ['Immigration', 'Réfugiés'] },
+    { nom: 'CLO', sousDomaines: ['Langues officielles'] },
+    { nom: 'DFO', sousDomaines: ['Pêches', 'Océans'] },
+    { nom: 'ECCC', sousDomaines: ['Environnement', 'Changements climatiques'] },
+    { nom: 'EDSC', sousDomaines: ['Emploi', 'Développement social'] },
+    { nom: 'FPC', sousDomaines: ['Service correctionnel'] },
+    { nom: 'GAC', sousDomaines: ['Affaires étrangères', 'Commerce'] },
+    { nom: 'GRC', sousDomaines: ['Sécurité', 'Criminel'] },
+    { nom: 'IRCC', sousDomaines: ['Immigration', 'Citoyenneté'] },
+    { nom: 'Justice', sousDomaines: ['Légal', 'Juridique'] },
+    { nom: 'Patrimoine', sousDomaines: ['Culture', 'Patrimoine canadien'] },
+    { nom: 'PMO', sousDomaines: ['Cabinet du Premier ministre'] },
+    { nom: 'RCMP', sousDomaines: ['Security', 'Criminal'] },
+    { nom: 'SPAC', sousDomaines: ['Services publics', 'Approvisionnement'] },
+    { nom: 'TC', sousDomaines: ['Transport'] },
+    { nom: 'VAC', sousDomaines: ['Anciens combattants'] },
+  ];
+
+  for (const clientData of clientsData) {
+    await prisma.client.upsert({
+      where: { nom: clientData.nom },
+      update: {},
+      create: clientData,
+    });
+  }
+  console.log('✓ Clients créés:', clientsData.length);
 
   // Sample sous-domaine (indépendant)
   await prisma.sousDomaine.upsert({

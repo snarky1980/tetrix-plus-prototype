@@ -232,7 +232,7 @@ const TacheCreation: React.FC = () => {
                     <option value="">Sélectionner un traducteur...</option>
                     {traducteurs.map(t => (
                       <option key={t.id} value={t.id}>
-                        {t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                        {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>

@@ -8,6 +8,7 @@ import {
   bloquerTemps,
   obtenirBlocages,
   supprimerBlocage,
+  mettreAJourDisponibilite,
 } from '../controllers/traducteurController';
 import {
   ajouterPaireLinguistique,
@@ -38,9 +39,9 @@ router.get('/', verifierRole('ADMIN', 'CONSEILLER'), obtenirTraducteurs);
 /**
  * GET /api/traducteurs/:id
  * Récupérer un traducteur par ID
- * Accessible par : Admin, Conseiller
+ * Accessible par : Admin, Conseiller, Traducteur (ses propres données uniquement)
  */
-router.get('/:id', verifierRole('ADMIN', 'CONSEILLER'), obtenirTraducteur);
+router.get('/:id', obtenirTraducteur);
 
 /**
  * POST /api/traducteurs
@@ -107,5 +108,12 @@ router.get('/:id/blocages', verifierRole('ADMIN', 'CONSEILLER'), obtenirBlocages
  * Accessible par : Admin, Conseiller
  */
 router.delete('/blocages/:blocageId', verifierRole('ADMIN', 'CONSEILLER'), supprimerBlocage);
+
+/**
+ * PUT /api/traducteurs/:id/disponibilite
+ * Mettre à jour le statut de disponibilité d'un traducteur
+ * Accessible par : Le traducteur lui-même ou Admin
+ */
+router.put('/:id/disponibilite', mettreAJourDisponibilite);
 
 export default router;

@@ -76,4 +76,21 @@ export const traducteurService = {
   async supprimerPaireLinguistique(id: string): Promise<void> {
     await api.delete(`/traducteurs/paires-linguistiques/${id}`);
   },
+
+  /**
+   * Mettre à jour le statut de disponibilité d'un traducteur
+   */
+  async mettreAJourDisponibilite(
+    id: string,
+    disponibilite: {
+      disponiblePourTravail: boolean;
+      commentaireDisponibilite?: string;
+    }
+  ): Promise<Traducteur> {
+    const { data } = await api.put<Traducteur>(
+      `/traducteurs/${id}/disponibilite`,
+      disponibilite
+    );
+    return data;
+  },
 };
