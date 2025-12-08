@@ -3231,7 +3231,7 @@ const PlanificationGlobale: React.FC = () => {
       {/* Bouton flottant pour voir toutes les tâches */}
       <button
         onClick={chargerMesTaches}
-        className="fixed bottom-6 right-6 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl hover:scale-110 transition-all z-50 flex items-center gap-2"
+        className="fixed bottom-6 left-6 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl hover:scale-110 transition-all z-50 flex items-center gap-2"
         title="Voir toutes mes tâches créées"
       >
         <span className="text-2xl">📋</span>
