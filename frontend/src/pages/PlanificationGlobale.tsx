@@ -157,6 +157,12 @@ const PlanificationGlobale: React.FC = () => {
     taches: any[];
   } | null>(null);
   const [loadingTaches, setLoadingTaches] = useState(false);
+  const [tacheDetaillee, setTacheDetaillee] = useState<any | null>(null);
+
+  // État pour la modal des tâches du conseiller
+  const [showMesTachesModal, setShowMesTachesModal] = useState(false);
+  const [mesTaches, setMesTaches] = useState<any[]>([]);
+  const [loadingMesTaches, setLoadingMesTaches] = useState(false);
 
   // État pour afficher le détail de charge de travail d'un traducteur
   const [showChargeModal, setShowChargeModal] = useState(false);
@@ -701,6 +707,31 @@ const PlanificationGlobale: React.FC = () => {
       setChargeTraducteur(prev => prev || { traducteur, tachesTotales: [], heuresTotal: 0, tachesParStatut: {} });
     } finally {
       setLoadingCharge(false);
+    }
+  };
+
+  const chargerMesTaches = async () => {
+    setLoadingMesTaches(true);
+    setShowMesTachesModal(true);
+    
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(
+        `${API_URL}/taches`,
+        {
+          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        }
+      );
+      
+      if (!response.ok) throw new Error('Erreur de chargement');
+      
+      const taches = await response.json();
+      setMesTaches(taches);
+    } catch (err: any) {
+      console.error('Erreur de chargement des tâches:', err);
+      setMesTaches([]);
+    } finally {
+      setLoadingMesTaches(false);
     }
   };
   
@@ -2705,59 +2736,258 @@ const PlanificationGlobale: React.FC = () => {
             ) : celluleSelectionnee.taches.length === 0 ? (
               <p className="text-sm text-muted">Aucune tâche pour cette date</p>
             ) : (
-              <div className="space-y-2">
-                {celluleSelectionnee.taches.map((tache: any) => {
-                  // Trouver les heures pour cette date spécifique
-                  const ajustementCeJour = tache.ajustementsTemps?.find(
-                    (aj: any) => aj.date.split('T')[0] === celluleSelectionnee.date
-                  );
-                  const heuresCeJour = ajustementCeJour ? ajustementCeJour.heures : 0;
-                  
-                  return (
-                    <div
-                      key={tache.id}
-                      className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+              <div className="space-y-3">
+                {/* Résumé des heures par projet */}
+                <div className="bg-blue-50 border border-blue-200 rounded p-3">
+                  <h4 className="text-xs font-semibold mb-2 text-blue-900">📊 Breakdown par projet</h4>
+                  <div className="space-y-1">
+                    {celluleSelectionnee.taches.map((tache: any) => {
+                      const ajustementCeJour = tache.ajustementsTemps?.find(
+                        (aj: any) => aj.date.split('T')[0] === celluleSelectionnee.date
+                      );
+                      const heuresCeJour = ajustementCeJour ? ajustementCeJour.heures : 0;
+                      
+                      return (
+                        <button
+                          key={tache.id}
+                          onClick={() => setTacheDetaillee(tache)}
+                          className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-200 rounded hover:border-primary hover:shadow-sm transition-all text-left"
+                        >
+                          <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-primary">
                               {tache.numeroProjet}
-                            </span>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-semibold">
-                              {heuresCeJour}h ce jour
                             </span>
                             <span className="text-xs text-muted">
                               {tache.typeTache || 'TRADUCTION'}
                             </span>
-                            <span className="text-xs text-muted">
-                              {tache.paireLinguistique?.langueSource} → {tache.paireLinguistique?.langueCible}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-blue-700">
+                              {heuresCeJour.toFixed(2)}h
                             </span>
+                            <span className="text-xs text-muted">→</span>
                           </div>
-                          <p className="text-sm mb-1">{tache.description}</p>
-                          <div className="flex items-center gap-3 text-xs text-muted">
-                            {tache.client && <span>Client: {tache.client.nom}</span>}
-                            {tache.sousDomaine && <span>Domaine: {tache.sousDomaine.nom}</span>}
-                            <span>Total tâche: {tache.heuresTotal}h</span>
-                            <span>Échéance: {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleEditTache(tache.id)}
-                          className="text-xs px-3 py-1 shrink-0"
-                        >
-                          ✏️ Éditer
-                        </Button>
-                      </div>
+                        </button>
+                      );
+                    })}
+                    <div className="border-t border-blue-300 pt-2 mt-2 flex justify-between px-3">
+                      <span className="text-xs font-semibold text-blue-900">Total ce jour:</span>
+                      <span className="text-xs font-bold text-blue-900">
+                        {celluleSelectionnee.taches.reduce((sum, t) => {
+                          const aj = t.ajustementsTemps?.find((a: any) => a.date.split('T')[0] === celluleSelectionnee.date);
+                          return sum + (aj ? aj.heures : 0);
+                        }, 0).toFixed(2)}h
+                      </span>
                     </div>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Modal Détail de tâche */}
+      {tacheDetaillee && (
+        <Modal
+          titre={`Détails - ${tacheDetaillee.numeroProjet}`}
+          ouvert={!!tacheDetaillee}
+          onFermer={() => setTacheDetaillee(null)}
+          ariaDescription="Détails complets de la tâche sélectionnée"
+        >
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <span className="font-medium text-muted">Numéro de projet:</span>
+                <p className="font-semibold text-primary">{tacheDetaillee.numeroProjet}</p>
+              </div>
+              <div>
+                <span className="font-medium text-muted">Type:</span>
+                <p>{tacheDetaillee.typeTache || 'TRADUCTION'}</p>
+              </div>
+              <div>
+                <span className="font-medium text-muted">Traducteur:</span>
+                <p>{tacheDetaillee.traducteur?.nom || 'N/A'}</p>
+              </div>
+              <div>
+                <span className="font-medium text-muted">Heures totales:</span>
+                <p className="font-bold">{tacheDetaillee.heuresTotal}h</p>
+              </div>
+              <div>
+                <span className="font-medium text-muted">Date échéance:</span>
+                <p>{new Date(tacheDetaillee.dateEcheance).toLocaleDateString('fr-CA')}</p>
+              </div>
+              <div>
+                <span className="font-medium text-muted">Statut:</span>
+                <p>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                    tacheDetaillee.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' :
+                    tacheDetaillee.statut === 'EN_COURS' ? 'bg-blue-100 text-blue-700' :
+                    'bg-gray-100 text-gray-700'
+                  }`}>
+                    {tacheDetaillee.statut || 'PLANIFIEE'}
+                  </span>
+                </p>
+              </div>
+              {tacheDetaillee.client && (
+                <div>
+                  <span className="font-medium text-muted">Client:</span>
+                  <p>{tacheDetaillee.client.nom}</p>
+                </div>
+              )}
+              {tacheDetaillee.sousDomaine && (
+                <div>
+                  <span className="font-medium text-muted">Domaine:</span>
+                  <p>{tacheDetaillee.sousDomaine.nom}</p>
+                </div>
+              )}
+              {tacheDetaillee.paireLinguistique && (
+                <div className="col-span-2">
+                  <span className="font-medium text-muted">Paire linguistique:</span>
+                  <p>{tacheDetaillee.paireLinguistique.langueSource} → {tacheDetaillee.paireLinguistique.langueCible}</p>
+                </div>
+              )}
+            </div>
+
+            {tacheDetaillee.description && (
+              <div>
+                <span className="font-medium text-muted text-sm">Description:</span>
+                <p className="mt-1 text-sm bg-gray-50 p-3 rounded border border-gray-200">{tacheDetaillee.description}</p>
+              </div>
+            )}
+
+            {tacheDetaillee.specialisation && (
+              <div>
+                <span className="font-medium text-muted text-sm">Spécialisation:</span>
+                <p className="mt-1 text-sm">{tacheDetaillee.specialisation}</p>
+              </div>
+            )}
+
+            {/* Répartition des heures */}
+            {tacheDetaillee.ajustementsTemps && tacheDetaillee.ajustementsTemps.length > 0 && (
+              <div>
+                <h4 className="font-medium text-sm mb-2">📅 Répartition des heures</h4>
+                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-100 sticky top-0">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-semibold">Date</th>
+                        <th className="text-right px-3 py-2 font-semibold">Heures</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tacheDetaillee.ajustementsTemps
+                        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                        .map((aj: any, idx: number) => (
+                          <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
+                            <td className="px-3 py-2">{new Date(aj.date).toLocaleDateString('fr-CA')}</td>
+                            <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
+                          </tr>
+                        ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-2 justify-end pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => setTacheDetaillee(null)}
+              >
+                Fermer
+              </Button>
+              <Button
+                variant="primaire"
+                onClick={() => {
+                  setTacheDetaillee(null);
+                  handleEditTache(tacheDetaillee.id);
+                }}
+              >
+                ✏️ Éditer cette tâche
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal Mes tâches créées */}
+      <Modal
+        titre="📋 Toutes mes tâches créées"
+        ouvert={showMesTachesModal}
+        onFermer={() => setShowMesTachesModal(false)}
+        ariaDescription="Liste de toutes les tâches que vous avez créées"
+      >
+        <div className="space-y-4">
+          {loadingMesTaches ? (
+            <p className="text-sm text-muted text-center py-8">Chargement...</p>
+          ) : mesTaches.length === 0 ? (
+            <p className="text-sm text-muted text-center py-8">Aucune tâche créée</p>
+          ) : (
+            <>
+              <div className="flex items-center justify-between text-sm mb-3">
+                <span className="font-medium">Total: {mesTaches.length} tâche(s)</span>
+                <span className="text-muted">
+                  {mesTaches.reduce((sum, t) => sum + t.heuresTotal, 0).toFixed(0)}h au total
+                </span>
+              </div>
+              <div className="max-h-[500px] overflow-y-auto space-y-2">
+                {mesTaches.map((tache: any) => (
+                  <div
+                    key={tache.id}
+                    className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => {
+                      setShowMesTachesModal(false);
+                      setTacheDetaillee(tache);
+                    }}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-semibold text-primary">
+                            {tache.numeroProjet}
+                          </span>
+                          <span className={`text-xs px-2 py-0.5 rounded font-semibold ${
+                            tache.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' :
+                            tache.statut === 'EN_COURS' ? 'bg-blue-100 text-blue-700' :
+                            'bg-gray-100 text-gray-700'
+                          }`}>
+                            {tache.statut || 'PLANIFIEE'}
+                          </span>
+                          <span className="text-xs text-muted">
+                            {tache.typeTache || 'TRADUCTION'}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted mb-1">
+                          {tache.traducteur?.nom || 'Traducteur non assigné'}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted">
+                          {tache.client && <span>Client: {tache.client.nom}</span>}
+                          {tache.paireLinguistique && (
+                            <span>{tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
+                          )}
+                          <span className="font-semibold">{tache.heuresTotal}h</span>
+                          <span>Échéance: {new Date(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </Modal>
+
+      {/* Bouton flottant pour voir toutes les tâches */}
+      <button
+        onClick={chargerMesTaches}
+        className="fixed bottom-6 right-6 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl hover:scale-110 transition-all z-50 flex items-center gap-2"
+        title="Voir toutes mes tâches créées"
+      >
+        <span className="text-2xl">📋</span>
+        <span className="text-sm font-semibold">Mes tâches</span>
+      </button>
       </div>
     </AppLayout>
   );
