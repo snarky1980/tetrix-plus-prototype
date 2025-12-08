@@ -4,6 +4,8 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
+import { Input } from '../components/ui/Input';
+import { Modal } from '../components/ui/Modal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanningGlobal } from '../hooks/usePlanning';
 import { clientService } from '../services/clientService';
@@ -72,6 +74,30 @@ const PlanningGlobal: React.FC = () => {
     langueCible: '',
   });
   const [searchResults, setSearchResults] = useState<string[]>([]);
+
+  // Modal ajout de tâche
+  const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [newTask, setNewTask] = useState({
+    numeroProjet: '',
+    description: '',
+    heuresRequises: '',
+    typeTache: '',
+    notes: '',
+    dateDebut: today,
+    dateFin: today,
+  });
+
+  const typesTaskes = [
+    'Traduction',
+    'Révision',
+    'Relecture',
+    'Correction d\'épreuves',
+    'Traduction + Révision',
+    'Mise en page',
+    'Terminologie',
+    'Recherche',
+    'Autre',
+  ];
 
   const endDate = useMemo(() => {
     const base = new Date(applied.start || today);
@@ -228,6 +254,27 @@ const PlanningGlobal: React.FC = () => {
       langueCible: '',
     });
     setSearchResults([]);
+  };
+
+  // Gestion du modal d'ajout de tâche
+  const resetNewTask = () => {
+    setNewTask({
+      numeroProjet: '',
+      description: '',
+      heuresRequises: '',
+      typeTache: '',
+      notes: '',
+      dateDebut: today,
+      dateFin: today,
+    });
+  };
+
+  const handleAddTask = () => {
+    // TODO: Appeler l'API pour créer la tâche
+    console.log('Nouvelle tâche:', newTask);
+    // La date d'attribution sera enregistrée par le backend avec new Date()
+    setShowAddTaskModal(false);
+    resetNewTask();
   };
 
   useEffect(() => {
@@ -567,12 +614,130 @@ const PlanningGlobal: React.FC = () => {
       {/* Bouton flottant Ajouter une tâche */}
       <Button
         variant="primaire"
-        onClick={() => navigate('/conseiller/taches/nouveau')}
+        onClick={() => setShowAddTaskModal(true)}
         className="fixed bottom-6 right-6 z-50 px-6 py-3 text-base shadow-lg hover:shadow-xl transition-shadow"
         title="Ajouter une nouvelle tâche"
       >
-        ➥ Ajouter une tâche
+        ➕ Ajouter une tâche
       </Button>
+
+      {/* Modal Ajouter une tâche */}
+      <Modal
+        titre="Ajouter une tâche"
+        ouvert={showAddTaskModal}
+        onFermer={() => {
+          setShowAddTaskModal(false);
+          resetNewTask();
+        }}
+        ariaDescription="Formulaire pour créer une nouvelle tâche de traduction"
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Numéro de projet *</label>
+            <Input
+              type="text"
+              value={newTask.numeroProjet}
+              onChange={(e) => setNewTask({ ...newTask, numeroProjet: e.target.value })}
+              placeholder="Ex: PRJ-2025-001"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Type de tâche *</label>
+            <Select
+              value={newTask.typeTache}
+              onChange={(e) => setNewTask({ ...newTask, typeTache: e.target.value })}
+              required
+            >
+              <option value="">Sélectionner...</option>
+              {typesTaskes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Heures requises *</label>
+            <Input
+              type="number"
+              step="0.5"
+              min="0"
+              value={newTask.heuresRequises}
+              onChange={(e) => setNewTask({ ...newTask, heuresRequises: e.target.value })}
+              placeholder="Ex: 4"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium mb-1">Date de début *</label>
+              <Input
+                type="date"
+                value={newTask.dateDebut}
+                onChange={(e) => setNewTask({ ...newTask, dateDebut: e.target.value })}
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">Date de fin *</label>
+              <Input
+                type="date"
+                value={newTask.dateFin}
+                onChange={(e) => setNewTask({ ...newTask, dateFin: e.target.value })}
+                min={newTask.dateDebut}
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Description (optionnel)</label>
+            <textarea
+              value={newTask.description}
+              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+              placeholder="Décrivez brièvement la tâche..."
+              rows={3}
+              className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Notes (optionnel)</label>
+            <textarea
+              value={newTask.notes}
+              onChange={(e) => setNewTask({ ...newTask, notes: e.target.value })}
+              placeholder="Notes additionnelles sur la distribution des heures, priorités, etc."
+              rows={2}
+              className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded p-3 text-xs text-muted">
+            ℹ️ Le moment de l'attribution sera automatiquement enregistré lors de la création de la tâche.
+          </div>
+
+          <div className="flex gap-2 justify-end pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAddTaskModal(false);
+                resetNewTask();
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="primaire"
+              onClick={handleAddTask}
+              disabled={!newTask.numeroProjet || !newTask.typeTache || !newTask.heuresRequises || !newTask.dateDebut || !newTask.dateFin}
+            >
+              Créer la tâche
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Planning principal */}
       <Card>
