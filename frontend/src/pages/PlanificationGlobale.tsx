@@ -257,6 +257,7 @@ const PlanificationGlobale: React.FC = () => {
   // Recherche de disponibilité
   const searchAvailability = () => {
     if (!searchCriteria.heuresRequises || !planificationEnrichie) {
+      console.log('Recherche annulée: heuresRequises=', searchCriteria.heuresRequises, 'planificationEnrichie=', !!planificationEnrichie);
       setSearchResults([]);
       return;
     }
@@ -264,17 +265,31 @@ const PlanificationGlobale: React.FC = () => {
     const heuresRequises = parseFloat(searchCriteria.heuresRequises);
     const results: string[] = [];
 
+    console.log('Recherche de disponibilité:', {
+      heuresRequises,
+      dateDebut: searchCriteria.dateDebut,
+      dateFin: searchCriteria.dateFin,
+      nbTraducteurs: planificationEnrichie.planification.length
+    });
+
     planificationEnrichie.planification.forEach((ligne) => {
       // Calculer la disponibilité totale sur la plage de dates
       let disponibleTotal = 0;
+      let joursComptes = 0;
+      
       Object.entries(ligne.dates).forEach(([dateStr, info]) => {
         if (dateStr >= searchCriteria.dateDebut && dateStr <= searchCriteria.dateFin) {
-          // Exclure les weekends
-          if (!info.estWeekend) {
-            disponibleTotal += info.capacite - info.heures;
+          // Utiliser isWeekend local si estWeekend n'est pas défini
+          const estWeekend = info.estWeekend ?? isWeekend(dateStr);
+          if (!estWeekend) {
+            const dispo = (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) - (info.heures ?? 0);
+            disponibleTotal += dispo;
+            joursComptes++;
           }
         }
       });
+      
+      console.log(`${ligne.traducteur.nom}: ${disponibleTotal}h disponibles sur ${joursComptes} jours`);
       
       // Vérifier si le traducteur a la disponibilité requise sur la période
       if (disponibleTotal >= heuresRequises) {
@@ -282,6 +297,7 @@ const PlanificationGlobale: React.FC = () => {
       }
     });
 
+    console.log('Résultats:', results.length, 'traducteurs trouvés');
     setSearchResults(results);
   };
 
