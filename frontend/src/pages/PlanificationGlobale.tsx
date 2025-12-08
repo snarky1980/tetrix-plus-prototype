@@ -1596,14 +1596,14 @@ const PlanificationGlobale: React.FC = () => {
         🎯 Tetrix Master
       </Button>
 
-      {/* Bouton flottant Ajouter une tâche */}
+      {/* Bouton flottant Créer une tâche */}
       <Button
         variant="primaire"
         onClick={() => setShowAddTaskModal(true)}
         className="fixed bottom-4 right-4 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow"
-        title="Ajouter une nouvelle tâche"
+        title="Créer une nouvelle tâche"
       >
-        ➕ Ajouter
+        ➕ Créer une tâche
       </Button>
 
       {/* Modal Ajouter une tâche */}
@@ -2546,7 +2546,20 @@ const PlanificationGlobale: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex justify-end pt-2 border-t">
+            <div className="flex justify-between pt-2 border-t">
+              <Button
+                variant="primaire"
+                onClick={() => {
+                  setShowChargeModal(false);
+                  setFormTache(prev => ({
+                    ...prev,
+                    traducteurId: chargeTraducteur?.traducteur.id || ''
+                  }));
+                  setShowAddTaskModal(true);
+                }}
+              >
+                ➕ Créer une tâche
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => {
