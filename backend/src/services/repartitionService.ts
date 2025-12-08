@@ -95,8 +95,8 @@ export async function repartitionJusteATemps(
 
   const heuresParJour = await heuresUtiliseesParJour(traducteurId, aujourdHui, echeance);
   
-  if (debug && ajustements.length > 0) {
-    console.debug(`[JAT] Ajustements existants trouvés: ${ajustements.length}`);
+  if (debug && Object.keys(heuresParJour).length > 0) {
+    console.debug(`[JAT] Ajustements existants trouvés: ${Object.keys(heuresParJour).length}`);
     Object.entries(heuresParJour).forEach(([date, heures]) => {
       console.debug(`  ${date}: ${heures}h utilisées`);
     });
