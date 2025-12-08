@@ -358,7 +358,7 @@ const PlanificationGlobale: React.FC = () => {
               {/* Accordéon - Divisions */}
               <details className="border-b border-border">
                 <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
-                  Divisions {pending.divisions.length > 0 && <span className="text-primary">({pending.divisions.length})</span>}
+                  Divisions {pending.divisions.length > 0 && <span className="text-primary text-[10px]">: {pending.divisions.join(', ')}</span>}
                 </summary>
                 <div className="p-2 pt-0 space-y-1">
                   {options.divisions.map((div) => (
@@ -396,7 +396,7 @@ const PlanificationGlobale: React.FC = () => {
               {/* Accordéon - Domaines */}
               <details className="border-b border-border">
                 <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
-                  Domaines {pending.domaines.length > 0 && <span className="text-primary">({pending.domaines.length})</span>}
+                  Domaines {pending.domaines.length > 0 && <span className="text-primary text-[10px]">: {pending.domaines.join(', ')}</span>}
                 </summary>
                 <div className="p-2 pt-0 space-y-1">
                   {options.domaines.map((dom) => (
@@ -416,7 +416,7 @@ const PlanificationGlobale: React.FC = () => {
               {/* Accordéon - Langues source */}
               <details className="border-b border-border">
                 <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
-                  Langues source {pending.languesSource.length > 0 && <span className="text-primary">({pending.languesSource.length})</span>}
+                  Langues source {pending.languesSource.length > 0 && <span className="text-primary text-[10px]">: {pending.languesSource.join(', ')}</span>}
                 </summary>
                 <div className="p-2 pt-0 space-y-1">
                   {options.languesSource.map((lang) => (
@@ -436,7 +436,7 @@ const PlanificationGlobale: React.FC = () => {
               {/* Accordéon - Langues cible */}
               <details className="border-b border-border">
                 <summary className="cursor-pointer text-xs font-medium p-2 hover:bg-gray-50">
-                  Langues cible {pending.languesCible.length > 0 && <span className="text-primary">({pending.languesCible.length})</span>}
+                  Langues cible {pending.languesCible.length > 0 && <span className="text-primary text-[10px]">: {pending.languesCible.join(', ')}</span>}
                 </summary>
                 <div className="p-2 pt-0 space-y-1">
                   {options.languesCible.map((lang) => (
