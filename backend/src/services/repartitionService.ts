@@ -1,5 +1,6 @@
 import prisma from '../config/database';
 import { addDays, subDays, differenceInCalendarDays } from 'date-fns';
+import { estWeekend } from './planificationService';
 
 export interface RepartitionItem { date: string; heures: number }
 
@@ -50,12 +51,14 @@ export async function repartitionJusteATemps(
     });
   }
 
-  // Calculer capacité totale disponible sur la fenêtre
+  // Calculer capacité totale disponible sur la fenêtre (excluant les weekends)
   const totalJours = differenceInCalendarDays(echeance, aujourdHui) + 1;
   let capaciteDisponibleGlobale = 0;
   for (let i = 0; i < totalJours; i++) {
     const d = addDays(aujourdHui, i);
     const iso = d.toISOString().split('T')[0];
+    // Ignorer les weekends dans le calcul de capacité
+    if (estWeekend(d)) continue;
     const utilisees = heuresParJour[iso] || 0;
     capaciteDisponibleGlobale += Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
   }
@@ -69,7 +72,7 @@ export async function repartitionJusteATemps(
     throw new Error(`Capacité insuffisante dans la plage pour heuresTotal demandées (demandé: ${heuresTotal}h, disponible: ${capaciteDisponibleGlobale.toFixed(2)}h)`);
   }
 
-  // Allocation JAT (remplir à rebours depuis l'échéance)
+  // Allocation JAT (remplir à rebours depuis l'échéance, en excluant les weekends)
   let restant = heuresTotal;
   const resultat: RepartitionItem[] = [];
   let courant = echeance;
@@ -77,14 +80,17 @@ export async function repartitionJusteATemps(
   while (restant > 0 && iterations < MAX_LOOKBACK_DAYS) {
     if (courant < aujourdHui) break;
     const iso = courant.toISOString().split('T')[0];
-    const utilisees = heuresParJour[iso] || 0;
-    const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
-    if (libre > 0) {
-      const alloue = Math.min(libre, restant);
-      resultat.push({ date: iso, heures: alloue });
-      restant -= alloue;
-      // Mettre à jour mémoire pour éviter double comptage si futur usage
-      heuresParJour[iso] = utilisees + alloue;
+    // Ignorer les weekends pour l'allocation
+    if (!estWeekend(courant)) {
+      const utilisees = heuresParJour[iso] || 0;
+      const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
+      if (libre > 0) {
+        const alloue = Math.min(libre, restant);
+        resultat.push({ date: iso, heures: alloue });
+        restant -= alloue;
+        // Mettre à jour mémoire pour éviter double comptage si futur usage
+        heuresParJour[iso] = utilisees + alloue;
+      }
     }
     courant = subDays(courant, 1);
     iterations++;
@@ -104,19 +110,32 @@ export async function repartitionJusteATemps(
   return resultTrie;
 }
 
-// Répartition uniforme entre dateDebut et dateFin incluses
+// Répartition uniforme entre dateDebut et dateFin incluses (excluant les weekends)
 export function repartitionUniforme(
   heuresTotal: number,
   dateDebut: Date,
   dateFin: Date
 ): RepartitionItem[] {
-  const jours = differenceInCalendarDays(dateFin, dateDebut) + 1;
-  if (jours <= 0) throw new Error('Intervalle de dates invalide');
-  const base = heuresTotal / jours;
+  const totalJours = differenceInCalendarDays(dateFin, dateDebut) + 1;
+  if (totalJours <= 0) throw new Error('Intervalle de dates invalide');
+  
+  // Compter uniquement les jours ouvrables (lun-ven)
+  const joursOuvrables: Date[] = [];
+  for (let i = 0; i < totalJours; i++) {
+    const dateCourante = addDays(dateDebut, i);
+    if (!estWeekend(dateCourante)) {
+      joursOuvrables.push(dateCourante);
+    }
+  }
+  
+  if (joursOuvrables.length === 0) {
+    throw new Error('Aucun jour ouvrable dans l\'intervalle (uniquement des weekends)');
+  }
+  
+  const base = heuresTotal / joursOuvrables.length;
   const items: RepartitionItem[] = [];
   let cumul = 0;
-  for (let i = 0; i < jours; i++) {
-    const dateCourante = addDays(dateDebut, i);
+  for (const dateCourante of joursOuvrables) {
     const iso = dateCourante.toISOString().split('T')[0];
     let h = parseFloat(base.toFixed(4));
     cumul += h;

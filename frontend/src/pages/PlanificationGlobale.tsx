@@ -121,6 +121,41 @@ const PlanificationGlobale: React.FC = () => {
 
   const { planificationGlobale, loading, error } = usePlanificationGlobal(params);
 
+  // Enrichir planificationGlobale pour inclure les weekends avec données vides
+  const planificationEnrichie = useMemo(() => {
+    if (!planificationGlobale) return null;
+    
+    return {
+      ...planificationGlobale,
+      planification: planificationGlobale.planification.map((ligne) => {
+        const datesCopy = { ...ligne.dates };
+        
+        // Ajouter les weekends manquants avec des données vides
+        const base = new Date(applied.start || today);
+        for (let i = 0; i < applied.range; i++) {
+          const d = new Date(base);
+          d.setDate(base.getDate() + i);
+          const dateStr = dateISO(d);
+          
+          if (isWeekend(dateStr) && !datesCopy[dateStr]) {
+            datesCopy[dateStr] = {
+              heures: 0,
+              couleur: 'libre' as const,
+              capacite: 0,
+              disponible: 0,
+              estWeekend: true,
+            };
+          }
+        }
+        
+        return {
+          ...ligne,
+          dates: datesCopy,
+        };
+      }),
+    };
+  }, [planificationGlobale, applied.start, applied.range, today]);
+
   const days = useMemo(() => {
     const base = new Date(applied.start || today);
     return Array.from({ length: applied.range }).map((_, i) => {
@@ -216,7 +251,7 @@ const PlanificationGlobale: React.FC = () => {
 
   // Recherche de disponibilité
   const searchAvailability = () => {
-    if (!searchCriteria.heuresRequises || !planificationGlobale) {
+    if (!searchCriteria.heuresRequises || !planificationEnrichie) {
       setSearchResults([]);
       return;
     }
@@ -224,7 +259,7 @@ const PlanificationGlobale: React.FC = () => {
     const heuresRequises = parseFloat(searchCriteria.heuresRequises);
     const results: string[] = [];
 
-    planificationGlobale.planification.forEach((ligne) => {
+    planificationEnrichie.planification.forEach((ligne) => {
       const info = ligne.dates[searchCriteria.date];
       if (!info) return;
 
@@ -742,7 +777,7 @@ const PlanificationGlobale: React.FC = () => {
       {/* Planification principal */}
       <Card>
         <CardHeader>
-          <CardTitle>Planification des traducteurs ({planificationGlobale?.planification.length || 0})</CardTitle>
+          <CardTitle>Planification des traducteurs ({planificationEnrichie?.planification.length || 0})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-4 items-center">
@@ -830,7 +865,7 @@ const PlanificationGlobale: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {planificationGlobale?.planification.map((ligne, idx) => {
+                {planificationEnrichie?.planification.map((ligne, idx) => {
                   const isSearchResult = searchResults.includes(ligne.traducteur.id);
                   return (
                     <tr key={ligne.traducteur.id} className={isSearchResult ? 'bg-yellow-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50')}>
@@ -875,32 +910,38 @@ const PlanificationGlobale: React.FC = () => {
                             key={iso}
                             className={`border-r border-b border-border text-center px-1 py-2 ${bgClass} ${isTodayCol ? 'ring-2 ring-inset ring-blue-400' : ''}`}
                           >
-                            <button
-                              onClick={() => {
-                                // Navigate to tasks filtered by traducteur and date
-                                const params = new URLSearchParams({
-                                  traducteurId: ligne.traducteur.id,
-                                  date: iso,
-                                });
-                                navigate(`/conseiller/taches?${params.toString()}`);
-                              }}
-                              className="w-full h-full hover:opacity-80 transition-opacity cursor-pointer"
-                              title={`${ligne.traducteur.nom}\n${iso}\n${heures.toFixed(1)}h / ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
-                            >
-                              <div className={`font-semibold ${textClass}`}>
-                                {heures.toFixed(1)}
+                            {isWeekendCol ? (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <div className={`font-semibold ${textClass}`}>—</div>
                               </div>
-                              <div className="text-[10px] text-muted">
-                                / {capacite.toFixed(1)}h
-                              </div>
-                            </button>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  // Navigate to tasks filtered by traducteur and date
+                                  const params = new URLSearchParams({
+                                    traducteurId: ligne.traducteur.id,
+                                    date: iso,
+                                  });
+                                  navigate(`/conseiller/taches?${params.toString()}`);
+                                }}
+                                className="w-full h-full hover:opacity-80 transition-opacity cursor-pointer"
+                                title={`${ligne.traducteur.nom}\n${iso}\n${heures.toFixed(1)}h / ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
+                              >
+                                <div className={`font-semibold ${textClass}`}>
+                                  {heures.toFixed(1)}
+                                </div>
+                                <div className="text-[10px] text-muted">
+                                  / {capacite.toFixed(1)}h
+                                </div>
+                              </button>
+                            )}
                           </td>
                         );
                       })}
                     </tr>
                   );
                 })}
-                {(!planificationGlobale || planificationGlobale.planification.length === 0) && !loading && (
+                {(!planificationEnrichie || planificationEnrichie.planification.length === 0) && !loading && (
                   <tr>
                     <td colSpan={days.length + 1} className="text-center py-8 text-muted">
                       Aucun traducteur trouvé avec ces critères

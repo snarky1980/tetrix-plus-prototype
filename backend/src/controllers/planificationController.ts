@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { calculerCouleurDisponibilite } from '../services/planificationService';
+import { calculerCouleurDisponibilite, estWeekend } from '../services/planificationService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
 
 /**
@@ -113,8 +113,9 @@ export const obtenirPlanification = async (
     const planification = Object.values(planificationParDate)
       .sort((a: any, b: any) => a.date.localeCompare(b.date))
       .map((jour: any) => {
+        const isWeekend = estWeekend(jour.date);
         const couleur = calculerCouleurDisponibilite(jour.heuresTotal, jour.capacite);
-        return { ...jour, couleur };
+        return { ...jour, couleur, estWeekend: isWeekend };
       });
 
     res.json({
@@ -317,16 +318,18 @@ export const obtenirPlanificationGlobale = async (
         }
 
         // Construire structure dates avec couleur + disponibilité
-        const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number }> = {};
+        const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean }> = {};
         Object.entries(heuresParDate).forEach(([dateStr, heures]) => {
           const capacite = traducteur.capaciteHeuresParJour;
-            const couleur = calculerCouleurDisponibilite(heures as number, capacite);
-            dates[dateStr] = {
-              heures: heures as number,
-              couleur,
-              capacite,
-              disponible: Math.max(capacite - (heures as number), 0),
-            };
+          const isWeekend = estWeekend(dateStr);
+          const couleur = calculerCouleurDisponibilite(heures as number, capacite);
+          dates[dateStr] = {
+            heures: heures as number,
+            couleur,
+            capacite,
+            disponible: Math.max(capacite - (heures as number), 0),
+            estWeekend: isWeekend,
+          };
         });
 
         return {

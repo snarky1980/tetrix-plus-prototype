@@ -104,6 +104,7 @@ export interface JourPlanification {
   heuresTotal: number;
   disponible: number;
   couleur?: 'libre' | 'presque-plein' | 'plein';
+  estWeekend?: boolean;
   taches: {
     id: string;
     description: string;
@@ -149,6 +150,7 @@ export interface PlanificationGlobale {
       couleur: 'libre' | 'presque-plein' | 'plein';
       capacite: number;
       disponible: number;
+      estWeekend?: boolean;
     }>;
   }[];
 }
