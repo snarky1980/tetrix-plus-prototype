@@ -15,7 +15,7 @@ import { formatHeures } from '../lib/format';
 import { JourDetail } from '../components/ui/JourDetail';
 import api from '../services/api';
 import { traducteurService } from '../services/traducteurService';
-import { Traducteur } from '../types';
+import type { Traducteur } from '../types';
 
 /**
  * Dashboard Traducteur - Planification personnel et blocage de temps
@@ -25,7 +25,7 @@ const DashboardTraducteur: React.FC = () => {
   const [blocageData, setBlocageData] = useState({ date: '', heures: 0 });
   const [submitting, setSubmitting] = useState(false);
   const [erreur, setErreur] = useState('');
-  const [traducteur, setTraducteur] = useState<Traducteur | null>(null);
+  const [_traducteur, setTraducteur] = useState<Traducteur | null>(null);
   const [disponibiliteActive, setDisponibiliteActive] = useState(false);
   const [commentaireDisponibilite, setCommentaireDisponibilite] = useState('');
   const [savingDisponibilite, setSavingDisponibilite] = useState(false);
@@ -164,20 +164,18 @@ const DashboardTraducteur: React.FC = () => {
             {disponibiliteActive && (
               <div className="border-t pt-4">
                 <FormField 
-                  label="Commentaire (optionnel)" 
-                  hint="Ex: Disponible pour révisions urgentes, préférence pour traduction juridique"
+                  label="Commentaire (optionnel)"
                 >
                   <Input
                     type="text"
                     value={commentaireDisponibilite}
                     onChange={e => setCommentaireDisponibilite(e.target.value)}
-                    placeholder="Précisez vos préférences..."
+                    placeholder="Ex: Disponible pour révisions urgentes, préférence pour traduction juridique"
                     maxLength={200}
                   />
                 </FormField>
                 <Button
                   variant="secondaire"
-                  size="sm"
                   onClick={async () => {
                     if (!utilisateur?.traducteurId) return;
                     setSavingDisponibilite(true);
