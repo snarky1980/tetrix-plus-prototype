@@ -19,7 +19,12 @@ const PlanificationGlobale: React.FC = () => {
   usePageTitle('Tetrix PLUS Planification', 'Consultez le planification globale des traductions');
   // const navigate = useNavigate(); // Reserved for future navigation
   // const { utilisateur } = useAuth(); // réservé pour filtres par rôle
-  const dateISO = (d: Date) => d.toISOString().split('T')[0];
+  const dateISO = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
   const today = useMemo(() => dateISO(new Date()), []);
 
   type Filters = {
@@ -72,10 +77,10 @@ const PlanificationGlobale: React.FC = () => {
   // Recherche de disponibilité
   const [showCustomRangeDialog, setShowCustomRangeDialog] = useState(false);
   const [customRangeStart, setCustomRangeStart] = useState(today);
-  const [customRangeEnd, setCustomRangeEnd] = useState(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
+  const [customRangeEnd, setCustomRangeEnd] = useState(dateISO(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)));
   const [searchCriteria, setSearchCriteria] = useState({
     dateDebut: today,
-    dateFin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +14 jours par défaut
+    dateFin: dateISO(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)), // +14 jours par défaut
     heuresRequises: '',
     client: '',
     domaine: '',
