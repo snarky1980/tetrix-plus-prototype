@@ -605,8 +605,9 @@ const PlanificationGlobale: React.FC = () => {
     setCelluleSelectionnee({ traducteurId, traducteurNom, date, taches: [] });
     
     try {
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
       const response = await fetch(
-        `http://localhost:3001/api/taches?traducteurId=${traducteurId}&date=${date}`,
+        `${API_URL}/taches?traducteurId=${traducteurId}&date=${date}`,
         {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }
@@ -630,8 +631,9 @@ const PlanificationGlobale: React.FC = () => {
     setChargeTraducteur({ traducteur, tachesTotales: [], heuresTotal: 0, tachesParStatut: {} });
     
     try {
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
       const response = await fetch(
-        `http://localhost:3001/api/taches?traducteurId=${traducteur.id}`,
+        `${API_URL}/taches?traducteurId=${traducteur.id}`,
         {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }
@@ -681,7 +683,8 @@ const PlanificationGlobale: React.FC = () => {
   const handleEditTache = async (tacheId: string) => {
     try {
       // Charger la tâche depuis l'API
-      const response = await fetch(`http://localhost:3001/api/taches/${tacheId}`, {
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${API_URL}/taches/${tacheId}`, {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
       });
       
@@ -808,7 +811,8 @@ const PlanificationGlobale: React.FC = () => {
         tache.repartitionManuelle = formEdition.repartitionManuelle;
       }
 
-      const response = await fetch(`http://localhost:3001/api/taches/${tacheEnEdition}`, {
+      const API_URL = import.meta.env.VITE_API_URL || '/api';
+      const response = await fetch(`${API_URL}/taches/${tacheEnEdition}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
