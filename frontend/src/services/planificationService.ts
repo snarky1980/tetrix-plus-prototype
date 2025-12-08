@@ -1,17 +1,17 @@
 import api from './api';
-import { Planning, PlanningGlobal, AjustementTemps } from '../types';
+import { Planification, PlanificationGlobale, AjustementTemps } from '../types';
 
-export const planningService = {
+export const planificationService = {
   /**
-   * Récupérer le planning d'un traducteur
+   * Récupérer la planification d'un traducteur
    */
-  async obtenirPlanning(
+  async obtenirPlanification(
     traducteurId: string,
     dateDebut: string,
     dateFin: string
-  ): Promise<Planning> {
-    const { data } = await api.get<Planning>(
-      `/traducteurs/${traducteurId}/planning`,
+  ): Promise<Planification> {
+    const { data } = await api.get<Planification>(
+      `/traducteurs/${traducteurId}/planification`,
       {
         params: { dateDebut, dateFin },
       }
@@ -20,9 +20,9 @@ export const planningService = {
   },
 
   /**
-   * Récupérer le planning global
+   * Récupérer le planification globale
    */
-  async obtenirPlanningGlobal(params: {
+  async obtenirPlanificationGlobale(params: {
     dateDebut: string;
     dateFin: string;
     division?: string;
@@ -30,8 +30,8 @@ export const planningService = {
     domaine?: string;
     langueSource?: string;
     langueCible?: string;
-  }): Promise<PlanningGlobal> {
-    const { data } = await api.get<PlanningGlobal>('/planning-global', {
+  }): Promise<PlanificationGlobale> {
+    const { data } = await api.get<PlanificationGlobale>('/planification-globale', {
       params,
     });
     return data;

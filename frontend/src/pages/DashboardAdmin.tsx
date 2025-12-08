@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { StatCard } from '../components/ui/StatCard';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { usePlanningGlobal } from '../hooks/usePlanning';
+import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { TraducteurManagement } from '../components/admin/TraducteurManagement';
 import { ClientDomaineManagement } from '../components/admin/ClientDomaineManagement';
 import { UserManagement } from '../components/admin/UserManagement';
@@ -20,11 +20,11 @@ const DashboardAdmin: React.FC = () => {
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
-  const { planningGlobal } = usePlanningGlobal({ dateDebut: dateISO(aujourdHui), dateFin: dateISO(fin) });
+  const { planificationGlobale } = usePlanificationGlobal({ dateDebut: dateISO(aujourdHui), dateFin: dateISO(fin) });
   const stats = useMemo(() => {
-    if (!planningGlobal) return { total: 0, libre: 0, presque: 0, plein: 0 };
+    if (!planificationGlobale) return { total: 0, libre: 0, presque: 0, plein: 0 };
     let libre = 0, presque = 0, plein = 0;
-    planningGlobal.planning.forEach(l => {
+    planificationGlobale.planification.forEach(l => {
       Object.values(l.dates).forEach(d => {
         if (d.couleur === 'libre') libre++;
         else if (d.couleur === 'presque-plein') presque++;
@@ -32,7 +32,7 @@ const DashboardAdmin: React.FC = () => {
       });
     });
     return { total: libre + presque + plein, libre, presque, plein };
-  }, [planningGlobal]);
+  }, [planificationGlobale]);
 
   const renderContent = () => {
     switch (section) {

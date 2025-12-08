@@ -95,8 +95,8 @@ export interface AjustementTemps {
   creeLe: string;
 }
 
-// Types pour le planning
-export interface JourPlanning {
+// Types pour la planification
+export interface JourPlanification {
   date: string;
   capacite: number;
   heuresTaches: number;
@@ -118,7 +118,7 @@ export interface JourPlanning {
   }[];
 }
 
-export interface Planning {
+export interface Planification {
   traducteur: {
     id: string;
     nom: string;
@@ -128,15 +128,15 @@ export interface Planning {
     debut: string;
     fin: string;
   };
-  planning: JourPlanning[];
+  planification: JourPlanification[];
 }
 
-export interface PlanningGlobal {
+export interface PlanificationGlobale {
   periode: {
     debut: string;
     fin: string;
   };
-  planning: {
+  planification: {
     traducteur: {
       id: string;
       nom: string;

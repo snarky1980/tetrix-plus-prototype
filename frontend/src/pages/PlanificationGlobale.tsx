@@ -7,13 +7,13 @@ import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
 import { Modal } from '../components/ui/Modal';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { usePlanningGlobal } from '../hooks/usePlanning';
+import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { clientService } from '../services/clientService';
 import { sousDomaineService } from '../services/sousDomaineService';
 import { traducteurService } from '../services/traducteurService';
 
-const PlanningGlobal: React.FC = () => {
-  usePageTitle('Tetrix PLUS Planning', 'Consultez le planning global des traductions');
+const PlanificationGlobale: React.FC = () => {
+  usePageTitle('Tetrix PLUS Planification', 'Consultez le planification globale des traductions');
   const navigate = useNavigate();
   // const { utilisateur } = useAuth(); // réservé pour filtres par rôle
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
@@ -59,7 +59,7 @@ const PlanningGlobal: React.FC = () => {
   };
 
   const [savedViews, setSavedViews] = useState<SavedView[]>(() => {
-    const stored = localStorage.getItem('planning-saved-views');
+    const stored = localStorage.getItem('planification-saved-views');
     return stored ? JSON.parse(stored) : [];
   });
   const [showSaveDialog, setShowSaveDialog] = useState(false);
@@ -119,7 +119,7 @@ const PlanningGlobal: React.FC = () => {
     [applied, endDate]
   );
 
-  const { planningGlobal, loading, error } = usePlanningGlobal(params);
+  const { planificationGlobale, loading, error } = usePlanificationGlobal(params);
 
   const days = useMemo(() => {
     const base = new Date(applied.start || today);
@@ -198,7 +198,7 @@ const PlanningGlobal: React.FC = () => {
     
     const updated = [...savedViews, newView];
     setSavedViews(updated);
-    localStorage.setItem('planning-saved-views', JSON.stringify(updated));
+    localStorage.setItem('planification-saved-views', JSON.stringify(updated));
     setNewViewName('');
     setShowSaveDialog(false);
   };
@@ -211,12 +211,12 @@ const PlanningGlobal: React.FC = () => {
   const deleteView = (id: string) => {
     const updated = savedViews.filter(v => v.id !== id);
     setSavedViews(updated);
-    localStorage.setItem('planning-saved-views', JSON.stringify(updated));
+    localStorage.setItem('planification-saved-views', JSON.stringify(updated));
   };
 
   // Recherche de disponibilité
   const searchAvailability = () => {
-    if (!searchCriteria.heuresRequises || !planningGlobal) {
+    if (!searchCriteria.heuresRequises || !planificationGlobale) {
       setSearchResults([]);
       return;
     }
@@ -224,7 +224,7 @@ const PlanningGlobal: React.FC = () => {
     const heuresRequises = parseFloat(searchCriteria.heuresRequises);
     const results: string[] = [];
 
-    planningGlobal.planning.forEach((ligne) => {
+    planificationGlobale.planification.forEach((ligne) => {
       const info = ligne.dates[searchCriteria.date];
       if (!info) return;
 
@@ -309,7 +309,7 @@ const PlanningGlobal: React.FC = () => {
   }, []);
 
   return (
-    <AppLayout titre="Planning global">
+    <AppLayout titre="Planification globale">
       <div className="space-y-4">
         {/* Filtres compacts */}
         <div className="bg-white border border-border rounded-lg shadow-sm">
@@ -739,10 +739,10 @@ const PlanningGlobal: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Planning principal */}
+      {/* Planification principal */}
       <Card>
         <CardHeader>
-          <CardTitle>Planning des traducteurs ({planningGlobal?.planning.length || 0})</CardTitle>
+          <CardTitle>Planification des traducteurs ({planificationGlobale?.planification.length || 0})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-3 mb-4 items-center">
@@ -830,7 +830,7 @@ const PlanningGlobal: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {planningGlobal?.planning.map((ligne, idx) => {
+                {planificationGlobale?.planification.map((ligne, idx) => {
                   const isSearchResult = searchResults.includes(ligne.traducteur.id);
                   return (
                     <tr key={ligne.traducteur.id} className={isSearchResult ? 'bg-yellow-100' : (idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50')}>
@@ -900,7 +900,7 @@ const PlanningGlobal: React.FC = () => {
                     </tr>
                   );
                 })}
-                {(!planningGlobal || planningGlobal.planning.length === 0) && !loading && (
+                {(!planificationGlobale || planificationGlobale.planification.length === 0) && !loading && (
                   <tr>
                     <td colSpan={days.length + 1} className="text-center py-8 text-muted">
                       Aucun traducteur trouvé avec ces critères
@@ -910,7 +910,7 @@ const PlanningGlobal: React.FC = () => {
               </tbody>
             </table>
           </div>
-          {loading && <p className="text-xs text-muted mt-2">Chargement du planning...</p>}
+          {loading && <p className="text-xs text-muted mt-2">Chargement de la planification...</p>}
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
         </CardContent>
       </Card>
@@ -919,4 +919,4 @@ const PlanningGlobal: React.FC = () => {
   );
 };
 
-export default PlanningGlobal;
+export default PlanificationGlobale;

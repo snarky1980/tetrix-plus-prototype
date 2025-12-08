@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { calculerCouleurDisponibilite } from '../src/services/planningService';
+import { calculerCouleurDisponibilite } from '../src/services/planificationService';
 
-describe('planningService.calculerCouleurDisponibilite', () => {
+describe('planificationService.calculerCouleurDisponibilite', () => {
   it('retourne plein quand heures == capacite', () => {
     expect(calculerCouleurDisponibilite(7.5, 7.5)).toBe('plein');
   });

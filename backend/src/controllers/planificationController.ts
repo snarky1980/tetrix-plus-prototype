@@ -1,14 +1,14 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { calculerCouleurDisponibilite } from '../services/planningService';
+import { calculerCouleurDisponibilite } from '../services/planificationService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
 
 /**
- * Obtenir le planning d'un traducteur
- * GET /api/traducteurs/:traducteurId/planning
+ * Obtenir la planification d'un traducteur
+ * GET /api/traducteurs/:traducteurId/planification
  */
-export const obtenirPlanning = async (
+export const obtenirPlanification = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
@@ -68,13 +68,13 @@ export const obtenirPlanning = async (
     });
 
     // Regrouper par date
-    const planningParDate: Record<string, any> = {};
+    const planificationParDate: Record<string, any> = {};
 
     for (const ajust of ajustements) {
       const dateStr = ajust.date.toISOString().split('T')[0];
 
-      if (!planningParDate[dateStr]) {
-        planningParDate[dateStr] = {
+      if (!planificationParDate[dateStr]) {
+        planificationParDate[dateStr] = {
           date: dateStr,
           capacite: traducteur.capaciteHeuresParJour,
           heuresTaches: 0,
@@ -87,8 +87,8 @@ export const obtenirPlanning = async (
       }
 
       if (ajust.type === 'TACHE') {
-        planningParDate[dateStr].heuresTaches += ajust.heures;
-        planningParDate[dateStr].taches.push({
+        planificationParDate[dateStr].heuresTaches += ajust.heures;
+        planificationParDate[dateStr].taches.push({
           id: ajust.tache?.id,
           description: ajust.tache?.description,
           heures: ajust.heures,
@@ -97,20 +97,20 @@ export const obtenirPlanning = async (
           statut: ajust.tache?.statut,
         });
       } else {
-        planningParDate[dateStr].heuresBlocages += ajust.heures;
-        planningParDate[dateStr].blocages.push({
+        planificationParDate[dateStr].heuresBlocages += ajust.heures;
+        planificationParDate[dateStr].blocages.push({
           id: ajust.id,
           heures: ajust.heures,
         });
       }
 
-      planningParDate[dateStr].heuresTotal += ajust.heures;
-      planningParDate[dateStr].disponible = 
-        traducteur.capaciteHeuresParJour - planningParDate[dateStr].heuresTotal;
+      planificationParDate[dateStr].heuresTotal += ajust.heures;
+      planificationParDate[dateStr].disponible = 
+        traducteur.capaciteHeuresParJour - planificationParDate[dateStr].heuresTotal;
     }
 
     // Convertir en array et trier par date
-    const planning = Object.values(planningParDate)
+    const planification = Object.values(planificationParDate)
       .sort((a: any, b: any) => a.date.localeCompare(b.date))
       .map((jour: any) => {
         const couleur = calculerCouleurDisponibilite(jour.heuresTotal, jour.capacite);
@@ -123,11 +123,11 @@ export const obtenirPlanning = async (
         debut: dateDebut,
         fin: dateFin,
       },
-      planning,
+      planification,
     });
   } catch (error) {
-    console.error('Erreur récupération planning:', error);
-    res.status(500).json({ erreur: 'Erreur lors de la récupération du planning' });
+    console.error('Erreur récupération planification:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la récupération de la planification' });
   }
 };
 
@@ -210,10 +210,10 @@ export const supprimerBlocage = async (
 };
 
 /**
- * Obtenir le planning global (multi-traducteurs)
- * GET /api/planning-global
+ * Obtenir le planification globale (multi-traducteurs)
+ * GET /api/planification-globale
  */
-export const obtenirPlanningGlobal = async (
+export const obtenirPlanificationGlobale = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
@@ -297,7 +297,7 @@ export const obtenirPlanningGlobal = async (
     });
 
     // Pour chaque traducteur, récupérer ses ajustements
-    const planningGlobal = await Promise.all(
+    const planificationGlobale = await Promise.all(
       traducteurs.map(async (traducteur) => {
         const ajustements = await prisma.ajustementTemps.findMany({
           where: {
@@ -341,10 +341,10 @@ export const obtenirPlanningGlobal = async (
         debut: dateDebut,
         fin: dateFin,
       },
-      planning: planningGlobal,
+      planification: planificationGlobale,
     });
   } catch (error) {
-    console.error('Erreur récupération planning global:', error);
-    res.status(500).json({ erreur: 'Erreur lors de la récupération du planning global' });
+    console.error('Erreur récupération planification globale:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la récupération du planification globale' });
   }
 };

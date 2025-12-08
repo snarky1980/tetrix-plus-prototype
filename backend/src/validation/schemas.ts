@@ -38,8 +38,8 @@ export const mettreAJourTacheSchema = z.object({
   }),
 });
 
-// Planning individuel
-export const obtenirPlanningSchema = z.object({
+// Planification individuelle
+export const obtenirPlanificationSchema = z.object({
   params: z.object({ traducteurId: uuid() }),
   query: z.object({
     dateDebut: dateISO('dateDebut'),
@@ -47,8 +47,8 @@ export const obtenirPlanningSchema = z.object({
   })
 });
 
-// Planning global
-export const obtenirPlanningGlobalSchema = z.object({
+// Planification globale
+export const obtenirPlanificationGlobaleSchema = z.object({
   query: z.object({
     dateDebut: dateISO('dateDebut'),
     dateFin: dateISO('dateFin'),

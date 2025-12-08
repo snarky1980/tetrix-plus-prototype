@@ -10,7 +10,7 @@ import { LoadingSpinner } from '../components/ui/Spinner';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { usePlanningGlobal } from '../hooks/usePlanning';
+import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { tacheService } from '../services/tacheService';
 import { Tache } from '../types';
 
@@ -23,7 +23,7 @@ const DashboardConseiller: React.FC = () => {
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
-  const { planningGlobal, loading: loadingPlanning, error } = usePlanningGlobal({ 
+  const { planificationGlobale, loading: loadingPlanification, error } = usePlanificationGlobal({ 
     dateDebut: dateISO(aujourdHui), 
     dateFin: dateISO(fin) 
   });
@@ -224,10 +224,10 @@ const DashboardConseiller: React.FC = () => {
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle>Planning global (7 jours)</CardTitle>
+              <CardTitle>Planification globale (7 jours)</CardTitle>
               <Button 
                 variant="outline" 
-                onClick={() => navigate('/conseiller/planning-global')}
+                onClick={() => navigate('/conseiller/planification-globale')}
               >
                 Vue détaillée
               </Button>
@@ -239,8 +239,8 @@ const DashboardConseiller: React.FC = () => {
               <span className="px-2 py-1 rounded-md bg-orange-500 text-white">Presque plein</span>
               <span className="px-2 py-1 rounded-md bg-red-600 text-white">Plein</span>
             </div>
-            {loadingPlanning ? (
-              <LoadingSpinner message="Chargement du planning..." />
+            {loadingPlanification ? (
+              <LoadingSpinner message="Chargement de la planification..." />
             ) : error ? (
               <p className="text-sm text-red-600">{error}</p>
             ) : (
@@ -250,7 +250,7 @@ const DashboardConseiller: React.FC = () => {
                   {Array.from({ length: 7 }).map((_, i) => (
                     <div key={i} className="text-xs font-semibold text-center">{`J${i + 1}`}</div>
                   ))}
-                  {planningGlobal?.planning.slice(0, 10).map(ligne => {
+                  {planificationGlobale?.planification.slice(0, 10).map(ligne => {
                     const entries = Object.entries(ligne.dates);
                     return (
                       <React.Fragment key={ligne.traducteur.id}>
@@ -277,9 +277,9 @@ const DashboardConseiller: React.FC = () => {
                     );
                   })}
                 </div>
-                {planningGlobal && planningGlobal.planning.length > 10 && (
+                {planificationGlobale && planificationGlobale.planification.length > 10 && (
                   <p className="text-xs text-muted mt-2">
-                    Affichage de 10 traducteurs sur {planningGlobal.planning.length}
+                    Affichage de 10 traducteurs sur {planificationGlobale.planification.length}
                   </p>
                 )}
               </div>

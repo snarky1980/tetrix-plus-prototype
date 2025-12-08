@@ -11,7 +11,7 @@ import traducteurRoutes from './routes/traducteurRoutes';
 import clientRoutes from './routes/clientRoutes';
 import sousDomaineRoutes from './routes/sousDomaineRoutes';
 import tacheRoutes from './routes/tacheRoutes';
-import planningRoutes from './routes/planningRoutes';
+import planificationRoutes from './routes/planificationRoutes';
 import repartitionRoutes from './routes/repartitionRoutes';
 import importRoutes from './routes/importRoutes';
 
@@ -111,7 +111,7 @@ app.use('/api/traducteurs', traducteurRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/sous-domaines', sousDomaineRoutes);
 app.use('/api/taches', tacheRoutes);
-app.use('/api', planningRoutes); // Routes planning (plusieurs endpoints)
+app.use('/api', planificationRoutes); // Routes planification (plusieurs endpoints)
 app.use('/api/repartition', repartitionRoutes);
 app.use('/api/import', importRoutes);
 

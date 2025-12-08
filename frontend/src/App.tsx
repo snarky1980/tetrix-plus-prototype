@@ -8,7 +8,7 @@ import { ToastContainer } from './components/ui/Toast';
 import Connexion from './pages/Connexion';
 import DashboardTraducteur from './pages/DashboardTraducteur';
 import DashboardConseiller from './pages/DashboardConseiller';
-import PlanningGlobal from './pages/PlanningGlobal';
+import PlanificationGlobale from './pages/PlanificationGlobale';
 import TacheCreation from './pages/TacheCreation';
 import DashboardAdmin from './pages/DashboardAdmin';
 
@@ -91,10 +91,10 @@ function App() {
           />
           {/* Sous-routes conseiller (placeholder) */}
           <Route
-            path="/conseiller/planning-global"
+            path="/conseiller/planification-globale"
             element={
               <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
-                <PlanningGlobal />
+                <PlanificationGlobale />
               </RouteProtegee>
             }
           />

@@ -30,7 +30,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
       <main className={cn('flex-1 page-wrapper space-y-6')}>{children}</main>
       <footer className="mt-auto border-t border-border text-xs text-muted py-4">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between">
-          <span>Planning Traducteurs BT – Prototype</span>
+          <span>Planification Traducteurs BT – Prototype</span>
           <span>Accessibilité: contrastes élevés et focus visibles.</span>
         </div>
       </footer>

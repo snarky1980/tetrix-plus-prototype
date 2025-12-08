@@ -1,4 +1,4 @@
-// Service planning: calcul couleur disponibilité + helpers
+// Service planification: calcul couleur disponibilité + helpers
 
 export function calculerCouleurDisponibilite(heuresUtilisees: number, capacite: number): 'libre' | 'presque-plein' | 'plein' {
   if (heuresUtilisees >= capacite - 1e-6) return 'plein';
@@ -6,7 +6,7 @@ export function calculerCouleurDisponibilite(heuresUtilisees: number, capacite: 
   return 'libre';
 }
 
-export interface JourPlanning {
+export interface JourPlanification {
   date: string;
   capacite: number;
   heuresTaches: number;

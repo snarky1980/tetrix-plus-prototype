@@ -1,15 +1,15 @@
 import { Router } from 'express';
 import {
-  obtenirPlanning,
+  obtenirPlanification,
   creerBlocage,
   supprimerBlocage,
-  obtenirPlanningGlobal,
-} from '../controllers/planningController';
+  obtenirPlanificationGlobale,
+} from '../controllers/planificationController';
 import { authentifier, verifierRole, verifierAccesTraducteur } from '../middleware/auth';
 import { valider } from '../middleware/validation';
 import {
-  obtenirPlanningSchema,
-  obtenirPlanningGlobalSchema,
+  obtenirPlanificationSchema,
+  obtenirPlanificationGlobaleSchema,
   creerBlocageSchema,
   supprimerBlocageSchema,
 } from '../validation/schemas';
@@ -19,23 +19,23 @@ const router = Router();
 router.use(authentifier);
 
 /**
- * GET /api/traducteurs/:traducteurId/planning
- * Obtenir le planning d'un traducteur
+ * GET /api/traducteurs/:traducteurId/planification
+ * Obtenir la planification d'un traducteur
  * Accessible par : Admin, Conseiller, ou le traducteur lui-même
  */
 router.get(
-  '/traducteurs/:traducteurId/planning',
+  '/traducteurs/:traducteurId/planification',
   verifierAccesTraducteur,
-  valider(obtenirPlanningSchema),
-  obtenirPlanning
+  valider(obtenirPlanificationSchema),
+  obtenirPlanification
 );
 
 /**
- * GET /api/planning-global
- * Obtenir le planning global (multi-traducteurs)
+ * GET /api/planification-globale
+ * Obtenir le planification globale (multi-traducteurs)
  * Accessible par : Admin, Conseiller
  */
-router.get('/planning-global', verifierRole('ADMIN', 'CONSEILLER'), valider(obtenirPlanningGlobalSchema), obtenirPlanningGlobal);
+router.get('/planification-globale', verifierRole('ADMIN', 'CONSEILLER'), valider(obtenirPlanificationGlobaleSchema), obtenirPlanificationGlobale);
 
 /**
  * POST /api/ajustements

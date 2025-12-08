@@ -10,13 +10,13 @@ import { SkeletonCard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { usePlanning } from '../hooks/usePlanning';
+import { usePlanification } from '../hooks/usePlanification';
 import { formatHeures } from '../lib/format';
 import { JourDetail } from '../components/ui/JourDetail';
 import api from '../services/api';
 
 /**
- * Dashboard Traducteur - Planning personnel et blocage de temps
+ * Dashboard Traducteur - Planification personnel et blocage de temps
  */
 const DashboardTraducteur: React.FC = () => {
   const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
@@ -27,25 +27,25 @@ const DashboardTraducteur: React.FC = () => {
   const aujourdHui = useMemo(() => new Date(), []);
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
-  const { planning, loading, error, refresh } = usePlanning(utilisateur?.traducteurId, { 
+  const { planification, loading, error, refresh } = usePlanification(utilisateur?.traducteurId, { 
     dateDebut: dateISO(aujourdHui), 
     dateFin: dateISO(fin) 
   });
 
   // Mettre à jour le titre de la page avec le nom du traducteur
-  const titreTraducteur = planning?.traducteur?.nom || 'Traducteur';
-  usePageTitle(`${titreTraducteur} - Tetrix PLUS`, 'Consultez votre planning et bloquez votre temps');
+  const titreTraducteur = planification?.traducteur?.nom || 'Traducteur';
+  usePageTitle(`${titreTraducteur} - Tetrix PLUS`, 'Consultez votre planification et bloquez votre temps');
 
   const resume = useMemo(() => {
-    if (!planning) return { taches: 0, blocages: 0, libre: 0, capacite: 0 };
-    const totaux = planning.planning.reduce((acc, jour) => ({
+    if (!planification) return { taches: 0, blocages: 0, libre: 0, capacite: 0 };
+    const totaux = planification.planification.reduce((acc: any, jour: any) => ({
       taches: acc.taches + jour.heuresTaches,
       blocages: acc.blocages + jour.heuresBlocages,
       libre: acc.libre + jour.disponible,
       capacite: acc.capacite + jour.capacite,
     }), { taches: 0, blocages: 0, libre: 0, capacite: 0 });
     return totaux;
-  }, [planning]);
+  }, [planification]);
 
   // Calculer le pourcentage d'utilisation
   const percentageUtilise = useMemo(() => {
@@ -78,7 +78,7 @@ const DashboardTraducteur: React.FC = () => {
   };
 
   return (
-    <AppLayout titre="Mon planning">
+    <AppLayout titre="Ma planification">
       {/* Statistiques */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <StatCard 
@@ -150,15 +150,15 @@ const DashboardTraducteur: React.FC = () => {
                 <SkeletonCard key={i} />
               ))}
             </div>
-          ) : (!planning || planning.planning.length === 0) ? (
+          ) : (!planification || planification.planification.length === 0) ? (
             <EmptyState 
               icon="📅"
-              title="Aucun planning disponible"
-              description="Votre planning n'a pas encore été généré pour cette période"
+              title="Aucune planification disponible"
+              description="Votre planification n'a pas encore été généré pour cette période"
             />
           ) : (
             <div className="grid grid-cols-7 gap-2" aria-label="Calendrier 7 jours">
-              {planning?.planning.map((jour) => (
+              {planification?.planification.map((jour: any) => (
                 <JourDetail
                   key={jour.date}
                   date={jour.date}
