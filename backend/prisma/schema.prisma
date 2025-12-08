@@ -8,16 +8,50 @@ datasource db {
 }
 
 model Utilisateur {
-  id         String      @id @default(uuid())
-  email      String      @unique
-  motDePasse String
-  role       Role        @default(TRADUCTEUR)
-  actif      Boolean     @default(true)
-  creeLe     DateTime    @default(now())
-  modifieLe  DateTime    @updatedAt
-  traducteur Traducteur?
+  id                 String              @id @default(uuid())
+  email              String              @unique
+  motDePasse         String
+  nom                String?
+  prenom             String?
+  role               Role                @default(TRADUCTEUR)
+  actif              Boolean             @default(true)
+  creeLe             DateTime            @default(now())
+  modifieLe          DateTime            @updatedAt
+  traducteur         Traducteur?
+  divisionAccess     DivisionAccess[]
 
   @@map("utilisateurs")
+}
+
+model Division {
+  id           String           @id @default(uuid())
+  nom          String           @unique
+  code         String           @unique
+  description  String?
+  actif        Boolean          @default(true)
+  creeLe       DateTime         @default(now())
+  modifieLe    DateTime         @updatedAt
+  acces        DivisionAccess[]
+
+  @@map("divisions")
+}
+
+model DivisionAccess {
+  id            String    @id @default(uuid())
+  utilisateurId String
+  divisionId    String
+  peutLire      Boolean   @default(true)
+  peutEcrire    Boolean   @default(false)
+  peutGerer     Boolean   @default(false)
+  creeLe        DateTime  @default(now())
+  modifieLe     DateTime  @updatedAt
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  division      Division    @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+
+  @@unique([utilisateurId, divisionId])
+  @@index([utilisateurId])
+  @@index([divisionId])
+  @@map("division_access")
 }
 
 model Traducteur {

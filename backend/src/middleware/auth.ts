@@ -90,3 +90,60 @@ export const verifierAccesTraducteur = (
 
   next();
 };
+
+/**
+ * Middleware pour vérifier l'accès à une division
+ * @param typeAcces - Type d'accès requis ('lire', 'ecrire', 'gerer')
+ */
+export const verifierAccesDivision = (
+  typeAcces: 'lire' | 'ecrire' | 'gerer' = 'lire'
+) => {
+  return async (
+    req: AuthRequest,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      if (!req.utilisateur) {
+        res.status(401).json({ erreur: 'Non authentifié' });
+        return;
+      }
+
+      const { role, id: utilisateurId } = req.utilisateur;
+
+      // Les admins ont accès à tout
+      if (role === 'ADMIN') {
+        next();
+        return;
+      }
+
+      // Récupérer l'ID de la division depuis les params ou le body
+      const divisionId = req.params.divisionId || req.body.divisionId;
+
+      if (!divisionId) {
+        res.status(400).json({ erreur: 'ID de division requis' });
+        return;
+      }
+
+      // Vérifier l'accès dans la base de données
+      const { UtilisateurService } = await import('../services/utilisateurService');
+      const aAcces = await UtilisateurService.verifierAccesDivision(
+        utilisateurId,
+        divisionId,
+        typeAcces
+      );
+
+      if (!aAcces) {
+        res.status(403).json({ 
+          erreur: `Accès refusé : vous n'avez pas les permissions nécessaires pour ${typeAcces} cette division` 
+        });
+        return;
+      }
+
+      next();
+    } catch (error) {
+      console.error('Erreur verifierAccesDivision:', error);
+      res.status(500).json({ erreur: 'Erreur lors de la vérification des accès' });
+    }
+  };
+};

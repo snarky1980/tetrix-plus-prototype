@@ -15,6 +15,8 @@ import planificationRoutes from './routes/planificationRoutes';
 import repartitionRoutes from './routes/repartitionRoutes';
 import importRoutes from './routes/importRoutes';
 import optimisationRoutes from './routes/optimisationRoutes';
+import utilisateurRoutes from './routes/utilisateurRoutes';
+import divisionRoutes from './routes/divisionRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -116,6 +118,8 @@ app.use('/api', planificationRoutes); // Routes planification (plusieurs endpoin
 app.use('/api/repartition', repartitionRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/optimisation', optimisationRoutes);
+app.use('/api/utilisateurs', utilisateurRoutes);
+app.use('/api/divisions', divisionRoutes);
 
 // Route 404
 app.use((req, res) => {
@@ -133,14 +137,16 @@ app.use(gestionnaireErreurs);
 // ============================================
 
 const PORT = config.port;
+const HOST = '0.0.0.0'; // Bind to all interfaces for dev container
 
-app.listen(PORT, () => {
+app.listen(PORT, HOST, () => {
   console.log(`
 ╔════════════════════════════════════════════╗
 ║       🚀 Tetrix PLUS Backend API          ║
 ╚════════════════════════════════════════════╝
 
 ✓ Serveur démarré sur le port ${PORT}
+✓ Host: ${HOST}
 ✓ Environnement: ${config.nodeEnv}
 ✓ Frontend URL: ${config.frontendUrl}
 
