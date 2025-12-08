@@ -67,8 +67,10 @@ const PlanificationGlobale: React.FC = () => {
   // Recherche de disponibilité
   const [showSearchDialog, setShowSearchDialog] = useState(false);
   const [searchCriteria, setSearchCriteria] = useState({
-    date: today,
+    dateDebut: today,
+    dateFin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // +14 jours par défaut
     heuresRequises: '',
+    client: '',
     langueSource: '',
     langueCible: '',
   });
@@ -260,21 +262,20 @@ const PlanificationGlobale: React.FC = () => {
     const results: string[] = [];
 
     planificationEnrichie.planification.forEach((ligne) => {
-      const info = ligne.dates[searchCriteria.date];
-      if (!info) return;
-
-      const disponible = info.capacite - info.heures;
-      
-      // Vérifier si le traducteur a la disponibilité requise
-      if (disponible >= heuresRequises) {
-        // Vérifier les langues si spécifiées
-        if (searchCriteria.langueSource || searchCriteria.langueCible) {
-          // On devrait vérifier les paires linguistiques du traducteur
-          // Pour l'instant, on inclut le traducteur
-          results.push(ligne.traducteur.id);
-        } else {
-          results.push(ligne.traducteur.id);
+      // Calculer la disponibilité totale sur la plage de dates
+      let disponibleTotal = 0;
+      Object.entries(ligne.dates).forEach(([dateStr, info]) => {
+        if (dateStr >= searchCriteria.dateDebut && dateStr <= searchCriteria.dateFin) {
+          // Exclure les weekends
+          if (!info.estWeekend) {
+            disponibleTotal += info.capacite - info.heures;
+          }
         }
+      });
+      
+      // Vérifier si le traducteur a la disponibilité requise sur la période
+      if (disponibleTotal >= heuresRequises) {
+        results.push(ligne.traducteur.id);
       }
     });
 
@@ -283,8 +284,10 @@ const PlanificationGlobale: React.FC = () => {
 
   const resetSearch = () => {
     setSearchCriteria({
-      date: today,
+      dateDebut: today,
+      dateFin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       heuresRequises: '',
+      client: '',
       langueSource: '',
       langueCible: '',
     });
@@ -563,26 +566,51 @@ const PlanificationGlobale: React.FC = () => {
 
               {showSearchDialog && (
                 <div className="p-2 bg-green-50 border border-green-200 rounded space-y-2">
-                  <div>
-                    <label className="text-[10px] font-medium block mb-1">Date</label>
-                    <input
-                      type="date"
-                      value={searchCriteria.date}
-                      onChange={(e) => setSearchCriteria({ ...searchCriteria, date: e.target.value })}
-                      className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-medium block mb-1">Du</label>
+                      <input
+                        type="date"
+                        value={searchCriteria.dateDebut}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchCriteria({ ...searchCriteria, dateDebut: e.target.value })}
+                        className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-medium block mb-1">Au</label>
+                      <input
+                        type="date"
+                        value={searchCriteria.dateFin}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchCriteria({ ...searchCriteria, dateFin: e.target.value })}
+                        min={searchCriteria.dateDebut}
+                        className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                      />
+                    </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-medium block mb-1">Heures *</label>
+                    <label className="text-[10px] font-medium block mb-1">Heures requises *</label>
                     <input
                       type="number"
                       step="0.5"
                       min="0"
                       value={searchCriteria.heuresRequises}
-                      onChange={(e) => setSearchCriteria({ ...searchCriteria, heuresRequises: e.target.value })}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchCriteria({ ...searchCriteria, heuresRequises: e.target.value })}
                       placeholder="Ex: 4"
                       className="w-full px-2 py-1 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
                     />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-medium block mb-1">Client</label>
+                    <Select
+                      value={searchCriteria.client}
+                      onChange={(e) => setSearchCriteria({ ...searchCriteria, client: e.target.value })}
+                      className="text-xs py-1 px-2 w-full"
+                    >
+                      <option value="">Tous</option>
+                      {options.clients.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </Select>
                   </div>
                   <div>
                     <label className="text-[10px] font-medium block mb-1">Langue source</label>
