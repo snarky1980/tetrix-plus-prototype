@@ -135,6 +135,9 @@ const PlanificationGlobale: React.FC = () => {
     description: '',
     heuresTotal: 0,
     dateEcheance: '',
+    typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
+    dateDebut: '',
+    dateFin: '',
     repartitionAuto: true,
     repartitionManuelle: [] as { date: string; heures: number }[],
   });
@@ -573,11 +576,15 @@ const PlanificationGlobale: React.FC = () => {
         });
         tache.repartition = repartition;
       } else if (formTache.typeRepartition === 'PEPS') {
-        // Calculer la répartition PEPS
+        // Calculer la répartition PEPS avec la capacité du traducteur
+        const traducteur = traducteurs.find(t => t.id === formTache.traducteurId);
+        const capaciteParJour = traducteur?.capaciteHeuresParJour || 7.5;
+        
         const repartition = await repartitionService.calculerRepartitionPEPS({
           heuresTotal: parseFloat(formTache.heuresTotal as string),
           dateDebut: formTache.dateDebut,
           dateEcheance: formTache.dateEcheance,
+          capaciteParJour,
         });
         tache.repartition = repartition;
       } else {
@@ -671,6 +678,9 @@ const PlanificationGlobale: React.FC = () => {
       description: '',
       heuresTotal: 0,
       dateEcheance: '',
+      typeRepartition: 'JUSTE_TEMPS',
+      dateDebut: '',
+      dateFin: '',
       repartitionAuto: true,
       repartitionManuelle: [],
     });
@@ -712,6 +722,9 @@ const PlanificationGlobale: React.FC = () => {
         description: tache.description || '',
         heuresTotal: tache.heuresTotal || 0,
         dateEcheance: tache.dateEcheance?.split('T')[0] || '',
+        typeRepartition: 'MANUEL',
+        dateDebut: today,
+        dateFin: tache.dateEcheance?.split('T')[0] || '',
         repartitionAuto: false,
         repartitionManuelle: tache.repartitions?.map((r: any) => ({
           date: r.date.split('T')[0],
@@ -759,10 +772,6 @@ const PlanificationGlobale: React.FC = () => {
       setErreurEdition('Veuillez sélectionner une paire linguistique');
       return false;
     }
-    if (!formEdition.description.trim()) {
-      setErreurEdition('Veuillez saisir une description');
-      return false;
-    }
     if (formEdition.heuresTotal <= 0) {
       setErreurEdition('Les heures doivent être supérieures à 0');
       return false;
@@ -805,8 +814,29 @@ const PlanificationGlobale: React.FC = () => {
       if (formEdition.sousDomaineId) tache.sousDomaineId = formEdition.sousDomaineId;
       if (formEdition.specialisation.trim()) tache.specialisation = formEdition.specialisation;
 
-      if (formEdition.repartitionAuto) {
+      // Gérer la répartition selon le mode choisi
+      if (formEdition.typeRepartition === 'JUSTE_TEMPS') {
         tache.repartitionAuto = true;
+      } else if (formEdition.typeRepartition === 'EQUILIBRE') {
+        // Calculer la répartition équilibrée
+        const repartition = await repartitionService.calculerRepartitionEquilibree({
+          heuresTotal: formEdition.heuresTotal,
+          dateDebut: formEdition.dateDebut,
+          dateFin: formEdition.dateFin,
+        });
+        tache.repartition = repartition;
+      } else if (formEdition.typeRepartition === 'PEPS') {
+        // Calculer la répartition PEPS avec la capacité du traducteur
+        const traducteur = traducteurs.find(t => t.id === formEdition.traducteurId);
+        const capaciteParJour = traducteur?.capaciteHeuresParJour || 7.5;
+        
+        const repartition = await repartitionService.calculerRepartitionPEPS({
+          heuresTotal: formEdition.heuresTotal,
+          dateDebut: formEdition.dateDebut,
+          dateEcheance: formEdition.dateEcheance,
+          capaciteParJour,
+        });
+        tache.repartition = repartition;
       } else {
         tache.repartitionManuelle = formEdition.repartitionManuelle;
       }
@@ -1801,14 +1831,13 @@ const PlanificationGlobale: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1">Description *</label>
+                <label className="block text-sm font-medium mb-1">Description (optionnel)</label>
                 <textarea
                   value={formEdition.description}
                   onChange={(e) => setFormEdition({ ...formEdition, description: e.target.value })}
                   placeholder="Décrivez la tâche..."
                   rows={3}
                   className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                  required
                 />
               </div>
 
@@ -1838,18 +1867,101 @@ const PlanificationGlobale: React.FC = () => {
               </div>
 
               <div>
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={formEdition.repartitionAuto}
-                    onChange={(e) => setFormEdition({ ...formEdition, repartitionAuto: e.target.checked })}
-                  />
-                  Utiliser l'algorithme JAT (Juste-à-temps)
-                </label>
-                <p className="text-xs text-muted mt-1">
-                  L'algorithme répartira automatiquement les heures de manière optimale
-                </p>
+                <label className="block text-sm font-medium mb-2">Mode de répartition *</label>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="JUSTE_TEMPS"
+                      checked={formEdition.typeRepartition === 'JUSTE_TEMPS'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: true })}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-medium">Juste-à-temps (JAT)</div>
+                      <div className="text-xs text-muted">Remplit à rebours depuis l'échéance jusqu'à aujourd'hui</div>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="PEPS"
+                      checked={formEdition.typeRepartition === 'PEPS'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: false })}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-medium">PEPS (Premier Entré, Premier Sorti)</div>
+                      <div className="text-xs text-muted">Remplit à pleine capacité jour après jour depuis la date de début</div>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="EQUILIBRE"
+                      checked={formEdition.typeRepartition === 'EQUILIBRE'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: false })}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-medium">Équilibré</div>
+                      <div className="text-xs text-muted">Distribue uniformément les heures sur toute la période</div>
+                    </div>
+                  </label>
+                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="MANUEL"
+                      checked={formEdition.typeRepartition === 'MANUEL'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: false })}
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-medium">Manuel</div>
+                      <div className="text-xs text-muted">Définir manuellement les heures par jour</div>
+                    </div>
+                  </label>
+                </div>
               </div>
+
+              {formEdition.typeRepartition === 'PEPS' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Date de début</label>
+                  <Input
+                    type="date"
+                    value={formEdition.dateDebut}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateDebut: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
+
+              {formEdition.typeRepartition === 'EQUILIBRE' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date de début</label>
+                    <Input
+                      type="date"
+                      value={formEdition.dateDebut}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateDebut: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date de fin</label>
+                    <Input
+                      type="date"
+                      value={formEdition.dateFin}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateFin: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className="flex gap-2 justify-end pt-4 border-t">
                 <Button

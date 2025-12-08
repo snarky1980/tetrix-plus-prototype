@@ -107,11 +107,11 @@ export const repartitionService = {
     });
   },
 
-  // Calculer la répartition PEPS (Première Entrée Première Sortie) - commence à dateDebut
-  calculerRepartitionPEPS(params: { heuresTotal: number; dateDebut: string; dateEcheance: string }): Promise<RepartitionItem[]> {
+  // Calculer la répartition PEPS (Première Entrée Première Sortie) - remplit à pleine capacité depuis dateDebut
+  calculerRepartitionPEPS(params: { heuresTotal: number; dateDebut: string; dateEcheance: string; capaciteParJour?: number }): Promise<RepartitionItem[]> {
     return new Promise((resolve, reject) => {
       try {
-        const { heuresTotal, dateDebut, dateEcheance } = params;
+        const { heuresTotal, dateDebut, dateEcheance, capaciteParJour = 7.5 } = params;
         const debut = new Date(dateDebut);
         const fin = new Date(dateEcheance);
         
@@ -136,21 +136,23 @@ export const repartitionService = {
           return;
         }
         
-        // Répartir uniformément sur les jours ouvrables (PEPS = distribution uniforme depuis le début)
-        const heuresParJour = heuresTotal / joursOuvrables.length;
+        // PEPS = Remplir à PLEINE CAPACITÉ jour après jour depuis le début
         const items: RepartitionItem[] = [];
-        let cumul = 0;
+        let restant = heuresTotal;
         
         for (const date of joursOuvrables) {
-          const h = parseFloat(heuresParJour.toFixed(4));
-          cumul += h;
-          items.push({ date, heures: h });
+          if (restant <= 0) break;
+          
+          // Allouer le minimum entre capacité et heures restantes
+          const alloue = Math.min(capaciteParJour, restant);
+          items.push({ date, heures: parseFloat(alloue.toFixed(4)) });
+          restant -= alloue;
         }
         
-        // Ajuster la dernière valeur pour compenser les erreurs d'arrondi
-        const diff = parseFloat((heuresTotal - cumul).toFixed(4));
-        if (Math.abs(diff) >= 0.0001) {
-          items[items.length - 1].heures = parseFloat((items[items.length - 1].heures + diff).toFixed(4));
+        // Vérifier si toutes les heures ont été allouées
+        if (restant > 0.0001) {
+          reject(new Error(`Capacité insuffisante : ${restant.toFixed(2)}h restantes après allocation sur tous les jours ouvrables`));
+          return;
         }
         
         resolve(items);
