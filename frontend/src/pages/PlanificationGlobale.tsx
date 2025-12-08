@@ -844,6 +844,7 @@ const PlanificationGlobale: React.FC = () => {
     let totalTraducteurs = planificationEnrichie.planification.length;
     let heuresCapaciteTotale = 0;
     let heuresUtilisees = 0;
+    let heuresDisponiblesTotales = 0; // Somme des heures affichées dans les cellules
     let traducteursDisponibles = 0;
     let traducteursSurcharges = 0;
     let traducteursOccupes = 0;
@@ -867,8 +868,11 @@ const PlanificationGlobale: React.FC = () => {
           joursOuvrables++;
           const heures = info ? info.heures : 0;
           const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
+          const disponible = capacite - heures; // Ce qui est affiché dans la cellule
+          
           heuresTraducteur += heures;
           capaciteTraducteur += capacite;
+          heuresDisponiblesTotales += disponible;
         }
       });
 
@@ -893,7 +897,7 @@ const PlanificationGlobale: React.FC = () => {
     });
 
     const tauxOccupationMoyen = heuresCapaciteTotale > 0 ? (heuresUtilisees / heuresCapaciteTotale) * 100 : 0;
-    const heuresDisponibles = heuresCapaciteTotale - heuresUtilisees;
+    const heuresDisponibles = heuresDisponiblesTotales; // Utiliser la vraie somme des cellules
 
     return {
       totalTraducteurs,
@@ -2113,25 +2117,25 @@ const PlanificationGlobale: React.FC = () => {
                 <h3 className="font-semibold text-sm mb-3">⏰ Capacité (période affichée)</h3>
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-muted">Capacité totale</span>
+                    <span className="text-muted">Capacité maximale</span>
                     <span className="font-semibold">{stats.heuresCapaciteTotale.toFixed(1)}h</span>
                   </div>
                   <p className="text-xs text-muted italic">
-                    Somme des capacités de tous les traducteurs affichés sur les jours ouvrables visibles
+                    Somme des capacités maximales de tous les traducteurs sur la période visible
                   </p>
                   <div className="flex justify-between">
-                    <span className="text-muted">Heures assignées</span>
-                    <span className="font-semibold">{stats.heuresUtilisees.toFixed(1)}h</span>
+                    <span className="text-muted">Heures assignées (tâches)</span>
+                    <span className="font-semibold text-orange-600">{stats.heuresUtilisees.toFixed(1)}h</span>
                   </div>
                   <p className="text-xs text-muted italic">
-                    Somme des heures de tâches assignées sur la période visible
+                    Heures de tâches déjà attribuées
                   </p>
                   <div className="flex justify-between border-t pt-2">
-                    <span className="text-green-700 font-medium">Heures disponibles</span>
+                    <span className="text-green-700 font-medium">Heures disponibles (libres)</span>
                     <span className="font-bold text-green-700">{stats.heuresDisponibles.toFixed(1)}h</span>
                   </div>
                   <p className="text-xs text-muted italic">
-                    Capacité restante pour de nouvelles tâches
+                    Somme des heures affichées dans les cellules vertes/jaunes du calendrier
                   </p>
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
                     <div 
