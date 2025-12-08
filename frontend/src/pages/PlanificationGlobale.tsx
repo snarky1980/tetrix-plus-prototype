@@ -1492,7 +1492,7 @@ const PlanificationGlobale: React.FC = () => {
       <Button
         variant="outline"
         onClick={chargerAnalyseOptimisation}
-        className="fixed bottom-4 right-64 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
+        className="fixed bottom-16 right-32 z-50 px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-shadow bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
         title="Optimiser la charge de travail"
       >
         🎯 Tetrix Master
