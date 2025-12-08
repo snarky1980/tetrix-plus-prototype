@@ -46,6 +46,7 @@ const PlanificationGlobale: React.FC = () => {
     domaines: [] as string[],
     languesSource: [] as string[],
     languesCible: [] as string[],
+    traducteurs: [] as { id: string; nom: string }[],
   });
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [optionsError, setOptionsError] = useState<string | null>(null);
@@ -84,6 +85,7 @@ const PlanificationGlobale: React.FC = () => {
     description: '',
     heuresRequises: '',
     typeTache: '',
+    traducteurId: '',
     notes: '',
     dateDebut: today,
     dateFin: today,
@@ -303,6 +305,7 @@ const PlanificationGlobale: React.FC = () => {
       description: '',
       heuresRequises: '',
       typeTache: '',
+      traducteurId: '',
       notes: '',
       dateDebut: today,
       dateFin: today,
@@ -336,8 +339,9 @@ const PlanificationGlobale: React.FC = () => {
         const languesSource = Array.from(new Set(traducteurs.flatMap(t => t.pairesLinguistiques?.map(p => p.langueSource) || []))).sort();
         const languesCible = Array.from(new Set(traducteurs.flatMap(t => t.pairesLinguistiques?.map(p => p.langueCible) || []))).sort();
         const clientNoms = clients.map(c => c.nom).sort();
+        const traducteursListe = traducteurs.map(t => ({ id: t.id, nom: t.nom })).sort((a, b) => a.nom.localeCompare(b.nom));
 
-        setOptions({ divisions, domaines, languesSource, languesCible, clients: clientNoms });
+        setOptions({ divisions, domaines, languesSource, languesCible, clients: clientNoms, traducteurs: traducteursListe });
       } catch (e: any) {
         setOptionsError(e?.message || 'Erreur chargement listes');
       } finally {
@@ -738,6 +742,20 @@ const PlanificationGlobale: React.FC = () => {
               <option value="">Sélectionner...</option>
               {typesTaskes.map((type) => (
                 <option key={type} value={type}>{type}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Traducteur *</label>
+            <Select
+              value={newTask.traducteurId}
+              onChange={(e) => setNewTask({ ...newTask, traducteurId: e.target.value })}
+              required
+            >
+              <option value="">Sélectionner un traducteur...</option>
+              {options.traducteurs.map((t) => (
+                <option key={t.id} value={t.id}>{t.nom}</option>
               ))}
             </Select>
           </div>
