@@ -23,10 +23,14 @@ jobs:
           cache: 'npm'
       - name: Install dependencies
         run: npm ci
+      - name: Install frontend dependencies
+        working-directory: ./frontend
+        run: npm ci
       - name: Build frontend
+        working-directory: ./frontend
         env:
           VITE_API_URL: https://tetrix-plus-backend.onrender.com/api
-        run: npm run build --workspace=frontend
+        run: npm run build
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
