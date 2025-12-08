@@ -163,7 +163,13 @@ const PlanificationGlobale: React.FC = () => {
   // État pour la modal des tâches du conseiller
   const [showMesTachesModal, setShowMesTachesModal] = useState(false);
   const [mesTaches, setMesTaches] = useState<any[]>([]);
+  const [mesTachesFiltered, setMesTachesFiltered] = useState<any[]>([]);
   const [loadingMesTaches, setLoadingMesTaches] = useState(false);
+  const [filtresMesTaches, setFiltresMesTaches] = useState({
+    statut: '',
+    traducteur: '',
+    recherche: '',
+  });
 
   // État pour Tetrix Master (optimisation)
   const [showTetrixMaster, setShowTetrixMaster] = useState(false);
@@ -725,7 +731,7 @@ const PlanificationGlobale: React.FC = () => {
     try {
       const API_URL = import.meta.env.VITE_API_URL || '/api';
       const response = await fetch(
-        `${API_URL}/taches`,
+        `${API_URL}/taches?limit=100&sort=createdAt:desc`,
         {
           headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
         }
@@ -735,12 +741,40 @@ const PlanificationGlobale: React.FC = () => {
       
       const taches = await response.json();
       setMesTaches(taches);
+      setMesTachesFiltered(taches);
+      setFiltresMesTaches({ statut: '', traducteur: '', recherche: '' });
     } catch (err: any) {
       console.error('Erreur de chargement des tâches:', err);
       setMesTaches([]);
+      setMesTachesFiltered([]);
     } finally {
       setLoadingMesTaches(false);
     }
+  };
+
+  const appliquerFiltresMesTaches = () => {
+    let filtered = [...mesTaches];
+
+    if (filtresMesTaches.statut) {
+      filtered = filtered.filter(t => t.statut === filtresMesTaches.statut);
+    }
+
+    if (filtresMesTaches.traducteur) {
+      filtered = filtered.filter(t => 
+        t.traducteur?.nom.toLowerCase().includes(filtresMesTaches.traducteur.toLowerCase())
+      );
+    }
+
+    if (filtresMesTaches.recherche) {
+      const recherche = filtresMesTaches.recherche.toLowerCase();
+      filtered = filtered.filter(t => 
+        t.numeroProjet.toLowerCase().includes(recherche) ||
+        t.description?.toLowerCase().includes(recherche) ||
+        t.client?.nom.toLowerCase().includes(recherche)
+      );
+    }
+
+    setMesTachesFiltered(filtered);
   };
 
   const chargerAnalyseOptimisation = async () => {
@@ -2970,7 +3004,7 @@ const PlanificationGlobale: React.FC = () => {
 
       {/* Modal Mes tâches créées */}
       <Modal
-        titre="📋 Toutes mes tâches créées"
+        titre="📋 Mes tâches créées (100 dernières)"
         ouvert={showMesTachesModal}
         onFermer={() => setShowMesTachesModal(false)}
         ariaDescription="Liste de toutes les tâches que vous avez créées"
@@ -2982,14 +3016,81 @@ const PlanificationGlobale: React.FC = () => {
             <p className="text-sm text-muted text-center py-8">Aucune tâche créée</p>
           ) : (
             <>
-              <div className="flex items-center justify-between text-sm mb-3">
-                <span className="font-medium">Total: {mesTaches.length} tâche(s)</span>
+              {/* Filtres */}
+              <div className="bg-gray-50 border border-gray-200 rounded p-3 space-y-3">
+                <h4 className="text-sm font-semibold">🔍 Filtres</h4>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <label className="text-xs text-muted block mb-1">Statut</label>
+                    <Select
+                      value={filtresMesTaches.statut}
+                      onChange={(e) => {
+                        setFiltresMesTaches({ ...filtresMesTaches, statut: e.target.value });
+                      }}
+                      className="text-xs"
+                    >
+                      <option value="">Tous</option>
+                      <option value="PLANIFIEE">Planifiée</option>
+                      <option value="EN_COURS">En cours</option>
+                      <option value="TERMINEE">Terminée</option>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1">Traducteur</label>
+                    <Input
+                      type="text"
+                      value={filtresMesTaches.traducteur}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setFiltresMesTaches({ ...filtresMesTaches, traducteur: e.target.value });
+                      }}
+                      placeholder="Nom..."
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted block mb-1">Recherche</label>
+                    <Input
+                      type="text"
+                      value={filtresMesTaches.recherche}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setFiltresMesTaches({ ...filtresMesTaches, recherche: e.target.value });
+                      }}
+                      placeholder="Projet, client..."
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    variant="primaire"
+                    onClick={appliquerFiltresMesTaches}
+                    className="text-xs px-3 py-1"
+                  >
+                    Appliquer
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setFiltresMesTaches({ statut: '', traducteur: '', recherche: '' });
+                      setMesTachesFiltered(mesTaches);
+                    }}
+                    className="text-xs px-3 py-1"
+                  >
+                    Réinitialiser
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between text-sm">
+                <span className="font-medium">
+                  {mesTachesFiltered.length} tâche(s) affichée(s) sur {mesTaches.length}
+                </span>
                 <span className="text-muted">
-                  {mesTaches.reduce((sum, t) => sum + t.heuresTotal, 0).toFixed(0)}h au total
+                  {mesTachesFiltered.reduce((sum, t) => sum + t.heuresTotal, 0).toFixed(0)}h au total
                 </span>
               </div>
-              <div className="max-h-[500px] overflow-y-auto space-y-2">
-                {mesTaches.map((tache: any) => (
+              <div className="max-h-[400px] overflow-y-auto space-y-2">
+                {mesTachesFiltered.map((tache: any) => (
                   <div
                     key={tache.id}
                     className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow cursor-pointer"

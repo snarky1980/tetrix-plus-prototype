@@ -13,7 +13,7 @@ export const obtenirTaches = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { traducteurId, statut, dateDebut, dateFin, date } = req.query;
+    const { traducteurId, statut, dateDebut, dateFin, date, limit, sort } = req.query;
 
     const where: any = {};
 
@@ -48,6 +48,16 @@ export const obtenirTaches = async (
       if (dateFin) where.dateEcheance.lte = new Date(dateFin as string);
     }
 
+    // Gestion du tri
+    let orderBy: any = { dateEcheance: 'asc' };
+    if (sort) {
+      const [field, direction] = (sort as string).split(':');
+      orderBy = { [field]: direction || 'asc' };
+    }
+
+    // Gestion de la limite
+    const limitNumber = limit ? parseInt(limit as string) : undefined;
+
     const taches = await prisma.tache.findMany({
       where,
       include: {
@@ -65,7 +75,8 @@ export const obtenirTaches = async (
           orderBy: { date: 'asc' },
         },
       },
-      orderBy: { dateEcheance: 'asc' },
+      orderBy,
+      take: limitNumber,
     });
 
     res.json(taches);
