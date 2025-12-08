@@ -49,6 +49,20 @@ const PlanningGlobal: React.FC = () => {
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [optionsError, setOptionsError] = useState<string | null>(null);
 
+  // Gestion des vues sauvegardées
+  type SavedView = {
+    id: string;
+    nom: string;
+    filtres: Filters;
+  };
+
+  const [savedViews, setSavedViews] = useState<SavedView[]>(() => {
+    const stored = localStorage.getItem('planning-saved-views');
+    return stored ? JSON.parse(stored) : [];
+  });
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [newViewName, setNewViewName] = useState('');
+
   const endDate = useMemo(() => {
     const base = new Date(applied.start || today);
     const end = new Date(base);
@@ -134,6 +148,34 @@ const PlanningGlobal: React.FC = () => {
 
   const updateField = (key: keyof Filters, value: Filters[keyof Filters]) => {
     setPending((prev) => ({ ...prev, [key]: value } as Filters));
+  };
+
+  // Fonctions pour gérer les vues sauvegardées
+  const saveCurrentView = () => {
+    if (!newViewName.trim()) return;
+    
+    const newView: SavedView = {
+      id: Date.now().toString(),
+      nom: newViewName.trim(),
+      filtres: { ...applied },
+    };
+    
+    const updated = [...savedViews, newView];
+    setSavedViews(updated);
+    localStorage.setItem('planning-saved-views', JSON.stringify(updated));
+    setNewViewName('');
+    setShowSaveDialog(false);
+  };
+
+  const loadView = (view: SavedView) => {
+    setPending(view.filtres);
+    setApplied(view.filtres);
+  };
+
+  const deleteView = (id: string) => {
+    const updated = savedViews.filter(v => v.id !== id);
+    setSavedViews(updated);
+    localStorage.setItem('planning-saved-views', JSON.stringify(updated));
   };
 
   useEffect(() => {
@@ -289,6 +331,78 @@ const PlanningGlobal: React.FC = () => {
               </div>
             </div>
           </details>
+        </div>
+
+        {/* Vues sauvegardées */}
+        <div className="bg-white border border-border rounded-lg shadow-sm p-3">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="text-sm font-semibold">📌 Vues sauvegardées</h3>
+            <Button
+              variant="outline"
+              onClick={() => setShowSaveDialog(!showSaveDialog)}
+              className="px-3 py-1.5 text-xs"
+            >
+              {showSaveDialog ? 'Annuler' : '💾 Sauvegarder la vue actuelle'}
+            </Button>
+          </div>
+
+          {showSaveDialog && (
+            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded flex gap-2 items-center">
+              <input
+                type="text"
+                value={newViewName}
+                onChange={(e) => setNewViewName(e.target.value)}
+                placeholder="Nom de la vue (ex: Droit - Semaine complète)"
+                className="flex-1 px-3 py-2 text-sm border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                onKeyPress={(e) => e.key === 'Enter' && saveCurrentView()}
+              />
+              <Button
+                variant="primaire"
+                onClick={saveCurrentView}
+                disabled={!newViewName.trim()}
+                className="px-4 py-2 text-sm"
+              >
+                Enregistrer
+              </Button>
+            </div>
+          )}
+
+          {savedViews.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              {savedViews.map((view) => (
+                <div
+                  key={view.id}
+                  className="border border-border rounded p-2 hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <button
+                      onClick={() => loadView(view)}
+                      className="flex-1 text-left text-sm font-medium hover:text-primary transition-colors"
+                      title="Charger cette vue"
+                    >
+                      {view.nom}
+                    </button>
+                    <button
+                      onClick={() => deleteView(view.id)}
+                      className="text-red-600 hover:text-red-800 text-xs px-1"
+                      title="Supprimer cette vue"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                  <div className="text-[10px] text-muted mt-1">
+                    {view.filtres.divisions.length > 0 && `${view.filtres.divisions.length} division(s)`}
+                    {view.filtres.client && ` · ${view.filtres.client}`}
+                    {` · ${view.filtres.range}j`}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted text-center py-4">
+              Aucune vue sauvegardée. Configurez vos filtres et cliquez sur "Sauvegarder la vue actuelle" pour créer une vue.
+            </p>
+          )}
         </div>
 
       {/* Bouton flottant Ajouter une tâche */}
