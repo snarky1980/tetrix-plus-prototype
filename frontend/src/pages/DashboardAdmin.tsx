@@ -79,7 +79,7 @@ const DashboardAdmin: React.FC = () => {
             </div>
 
             {/* Management Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Card>
                 <CardHeader><CardTitle>Gestion des traducteurs</CardTitle></CardHeader>
                 <CardContent>
@@ -121,6 +121,21 @@ const DashboardAdmin: React.FC = () => {
                     full
                   >
                     Gérer les utilisateurs
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle>Profils & Accès</CardTitle></CardHeader>
+                <CardContent>
+                  <p className="text-muted mb-4">Gestion des profils conseillers/gestionnaires et accès aux divisions.</p>
+                  <Button 
+                    variant="primaire" 
+                    aria-label="Gérer profils et accès"
+                    onClick={() => window.location.href = '/tetrix-plus-prototype/admin/gestion-profils'}
+                    full
+                  >
+                    Gérer profils & accès
                   </Button>
                 </CardContent>
               </Card>

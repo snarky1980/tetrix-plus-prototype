@@ -55,7 +55,7 @@ export const UserManagement: React.FC = () => {
   const handleDesactiverUtilisateur = async (id: string) => {
     if (!confirm('Êtes-vous sûr de vouloir désactiver cet utilisateur ?')) return;
     try {
-      await utilisateurService.desactiverUtilisateur(id);
+      await utilisateurService.mettreAJourUtilisateur(id, { actif: false });
       await chargerDonnees();
       addToast('Utilisateur désactivé avec succès', 'success');
     } catch (err) {
@@ -223,8 +223,8 @@ const UserForm: React.FC<{
     try {
       if (utilisateur) {
         await utilisateurService.mettreAJourUtilisateur(utilisateur.id, {
+          email: formData.email,
           role: formData.role,
-          traducteurId: formData.traducteurId || undefined,
         });
       } else {
         if (!formData.motDePasse) {
@@ -236,7 +236,6 @@ const UserForm: React.FC<{
           email: formData.email,
           motDePasse: formData.motDePasse,
           role: formData.role,
-          traducteurId: formData.traducteurId || undefined,
         });
       }
       onSauvegarder();

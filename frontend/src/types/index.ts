@@ -2,8 +2,39 @@
 export interface Utilisateur {
   id: string;
   email: string;
+  nom?: string;
+  prenom?: string;
   role: 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR';
+  actif: boolean;
   traducteurId?: string;
+  divisionAccess?: DivisionAccess[];
+  traducteur?: {
+    id: string;
+    nom: string;
+    division: string;
+  };
+}
+
+export interface Division {
+  id: string;
+  nom: string;
+  code: string;
+  description?: string;
+  actif: boolean;
+  creeLe: string;
+  modifieLe: string;
+  acces?: DivisionAccess[];
+}
+
+export interface DivisionAccess {
+  id: string;
+  utilisateurId: string;
+  divisionId: string;
+  peutLire: boolean;
+  peutEcrire: boolean;
+  peutGerer: boolean;
+  division?: Division;
+  utilisateur?: Utilisateur;
 }
 
 export interface LoginResponse {

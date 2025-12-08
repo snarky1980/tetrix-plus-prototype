@@ -11,6 +11,7 @@ import DashboardConseiller from './pages/DashboardConseiller';
 import PlanificationGlobale from './pages/PlanificationGlobale';
 import TacheCreation from './pages/TacheCreation';
 import DashboardAdmin from './pages/DashboardAdmin';
+import { GestionProfils } from './pages/GestionProfils';
 
 /**
  * Route protégée - nécessite authentification
@@ -112,6 +113,15 @@ function App() {
             element={
               <RouteProtegee rolesAutorises={['ADMIN']}>
                 <DashboardAdmin />
+              </RouteProtegee>
+            }
+          />
+
+          <Route
+            path="/admin/gestion-profils"
+            element={
+              <RouteProtegee rolesAutorises={['ADMIN']}>
+                <GestionProfils />
               </RouteProtegee>
             }
           />
