@@ -1,51 +1,21 @@
 import prisma from '../config/database';
-import { addDays, subDays, differenceInCalendarDays } from 'date-fns';
-import { estWeekend } from './planificationService';
+import {
+  DateInput,
+  normalizeToOttawa,
+  formatOttawaISO,
+  todayOttawa,
+  addDaysOttawa,
+  subDaysOttawa,
+  differenceInDaysOttawa,
+  businessDaysOttawa,
+  isWeekendOttawa,
+  validateNotPast,
+  validateDateRange
+} from '../utils/dateTimeOttawa';
 
 export interface RepartitionItem { date: string; heures: number }
 
 const MAX_LOOKBACK_DAYS = 90; // Sécurité pour éviter boucle infinie
-const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-
-type DateInput = Date | string;
-
-function normaliserDateInput(dateInput: DateInput, label = 'date'): { date: Date; iso: string } {
-  const toDateOnly = (dateObj: Date) => {
-    if (isNaN(dateObj.getTime())) {
-      throw new Error(`${label} invalide`);
-    }
-    const normalisee = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
-    normalisee.setHours(0, 0, 0, 0);
-    return { date: normalisee, iso: normalisee.toISOString().split('T')[0] };
-  };
-
-  if (dateInput instanceof Date) {
-    return toDateOnly(new Date(dateInput));
-  }
-
-  if (typeof dateInput === 'string') {
-    const trimmed = dateInput.trim();
-    if (ISO_DATE_REGEX.test(trimmed)) {
-      const [year, month, day] = trimmed.split('-').map(Number);
-      return toDateOnly(new Date(year, month - 1, day));
-    }
-    return toDateOnly(new Date(trimmed));
-  }
-
-  throw new Error(`${label} invalide (attendu YYYY-MM-DD)`);
-}
-
-function joursOuvrablesEntre(dateDebut: Date, dateFin: Date): Date[] {
-  const jours: Date[] = [];
-  const totalJours = differenceInCalendarDays(dateFin, dateDebut) + 1;
-  for (let i = 0; i < totalJours; i++) {
-    const dateCourante = addDays(dateDebut, i);
-    if (!estWeekend(dateCourante)) {
-      jours.push(dateCourante);
-    }
-  }
-  return jours;
-}
 
 async function heuresUtiliseesParJour(
   traducteurId: string,
@@ -62,10 +32,16 @@ async function heuresUtiliseesParJour(
 
   const heuresParJour: Record<string, number> = {};
   for (const ajustement of ajustements) {
-    const iso = ajustement.date.toISOString().split('T')[0];
+    const iso = formatOttawaISO(ajustement.date);
     heuresParJour[iso] = (heuresParJour[iso] || 0) + ajustement.heures;
   }
   return heuresParJour;
+}
+
+export interface RepartitionJATOptions {
+  livraisonMatinale?: boolean;
+  heuresMaxJourJ?: number;
+  debug?: boolean;
 }
 
 // Répartition "Juste-à-temps" (JAT)
@@ -73,11 +49,23 @@ export async function repartitionJusteATemps(
   traducteurId: string,
   heuresTotal: number,
   dateEcheanceInput: DateInput,
-  debug = false
+  optionsOrDebug?: boolean | RepartitionJATOptions
 ): Promise<RepartitionItem[]> {
-  const { date: echeance, iso: dateEcheanceISO } = normaliserDateInput(dateEcheanceInput, 'dateEcheance');
+  // Compatibilité avec ancienne signature (debug: boolean)
+  const options: RepartitionJATOptions = typeof optionsOrDebug === 'boolean' 
+    ? { debug: optionsOrDebug }
+    : (optionsOrDebug || {});
+  
+  const debug = options.debug || false;
+  const livraisonMatinale = options.livraisonMatinale || false;
+  const heuresMaxJourJ = options.heuresMaxJourJ ?? 2;
 
-  if (debug) console.debug(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheanceISO}`);
+  const { date: echeance, iso: dateEcheanceISO } = normalizeToOttawa(dateEcheanceInput, 'dateEcheance');
+
+  if (debug) {
+    console.debug(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheanceISO}`);
+    if (livraisonMatinale) console.debug(`[JAT] Mode livraison matinale activé (max ${heuresMaxJourJ}h le jour J)`);
+  }
   
   if (heuresTotal <= 0) throw new Error('heuresTotal doit être > 0');
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
@@ -85,13 +73,11 @@ export async function repartitionJusteATemps(
   
   if (debug) console.debug(`[JAT] Traducteur: ${traducteur.nom}, capacité=${traducteur.capaciteHeuresParJour}h/jour`);
 
-  const aujourdHui = new Date();
-  // Normaliser à minuit pour comparaison de jours
-  aujourdHui.setHours(0,0,0,0);
+  const aujourdHui = todayOttawa();
   
-  if (debug) console.debug(`[JAT] Échéance reçue: ${dateEcheanceISO}, normalisée: ${echeance.toISOString()}`);
+  if (debug) console.debug(`[JAT] Échéance reçue: ${dateEcheanceISO}, normalisée: ${formatOttawaISO(echeance)}`);
   
-  if (echeance < aujourdHui) throw new Error('dateEcheance déjà passée');
+  validateNotPast(echeance, 'dateEcheance');
 
   const heuresParJour = await heuresUtiliseesParJour(traducteurId, aujourdHui, echeance);
   
@@ -103,19 +89,30 @@ export async function repartitionJusteATemps(
   }
 
   // Calculer capacité totale disponible sur la fenêtre (excluant les weekends)
-  const totalJours = differenceInCalendarDays(echeance, aujourdHui) + 1;
+  const totalJours = differenceInDaysOttawa(echeance, aujourdHui) + 1;
   let capaciteDisponibleGlobale = 0;
+  
+  // Si livraison matinale, limiter capacité du jour J
+  const capaciteJourJ = livraisonMatinale 
+    ? Math.min(heuresMaxJourJ, traducteur.capaciteHeuresParJour)
+    : traducteur.capaciteHeuresParJour;
+  
   for (let i = 0; i < totalJours; i++) {
-    const d = addDays(aujourdHui, i);
-    const iso = d.toISOString().split('T')[0];
+    const d = addDaysOttawa(aujourdHui, i);
+    const iso = formatOttawaISO(d);
     // Ignorer les weekends dans le calcul de capacité
-    if (estWeekend(d)) continue;
+    if (isWeekendOttawa(d)) continue;
     const utilisees = heuresParJour[iso] || 0;
-    capaciteDisponibleGlobale += Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
+    
+    // Capacité différente pour le jour d'échéance si livraison matinale
+    const estJourEcheance = formatOttawaISO(d) === dateEcheanceISO;
+    const capaciteJour = estJourEcheance && livraisonMatinale ? capaciteJourJ : traducteur.capaciteHeuresParJour;
+    
+    capaciteDisponibleGlobale += Math.max(capaciteJour - utilisees, 0);
   }
   
   if (debug) {
-    console.debug(`[JAT] Fenêtre: ${totalJours} jours (${aujourdHui.toISOString().split('T')[0]} à ${echeance.toISOString().split('T')[0]})`);
+    console.debug(`[JAT] Fenêtre: ${totalJours} jours (${formatOttawaISO(aujourdHui)} à ${formatOttawaISO(echeance)})`);
     console.debug(`[JAT] Capacité disponible totale: ${capaciteDisponibleGlobale.toFixed(2)}h`);
   }
   
@@ -130,11 +127,16 @@ export async function repartitionJusteATemps(
   let iterations = 0;
   while (restant > 0 && iterations < MAX_LOOKBACK_DAYS) {
     if (courant < aujourdHui) break;
-    const iso = courant.toISOString().split('T')[0];
+    const iso = formatOttawaISO(courant);
     // Ignorer les weekends pour l'allocation
-    if (!estWeekend(courant)) {
+    if (!isWeekendOttawa(courant)) {
       const utilisees = heuresParJour[iso] || 0;
-      const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
+      
+      // Appliquer limite pour jour d'échéance si livraison matinale
+      const estJourEcheance = iso === dateEcheanceISO;
+      const capaciteJour = estJourEcheance && livraisonMatinale ? capaciteJourJ : traducteur.capaciteHeuresParJour;
+      
+      const libre = Math.max(capaciteJour - utilisees, 0);
       if (libre > 0) {
         const alloue = Math.min(libre, restant);
         resultat.push({ date: iso, heures: alloue });
@@ -143,7 +145,7 @@ export async function repartitionJusteATemps(
         heuresParJour[iso] = utilisees + alloue;
       }
     }
-    courant = subDays(courant, 1);
+    courant = subDaysOttawa(courant, 1);
     iterations++;
   }
   if (restant > 0) throw new Error('Impossible de répartir toutes les heures (capacité insuffisante après allocation).');
@@ -171,17 +173,17 @@ export async function repartitionEquilibree(
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
 
-  const { date: dateDebut } = normaliserDateInput(dateDebutInput, 'dateDebut');
-  const { date: dateFin } = normaliserDateInput(dateFinInput, 'dateFin');
-  if (dateFin < dateDebut) throw new Error('dateFin doit être après dateDebut');
+  const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
+  const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
+  validateDateRange(dateDebut, dateFin);
 
-  const jours = joursOuvrablesEntre(dateDebut, dateFin);
+  const jours = businessDaysOttawa(dateDebut, dateFin);
   if (jours.length === 0) throw new Error('Aucun jour ouvrable dans la période');
 
   const heuresParJour = await heuresUtiliseesParJour(traducteurId, dateDebut, dateFin);
   const disponibilites = jours
     .map((jour) => {
-      const iso = jour.toISOString().split('T')[0];
+      const iso = formatOttawaISO(jour);
       const utilisees = heuresParJour[iso] || 0;
       const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
       return { iso, libre };
@@ -197,34 +199,30 @@ export async function repartitionEquilibree(
     throw new Error(`Capacité insuffisante sur la période (disponible: ${capaciteDisponible.toFixed(2)}h).`);
   }
 
-  const resultat: RepartitionItem[] = disponibilites.map((d) => ({ date: d.iso, heures: 0 }));
-  let restant = heuresTotal;
-
-  disponibilites.forEach((jour, index) => {
-    const joursRestants = disponibilites.length - index;
-    const cible = parseFloat((restant / joursRestants).toFixed(4));
-    const alloue = Math.min(jour.libre, cible);
-    resultat[index].heures = alloue;
-    jour.libre = parseFloat((jour.libre - alloue).toFixed(4));
-    restant = parseFloat((restant - alloue).toFixed(4));
-  });
-
-  // S'il reste quelques centièmes à répartir à cause des arrondis, effectuer un second passage
-  let guard = 0;
-  while (restant > 1e-4 && guard < 100) {
-    for (let i = 0; i < disponibilites.length && restant > 1e-4; i++) {
-      const libre = disponibilites[i].libre;
-      if (libre <= 0) continue;
-      const ajout = Math.min(libre, restant);
-      resultat[i].heures = parseFloat((resultat[i].heures + ajout).toFixed(4));
-      disponibilites[i].libre = parseFloat((libre - ajout).toFixed(4));
-      restant = parseFloat((restant - ajout).toFixed(4));
+  // Nouvelle méthode: distribuer en centimes pour éviter arrondis
+  // Convertir tout en centièmes (heures * 100)
+  const heuresCentimes = Math.round(heuresTotal * 100);
+  const nbJours = disponibilites.length;
+  const baseParJour = Math.floor(heuresCentimes / nbJours); // centièmes par jour
+  let reste = heuresCentimes - (baseParJour * nbJours); // centièmes restants
+  
+  const resultat: RepartitionItem[] = disponibilites.map((jour, index) => {
+    // Chaque jour reçoit sa part de base + 1 centime si reste > 0
+    let centimes = baseParJour;
+    if (reste > 0) {
+      centimes += 1;
+      reste--;
     }
-    guard++;
-  }
-
-  if (restant > 1e-3) {
-    throw new Error('Impossible de répartir toutes les heures de manière équilibrée.');
+    
+    // Convertir en heures et respecter capacité disponible
+    const heures = Math.min(centimes / 100, jour.libre);
+    return { date: jour.iso, heures: parseFloat(heures.toFixed(4)) };
+  });
+  
+  // Vérifier somme exacte (tolérance 0.01h)
+  const somme = resultat.reduce((s, r) => s + r.heures, 0);
+  if (Math.abs(somme - heuresTotal) > 0.01) {
+    throw new Error(`Erreur de répartition: somme=${somme.toFixed(4)}h, attendu=${heuresTotal.toFixed(4)}h`);
   }
 
   return resultat.sort((a, b) => a.date.localeCompare(b.date));
@@ -240,11 +238,11 @@ export async function repartitionPEPS(
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
 
-  const { date: dateDebut } = normaliserDateInput(dateDebutInput, 'dateDebut');
-  const { date: dateFin } = normaliserDateInput(dateFinInput, 'dateFin');
-  if (dateFin < dateDebut) throw new Error('dateFin doit être après dateDebut');
+  const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
+  const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
+  validateDateRange(dateDebut, dateFin);
 
-  const jours = joursOuvrablesEntre(dateDebut, dateFin);
+  const jours = businessDaysOttawa(dateDebut, dateFin);
   if (jours.length === 0) throw new Error('Aucun jour ouvrable dans la période');
 
   const heuresParJour = await heuresUtiliseesParJour(traducteurId, dateDebut, dateFin);
@@ -253,7 +251,7 @@ export async function repartitionPEPS(
 
   for (const jour of jours) {
     if (restant <= 0) break;
-    const iso = jour.toISOString().split('T')[0];
+    const iso = formatOttawaISO(jour);
     const utilisees = heuresParJour[iso] || 0;
     const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
     if (libre <= 0) continue;
@@ -275,17 +273,9 @@ export function repartitionUniforme(
   dateDebut: Date,
   dateFin: Date
 ): RepartitionItem[] {
-  const totalJours = differenceInCalendarDays(dateFin, dateDebut) + 1;
-  if (totalJours <= 0) throw new Error('Intervalle de dates invalide');
+  validateDateRange(dateDebut, dateFin);
   
-  // Compter uniquement les jours ouvrables (lun-ven)
-  const joursOuvrables: Date[] = [];
-  for (let i = 0; i < totalJours; i++) {
-    const dateCourante = addDays(dateDebut, i);
-    if (!estWeekend(dateCourante)) {
-      joursOuvrables.push(dateCourante);
-    }
-  }
+  const joursOuvrables = businessDaysOttawa(dateDebut, dateFin);
   
   if (joursOuvrables.length === 0) {
     throw new Error('Aucun jour ouvrable dans l\'intervalle (uniquement des weekends)');
@@ -295,7 +285,7 @@ export function repartitionUniforme(
   const items: RepartitionItem[] = [];
   let cumul = 0;
   for (const dateCourante of joursOuvrables) {
-    const iso = dateCourante.toISOString().split('T')[0];
+    const iso = formatOttawaISO(dateCourante);
     let h = parseFloat(base.toFixed(4));
     cumul += h;
     items.push({ date: iso, heures: h });
