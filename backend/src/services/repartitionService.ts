@@ -216,27 +216,83 @@ export async function repartitionEquilibree(
     throw new Error(`Capacité insuffisante sur la période (disponible: ${capaciteDisponible.toFixed(2)}h).`);
   }
 
-  // Nouvelle méthode: distribuer en centimes pour éviter arrondis
-  // Convertir tout en centièmes (heures * 100)
+  // Algorithme de distribution équilibrée avec gestion des capacités contraintes
+  // ÉTAPE 1: Distribution uniforme initiale en centimes
   const heuresCentimes = Math.round(heuresTotal * 100);
   const nbJours = disponibilites.length;
-  const baseParJour = Math.floor(heuresCentimes / nbJours); // centièmes par jour
-  let reste = heuresCentimes - (baseParJour * nbJours); // centièmes restants
+  const baseParJour = Math.floor(heuresCentimes / nbJours);
+  let reste = heuresCentimes - (baseParJour * nbJours);
   
-  const resultat: RepartitionItem[] = disponibilites.map((jour, index) => {
-    // Chaque jour reçoit sa part de base + 1 centime si reste > 0
+  // Créer allocation initiale
+  const allocations = disponibilites.map((jour, index) => {
     let centimes = baseParJour;
     if (reste > 0) {
       centimes += 1;
       reste--;
     }
-    
-    // Convertir en heures et respecter capacité disponible
-    const heures = Math.min(centimes / 100, jour.libre);
-    return { date: jour.iso, heures: parseFloat(heures.toFixed(4)) };
+    return {
+      iso: jour.iso,
+      capaciteLibre: jour.libre,
+      heuresAllouees: centimes / 100,
+      estContraint: false
+    };
   });
   
-  // Vérifier somme exacte (tolérance 0.01h)
+  // ÉTAPE 2: Identifier les jours contraints et redistribuer
+  let heuresARedistribu = 0;
+  const joursContraints: number[] = [];
+  const joursLibres: number[] = [];
+  
+  allocations.forEach((alloc, index) => {
+    if (alloc.heuresAllouees > alloc.capaciteLibre + 0.0001) {
+      // Jour contraint: ne peut recevoir que sa capacité libre
+      heuresARedistribu += alloc.heuresAllouees - alloc.capaciteLibre;
+      alloc.heuresAllouees = alloc.capaciteLibre;
+      alloc.estContraint = true;
+      joursContraints.push(index);
+    } else {
+      joursLibres.push(index);
+    }
+  });
+  
+  // ÉTAPE 3: Redistribuer les heures excédentaires sur les jours non contraints
+  if (heuresARedistribu > 0.0001 && joursLibres.length > 0) {
+    // Trier les jours libres par capacité restante décroissante
+    joursLibres.sort((a, b) => {
+      const capaciteResteA = allocations[a].capaciteLibre - allocations[a].heuresAllouees;
+      const capaciteResteB = allocations[b].capaciteLibre - allocations[b].heuresAllouees;
+      return capaciteResteB - capaciteResteA;
+    });
+    
+    // Redistribuer en centimes pour précision maximale
+    let centimesARedistribu = Math.round(heuresARedistribu * 100);
+    
+    for (const index of joursLibres) {
+      if (centimesARedistribu <= 0) break;
+      
+      const alloc = allocations[index];
+      const capaciteResteCentimes = Math.round((alloc.capaciteLibre - alloc.heuresAllouees) * 100);
+      
+      if (capaciteResteCentimes > 0) {
+        const aAjouter = Math.min(capaciteResteCentimes, centimesARedistribu);
+        alloc.heuresAllouees += aAjouter / 100;
+        centimesARedistribu -= aAjouter;
+      }
+    }
+    
+    // Si encore des heures non distribuées, c'est qu'on a un problème
+    if (centimesARedistribu > 1) {
+      throw new Error(`Erreur de redistribution: ${(centimesARedistribu / 100).toFixed(2)}h non distribuables malgré capacité suffisante`);
+    }
+  }
+  
+  // ÉTAPE 4: Construire le résultat final
+  const resultat: RepartitionItem[] = allocations.map(alloc => ({
+    date: alloc.iso,
+    heures: parseFloat(alloc.heuresAllouees.toFixed(4))
+  }));
+  
+  // Vérifier somme exacte (tolérance 0.01h pour arrondis)
   const somme = resultat.reduce((s, r) => s + r.heures, 0);
   if (Math.abs(somme - heuresTotal) > 0.01) {
     throw new Error(`Erreur de répartition: somme=${somme.toFixed(4)}h, attendu=${heuresTotal.toFixed(4)}h`);

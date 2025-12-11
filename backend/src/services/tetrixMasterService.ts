@@ -336,13 +336,22 @@ function analyserCapacites(
 ): AnalyseCapacite[] {
   const analyses: AnalyseCapacite[] = [];
 
+  // Vérification de sécurité
+  if (!donnees.traducteurs || !Array.isArray(donnees.traducteurs)) {
+    return analyses;
+  }
+
   donnees.traducteurs.forEach((trad) => {
     const capaciteJournaliere = trad.capaciteHeuresParJour;
     const joursDisponibles = donnees.joursOuvrables.length;
     const capaciteTotale = capaciteJournaliere * joursDisponibles;
 
+    // Vérification de sécurité pour trad.taches
+    const taches = Array.isArray(trad.taches) ? trad.taches : [];
+    const ajustementsTemps = Array.isArray(trad.ajustementsTemps) ? trad.ajustementsTemps : [];
+
     // Calculer les heures assignées
-    const heuresAssignees = trad.taches.reduce((sum: number, tache: any) => {
+    const heuresAssignees = taches.reduce((sum: number, tache: any) => {
       const heuresPeriode = tache.ajustementsTemps.reduce(
         (s: number, aj: any) => s + aj.heures,
         0
@@ -351,7 +360,7 @@ function analyserCapacites(
     }, 0);
 
     // Calculer les heures de blocages
-    const heuresBlocages = trad.ajustementsTemps.reduce(
+    const heuresBlocages = ajustementsTemps.reduce(
       (sum: number, aj: any) => sum + aj.heures,
       0
     );
@@ -369,15 +378,16 @@ function analyserCapacites(
       const jourStr = formatOttawaISO(jour);
       let heuresJour = 0;
       
-      trad.taches.forEach((tache: any) => {
-        tache.ajustementsTemps.forEach((aj: any) => {
+      taches.forEach((tache: any) => {
+        const ajustementsTempsTask = Array.isArray(tache.ajustementsTemps) ? tache.ajustementsTemps : [];
+        ajustementsTempsTask.forEach((aj: any) => {
           if (formatOttawaISO(aj.date) === jourStr) {
             heuresJour += aj.heures;
           }
         });
       });
       
-      const blocagesJour = trad.ajustementsTemps
+      const blocagesJour = ajustementsTemps
         .filter((aj: any) => formatOttawaISO(aj.date) === jourStr)
         .reduce((sum: number, aj: any) => sum + aj.heures, 0);
       
@@ -453,13 +463,19 @@ function analyserEcheances(
   const analyses: AnalyseEcheance[] = [];
   const maintenant = new Date();
 
+  // Vérification de sécurité
+  if (!donnees.taches || !Array.isArray(donnees.taches)) {
+    return analyses;
+  }
+
   donnees.taches.forEach((tache) => {
     const dateEcheance = new Date(tache.dateEcheance);
     const joursRestants = differenceInDays(dateEcheance, maintenant);
     
     if (joursRestants < 0) return; // Tâche déjà échue
 
-    const heuresRealisees = tache.ajustementsTemps.reduce(
+    const ajustementsTache = Array.isArray(tache.ajustementsTemps) ? tache.ajustementsTemps : [];
+    const heuresRealisees = ajustementsTache.reduce(
       (sum: number, aj: any) => sum + aj.heures,
       0
     );
@@ -470,9 +486,10 @@ function analyserEcheances(
     const veilleStr = formatOttawaISO(veille);
     
     let heuresVeille = 0;
-    if (tache.traducteur) {
+    if (tache.traducteur && Array.isArray(tache.traducteur.taches)) {
       tache.traducteur.taches.forEach((t: any) => {
-        t.ajustementsTemps.forEach((aj: any) => {
+        const ajustementsTacheVeille = Array.isArray(t.ajustementsTemps) ? t.ajustementsTemps : [];
+        ajustementsTacheVeille.forEach((aj: any) => {
           if (formatOttawaISO(aj.date) === veilleStr) {
             heuresVeille += aj.heures;
           }
@@ -557,6 +574,11 @@ function analyserConflits(
 function verifierConformite(donnees: DonneesAnalyse): AnalyseConformite[] {
   const problemes: AnalyseConformite[] = [];
 
+  // Vérification de sécurité
+  if (!donnees.taches || !Array.isArray(donnees.taches)) {
+    return problemes;
+  }
+
   donnees.taches.forEach((tache) => {
     const traducteur = tache.traducteur;
     if (!traducteur) return;
@@ -617,6 +639,11 @@ function identifierOpportunites(
 ): AnalyseOpportunite[] {
   const opportunites: AnalyseOpportunite[] = [];
 
+  // Vérifications de sécurité
+  if (!Array.isArray(capacites) || !donnees.traducteurs) {
+    return opportunites;
+  }
+
   // Opportunité: libérer les TR3 surchargés en traduction
   capacites.forEach((cap) => {
     if (cap.profil === 'TR3' && cap.type === 'SURCHARGE') {
@@ -666,8 +693,15 @@ function genererRecommandations(
   const recommandations: Recommandation[] = [];
   let idCounter = 1;
 
+  // Vérifications de sécurité
+  const safeCapacites = Array.isArray(capacites) ? capacites : [];
+  const safeEcheances = Array.isArray(echeances) ? echeances : [];
+  const safeConflits = Array.isArray(conflits) ? conflits : [];
+  const safeConformite = Array.isArray(conformite) ? conformite : [];
+  const safeOpportunites = Array.isArray(opportunites) ? opportunites : [];
+
   // PRIORITÉ 1: Corrections immédiates (conformité + risques critiques)
-  conformite.forEach((conf) => {
+  safeConformite.forEach((conf) => {
     recommandations.push({
       id: `rec-${idCounter++}`,
       priorite: 1,
@@ -681,7 +715,7 @@ function genererRecommandations(
     });
   });
 
-  echeances
+  safeEcheances
     .filter((e) => e.gravite === 'CRITIQUE' || e.gravite === 'ELEVE')
     .forEach((ech) => {
       recommandations.push({
@@ -696,7 +730,7 @@ function genererRecommandations(
       });
     });
 
-  capacites
+  safeCapacites
     .filter((c) => c.gravite === 'CRITIQUE')
     .forEach((cap) => {
       recommandations.push({
@@ -712,7 +746,7 @@ function genererRecommandations(
     });
 
   // PRIORITÉ 2: Améliorations recommandées
-  capacites
+  safeCapacites
     .filter((c) => c.gravite === 'ELEVE' || c.gravite === 'MOYEN')
     .slice(0, 5)
     .forEach((cap) => {
@@ -729,7 +763,7 @@ function genererRecommandations(
     });
 
   // PRIORITÉ 3: Optimisations optionnelles
-  opportunites.forEach((opp) => {
+  safeOpportunites.forEach((opp) => {
     recommandations.push({
       id: `rec-${idCounter++}`,
       priorite: 3,
