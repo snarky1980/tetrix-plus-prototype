@@ -2,6 +2,7 @@ import React from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '../ui/Button';
 import { cn } from '../../lib/cn';
+import { UserSettingsButton } from '../settings/UserSettingsButton';
 
 interface AppLayoutProps {
   titre: string;
@@ -24,6 +25,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
           <div className="flex items-center gap-3">
             <span className="text-xs" aria-label="Utilisateur connecté">{utilisateur?.email}</span>
             {actionsDroite}
+            <UserSettingsButton />
             <Button variant="outline" onClick={deconnexion} aria-label="Déconnexion" className="text-xs px-2 py-1">Déconnexion</Button>
           </div>
         </div>

@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
+import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { ToastContainer } from './components/ui/Toast';
 
 // Pages
@@ -55,9 +56,10 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <BrowserRouter basename="/tetrix-plus-prototype">
-          <ToastContainer />
-          <Routes>
+        <UserPreferencesProvider>
+          <BrowserRouter basename="/tetrix-plus-prototype">
+            <ToastContainer />
+            <Routes>
           {/* Route publique */}
           <Route path="/connexion" element={<Connexion />} />
 
@@ -121,9 +123,10 @@ function App() {
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+          </Routes>
+          </BrowserRouter>
+        </UserPreferencesProvider>
+      </AuthProvider>
     </ToastProvider>
   );
 }
