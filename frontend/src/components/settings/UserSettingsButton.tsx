@@ -45,10 +45,10 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           aria-label="Paramètres utilisateur"
           className="flex items-center gap-2 text-xs px-2 py-1"
+          title="Paramètres"
         >
           <Settings className="h-4 w-4" />
-          <span className="hidden sm:inline">Paramètres</span>
-          <ChevronDown className={cn('h-4 w-4 transition-transform', isMenuOpen && 'rotate-180')} />
+          <ChevronDown className={cn('h-3 w-3 transition-transform', isMenuOpen && 'rotate-180')} />
         </Button>
 
         {isMenuOpen && (
