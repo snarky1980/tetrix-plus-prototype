@@ -14,6 +14,7 @@ import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
 import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa } from '../utils/dateTimeOttawa';
+import { formatNumeroProjet } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 
 const PlanificationGlobale: React.FC = () => {
@@ -1638,8 +1639,12 @@ const PlanificationGlobale: React.FC = () => {
                   <Input
                     type="text"
                     value={formTache.numeroProjet}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, numeroProjet: e.target.value })}
-                    placeholder="Ex: PROJ-2024-001"
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const formatted = formatNumeroProjet(e.target.value);
+                      setFormTache({ ...formTache, numeroProjet: formatted });
+                    }}
+                    placeholder="123-4567-001"
+                    maxLength={12}
                     required
                     className="border-2 border-blue-300"
                   />
@@ -2138,8 +2143,12 @@ const PlanificationGlobale: React.FC = () => {
                 <Input
                   type="text"
                   value={formEdition.numeroProjet}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, numeroProjet: e.target.value })}
-                  placeholder="Ex: PROJ-2024-001"
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                    const formatted = formatNumeroProjet(e.target.value);
+                    setFormEdition({ ...formEdition, numeroProjet: formatted });
+                  }}
+                  placeholder="123-4567-001"
+                  maxLength={12}
                   required
                 />
               </div>
