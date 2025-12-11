@@ -80,8 +80,18 @@ export function formatOttawaISO(date: Date): string {
 /**
  * Parser une string YYYY-MM-DD comme date à minuit Ottawa
  */
-export function parseOttawaDateISO(dateStr: string): Date {
+export function parseOttawaDateISO(dateStr: string | null | undefined): Date {
+  if (!dateStr || typeof dateStr !== 'string' || !dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return new Date(NaN); // Return invalid date instead of throwing
+  }
+  
   const [year, month, day] = dateStr.split('-').map(Number);
+  
+  // Validate the parsed numbers
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
+    return new Date(NaN);
+  }
+  
   return fromZonedTime(new Date(year, month - 1, day, 0, 0, 0), OTTAWA_TIMEZONE);
 }
 
@@ -95,7 +105,7 @@ export function dateISO(d: Date): string {
 /**
  * Helper pour parser date ISO (équivalent à parseISODate)
  */
-export function parseISODate(dateString: string): Date {
+export function parseISODate(dateString: string | null | undefined): Date {
   return parseOttawaDateISO(dateString);
 }
 
@@ -187,7 +197,11 @@ export function setDateFormatPreference(format: DateFormat): void {
  * Formater une date selon le format et le timezone préférés de l'utilisateur (ex: "11 déc. 2025")
  * Note: Les données sont stockées en timezone Ottawa, mais l'affichage utilise le timezone préféré
  */
-export function formatDateDisplay(date: Date, customFormat?: DateFormat): string {
+export function formatDateDisplay(date: Date | null | undefined, customFormat?: DateFormat): string {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Date invalide';
+  }
+  
   const displayTimezone = getDisplayTimezonePreference();
   const zonedDate = toZonedTime(date, displayTimezone);
   const fmt = customFormat || getDateFormatPreference();
@@ -222,7 +236,11 @@ export function formatDateDisplay(date: Date, customFormat?: DateFormat): string
 /**
  * Formater une date avec jour de la semaine (ex: "Mer. 11/12")
  */
-export function formatDateWithWeekday(date: Date): string {
+export function formatDateWithWeekday(date: Date | null | undefined): string {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Date invalide';
+  }
+  
   const displayTimezone = getDisplayTimezonePreference();
   const zonedDate = toZonedTime(date, displayTimezone);
   const weekday = format(zonedDate, 'EEE', { 
@@ -236,7 +254,11 @@ export function formatDateWithWeekday(date: Date): string {
 /**
  * Formater une date avec heure (ex: "11 déc. 2025 à 14h30")
  */
-export function formatDateTimeDisplay(date: Date): string {
+export function formatDateTimeDisplay(date: Date | null | undefined): string {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return 'Date invalide';
+  }
+  
   const displayTimezone = getDisplayTimezonePreference();
   const zonedDate = toZonedTime(date, displayTimezone);
   const dateStr = formatDateDisplay(date);
