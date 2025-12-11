@@ -25,8 +25,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
           <div className="flex items-center gap-3">
             <span className="text-xs" aria-label="Utilisateur connecté">{utilisateur?.email}</span>
             {actionsDroite}
-            <UserSettingsButton />
-            <Button variant="outline" onClick={deconnexion} aria-label="Déconnexion" className="text-xs px-2 py-1">Déconnexion</Button>
+            <UserSettingsButton className="[&_button]:!text-primary-foreground [&_button]:!border-primary-foreground/30 [&_button]:hover:!bg-primary-foreground/10" />
+            <Button variant="outline" onClick={deconnexion} aria-label="Déconnexion" className="text-xs px-2 py-1 !text-primary-foreground !border-primary-foreground/30 hover:!bg-primary-foreground/10">Déconnexion</Button>
           </div>
         </div>
       </header>
