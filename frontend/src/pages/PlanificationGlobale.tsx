@@ -1350,7 +1350,7 @@ const PlanificationGlobale: React.FC = () => {
                 onClick={() => setShowSaveDialog(!showSaveDialog)}
                 className="w-full px-1.5 py-0.5 text-xs"
               >
-                {showSaveDialog ? '✕' : '💾 Sauv.'}
+                {showSaveDialog ? '✕' : '💾 Sauvegarder'}
               </Button>
 
               {showSaveDialog && (
@@ -3633,11 +3633,11 @@ const PlanificationGlobale: React.FC = () => {
       {/* Bouton flottant pour voir toutes les tâches */}
       <button
         onClick={chargerMesTaches}
-        className="fixed bottom-6 left-6 bg-primary text-white rounded-full p-4 shadow-lg hover:shadow-xl hover:scale-110 transition-all z-50 flex items-center gap-2"
+        className="fixed bottom-4 left-4 bg-primary text-white rounded-full p-2.5 shadow-lg hover:shadow-xl hover:scale-110 transition-all z-50 flex items-center gap-1.5"
         title="Voir toutes mes tâches créées"
       >
-        <span className="text-2xl">📋</span>
-        <span className="text-sm font-semibold">Mes tâches</span>
+        <span className="text-lg">📋</span>
+        <span className="text-xs font-semibold">Mes tâches</span>
       </button>
       </div>
     </AppLayout>
