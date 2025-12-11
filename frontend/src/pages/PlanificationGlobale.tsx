@@ -17,11 +17,12 @@ import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOtt
 import { formatNumeroProjet } from '../utils/formatters';
 import { DateFormatSettings } from '../components/settings/DateFormatSettings';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 const PlanificationGlobale: React.FC = () => {
   usePageTitle('Tetrix PLUS Planification', 'Consultez le planification globale des traductions');
   // const navigate = useNavigate(); // Reserved for future navigation
-  // const { utilisateur } = useAuth(); // réservé pour filtres par rôle
+  const { utilisateur } = useAuth();
   
   // Utiliser les fonctions timezone-aware d'Ottawa
   const dateISO = formatOttawaISO;
@@ -765,19 +766,22 @@ const PlanificationGlobale: React.FC = () => {
     setShowMesTachesModal(true);
     
     try {
-      const API_URL = import.meta.env.VITE_API_URL || '/api';
-      const response = await fetch(
-        `${API_URL}/taches?limit=100&sort=createdAt:desc`,
-        {
-          headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-        }
+      // Filtrer par traducteur si l'utilisateur est un traducteur
+      const traducteurId = utilisateur?.role === 'TRADUCTEUR' && utilisateur?.traducteur?.id 
+        ? utilisateur.traducteur.id 
+        : undefined;
+
+      const taches = await tacheService.obtenirTaches(
+        traducteurId ? { traducteurId } : {}
       );
       
-      if (!response.ok) throw new Error('Erreur de chargement');
+      // Trier par date de création (plus récent d'abord)
+      const tachesTries = taches.sort((a, b) => 
+        new Date(b.creeLe).getTime() - new Date(a.creeLe).getTime()
+      );
       
-      const taches = await response.json();
-      setMesTaches(taches);
-      setMesTachesFiltered(taches);
+      setMesTaches(tachesTries);
+      setMesTachesFiltered(tachesTries);
       setFiltresMesTaches({ statut: '', traducteur: '', recherche: '' });
     } catch (err: any) {
       console.error('Erreur de chargement des tâches:', err);
@@ -3307,10 +3311,10 @@ const PlanificationGlobale: React.FC = () => {
 
       {/* Modal Mes tâches créées */}
       <Modal
-        titre="📋 Mes tâches créées (100 dernières)"
+        titre={utilisateur?.role === 'TRADUCTEUR' ? '📋 Mes tâches assignées' : '📋 Toutes les tâches'}
         ouvert={showMesTachesModal}
         onFermer={() => setShowMesTachesModal(false)}
-        ariaDescription="Liste de toutes les tâches que vous avez créées"
+        ariaDescription={utilisateur?.role === 'TRADUCTEUR' ? 'Liste de vos tâches assignées' : 'Liste de toutes les tâches'}
       >
         <div className="space-y-4">
           {loadingMesTaches ? (
@@ -3322,7 +3326,7 @@ const PlanificationGlobale: React.FC = () => {
               {/* Filtres */}
               <div className="bg-gray-50 border border-gray-200 rounded p-3 space-y-3">
                 <h4 className="text-sm font-semibold">🔍 Filtres</h4>
-                <div className="grid grid-cols-3 gap-2">
+                <div className={`grid gap-2 ${utilisateur?.role === 'TRADUCTEUR' ? 'grid-cols-2' : 'grid-cols-3'}`}>
                   <div>
                     <label className="text-xs text-muted block mb-1">Statut</label>
                     <Select
@@ -3338,18 +3342,20 @@ const PlanificationGlobale: React.FC = () => {
                       <option value="TERMINEE">Terminée</option>
                     </Select>
                   </div>
-                  <div>
-                    <label className="text-xs text-muted block mb-1">Traducteur</label>
-                    <Input
-                      type="text"
-                      value={filtresMesTaches.traducteur}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                        setFiltresMesTaches({ ...filtresMesTaches, traducteur: e.target.value });
-                      }}
-                      placeholder="Nom..."
-                      className="text-xs"
-                    />
-                  </div>
+                  {utilisateur?.role !== 'TRADUCTEUR' && (
+                    <div>
+                      <label className="text-xs text-muted block mb-1">Traducteur</label>
+                      <Input
+                        type="text"
+                        value={filtresMesTaches.traducteur}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          setFiltresMesTaches({ ...filtresMesTaches, traducteur: e.target.value });
+                        }}
+                        placeholder="Nom..."
+                        className="text-xs"
+                      />
+                    </div>
+                  )}
                   <div>
                     <label className="text-xs text-muted block mb-1">Recherche</label>
                     <Input
@@ -3392,11 +3398,11 @@ const PlanificationGlobale: React.FC = () => {
                   {mesTachesFiltered.reduce((sum, t) => sum + t.heuresTotal, 0).toFixed(0)}h au total
                 </span>
               </div>
-              <div className="max-h-[400px] overflow-y-auto space-y-2">
+              <div className="max-h-[500px] overflow-y-auto space-y-2">
                 {mesTachesFiltered.map((tache: any) => (
                   <div
                     key={tache.id}
-                    className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow cursor-pointer"
+                    className="bg-white border border-border rounded p-3 hover:shadow-md hover:border-primary transition-all cursor-pointer"
                     onClick={() => {
                       setShowMesTachesModal(false);
                       setTacheDetaillee(tache);
@@ -3419,15 +3425,26 @@ const PlanificationGlobale: React.FC = () => {
                             {tache.typeTache || 'TRADUCTION'}
                           </span>
                         </div>
-                        <p className="text-sm text-muted mb-1">
-                          {tache.traducteur?.nom || 'Traducteur non assigné'}
+                        {tache.description && (
+                          <p className="text-sm mb-1 line-clamp-1">
+                            {tache.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-muted mb-1">
+                          👤 {tache.traducteur?.nom || 'Traducteur non assigné'}
                         </p>
-                        <div className="flex items-center gap-3 text-xs text-muted">
-                          {tache.client && <span>Client: {tache.client.nom}</span>}
+                        <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
+                          {tache.client && <span>📋 {tache.client.nom}</span>}
                           {tache.paireLinguistique && (
-                            <span>{tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
+                            <span>🌐 {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
                           )}
-                          <span className="font-semibold">{tache.heuresTotal}h</span>
+                          {tache.compteMots && <span>📝 {tache.compteMots.toLocaleString()} mots</span>}
+                          <span className="font-semibold">⏱️ {tache.heuresTotal}h</span>
+                          {tache.dateEcheance && (
+                            <span className="text-orange-600 font-medium">
+                              📅 {formatDateDisplay(tache.dateEcheance)}
+                            </span>
+                          )}
                           <span>Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
                         </div>
                       </div>
