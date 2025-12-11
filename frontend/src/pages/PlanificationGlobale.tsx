@@ -1737,7 +1737,7 @@ const PlanificationGlobale: React.FC = () => {
 
                 {/* Client (optionnel) */}
               <div>
-                <label className="block text-sm font-medium mb-1">Client</label>
+                <label className="block text-sm font-medium mb-1">Client <span className="text-gray-500 text-xs">(optionnel)</span></label>
                 <Select
                   value={formTache.clientId}
                   onChange={(e) => setFormTache({ ...formTache, clientId: e.target.value })}
@@ -1751,7 +1751,7 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Sous-domaine (optionnel) */}
               <div>
-                <label className="block text-sm font-medium mb-1">Sous-domaine</label>
+                <label className="block text-sm font-medium mb-1">Sous-domaine <span className="text-gray-500 text-xs">(optionnel)</span></label>
                 <Select
                   value={formTache.sousDomaineId}
                   onChange={(e) => setFormTache({ ...formTache, sousDomaineId: e.target.value })}
@@ -1765,7 +1765,7 @@ const PlanificationGlobale: React.FC = () => {
 
               {/* Spécialisation (optionnel) */}
               <div>
-                <label className="block text-sm font-medium mb-1">Spécialisation</label>
+                <label className="block text-sm font-medium mb-1">Spécialisation <span className="text-gray-500 text-xs">(optionnel)</span></label>
                 <Input
                   type="text"
                   value={formTache.specialisation}
