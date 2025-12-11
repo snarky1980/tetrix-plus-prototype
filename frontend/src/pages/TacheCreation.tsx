@@ -36,6 +36,7 @@ const TacheCreation: React.FC = () => {
     paireLinguistiqueId: '',
     description: '',
     heuresTotal: 0,
+    compteMots: undefined as number | undefined,
     dateEcheance: '',
     repartitionAuto: true,
     repartitionManuelle: [] as { date: string; heures: number }[],
@@ -172,6 +173,7 @@ const TacheCreation: React.FC = () => {
 
       if (formData.clientId) tache.clientId = formData.clientId;
       if (formData.sousDomaineId) tache.sousDomaineId = formData.sousDomaineId;
+      if (formData.compteMots) tache.compteMots = formData.compteMots;
 
       if (formData.repartitionAuto) {
         tache.repartitionAuto = true;
@@ -305,6 +307,18 @@ const TacheCreation: React.FC = () => {
                     }
                     required
                     placeholder="7.5"
+                  />
+                </FormField>
+
+                <FormField label="Compte de mots (optionnel)">
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formData.compteMots || ''}
+                    onChange={e =>
+                      setFormData({ ...formData, compteMots: e.target.value ? parseInt(e.target.value) : undefined })
+                    }
+                    placeholder="5000"
                   />
                 </FormField>
 

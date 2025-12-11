@@ -126,6 +126,7 @@ model Tache {
   description         String             @default("")
   specialisation      String             @default("")
   heuresTotal         Float
+  compteMots          Int?
   dateEcheance        DateTime
   statut              StatutTache        @default(PLANIFIEE)
   typeTache           TypeTache          @default(TRADUCTION)

@@ -145,6 +145,7 @@ export const creerTache = async (
       typeTache,
       description,
       heuresTotal,
+      compteMots,
       dateEcheance,
       repartition, // Array de { date, heures }
       repartitionAuto, // bool: utiliser JAT si true et pas de répartition fournie
@@ -189,6 +190,7 @@ export const creerTache = async (
           specialisation: req.body.specialisation || '',
           description: description || '',
           heuresTotal,
+          compteMots: compteMots ? parseInt(compteMots) : null,
           dateEcheance: parseOttawaDateISO(dateEcheance),
           statut: 'PLANIFIEE',
           creePar: req.utilisateur!.id,
@@ -256,6 +258,7 @@ export const mettreAJourTache = async (
       description,
       specialisation,
       heuresTotal,
+      compteMots,
       dateEcheance,
       statut,
       typeTache,
@@ -302,6 +305,7 @@ export const mettreAJourTache = async (
           ...(description !== undefined && { description }),
           ...(specialisation !== undefined && { specialisation }),
           ...(heuresTotal && { heuresTotal }),
+          ...(compteMots !== undefined && { compteMots: compteMots ? parseInt(compteMots) : null }),
           ...(dateEcheance && { dateEcheance: parseOttawaDateISO(dateEcheance) }),
           ...(statut && { statut }),
           ...(typeTache && { typeTache }),

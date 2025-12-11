@@ -135,6 +135,7 @@ const PlanificationGlobale: React.FC = () => {
     specialisation: '',
     description: '',
     heuresTotal: '',
+    compteMots: '' as string | number,
     dateEcheance: '',
     typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL',
     dateDebut: today,
@@ -162,6 +163,7 @@ const PlanificationGlobale: React.FC = () => {
     specialisation: '',
     description: '',
     heuresTotal: 0,
+    compteMots: 0,
     dateEcheance: '',
     typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
     dateDebut: '',
@@ -500,6 +502,7 @@ const PlanificationGlobale: React.FC = () => {
       specialisation: '',
       description: '',
       heuresTotal: '',
+      compteMots: '',
       dateEcheance: '',
       typeRepartition: 'JUSTE_TEMPS',
       dateDebut: today,
@@ -662,6 +665,7 @@ const PlanificationGlobale: React.FC = () => {
       if (formTache.sousDomaineId) tache.sousDomaineId = formTache.sousDomaineId;
       if (formTache.specialisation.trim()) tache.specialisation = formTache.specialisation;
       if (formTache.description.trim()) tache.description = formTache.description;
+      if (formTache.compteMots) tache.compteMots = parseInt(formTache.compteMots as string);
 
       // Gérer les différentes méthodes de répartition
       if (formTache.typeRepartition === 'JUSTE_TEMPS') {
@@ -864,6 +868,7 @@ const PlanificationGlobale: React.FC = () => {
       specialisation: '',
       description: '',
       heuresTotal: 0,
+      compteMots: 0,
       dateEcheance: '',
       typeRepartition: 'JUSTE_TEMPS',
       dateDebut: '',
@@ -908,6 +913,7 @@ const PlanificationGlobale: React.FC = () => {
         specialisation: tache.specialisation || '',
         description: tache.description || '',
         heuresTotal: tache.heuresTotal || 0,
+        compteMots: tache.compteMots || 0,
         dateEcheance: tache.dateEcheance?.split('T')[0] || '',
         typeRepartition: 'MANUEL',
         dateDebut: today,
@@ -996,6 +1002,7 @@ const PlanificationGlobale: React.FC = () => {
       if (formEdition.clientId) tache.clientId = formEdition.clientId;
       if (formEdition.sousDomaineId) tache.sousDomaineId = formEdition.sousDomaineId;
       if (formEdition.specialisation.trim()) tache.specialisation = formEdition.specialisation;
+      if (formEdition.compteMots) tache.compteMots = formEdition.compteMots;
 
       // Gérer la répartition selon le mode choisi
       if (formEdition.typeRepartition === 'JUSTE_TEMPS') {
@@ -1714,6 +1721,19 @@ const PlanificationGlobale: React.FC = () => {
                   />
                 </div>
 
+                {/* Compte de mots */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Compte de mots</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formTache.compteMots}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, compteMots: e.target.value })}
+                    placeholder="Ex: 5000"
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
                 {/* Date d'échéance */}
                 <div>
                   <label className="block text-sm font-bold mb-1 text-gray-900">Date d'échéance <span className="text-red-600">*</span></label>
@@ -2220,6 +2240,19 @@ const PlanificationGlobale: React.FC = () => {
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, heuresTotal: parseFloat(e.target.value) || 0 })}
                     placeholder="Ex: 4.5"
                     required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Compte de mots */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Compte de mots</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formEdition.compteMots || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, compteMots: parseInt(e.target.value) || 0 })}
+                    placeholder="Ex: 5000"
                     className="border-2 border-blue-300"
                   />
                 </div>

@@ -92,6 +92,7 @@ export interface Tache {
   description?: string;
   specialisation?: string;
   heuresTotal: number;
+  compteMots?: number;
   dateEcheance: string;
   statut: StatutTache;
   typeTache: TypeTache;
@@ -203,6 +204,7 @@ export interface CreerTacheForm {
   paireLinguistiqueId: string;
   description: string;
   heuresTotal: number;
+  compteMots?: number;
   dateEcheance: string;
   repartition?: { date: string; heures: number }[];
   repartitionAuto?: boolean;
