@@ -102,13 +102,76 @@ export function isWeekendOttawa(date: Date): boolean {
 }
 
 /**
- * Formater une date pour affichage (ex: "11 déc. 2025")
+ * Formats de date disponibles
  */
-export function formatDateDisplay(date: Date): string {
-  return format(toZonedTime(date, OTTAWA_TIMEZONE), 'd MMM yyyy', { 
-    timeZone: OTTAWA_TIMEZONE,
-    locale: fr
-  });
+export type DateFormat = 
+  | 'text-short'      // "11 déc. 2025"
+  | 'text-long'       // "11 décembre 2025"
+  | 'iso'             // "2025-12-11"
+  | 'slash-dmy'       // "11/12/2025"
+  | 'slash-mdy'       // "12/11/2025"
+  | 'dash-dmy'        // "11-12-2025"
+  | 'dash-mdy';       // "12-11-2025"
+
+export const DATE_FORMAT_LABELS: Record<DateFormat, string> = {
+  'text-short': '11 déc. 2025 (texte court)',
+  'text-long': '11 décembre 2025 (texte long)',
+  'iso': '2025-12-11 (ISO, AAAA-MM-JJ)',
+  'slash-dmy': '11/12/2025 (JJ/MM/AAAA)',
+  'slash-mdy': '12/11/2025 (MM/JJ/AAAA)',
+  'dash-dmy': '11-12-2025 (JJ-MM-AAAA)',
+  'dash-mdy': '12-11-2025 (MM-JJ-AAAA)',
+};
+
+const DATE_PREFERENCE_KEY = 'tetrix-date-format-preference';
+
+/**
+ * Obtenir le format de date préféré de l'utilisateur
+ */
+export function getDateFormatPreference(): DateFormat {
+  const stored = localStorage.getItem(DATE_PREFERENCE_KEY);
+  return (stored as DateFormat) || 'text-short';
+}
+
+/**
+ * Définir le format de date préféré de l'utilisateur
+ */
+export function setDateFormatPreference(format: DateFormat): void {
+  localStorage.setItem(DATE_PREFERENCE_KEY, format);
+}
+
+/**
+ * Formater une date selon le format préféré de l'utilisateur (ex: "11 déc. 2025")
+ */
+export function formatDateDisplay(date: Date, customFormat?: DateFormat): string {
+  const zonedDate = toZonedTime(date, OTTAWA_TIMEZONE);
+  const fmt = customFormat || getDateFormatPreference();
+  
+  switch (fmt) {
+    case 'text-short':
+      return format(zonedDate, 'd MMM yyyy', { timeZone: OTTAWA_TIMEZONE, locale: fr });
+    
+    case 'text-long':
+      return format(zonedDate, 'd MMMM yyyy', { timeZone: OTTAWA_TIMEZONE, locale: fr });
+    
+    case 'iso':
+      return format(zonedDate, 'yyyy-MM-dd', { timeZone: OTTAWA_TIMEZONE });
+    
+    case 'slash-dmy':
+      return format(zonedDate, 'dd/MM/yyyy', { timeZone: OTTAWA_TIMEZONE });
+    
+    case 'slash-mdy':
+      return format(zonedDate, 'MM/dd/yyyy', { timeZone: OTTAWA_TIMEZONE });
+    
+    case 'dash-dmy':
+      return format(zonedDate, 'dd-MM-yyyy', { timeZone: OTTAWA_TIMEZONE });
+    
+    case 'dash-mdy':
+      return format(zonedDate, 'MM-dd-yyyy', { timeZone: OTTAWA_TIMEZONE });
+    
+    default:
+      return format(zonedDate, 'd MMM yyyy', { timeZone: OTTAWA_TIMEZONE, locale: fr });
+  }
 }
 
 /**
