@@ -127,7 +127,7 @@ const PlanificationGlobale: React.FC = () => {
     clientId: '',
     sousDomaineId: '',
     paireLinguistiqueId: '',
-    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE',
+    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE',
     specialisation: '',
     description: '',
     heuresTotal: '',
@@ -154,7 +154,7 @@ const PlanificationGlobale: React.FC = () => {
     clientId: '',
     sousDomaineId: '',
     paireLinguistiqueId: '',
-    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE',
+    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE',
     specialisation: '',
     description: '',
     heuresTotal: 0,
@@ -1673,13 +1673,14 @@ const PlanificationGlobale: React.FC = () => {
                   <label className="block text-sm font-bold mb-1 text-gray-900">Type de tâche <span className="text-red-600">*</span></label>
                   <Select
                     value={formTache.typeTache}
-                    onChange={(e) => setFormTache({ ...formTache, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE' })}
+                    onChange={(e) => setFormTache({ ...formTache, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE' })}
                     required
                     className="border-2 border-blue-300"
                   >
                     <option value="TRADUCTION">Traduction</option>
                     <option value="REVISION">Révision</option>
                     <option value="RELECTURE">Relecture</option>
+                    <option value="ENCADREMENT">Encadrement</option>
                     <option value="AUTRE">Autre</option>
                   </Select>
                 </div>
@@ -2182,13 +2183,14 @@ const PlanificationGlobale: React.FC = () => {
                   <label className="block text-sm font-bold mb-1 text-gray-900">Type de tâche <span className="text-red-600">*</span></label>
                   <Select
                     value={formEdition.typeTache}
-                    onChange={(e) => setFormEdition({ ...formEdition, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE' })}
+                    onChange={(e) => setFormEdition({ ...formEdition, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE' })}
                     required
                     className="border-2 border-blue-300"
                   >
                     <option value="TRADUCTION">Traduction</option>
                     <option value="REVISION">Révision</option>
                     <option value="RELECTURE">Relecture</option>
+                    <option value="ENCADREMENT">Encadrement</option>
                     <option value="AUTRE">Autre</option>
                   </Select>
                 </div>
