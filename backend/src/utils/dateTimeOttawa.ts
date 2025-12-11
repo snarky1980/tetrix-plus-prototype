@@ -335,3 +335,232 @@ export function validateDateRange(
     throw new Error(`${labelTo} (${toStr}) doit être après ${labelFrom} (${fromStr})`);
   }
 }
+
+// ============================================================================
+// NOUVELLES FONCTIONS: Support des Timestamps (Date + Heure)
+// ============================================================================
+
+/**
+ * Regex pour valider format ISO datetime: YYYY-MM-DDTHH:mm:ss
+ */
+const ISO_DATETIME_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/;
+
+/**
+ * Parse une string ISO complète avec heure en Date Ottawa
+ * 
+ * @param dateTimeStr String au format YYYY-MM-DDTHH:mm:ss ou YYYY-MM-DD HH:mm:ss
+ * @returns Date UTC équivalente au timestamp Ottawa
+ * @throws Error si format invalide
+ * 
+ * @example
+ * const dt = parseOttawaDateTimeISO('2025-12-15T14:30:00');
+ * // Retourne Date pour le 15 déc 2025 à 14h30 heure Ottawa
+ */
+export function parseOttawaDateTimeISO(dateTimeStr: string): Date {
+  // Normaliser le format (accepter espace au lieu de T)
+  const normalized = dateTimeStr.trim().replace(' ', 'T');
+  
+  if (!ISO_DATETIME_REGEX.test(normalized)) {
+    throw new Error(
+      `Format de timestamp invalide: "${dateTimeStr}". Attendu: YYYY-MM-DDTHH:mm:ss`
+    );
+  }
+  
+  // Extraire composants
+  const [datePart, timePart] = normalized.split('T');
+  const [year, month, day] = datePart.split('-').map(Number);
+  const [hours, minutes, seconds] = timePart.split(':').map(Number);
+  
+  // Valider ranges
+  if (month < 1 || month > 12) {
+    throw new Error(`Mois invalide: ${month} (doit être 1-12)`);
+  }
+  if (day < 1 || day > 31) {
+    throw new Error(`Jour invalide: ${day} (doit être 1-31)`);
+  }
+  if (hours < 0 || hours > 23) {
+    throw new Error(`Heure invalide: ${hours} (doit être 0-23)`);
+  }
+  if (minutes < 0 || minutes > 59) {
+    throw new Error(`Minute invalide: ${minutes} (doit être 0-59)`);
+  }
+  if (seconds < 0 || seconds > 59) {
+    throw new Error(`Seconde invalide: ${seconds} (doit être 0-59)`);
+  }
+  
+  // Créer string avec heure locale Ottawa
+  const localStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  
+  // Convertir en UTC (ce que PostgreSQL stocke)
+  return fromZonedTime(localStr, OTTAWA_TIMEZONE);
+}
+
+/**
+ * Formate une Date en string ISO avec heure selon le fuseau Ottawa
+ * 
+ * @param date Date à formater
+ * @returns String au format YYYY-MM-DDTHH:mm:ss
+ * 
+ * @example
+ * const date = new Date('2025-12-15T19:30:00Z'); // UTC
+ * formatOttawaDateTimeISO(date); // Retourne '2025-12-15T14:30:00' (EST)
+ */
+export function formatOttawaDateTimeISO(date: Date): string {
+  return format(
+    toZonedTime(date, OTTAWA_TIMEZONE), 
+    "yyyy-MM-dd'T'HH:mm:ss", 
+    { timeZone: OTTAWA_TIMEZONE }
+  );
+}
+
+/**
+ * Obtient l'heure de fin de journée (23:59:59) pour une date donnée à Ottawa
+ * 
+ * @param date Date de référence (Date ou string YYYY-MM-DD)
+ * @returns Date représentant 23:59:59 ce jour-là à Ottawa
+ * 
+ * @example
+ * const date = parseOttawaDateISO('2025-12-15');
+ * const finJour = endOfDayOttawa(date); // 2025-12-15 23:59:59 Ottawa
+ */
+export function endOfDayOttawa(date: Date | string): Date {
+  const dateOnly = typeof date === 'string' ? parseOttawaDateISO(date) : date;
+  const iso = formatOttawaISO(dateOnly);
+  return parseOttawaDateTimeISO(`${iso}T23:59:59`);
+}
+
+/**
+ * Vérifie si une Date contient une heure significative
+ * (différente de minuit 00:00:00 ou fin de journée 23:59:59)
+ * 
+ * @param date Date à vérifier
+ * @returns true si heure significative présente
+ * 
+ * @example
+ * hasSignificantTime(parseOttawaDateISO('2025-12-15')); // false (minuit)
+ * hasSignificantTime(endOfDayOttawa('2025-12-15')); // false (23:59:59)
+ * hasSignificantTime(parseOttawaDateTimeISO('2025-12-15T14:30:00')); // true
+ */
+export function hasSignificantTime(date: Date): boolean {
+  const ottawa = toZonedTime(date, OTTAWA_TIMEZONE);
+  const hours = ottawa.getHours();
+  const minutes = ottawa.getMinutes();
+  const seconds = ottawa.getSeconds();
+  
+  // Minuit = pas d'heure fournie (legacy ou date seule)
+  if (hours === 0 && minutes === 0 && seconds === 0) return false;
+  
+  // 23:59:59 = fin de journée par défaut (date seule nouvelle UI)
+  if (hours === 23 && minutes === 59 && seconds === 59) return false;
+  
+  return true; // Heure significative présente
+}
+
+/**
+ * Calcule la différence en heures entre deux timestamps Ottawa
+ * Résultat peut être décimal (ex: 1.5h = 1h30min)
+ * 
+ * @param dateFrom Date de début
+ * @param dateTo Date de fin
+ * @returns Nombre d'heures (peut être négatif si dateTo < dateFrom)
+ * 
+ * @example
+ * const debut = parseOttawaDateTimeISO('2025-12-15T09:00:00');
+ * const fin = parseOttawaDateTimeISO('2025-12-15T17:30:00');
+ * differenceInHoursOttawa(debut, fin); // 8.5
+ */
+export function differenceInHoursOttawa(dateFrom: Date, dateTo: Date): number {
+  const milliseconds = dateTo.getTime() - dateFrom.getTime();
+  return milliseconds / (1000 * 60 * 60);
+}
+
+/**
+ * Normalise une entrée utilisateur avec support optionnel de l'heure
+ * Version étendue de normalizeToOttawa() pour gérer les timestamps
+ * 
+ * @param input Date ou string (YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss)
+ * @param includeTime Si true, parse l'heure si fournie, sinon utilise 23:59:59 par défaut
+ * @param label Label pour messages d'erreur
+ * @returns Objet { date: Date, iso: string, hasTime: boolean }
+ * 
+ * @example
+ * // Date seule
+ * normalizeToOttawaWithTime('2025-12-15', false);
+ * // → { date: minuit, iso: '2025-12-15', hasTime: false }
+ * 
+ * // Date seule avec support heure
+ * normalizeToOttawaWithTime('2025-12-15', true);
+ * // → { date: 23:59:59, iso: '2025-12-15T23:59:59', hasTime: false }
+ * 
+ * // Timestamp complet
+ * normalizeToOttawaWithTime('2025-12-15T14:30:00', true);
+ * // → { date: 14h30, iso: '2025-12-15T14:30:00', hasTime: true }
+ */
+export function normalizeToOttawaWithTime(
+  input: DateInput,
+  includeTime: boolean = false,
+  label: string = 'date'
+): { date: Date; iso: string; hasTime: boolean } {
+  let date: Date;
+  let hasTime: boolean = false;
+  
+  if (input instanceof Date) {
+    // Si Date fournie, vérifier si elle contient une heure significative
+    hasTime = hasSignificantTime(input);
+    
+    if (includeTime && hasTime) {
+      // Conserver l'heure telle quelle
+      date = input;
+    } else if (includeTime && !hasTime) {
+      // Date à minuit → convertir en fin de journée si includeTime
+      date = endOfDayOttawa(input);
+    } else {
+      // Mode legacy: normaliser à minuit
+      date = startOfDayOttawa(input);
+    }
+  } 
+  else if (typeof input === 'string') {
+    const trimmed = input.trim();
+    
+    // Cas 1: Timestamp complet (YYYY-MM-DDTHH:mm:ss)
+    if (ISO_DATETIME_REGEX.test(trimmed)) {
+      date = parseOttawaDateTimeISO(trimmed);
+      hasTime = hasSignificantTime(date);
+    }
+    // Cas 2: Date seule (YYYY-MM-DD)
+    else if (ISO_DATE_REGEX.test(trimmed)) {
+      if (includeTime) {
+        // Mode timestamp: utiliser fin de journée par défaut
+        date = endOfDayOttawa(trimmed);
+        hasTime = false; // Pas d'heure fournie explicitement
+      } else {
+        // Mode legacy: minuit
+        date = parseOttawaDateISO(trimmed);
+        hasTime = false;
+      }
+    }
+    // Cas 3: ISO complet avec timezone (fallback)
+    else if (trimmed.includes('T')) {
+      const parsed = parseISO(trimmed);
+      if (isNaN(parsed.getTime())) {
+        throw new Error(`${label} invalide: "${trimmed}"`);
+      }
+      hasTime = hasSignificantTime(parsed);
+      date = hasTime && includeTime ? parsed : startOfDayOttawa(parsed);
+    }
+    // Cas 4: Format non supporté
+    else {
+      throw new Error(
+        `${label} invalide: "${trimmed}". Formats attendus: YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss`
+      );
+    }
+  } 
+  else {
+    throw new Error(`${label}: type invalide (attendu Date ou string)`);
+  }
+  
+  // Formater ISO selon présence d'heure
+  const iso = hasTime ? formatOttawaDateTimeISO(date) : formatOttawaISO(date);
+  
+  return { date, iso, hasTime };
+}
