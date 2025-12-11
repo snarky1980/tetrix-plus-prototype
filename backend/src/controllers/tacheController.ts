@@ -170,8 +170,10 @@ export const creerTache = async (
     } else if (repartitionAuto) {
       // Génération JAT
       try {
-        repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, new Date(dateEcheance));
+        // Passer la string dateEcheance directement, normalizeToOttawa s'occupera de la conversion correcte
+        repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, dateEcheance);
       } catch (e: any) {
+        console.error('[Erreur JAT]', e.message, '| traducteurId:', traducteurId, '| heuresTotal:', heuresTotal, '| dateEcheance:', dateEcheance);
         res.status(400).json({ erreur: e.message || 'Erreur JAT' });
         return;
       }
@@ -273,7 +275,8 @@ export const mettreAJourTache = async (
 
     let repartitionEffective: RepartitionItem[] | undefined = undefined;
     const heuresCible = heuresTotal || existante.heuresTotal;
-    const echeanceCible = dateEcheance ? new Date(dateEcheance) : existante.dateEcheance;
+    // Garder en string pour JAT, convertir en Date uniquement pour l'insertion en base
+    const echeanceCible = dateEcheance || existante.dateEcheance;
 
     if (repartition && Array.isArray(repartition) && repartition.length > 0) {
       const { valide, erreurs } = await validerRepartition(existante.traducteurId, repartition, heuresCible, id);
@@ -284,8 +287,10 @@ export const mettreAJourTache = async (
       repartitionEffective = repartition;
     } else if (repartitionAuto) {
       try {
+        // Passer string ou Date, normalizeToOttawa gère les deux
         repartitionEffective = await repartitionJusteATemps(existante.traducteurId, heuresCible, echeanceCible);
       } catch (e: any) {
+        console.error('[Erreur JAT edition]', e.message, '| traducteurId:', existante.traducteurId, '| heuresTotal:', heuresCible, '| dateEcheance:', echeanceCible);
         res.status(400).json({ erreur: e.message || 'Erreur JAT' });
         return;
       }
