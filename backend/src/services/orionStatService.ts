@@ -257,7 +257,16 @@ async function collecterDonneesOrion(
           statut: { in: ['PLANIFIEE', 'EN_COURS', 'TERMINEE'] },
           dateEcheance: { gte: dateDebut, lte: dateFin },
         },
-        include: {
+        select: {
+          id: true,
+          numeroProjet: true,
+          description: true,
+          specialisation: true,
+          heuresTotal: true,
+          dateEcheance: true,
+          statut: true,
+          typeTache: true,
+          traducteurId: true,
           ajustementsTemps: {
             where: {
               date: { gte: dateDebut, lte: dateFin },
@@ -281,7 +290,15 @@ async function collecterDonneesOrion(
       statut: { in: ['PLANIFIEE', 'EN_COURS', 'TERMINEE'] },
       dateEcheance: { gte: dateDebut, lte: dateFin },
     },
-    include: {
+    select: {
+      id: true,
+      numeroProjet: true,
+      specialisation: true,
+      heuresTotal: true,
+      dateEcheance: true,
+      statut: true,
+      typeTache: true,
+      traducteurId: true,
       ajustementsTemps: {
         where: {
           date: { gte: dateDebut, lte: dateFin },
@@ -298,7 +315,11 @@ async function collecterDonneesOrion(
       statut: { in: ['PLANIFIEE', 'EN_COURS', 'TERMINEE'] },
       dateEcheance: { gte: dateDebutHistorique, lt: dateDebut },
     },
-    include: {
+    select: {
+      id: true,
+      heuresTotal: true,
+      dateEcheance: true,
+      typeTache: true,
       ajustementsTemps: {
         where: {
           date: { gte: dateDebutHistorique, lt: dateDebut },

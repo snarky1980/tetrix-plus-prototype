@@ -245,7 +245,19 @@ async function collecterDonnees(dateDebut: Date, dateFin: Date): Promise<Donnees
             },
           ],
         },
-        include: {
+        select: {
+          id: true,
+          numeroProjet: true,
+          description: true,
+          specialisation: true,
+          heuresTotal: true,
+          dateEcheance: true,
+          statut: true,
+          typeTache: true,
+          traducteurId: true,
+          clientId: true,
+          sousDomaineId: true,
+          paireLinguistiqueId: true,
           ajustementsTemps: {
             where: {
               date: { gte: dateDebut, lte: dateFin },
