@@ -6,6 +6,7 @@ import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
 import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
+import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { clientService } from '../services/clientService';
@@ -839,11 +840,12 @@ const PlanificationGlobale: React.FC = () => {
     setErreurOptimisation('');
     
     try {
-      const analyse = await optimisationService.analyser(applied.start, endDate);
+      // Utiliser la nouvelle analyse Tetrix Master
+      const analyse = await optimisationService.analyserTetrixMaster(applied.start, endDate);
       setAnalyseOptimisation(analyse);
       setErreurOptimisation('');
     } catch (err: any) {
-      console.error('Erreur d\'analyse:', err);
+      console.error('Erreur d\'analyse Tetrix Master:', err);
       console.error('Response:', err.response?.data);
       const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de l\'analyse';
       setErreurOptimisation(messageErreur);
@@ -3505,97 +3507,7 @@ const PlanificationGlobale: React.FC = () => {
               <p className="text-sm text-muted">Analyse en cours...</p>
             </div>
           ) : etapeOptimisation === 'analyse' && analyseOptimisation ? (
-            <div className="space-y-4">
-              {/* Score global */}
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-4 border border-purple-200">
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-lg font-semibold">Score d'équilibre</h3>
-                  <div className="text-3xl font-bold text-primary">{analyseOptimisation.score}/100</div>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`h-3 rounded-full transition-all ${
-                      analyseOptimisation.score >= 80 ? 'bg-green-500' :
-                      analyseOptimisation.score >= 60 ? 'bg-yellow-500' : 'bg-red-500'
-                    }`}
-                    style={{ width: `${analyseOptimisation.score}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Métriques */}
-              <div className="grid grid-cols-2 gap-3">
-                <div className="bg-white border border-gray-200 rounded p-3">
-                  <p className="text-xs text-muted mb-1">Écart-type</p>
-                  <p className="text-xl font-bold">{analyseOptimisation.ecartType}%</p>
-                  <p className="text-xs text-muted mt-1">Plus bas = mieux équilibré</p>
-                </div>
-                <div className="bg-white border border-gray-200 rounded p-3">
-                  <p className="text-xs text-muted mb-1">Capacité gaspillée</p>
-                  <p className="text-xl font-bold">{analyseOptimisation.capaciteGaspillee}h</p>
-                  <p className="text-xs text-muted mt-1">Disponibilité non utilisée</p>
-                </div>
-              </div>
-
-              {/* Problèmes détectés */}
-              {analyseOptimisation.problemes.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">⚠️ {analyseOptimisation.problemes.length} problème(s) détecté(s)</h4>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {analyseOptimisation.problemes.map((prob: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className={`p-3 rounded border-l-4 ${
-                          prob.gravite === 'ELEVE' ? 'bg-red-50 border-red-500' :
-                          prob.gravite === 'MOYEN' ? 'bg-orange-50 border-orange-500' :
-                          'bg-yellow-50 border-yellow-500'
-                        }`}
-                      >
-                        <p className="text-sm font-medium">{prob.description}</p>
-                        <p className="text-xs text-muted mt-1">{prob.impact}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Utilisation par traducteur */}
-              <div>
-                <h4 className="font-semibold text-sm mb-2">👥 Utilisation par traducteur</h4>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
-                  {analyseOptimisation.traducteurs.map((trad: any) => (
-                    <div key={trad.id} className="bg-white border border-gray-200 rounded p-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-medium text-sm">{trad.nom}</span>
-                        <span className={`text-sm font-bold ${
-                          trad.tauxUtilisation > 100 ? 'text-red-600' :
-                          trad.tauxUtilisation > 90 ? 'text-orange-600' :
-                          trad.tauxUtilisation < 50 ? 'text-blue-600' :
-                          'text-green-600'
-                        }`}>
-                          {trad.tauxUtilisation.toFixed(0)}%
-                        </span>
-                      </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div
-                          className={`h-2 rounded-full ${
-                            trad.tauxUtilisation > 100 ? 'bg-red-500' :
-                            trad.tauxUtilisation > 90 ? 'bg-orange-500' :
-                            trad.tauxUtilisation < 50 ? 'bg-blue-500' :
-                            'bg-green-500'
-                          }`}
-                          style={{ width: `${Math.min(trad.tauxUtilisation, 100)}%` }}
-                        ></div>
-                      </div>
-                      <div className="flex justify-between text-xs text-muted mt-1">
-                        <span>{trad.heuresAssignees.toFixed(1)}h assignées</span>
-                        <span>{trad.capaciteTotal.toFixed(1)}h capacité</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <TetrixMasterDisplay analyse={analyseOptimisation} />
           ) : etapeOptimisation === 'suggestions' && suggestions.length > 0 ? (
             <div className="space-y-3">
               <p className="text-sm text-muted">{suggestions.length} suggestion(s) d'amélioration</p>

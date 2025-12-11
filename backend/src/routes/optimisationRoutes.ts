@@ -1,11 +1,36 @@
 import { Router } from 'express';
 import { authentifier, AuthRequest } from '../middleware/auth';
 import { analyserPlanification, genererSuggestions, appliquerReassignation } from '../services/optimisationService';
+import { analyserAvecTetrixMaster } from '../services/tetrixMasterService';
 
 const router = Router();
 
 /**
- * Analyser la planification actuelle
+ * Analyser la planification avec Tetrix Master (version complète)
+ * GET /api/optimisation/tetrix-master?dateDebut=YYYY-MM-DD&dateFin=YYYY-MM-DD
+ */
+router.get('/tetrix-master', authentifier, async (req, res, next) => {
+  try {
+    const { dateDebut, dateFin } = req.query;
+
+    if (!dateDebut || !dateFin) {
+      res.status(400).json({ erreur: 'dateDebut et dateFin sont requis' });
+      return;
+    }
+
+    const debut = new Date(dateDebut as string);
+    const fin = new Date(dateFin as string);
+
+    const analyse = await analyserAvecTetrixMaster(debut, fin);
+    res.json(analyse);
+  } catch (error) {
+    console.error('[Tetrix Master] Erreur:', error);
+    next(error);
+  }
+});
+
+/**
+ * Analyser la planification actuelle (version simplifiée, legacy)
  * GET /api/optimisation/analyser?dateDebut=YYYY-MM-DD&dateFin=YYYY-MM-DD
  */
 router.get('/analyser', authentifier, async (req, res, next) => {

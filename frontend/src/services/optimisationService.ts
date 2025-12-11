@@ -51,7 +51,20 @@ export interface AnalyseOptimisation {
 
 const optimisationService = {
   /**
-   * Analyser la planification actuelle
+   * Analyser la planification avec Tetrix Master (version complète)
+   */
+  async analyserTetrixMaster(dateDebut: string, dateFin: string): Promise<any> {
+    const response = await axios.get(`${API_URL}/optimisation/tetrix-master`, {
+      params: { dateDebut, dateFin },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * Analyser la planification actuelle (version simplifiée, legacy)
    */
   async analyser(dateDebut: string, dateFin: string): Promise<AnalyseOptimisation> {
     const response = await axios.get(`${API_URL}/optimisation/analyser`, {
