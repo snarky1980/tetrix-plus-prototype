@@ -202,6 +202,7 @@ const PlanificationGlobale: React.FC = () => {
   const [analyseOptimisation, setAnalyseOptimisation] = useState<any | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loadingOptimisation, setLoadingOptimisation] = useState(false);
+  const [erreurOptimisation, setErreurOptimisation] = useState<string>('');
   const [etapeOptimisation, setEtapeOptimisation] = useState<'analyse' | 'suggestions'>('analyse');
 
   // État pour afficher le détail de charge de travail d'un traducteur
@@ -835,12 +836,17 @@ const PlanificationGlobale: React.FC = () => {
     setLoadingOptimisation(true);
     setShowTetrixMaster(true);
     setEtapeOptimisation('analyse');
+    setErreurOptimisation('');
     
     try {
       const analyse = await optimisationService.analyser(applied.start, endDate);
       setAnalyseOptimisation(analyse);
+      setErreurOptimisation('');
     } catch (err: any) {
       console.error('Erreur d\'analyse:', err);
+      console.error('Response:', err.response?.data);
+      const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de l\'analyse';
+      setErreurOptimisation(messageErreur);
       setAnalyseOptimisation(null);
     } finally {
       setLoadingOptimisation(false);
@@ -3466,7 +3472,12 @@ const PlanificationGlobale: React.FC = () => {
           {/* Onglets */}
           <div className="flex gap-2 border-b border-gray-200">
             <button
-              onClick={() => setEtapeOptimisation('analyse')}
+              onClick={() => {
+                setEtapeOptimisation('analyse');
+                if (!analyseOptimisation && !loadingOptimisation) {
+                  chargerAnalyseOptimisation();
+                }
+              }}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                 etapeOptimisation === 'analyse'
                   ? 'border-primary text-primary'
@@ -3637,6 +3648,20 @@ const PlanificationGlobale: React.FC = () => {
             <div className="text-center py-12">
               <p className="text-sm text-muted">Aucune suggestion disponible</p>
               <p className="text-xs text-muted mt-2">La planification semble déjà bien équilibrée</p>
+            </div>
+          ) : erreurOptimisation ? (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 mb-4">
+                <span className="text-3xl">⚠️</span>
+              </div>
+              <p className="text-sm font-semibold text-red-600 mb-2">Erreur lors de l'analyse</p>
+              <p className="text-sm text-muted">{erreurOptimisation}</p>
+              <button
+                onClick={chargerAnalyseOptimisation}
+                className="mt-4 px-4 py-2 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90"
+              >
+                Réessayer
+              </button>
             </div>
           ) : (
             <div className="text-center py-12">
