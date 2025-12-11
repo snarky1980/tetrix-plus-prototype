@@ -1327,11 +1327,11 @@ const PlanificationGlobale: React.FC = () => {
           </details>
         </div>
 
-        {/* Vues sauvegardées */}
+        {/* Portraits sauvegardés */}
         <div className="bg-white border border-border rounded shadow-sm">
           <details>
             <summary className="cursor-pointer text-xs font-semibold px-1.5 py-0.5 hover:bg-gray-50 flex items-center gap-0.5">
-              📌 Vues ({savedViews.length})
+              📌 Portraits ({savedViews.length})
             </summary>
             <div className="px-1.5 pb-1 space-y-0.5 border-t border-border pt-0.5">
               <Button
@@ -1348,7 +1348,7 @@ const PlanificationGlobale: React.FC = () => {
                     type="text"
                     value={newViewName}
                     onChange={(e) => setNewViewName(e.target.value)}
-                    placeholder="Nom de la vue..."
+                    placeholder="Nom du portrait..."
                     className="w-full px-1.5 py-0.5 text-xs border border-border rounded focus:outline-none focus:ring-1 focus:ring-primary"
                     onKeyPress={(e) => e.key === 'Enter' && saveCurrentView()}
                   />
@@ -1394,7 +1394,7 @@ const PlanificationGlobale: React.FC = () => {
                 </div>
               ) : (
                 <p className="text-[10px] text-muted text-center py-2">
-                  Aucune vue sauvegardée
+                  Aucun portrait sauvegardé
                 </p>
               )}
             </div>
@@ -2651,16 +2651,16 @@ const PlanificationGlobale: React.FC = () => {
               {/* Avertissement sur la période */}
               <div className="bg-blue-50 border border-blue-300 rounded p-3">
                 <p className="text-xs text-blue-700">
-                  ℹ️ <strong>Statistiques basées sur la vue actuelle :</strong> du {applied.start} sur {applied.range} jours
+                  ℹ️ <strong>Statistiques basées sur le portrait actuel :</strong> du {applied.start} sur {applied.range} jours
                   {(applied.divisions.length > 0 || applied.domaines.length > 0 || applied.clients.length > 0 || applied.languesSource.length > 0 || applied.languesCible.length > 0) && (
                     <span> (avec filtres appliqués)</span>
                   )}
                 </p>
               </div>
 
-              {/* Vue d'ensemble */}
+              {/* Portrait d'ensemble */}
               <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                <h3 className="font-semibold text-sm mb-3">📈 Vue d'ensemble</h3>
+                <h3 className="font-semibold text-sm mb-3">📈 Portrait d'ensemble</h3>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-muted text-xs">Traducteurs affichés</p>
