@@ -13,7 +13,7 @@ import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
-import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa } from '../utils/dateTimeOttawa';
+import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateDisplay } from '../utils/dateTimeOttawa';
 import { formatNumeroProjet } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 
@@ -1922,14 +1922,14 @@ const PlanificationGlobale: React.FC = () => {
                   <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
                   <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
                   <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
-                  <p><span className="font-medium">Échéance:</span> {parseISODate(formTache.dateEcheance).toLocaleDateString('fr-CA')}</p>
+                  <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? formatDateDisplay(parseISODate(formTache.dateEcheance)) : 'Non définie'}</p>
                   <p><span className="font-medium">Répartition:</span> {
                     formTache.typeRepartition === 'JUSTE_TEMPS' ? 'Juste à temps (JAT)' :
                     formTache.typeRepartition === 'EQUILIBRE' ? 'Équilibré' :
                     formTache.typeRepartition === 'PEPS' ? 'PEPS' : 'Manuelle'
                   }</p>
-                  {formTache.typeRepartition === 'EQUILIBRE' && (
-                    <p><span className="font-medium">Période:</span> {parseISODate(formTache.dateDebut).toLocaleDateString('fr-CA')} → {parseISODate(formTache.dateFin).toLocaleDateString('fr-CA')}</p>
+                  {formTache.typeRepartition === 'EQUILIBRE' && formTache.dateDebut && formTache.dateFin && (
+                    <p><span className="font-medium">Période:</span> {formatDateDisplay(parseISODate(formTache.dateDebut))} → {formatDateDisplay(parseISODate(formTache.dateFin))}</p>
                   )}
                 </div>
               </div>
@@ -2431,7 +2431,7 @@ const PlanificationGlobale: React.FC = () => {
                       <div className="space-y-1.5">
                         {previewJATEdit.map((r, idx) => (
                           <div key={idx} className="flex justify-between items-center text-xs bg-white px-2 py-1 rounded">
-                            <span className="font-medium">{parseISODate(r.date).toLocaleDateString('fr-CA')}</span>
+                            <span className="font-medium">{formatDateDisplay(parseISODate(r.date))}</span>
                             <span className="text-primary font-semibold">{r.heures}h</span>
                           </div>
                         ))}
@@ -2585,7 +2585,7 @@ const PlanificationGlobale: React.FC = () => {
                             )}
                             {tache.client && <span>👤 {tache.client.nom}</span>}
                             <span>⏱️ {tache.heuresTotal}h</span>
-                            <span>📅 {parseISODate(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
+                            <span>📅 {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
                           </div>
                         </div>
                         <Button
@@ -3012,7 +3012,7 @@ const PlanificationGlobale: React.FC = () => {
       {/* Modal Tâches d'une cellule */}
       {celluleSelectionnee && (
         <Modal
-          titre={`📋 ${celluleSelectionnee.traducteurNom} - ${parseISODate(celluleSelectionnee.date).toLocaleDateString('fr-CA')}`}
+          titre={`📋 ${celluleSelectionnee.traducteurNom} - ${formatDateDisplay(parseISODate(celluleSelectionnee.date))}`}
           ouvert={!!celluleSelectionnee}
           onFermer={() => setCelluleSelectionnee(null)}
           ariaDescription="Liste des tâches pour ce traducteur à cette date"
@@ -3039,7 +3039,8 @@ const PlanificationGlobale: React.FC = () => {
                         weekday: 'long', 
                         year: 'numeric', 
                         month: 'long', 
-                        day: 'numeric' 
+                        day: 'numeric',
+                        timeZone: 'America/Toronto'
                       })}
                     </p>
                   </div>
@@ -3116,7 +3117,7 @@ const PlanificationGlobale: React.FC = () => {
                       )}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
                         <span className="text-xs text-muted">
-                          Échéance: {parseISODate(tache.dateEcheance).toLocaleDateString('fr-CA')}
+                          Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}
                         </span>
                         <span className="text-xs text-primary font-medium">
                           Voir détails →
@@ -3159,7 +3160,7 @@ const PlanificationGlobale: React.FC = () => {
               </div>
               <div>
                 <span className="font-medium text-muted">Date échéance:</span>
-                <p>{parseISODate(tacheDetaillee.dateEcheance).toLocaleDateString('fr-CA')}</p>
+                <p>{tacheDetaillee.dateEcheance ? formatDateDisplay(parseISODate(tacheDetaillee.dateEcheance)) : 'Non définie'}</p>
               </div>
               <div>
                 <span className="font-medium text-muted">Statut:</span>
@@ -3224,7 +3225,7 @@ const PlanificationGlobale: React.FC = () => {
                         .sort((a: any, b: any) => parseISODate(a.date).getTime() - parseISODate(b.date).getTime())
                         .map((aj: any, idx: number) => (
                           <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                            <td className="px-3 py-2">{parseISODate(aj.date).toLocaleDateString('fr-CA')}</td>
+                            <td className="px-3 py-2">{formatDateDisplay(parseISODate(aj.date))}</td>
                             <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
                           </tr>
                         ))}
@@ -3378,7 +3379,7 @@ const PlanificationGlobale: React.FC = () => {
                             <span>{tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
                           )}
                           <span className="font-semibold">{tache.heuresTotal}h</span>
-                          <span>Échéance: {parseISODate(tache.dateEcheance).toLocaleDateString('fr-CA')}</span>
+                          <span>Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
                         </div>
                       </div>
                     </div>
