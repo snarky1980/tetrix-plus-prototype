@@ -10,6 +10,49 @@ import { fr } from 'date-fns/locale';
 export const OTTAWA_TIMEZONE = 'America/Toronto';
 
 /**
+ * Timezones disponibles pour l'affichage
+ * Note: Les données sont toujours stockées en timezone Ottawa
+ */
+export type DisplayTimezone = 
+  | 'America/Toronto'      // EST/EDT - Ottawa, Toronto
+  | 'America/Vancouver'    // PST/PDT - Vancouver
+  | 'America/Halifax'      // AST/ADT - Maritimes
+  | 'America/Winnipeg'     // CST/CDT - Manitoba
+  | 'America/Edmonton'     // MST/MDT - Alberta
+  | 'America/St_Johns'     // NST/NDT - Terre-Neuve
+  | 'America/Montreal'     // EST/EDT - Montréal
+  | 'America/Regina';      // CST (pas de DST) - Saskatchewan
+
+export const TIMEZONE_LABELS: Record<DisplayTimezone, string> = {
+  'America/Toronto': '🇨🇦 Toronto/Ottawa (EST/EDT)',
+  'America/Montreal': '🇨🇦 Montréal (EST/EDT)',
+  'America/Vancouver': '🇨🇦 Vancouver (PST/PDT)',
+  'America/Halifax': '🇨🇦 Halifax/Maritimes (AST/ADT)',
+  'America/Winnipeg': '🇨🇦 Winnipeg (CST/CDT)',
+  'America/Edmonton': '🇨🇦 Edmonton/Calgary (MST/MDT)',
+  'America/St_Johns': '🇨🇦 St. John\'s/Terre-Neuve (NST/NDT)',
+  'America/Regina': '🇨🇦 Regina/Saskatchewan (CST)',
+};
+
+const TIMEZONE_PREFERENCE_KEY = 'tetrix-display-timezone-preference';
+
+/**
+ * Obtenir le timezone d'affichage préféré de l'utilisateur
+ * Note: Cela n'affecte que l'affichage, les données restent en timezone Ottawa
+ */
+export function getDisplayTimezonePreference(): DisplayTimezone {
+  const stored = localStorage.getItem(TIMEZONE_PREFERENCE_KEY);
+  return (stored as DisplayTimezone) || OTTAWA_TIMEZONE;
+}
+
+/**
+ * Définir le timezone d'affichage préféré de l'utilisateur
+ */
+export function setDisplayTimezonePreference(timezone: DisplayTimezone): void {
+  localStorage.setItem(TIMEZONE_PREFERENCE_KEY, timezone);
+}
+
+/**
  * Obtenir la date/heure actuelle à Ottawa
  */
 export function nowOttawa(): Date {
@@ -141,36 +184,38 @@ export function setDateFormatPreference(format: DateFormat): void {
 }
 
 /**
- * Formater une date selon le format préféré de l'utilisateur (ex: "11 déc. 2025")
+ * Formater une date selon le format et le timezone préférés de l'utilisateur (ex: "11 déc. 2025")
+ * Note: Les données sont stockées en timezone Ottawa, mais l'affichage utilise le timezone préféré
  */
 export function formatDateDisplay(date: Date, customFormat?: DateFormat): string {
-  const zonedDate = toZonedTime(date, OTTAWA_TIMEZONE);
+  const displayTimezone = getDisplayTimezonePreference();
+  const zonedDate = toZonedTime(date, displayTimezone);
   const fmt = customFormat || getDateFormatPreference();
   
   switch (fmt) {
     case 'text-short':
-      return format(zonedDate, 'd MMM yyyy', { timeZone: OTTAWA_TIMEZONE, locale: fr });
+      return format(zonedDate, 'd MMM yyyy', { timeZone: displayTimezone, locale: fr });
     
     case 'text-long':
-      return format(zonedDate, 'd MMMM yyyy', { timeZone: OTTAWA_TIMEZONE, locale: fr });
+      return format(zonedDate, 'd MMMM yyyy', { timeZone: displayTimezone, locale: fr });
     
     case 'iso':
-      return format(zonedDate, 'yyyy-MM-dd', { timeZone: OTTAWA_TIMEZONE });
+      return format(zonedDate, 'yyyy-MM-dd', { timeZone: displayTimezone });
     
     case 'slash-dmy':
-      return format(zonedDate, 'dd/MM/yyyy', { timeZone: OTTAWA_TIMEZONE });
+      return format(zonedDate, 'dd/MM/yyyy', { timeZone: displayTimezone });
     
     case 'slash-mdy':
-      return format(zonedDate, 'MM/dd/yyyy', { timeZone: OTTAWA_TIMEZONE });
+      return format(zonedDate, 'MM/dd/yyyy', { timeZone: displayTimezone });
     
     case 'dash-dmy':
-      return format(zonedDate, 'dd-MM-yyyy', { timeZone: OTTAWA_TIMEZONE });
+      return format(zonedDate, 'dd-MM-yyyy', { timeZone: displayTimezone });
     
     case 'dash-mdy':
-      return format(zonedDate, 'MM-dd-yyyy', { timeZone: OTTAWA_TIMEZONE });
+      return format(zonedDate, 'MM-dd-yyyy', { timeZone: displayTimezone });
     
     default:
-      return format(zonedDate, 'd MMM yyyy', { timeZone: OTTAWA_TIMEZONE, locale: fr });
+      return format(zonedDate, 'd MMM yyyy', { timeZone: displayTimezone, locale: fr });
   }
 }
 
@@ -178,11 +223,23 @@ export function formatDateDisplay(date: Date, customFormat?: DateFormat): string
  * Formater une date avec jour de la semaine (ex: "Mer. 11/12")
  */
 export function formatDateWithWeekday(date: Date): string {
-  const zonedDate = toZonedTime(date, OTTAWA_TIMEZONE);
+  const displayTimezone = getDisplayTimezonePreference();
+  const zonedDate = toZonedTime(date, displayTimezone);
   const weekday = format(zonedDate, 'EEE', { 
-    timeZone: OTTAWA_TIMEZONE,
+    timeZone: displayTimezone,
     locale: fr
   });
-  const dayMonth = format(zonedDate, 'd/M', { timeZone: OTTAWA_TIMEZONE });
+  const dayMonth = format(zonedDate, 'd/M', { timeZone: displayTimezone });
   return `${weekday}. ${dayMonth}`;
+}
+
+/**
+ * Formater une date avec heure (ex: "11 déc. 2025 à 14h30")
+ */
+export function formatDateTimeDisplay(date: Date): string {
+  const displayTimezone = getDisplayTimezonePreference();
+  const zonedDate = toZonedTime(date, displayTimezone);
+  const dateStr = formatDateDisplay(date);
+  const timeStr = format(zonedDate, 'HH:mm', { timeZone: displayTimezone });
+  return `${dateStr} à ${timeStr}`;
 }
