@@ -15,7 +15,6 @@ import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
 import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateDisplay } from '../utils/dateTimeOttawa';
 import { formatNumeroProjet } from '../utils/formatters';
-import { DateFormatSettings } from '../components/settings/DateFormatSettings';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -109,9 +108,6 @@ const PlanificationGlobale: React.FC = () => {
 
   // Modal statistiques
   const [showStatsModal, setShowStatsModal] = useState(false);
-
-  // Modal paramètres de date
-  const [showDateFormatSettings, setShowDateFormatSettings] = useState(false);
 
   // Référence pour le scroll horizontal
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
@@ -1611,16 +1607,6 @@ const PlanificationGlobale: React.FC = () => {
           title="Optimiser la charge de travail"
         >
           🎯 Tetrix Master
-        </Button>
-
-        {/* Bouton Paramètres de date */}
-        <Button
-          variant="outline"
-          onClick={() => setShowDateFormatSettings(true)}
-          className="px-3 py-2 text-sm"
-          title="Format d'affichage des dates"
-        >
-          📅 Format de date
         </Button>
 
         {/* Bouton Créer une tâche */}
@@ -3653,13 +3639,6 @@ const PlanificationGlobale: React.FC = () => {
         <span className="text-2xl">📋</span>
         <span className="text-sm font-semibold">Mes tâches</span>
       </button>
-
-      {/* Modal Paramètres de format de date */}
-      <DateFormatSettings
-        isOpen={showDateFormatSettings}
-        onClose={() => setShowDateFormatSettings(false)}
-        onFormatChange={() => window.location.reload()}
-      />
       </div>
     </AppLayout>
   );
