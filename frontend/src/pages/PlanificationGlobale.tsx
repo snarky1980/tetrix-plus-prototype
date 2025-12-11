@@ -4,6 +4,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
+import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
@@ -1725,17 +1726,13 @@ const PlanificationGlobale: React.FC = () => {
                 </div>
 
                 {/* Date d'échéance */}
-                <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-900">Date d'échéance <span className="text-red-600">*</span></label>
-                  <Input
-                    type="date"
-                    value={formTache.dateEcheance}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateEcheance: e.target.value })}
-                    min={today}
-                    required
-                    className="border-2 border-blue-300"
-                  />
-                </div>
+                <DateTimeInput
+                  label="Date d'échéance"
+                  value={formTache.dateEcheance}
+                  onChange={(value) => setFormTache({ ...formTache, dateEcheance: value })}
+                  includeTime={true}
+                  required
+                />
               </div>
 
               {/* Section Champs optionnels */}
@@ -2249,14 +2246,12 @@ const PlanificationGlobale: React.FC = () => {
 
                 {/* Date d'échéance */}
                 <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-900">Date d'échéance <span className="text-red-600">*</span></label>
-                  <Input
-                    type="date"
+                  <DateTimeInput
+                    label="Date d'échéance"
                     value={formEdition.dateEcheance}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateEcheance: e.target.value })}
-                    min={today}
+                    onChange={(value) => setFormEdition({ ...formEdition, dateEcheance: value })}
+                    includeTime={true}
                     required
-                    className="border-2 border-blue-300"
                   />
                 </div>
               </div>
