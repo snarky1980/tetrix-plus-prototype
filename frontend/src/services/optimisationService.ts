@@ -103,6 +103,19 @@ const optimisationService = {
       }
     );
   },
+
+  /**
+   * Générer rapport Tetrix Orion (analyse statistique avancée)
+   */
+  async genererRapportOrion(dateDebut: string, dateFin: string): Promise<any> {
+    const response = await axios.get(`${API_URL}/optimisation/orion`, {
+      params: { dateDebut, dateFin },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return response.data;
+  },
 };
 
 export default optimisationService;

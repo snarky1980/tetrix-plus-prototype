@@ -7,6 +7,7 @@ import { Input } from '../components/ui/Input';
 import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
 import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
+import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { clientService } from '../services/clientService';
@@ -108,8 +109,11 @@ const PlanificationGlobale: React.FC = () => {
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [searchType, setSearchType] = useState<'availability' | 'immediate' | null>(null);
 
-  // Modal statistiques
-  const [showStatsModal, setShowStatsModal] = useState(false);
+  // Modal statistiques Tetrix Orion
+  const [showOrionModal, setShowOrionModal] = useState(false);
+  const [rapportOrion, setRapportOrion] = useState<any>(null);
+  const [chargementOrion, setChargementOrion] = useState(false);
+  const [erreurOrion, setErreurOrion] = useState<string | null>(null);
 
   // Référence pour le scroll horizontal
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
@@ -855,6 +859,26 @@ const PlanificationGlobale: React.FC = () => {
     }
   };
 
+  const chargerRapportOrion = async () => {
+    setChargementOrion(true);
+    setShowOrionModal(true);
+    setErreurOrion(null);
+    
+    try {
+      const rapport = await optimisationService.genererRapportOrion(applied.start, endDate);
+      setRapportOrion(rapport);
+      setErreurOrion(null);
+    } catch (err: any) {
+      console.error('Erreur génération Rapport Orion:', err);
+      console.error('Response:', err.response?.data);
+      const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de la génération du rapport';
+      setErreurOrion(messageErreur);
+      setRapportOrion(null);
+    } finally {
+      setChargementOrion(false);
+    }
+  };
+
   const chargerSuggestions = async () => {
     setLoadingOptimisation(true);
     setEtapeOptimisation('suggestions');
@@ -1087,81 +1111,6 @@ const PlanificationGlobale: React.FC = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  // Calculer les statistiques de disponibilité basées sur la vue actuelle
-  const calculerStatistiques = () => {
-    if (!planificationEnrichie) return null;
-
-    // Utiliser uniquement les dates visibles (days) et les traducteurs affichés
-    const joursOuvrablesVisibles = days.filter(d => !isWeekend(d));
-    
-    let totalTraducteurs = planificationEnrichie.planification.length;
-    let heuresCapaciteTotale = 0;
-    let heuresUtilisees = 0;
-    let heuresDisponiblesTotales = 0; // Somme des heures affichées dans les cellules
-    let traducteursDisponibles = 0;
-    let traducteursSurcharges = 0;
-    let traducteursOccupes = 0;
-    
-    const statsByDivision: Record<string, { count: number; tauxOccupation: number }> = {};
-
-    planificationEnrichie.planification.forEach((ligne) => {
-      const division = ligne.traducteur.division;
-      if (!statsByDivision[division]) {
-        statsByDivision[division] = { count: 0, tauxOccupation: 0 };
-      }
-      statsByDivision[division].count++;
-
-      let heuresTraducteur = 0;
-      let capaciteTraducteur = 0;
-
-      // Parcourir TOUS les jours ouvrables visibles, pas seulement ceux avec des données
-      joursOuvrablesVisibles.forEach((dateStr) => {
-        const info = ligne.dates[dateStr];
-        const heures = info ? info.heures : 0;
-        const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
-        const disponible = capacite - heures; // Ce qui est affiché dans la cellule
-        
-        heuresTraducteur += heures;
-        capaciteTraducteur += capacite;
-        heuresDisponiblesTotales += disponible;
-      });
-
-      heuresCapaciteTotale += capaciteTraducteur;
-      heuresUtilisees += heuresTraducteur;
-
-      const tauxOccupation = capaciteTraducteur > 0 ? (heuresTraducteur / capaciteTraducteur) * 100 : 0;
-      statsByDivision[division].tauxOccupation += tauxOccupation;
-
-      if (tauxOccupation < 50) {
-        traducteursDisponibles++;
-      } else if (tauxOccupation >= 80) {
-        traducteursSurcharges++;
-      } else {
-        traducteursOccupes++;
-      }
-    });
-
-    // Calculer moyenne par division
-    Object.keys(statsByDivision).forEach((div) => {
-      statsByDivision[div].tauxOccupation = statsByDivision[div].tauxOccupation / statsByDivision[div].count;
-    });
-
-    const tauxOccupationMoyen = heuresCapaciteTotale > 0 ? (heuresUtilisees / heuresCapaciteTotale) * 100 : 0;
-    const heuresDisponibles = heuresDisponiblesTotales; // Utiliser la vraie somme des cellules
-
-    return {
-      totalTraducteurs,
-      tauxOccupationMoyen,
-      traducteursDisponibles,
-      traducteursOccupes,
-      traducteursSurcharges,
-      heuresCapaciteTotale,
-      heuresUtilisees,
-      heuresDisponibles,
-      statsByDivision,
-    };
   };
 
   useEffect(() => {
@@ -1615,14 +1564,14 @@ const PlanificationGlobale: React.FC = () => {
 
       {/* Groupe de boutons flottants - Coin inférieur droit */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-        {/* Bouton Statistiques */}
+        {/* Bouton Tetrix Orion - Statistiques Avancées */}
         <Button
           variant="outline"
-          onClick={() => setShowStatsModal(true)}
-          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-white"
-          title="Voir les statistiques de disponibilité"
+          onClick={chargerRapportOrion}
+          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white border-none"
+          title="Analyse statistique avancée du planning"
         >
-          📊 Stats
+          🔭 Tetrix Orion
         </Button>
 
         {/* Bouton Tetrix Master */}
@@ -2694,124 +2643,36 @@ const PlanificationGlobale: React.FC = () => {
         )}
       </Modal>
 
-      {/* Modal Statistiques */}
+      {/* Modal Tetrix Orion */}
       <Modal
-        titre=" Statistiques de disponibilité"
-        ouvert={showStatsModal}
-        onFermer={() => setShowStatsModal(false)}
-        ariaDescription="Statistiques sur la disponibilité des traducteurs"
+        titre="🔭 Tetrix Orion - Analyse Statistique Avancée"
+        ouvert={showOrionModal}
+        onFermer={() => setShowOrionModal(false)}
+        ariaDescription="Rapport statistique avancé du planning"
       >
-        {(() => {
-          const stats = calculerStatistiques();
-          if (!stats) return <p className="text-sm text-muted">Aucune donnée disponible</p>;
-
-          return (
-            <div className="space-y-4">
-              {/* Avertissement sur la période */}
-              <div className="bg-blue-50 border border-blue-300 rounded p-3">
-                <p className="text-xs text-blue-700">
-                  ℹ️ <strong>Statistiques basées sur le portrait actuel :</strong> du {applied.start} sur {applied.range} jours
-                  {(applied.divisions.length > 0 || applied.domaines.length > 0 || applied.clients.length > 0 || applied.languesSource.length > 0 || applied.languesCible.length > 0) && (
-                    <span> (avec filtres appliqués)</span>
-                  )}
-                </p>
-              </div>
-
-              {/* Portrait d'ensemble */}
-              <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                <h3 className="font-semibold text-sm mb-3">📈 Portrait d'ensemble</h3>
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p className="text-muted text-xs">Traducteurs affichés</p>
-                    <p className="font-bold text-lg">{stats.totalTraducteurs}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted text-xs">Taux d'occupation moyen</p>
-                    <p className="font-bold text-lg">{stats.tauxOccupationMoyen.toFixed(1)}%</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Disponibilité */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-green-50 border border-green-200 rounded p-3">
-                  <p className="text-green-700 text-xs font-medium mb-1">✅ Disponibles</p>
-                  <p className="text-green-900 font-bold text-2xl">{stats.traducteursDisponibles}</p>
-                  <p className="text-green-600 text-xs mt-1">&lt; 50% occupés</p>
-                </div>
-                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                  <p className="text-yellow-700 text-xs font-medium mb-1">⚠️ Occupés</p>
-                  <p className="text-yellow-900 font-bold text-2xl">{stats.traducteursOccupes}</p>
-                  <p className="text-yellow-600 text-xs mt-1">50-80% occupés</p>
-                </div>
-                <div className="bg-red-50 border border-red-200 rounded p-3">
-                  <p className="text-red-700 text-xs font-medium mb-1">🔴 Surchargés</p>
-                  <p className="text-red-900 font-bold text-2xl">{stats.traducteursSurcharges}</p>
-                  <p className="text-red-600 text-xs mt-1">&gt; 80% occupés</p>
-                </div>
-              </div>
-
-              {/* Heures */}
-              <div className="bg-gray-50 border border-gray-200 rounded p-4">
-                <h3 className="font-semibold text-sm mb-3">⏰ Capacité (période affichée)</h3>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted">Capacité maximale</span>
-                    <span className="font-semibold">{stats.heuresCapaciteTotale.toFixed(1)}h</span>
-                  </div>
-                  <p className="text-xs text-muted italic">
-                    Somme des capacités maximales de tous les traducteurs sur la période visible
-                  </p>
-                  <div className="flex justify-between">
-                    <span className="text-muted">Heures assignées (tâches)</span>
-                    <span className="font-semibold text-orange-600">{stats.heuresUtilisees.toFixed(1)}h</span>
-                  </div>
-                  <p className="text-xs text-muted italic">
-                    Heures de tâches déjà attribuées
-                  </p>
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="text-green-700 font-medium">Heures disponibles (libres)</span>
-                    <span className="font-bold text-green-700">{stats.heuresDisponibles.toFixed(1)}h</span>
-                  </div>
-                  <p className="text-xs text-muted italic">
-                    Somme des heures affichées dans les cellules vertes/jaunes du calendrier
-                  </p>
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full transition-all" 
-                      style={{ width: `${stats.tauxOccupationMoyen}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Par division */}
-              <div className="bg-purple-50 border border-purple-200 rounded p-4">
-                <h3 className="font-semibold text-sm mb-3">🏢 Par division</h3>
-                <div className="space-y-2 text-sm">
-                  {Object.entries(stats.statsByDivision).map(([division, stat]) => (
-                    <div key={division} className="flex justify-between items-center">
-                      <span className="text-muted truncate flex-1">{division}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted">({stat.count})</span>
-                        <span className="font-semibold min-w-[50px] text-right">{stat.tauxOccupation.toFixed(1)}%</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowStatsModal(false)}
-                >
-                  Fermer
-                </Button>
-              </div>
-            </div>
-          );
-        })()}
+        {chargementOrion ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+            <p className="text-sm text-muted">Génération du rapport Orion...</p>
+            <p className="text-xs text-muted mt-2">Analyse en cours</p>
+          </div>
+        ) : erreurOrion ? (
+          <div className="p-4 bg-red-50 border border-red-200 rounded">
+            <p className="text-sm text-red-800 font-medium mb-2">❌ Erreur</p>
+            <p className="text-xs text-red-700">{erreurOrion}</p>
+            <Button
+              variant="outline"
+              onClick={chargerRapportOrion}
+              className="mt-3 text-xs"
+            >
+              Réessayer
+            </Button>
+          </div>
+        ) : rapportOrion ? (
+          <TetrixOrionDisplay rapport={rapportOrion} />
+        ) : (
+          <p className="text-sm text-muted text-center py-8">Aucun rapport disponible</p>
+        )}
       </Modal>
 
       {/* Panneau principal à droite - Tableau de planification */}
