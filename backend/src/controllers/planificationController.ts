@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { calculerCouleurDisponibilite, estWeekend } from '../services/planificationService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
+import { parseOttawaDateISO } from '../utils/dateTimeOttawa';
 
 /**
  * Obtenir la planification d'un traducteur
@@ -41,8 +42,8 @@ export const obtenirPlanification = async (
       where: {
         traducteurId,
         date: {
-          gte: new Date(dateDebut as string),
-          lte: new Date(dateFin as string),
+          gte: parseOttawaDateISO(dateDebut as string),
+          lte: parseOttawaDateISO(dateFin as string),
         },
       },
       include: {
@@ -147,7 +148,7 @@ export const creerBlocage = async (
       return;
     }
     try {
-      const cap = await verifierCapaciteJournaliere(traducteurId, new Date(date), heures);
+      const cap = await verifierCapaciteJournaliere(traducteurId, parseOttawaDateISO(date), heures);
       if (cap.depassement) {
         res.status(400).json({ erreur: `Capacité dépassée le ${date} (actuelles ${cap.heuresActuelles.toFixed(2)} + nouvelles ${heures} > ${cap.capacite}).` });
         return;
@@ -159,7 +160,7 @@ export const creerBlocage = async (
     const blocage = await prisma.ajustementTemps.create({
       data: {
         traducteurId,
-        date: new Date(date),
+        date: parseOttawaDateISO(date),
         heures,
         type: 'BLOCAGE',
         creePar: req.utilisateur!.id,
@@ -319,8 +320,8 @@ export const obtenirPlanificationGlobale = async (
           where: {
             traducteurId: traducteur.id,
             date: {
-              gte: new Date(dateDebut as string),
-              lte: new Date(dateFin as string),
+              gte: parseOttawaDateISO(dateDebut as string),
+              lte: parseOttawaDateISO(dateFin as string),
             },
           },
         });

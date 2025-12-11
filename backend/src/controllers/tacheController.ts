@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { repartitionJusteATemps, validerRepartition, RepartitionItem } from '../services/repartitionService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
+import { parseOttawaDateISO } from '../utils/dateTimeOttawa';
 
 /**
  * Obtenir les tâches avec filtres
@@ -27,25 +28,21 @@ export const obtenirTaches = async (
 
     // Si une date spécifique est fournie, filtrer les tâches ayant des ajustements pour cette date
     if (date) {
-      // Utiliser une plage pour gérer les problèmes de timezone
+      // Utiliser parseOttawaDateISO pour une gestion correcte de la timezone
       const dateStr = date as string;
-      const dateDebut = new Date(dateStr + 'T00:00:00.000Z');
-      const dateFin = new Date(dateStr + 'T23:59:59.999Z');
+      const dateOttawa = parseOttawaDateISO(dateStr);
       
       where.ajustementsTemps = {
         some: {
-          date: {
-            gte: dateDebut,
-            lte: dateFin
-          },
+          date: dateOttawa,
           type: 'TACHE'
         }
       };
     } else if (dateDebut || dateFin) {
       // Sinon, utiliser la plage de dates d'échéance
       where.dateEcheance = {};
-      if (dateDebut) where.dateEcheance.gte = new Date(dateDebut as string);
-      if (dateFin) where.dateEcheance.lte = new Date(dateFin as string);
+      if (dateDebut) where.dateEcheance.gte = parseOttawaDateISO(dateDebut as string);
+      if (dateFin) where.dateEcheance.lte = parseOttawaDateISO(dateFin as string);
     }
 
     // Gestion du tri
@@ -192,7 +189,7 @@ export const creerTache = async (
           specialisation: req.body.specialisation || '',
           description: description || '',
           heuresTotal,
-          dateEcheance: new Date(dateEcheance),
+          dateEcheance: parseOttawaDateISO(dateEcheance),
           statut: 'PLANIFIEE',
           creePar: req.utilisateur!.id,
         },
@@ -205,7 +202,7 @@ export const creerTache = async (
             data: {
               traducteurId,
               tacheId: nouvelleTache.id,
-              date: new Date(ajust.date),
+              date: parseOttawaDateISO(ajust.date),
               heures: ajust.heures,
               type: 'TACHE',
               creePar: req.utilisateur!.id,
@@ -305,7 +302,7 @@ export const mettreAJourTache = async (
           ...(description !== undefined && { description }),
           ...(specialisation !== undefined && { specialisation }),
           ...(heuresTotal && { heuresTotal }),
-          ...(dateEcheance && { dateEcheance: new Date(dateEcheance) }),
+          ...(dateEcheance && { dateEcheance: parseOttawaDateISO(dateEcheance) }),
           ...(statut && { statut }),
           ...(typeTache && { typeTache }),
         },
@@ -321,7 +318,7 @@ export const mettreAJourTache = async (
             data: {
               traducteurId: tacheMiseAJour.traducteurId,
               tacheId: id,
-              date: new Date(ajust.date),
+              date: parseOttawaDateISO(ajust.date),
               heures: ajust.heures,
               type: 'TACHE',
               creePar: req.utilisateur!.id,
