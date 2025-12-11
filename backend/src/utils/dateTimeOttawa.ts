@@ -506,17 +506,20 @@ export function normalizeToOttawaWithTime(
   
   if (input instanceof Date) {
     // Si Date fournie, vérifier si elle contient une heure significative
-    hasTime = hasSignificantTime(input);
+    const inputHasSignificantTime = hasSignificantTime(input);
     
-    if (includeTime && hasTime) {
-      // Conserver l'heure telle quelle
+    if (includeTime && inputHasSignificantTime) {
+      // Mode timestamp + heure significative fournie → conserver
       date = input;
-    } else if (includeTime && !hasTime) {
-      // Date à minuit → convertir en fin de journée si includeTime
+      hasTime = true;
+    } else if (includeTime && !inputHasSignificantTime) {
+      // Mode timestamp + date à minuit → convertir en fin de journée
       date = endOfDayOttawa(input);
+      hasTime = false; // Pas fournie explicitement
     } else {
-      // Mode legacy: normaliser à minuit
+      // Mode legacy: normaliser à minuit (ignore l'heure)
       date = startOfDayOttawa(input);
+      hasTime = false;
     }
   } 
   else if (typeof input === 'string') {
@@ -524,8 +527,18 @@ export function normalizeToOttawaWithTime(
     
     // Cas 1: Timestamp complet (YYYY-MM-DDTHH:mm:ss)
     if (ISO_DATETIME_REGEX.test(trimmed)) {
-      date = parseOttawaDateTimeISO(trimmed);
-      hasTime = hasSignificantTime(date);
+      const parsedDate = parseOttawaDateTimeISO(trimmed);
+      const inputHasSignificantTime = hasSignificantTime(parsedDate);
+      
+      if (includeTime) {
+        // Mode timestamp: conserver l'heure
+        date = parsedDate;
+        hasTime = inputHasSignificantTime;
+      } else {
+        // Mode legacy: ignorer l'heure → minuit
+        date = startOfDayOttawa(parsedDate);
+        hasTime = false;
+      }
     }
     // Cas 2: Date seule (YYYY-MM-DD)
     else if (ISO_DATE_REGEX.test(trimmed)) {
@@ -545,8 +558,15 @@ export function normalizeToOttawaWithTime(
       if (isNaN(parsed.getTime())) {
         throw new Error(`${label} invalide: "${trimmed}"`);
       }
-      hasTime = hasSignificantTime(parsed);
-      date = hasTime && includeTime ? parsed : startOfDayOttawa(parsed);
+      const inputHasSignificantTime = hasSignificantTime(parsed);
+      
+      if (includeTime && inputHasSignificantTime) {
+        date = parsed;
+        hasTime = true;
+      } else {
+        date = startOfDayOttawa(parsed);
+        hasTime = false;
+      }
     }
     // Cas 4: Format non supporté
     else {
@@ -559,8 +579,39 @@ export function normalizeToOttawaWithTime(
     throw new Error(`${label}: type invalide (attendu Date ou string)`);
   }
   
-  // Formater ISO selon présence d'heure
-  const iso = hasTime ? formatOttawaDateTimeISO(date) : formatOttawaISO(date);
+  // Formater ISO selon le mode et l'heure stockée
+  let iso: string;
+  if (!includeTime) {
+    // Mode legacy: toujours format date seule (ignore l'heure stockée)
+    iso = formatOttawaISO(date);
+  } else {
+    // Mode timestamp: format avec l'heure réellement stockée
+    // Si hasTime=false mais qu'on a converti en 23:59:59, on doit le montrer
+    // Si hasTime=false et c'est minuit, on peut montrer juste la date
+    // Si hasTime=true, toujours montrer l'heure
+    if (hasTime) {
+      iso = formatOttawaDateTimeISO(date);
+    } else {
+      // Pas d'heure fournie explicitement mais on doit montrer ce qui est stocké
+      const ottawaDate = toZonedTime(date, OTTAWA_TIMEZONE);
+      const hours = ottawaDate.getHours();
+      const minutes = ottawaDate.getMinutes();
+      const seconds = ottawaDate.getSeconds();
+      
+      // Si c'est 23:59:59, l'afficher explicitement
+      if (hours === 23 && minutes === 59 && seconds === 59) {
+        iso = formatOttawaDateTimeISO(date);
+      } 
+      // Si c'est minuit, format date seule suffit
+      else if (hours === 0 && minutes === 0 && seconds === 0) {
+        iso = formatOttawaISO(date);
+      }
+      // Autres cas (ne devrait pas arriver mais par sécurité)
+      else {
+        iso = formatOttawaDateTimeISO(date);
+      }
+    }
+  }
   
   return { date, iso, hasTime };
 }

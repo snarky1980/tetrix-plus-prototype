@@ -2,8 +2,12 @@ import prisma from '../config/database';
 import {
   DateInput,
   normalizeToOttawa,
+  normalizeToOttawaWithTime,
+  hasSignificantTime,
+  differenceInHoursOttawa,
   formatOttawaISO,
   todayOttawa,
+  nowOttawa,
   addDaysOttawa,
   subDaysOttawa,
   differenceInDaysOttawa,
@@ -12,6 +16,7 @@ import {
   validateNotPast,
   validateDateRange
 } from '../utils/dateTimeOttawa';
+import { capaciteDisponiblePlageHoraire } from './capaciteService';
 
 export interface RepartitionItem { date: string; heures: number }
 
@@ -42,6 +47,11 @@ export interface RepartitionJATOptions {
   livraisonMatinale?: boolean;
   heuresMaxJourJ?: number;
   debug?: boolean;
+  /**
+   * NOUVEAU: Mode timestamp - si true, parse les timestamps avec heure
+   * et utilise hasSignificantTime() pour détecter si échéance a heure précise
+   */
+  modeTimestamp?: boolean;
 }
 
 // Répartition "Juste-à-temps" (JAT)
@@ -59,11 +69,18 @@ export async function repartitionJusteATemps(
   const debug = options.debug || false;
   const livraisonMatinale = options.livraisonMatinale || false;
   const heuresMaxJourJ = options.heuresMaxJourJ ?? 2;
+  const modeTimestamp = options.modeTimestamp || false;
 
-  const { date: echeance, iso: dateEcheanceISO } = normalizeToOttawa(dateEcheanceInput, 'dateEcheance');
+  // Mode legacy ou timestamp
+  const { date: echeance, iso: dateEcheanceISO, hasTime: echeanceHasTime } = modeTimestamp
+    ? normalizeToOttawaWithTime(dateEcheanceInput, true, 'dateEcheance')
+    : { ...normalizeToOttawa(dateEcheanceInput, 'dateEcheance'), hasTime: false };
 
   if (debug) {
     console.debug(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheanceISO}`);
+    if (modeTimestamp && echeanceHasTime) {
+      console.debug(`[JAT] Mode timestamp: échéance avec heure précise détectée`);
+    }
     if (livraisonMatinale) console.debug(`[JAT] Mode livraison matinale activé (max ${heuresMaxJourJ}h le jour J)`);
   }
   

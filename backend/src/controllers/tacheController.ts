@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { repartitionJusteATemps, validerRepartition, RepartitionItem } from '../services/repartitionService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
-import { parseOttawaDateISO } from '../utils/dateTimeOttawa';
+import { parseOttawaDateISO, normalizeToOttawaWithTime, hasSignificantTime } from '../utils/dateTimeOttawa';
 
 /**
  * Obtenir les tâches avec filtres
@@ -156,6 +156,10 @@ export const creerTache = async (
       return;
     }
 
+    // Parser la dateEcheance avec support timestamp
+    const { date: dateEcheanceParsee } = normalizeToOttawaWithTime(dateEcheance, true, 'dateEcheance');
+    const echeanceAHeureSignificative = hasSignificantTime(dateEcheanceParsee);
+
     let repartitionEffective: RepartitionItem[] | undefined = undefined;
     if (repartition && Array.isArray(repartition) && repartition.length > 0) {
       // Validation répartition manuelle
@@ -166,10 +170,11 @@ export const creerTache = async (
       }
       repartitionEffective = repartition;
     } else if (repartitionAuto) {
-      // Génération JAT
+      // Génération JAT avec support timestamp si échéance a heure significative
       try {
-        // Passer la string dateEcheance directement, normalizeToOttawa s'occupera de la conversion correcte
-        repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, dateEcheance);
+        repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, dateEcheance, {
+          modeTimestamp: echeanceAHeureSignificative
+        });
       } catch (e: any) {
         console.error('[Erreur JAT]', e.message, '| traducteurId:', traducteurId, '| heuresTotal:', heuresTotal, '| dateEcheance:', dateEcheance);
         res.status(400).json({ erreur: e.message || 'Erreur JAT' });
@@ -191,7 +196,7 @@ export const creerTache = async (
           description: description || '',
           heuresTotal,
           compteMots: compteMots ? parseInt(compteMots) : null,
-          dateEcheance: parseOttawaDateISO(dateEcheance),
+          dateEcheance: dateEcheanceParsee, // Utilise la date parsée avec support timestamp
           statut: 'PLANIFIEE',
           creePar: req.utilisateur!.id,
         },
@@ -296,6 +301,13 @@ export const mettreAJourTache = async (
       }
     }
 
+    // Parser dateEcheance si fournie
+    let dateEcheanceParsee: Date | undefined;
+    if (dateEcheance) {
+      const { date } = normalizeToOttawaWithTime(dateEcheance, true, 'dateEcheance');
+      dateEcheanceParsee = date;
+    }
+
     const tache = await prisma.$transaction(async (tx) => {
       // Mettre à jour la tâche
       const tacheMiseAJour = await tx.tache.update({
@@ -306,7 +318,7 @@ export const mettreAJourTache = async (
           ...(specialisation !== undefined && { specialisation }),
           ...(heuresTotal && { heuresTotal }),
           ...(compteMots !== undefined && { compteMots: compteMots ? parseInt(compteMots) : null }),
-          ...(dateEcheance && { dateEcheance: parseOttawaDateISO(dateEcheance) }),
+          ...(dateEcheanceParsee && { dateEcheance: dateEcheanceParsee }),
           ...(statut && { statut }),
           ...(typeTache && { typeTache }),
         },
