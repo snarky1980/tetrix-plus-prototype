@@ -3621,7 +3621,12 @@ const PlanificationGlobale: React.FC = () => {
               <p className="text-sm text-muted">Aucune suggestion disponible</p>
               <p className="text-xs text-muted mt-2">La planification semble déjà bien équilibrée</p>
             </div>
-          ) : null}
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-sm text-muted">Aucune analyse disponible</p>
+              <p className="text-xs text-muted mt-2">Cliquez sur "📊 Analyse" pour analyser la planification</p>
+            </div>
+          )}
         </div>
       </Modal>
 
