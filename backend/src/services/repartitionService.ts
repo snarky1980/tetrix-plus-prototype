@@ -89,7 +89,7 @@ export async function repartitionJusteATemps(
   }
 
   // Calculer capacité totale disponible sur la fenêtre (excluant les weekends)
-  const totalJours = differenceInDaysOttawa(echeance, aujourdHui) + 1;
+  const totalJours = differenceInDaysOttawa(aujourdHui, echeance) + 1;
   let capaciteDisponibleGlobale = 0;
   
   // Si livraison matinale, limiter capacité du jour J
