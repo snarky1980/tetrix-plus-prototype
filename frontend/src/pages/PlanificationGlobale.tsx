@@ -638,6 +638,19 @@ const PlanificationGlobale: React.FC = () => {
     setErreurCreation('');
 
     try {
+      // Validation des champs requis
+      if (!formTache.dateEcheance || formTache.dateEcheance.trim() === '') {
+        setErreurCreation('La date d\'échéance est requise');
+        setSubmitting(false);
+        return;
+      }
+
+      if (!formTache.numeroProjet || !formTache.traducteurId || !formTache.heuresTotal) {
+        setErreurCreation('Veuillez remplir tous les champs obligatoires');
+        setSubmitting(false);
+        return;
+      }
+
       // Validation pour répartition manuelle
       if (formTache.typeRepartition === 'MANUEL') {
         const totalHeuresManuel = formTache.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
@@ -691,7 +704,11 @@ const PlanificationGlobale: React.FC = () => {
       // Rafraîchir la planification
       window.location.reload();
     } catch (err: any) {
-      setErreurCreation(err.response?.data?.erreur || 'Erreur lors de la création de la tâche');
+      console.error('Erreur complète:', err);
+      console.error('Response data:', err.response?.data);
+      const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de la création de la tâche';
+      const detailsErreur = err.response?.data?.details ? `\nDétails: ${JSON.stringify(err.response.data.details)}` : '';
+      setErreurCreation(messageErreur + detailsErreur);
     } finally {
       setSubmitting(false);
     }
