@@ -13,29 +13,23 @@ import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
+import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa } from '../utils/dateTimeOttawa';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 
 const PlanificationGlobale: React.FC = () => {
   usePageTitle('Tetrix PLUS Planification', 'Consultez le planification globale des traductions');
   // const navigate = useNavigate(); // Reserved for future navigation
   // const { utilisateur } = useAuth(); // réservé pour filtres par rôle
-  const dateISO = (d: Date) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // Helper to safely parse ISO date strings without timezone shift
-  const parseISODate = (dateString: string): Date => {
-    const [year, month, day] = dateString.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
-  // Calculer la date actuelle sans useMemo pour éviter le cache
-  const now = new Date();
-  const today = dateISO(now);
-  console.log('[PlanificationGlobale] Date actuelle:', now.toString());
-  console.log('[PlanificationGlobale] Today ISO:', today);
+  
+  // Utiliser les fonctions timezone-aware d'Ottawa
+  const dateISO = formatOttawaISO;
+  const parseISODate = parseOttawaDateISO;
+  
+  // Calculer la date actuelle à Ottawa (pas en cache pour avoir l'heure exacte)
+  const now = nowOttawa();
+  const today = formatOttawaISO(todayOttawa());
+  console.log('[PlanificationGlobale] Date actuelle Ottawa:', now.toString());
+  console.log('[PlanificationGlobale] Today ISO Ottawa:', today);
   console.log('[PlanificationGlobale] Jour de la semaine:', now.getDay(), ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][now.getDay()]);
 
   type Filters = {
@@ -96,10 +90,10 @@ const PlanificationGlobale: React.FC = () => {
   // Recherche de disponibilité
   const [showCustomRangeDialog, setShowCustomRangeDialog] = useState(false);
   const [customRangeStart, setCustomRangeStart] = useState(today);
-  const [customRangeEnd, setCustomRangeEnd] = useState(dateISO(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)));
+  const [customRangeEnd, setCustomRangeEnd] = useState(formatOttawaISO(addDaysOttawa(todayOttawa(), 30)));
   const [searchCriteria, setSearchCriteria] = useState({
     dateDebut: today,
-    dateFin: dateISO(new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)), // +14 jours par défaut
+    dateFin: formatOttawaISO(addDaysOttawa(todayOttawa(), 14)), // +14 jours par défaut
     heuresRequises: '',
     client: '',
     domaine: '',
@@ -216,10 +210,9 @@ const PlanificationGlobale: React.FC = () => {
   const [loadingCharge, setLoadingCharge] = useState(false);
 
   const endDate = useMemo(() => {
-    const base = new Date(applied.start || today);
-    const end = new Date(base);
-    end.setDate(end.getDate() + applied.range - 1);
-    return dateISO(end);
+    const base = parseISODate(applied.start || today);
+    const end = addDaysOttawa(base, applied.range - 1);
+    return formatOttawaISO(end);
   }, [applied.start, applied.range, today]);
 
   const params = useMemo(
@@ -237,11 +230,9 @@ const PlanificationGlobale: React.FC = () => {
 
   const { planificationGlobale, loading, error } = usePlanificationGlobal(params);
 
-  // Fonction utilitaire pour détecter les weekends
+  // Fonction utilitaire pour détecter les weekends (timezone Ottawa)
   const isWeekend = (iso: string) => {
-    const d = new Date(iso);
-    const day = d.getDay();
-    return day === 0 || day === 6; // dimanche ou samedi
+    return isWeekendOttawa(parseISODate(iso));
   };
 
   const isToday = (iso: string) => iso === today;
@@ -256,11 +247,10 @@ const PlanificationGlobale: React.FC = () => {
         const datesCopy = { ...ligne.dates };
         
         // Ajouter les weekends manquants avec des données vides
-        const base = new Date(applied.start || today);
+        const base = parseISODate(applied.start || today);
         for (let i = 0; i < applied.range; i++) {
-          const d = new Date(base);
-          d.setDate(base.getDate() + i);
-          const dateStr = dateISO(d);
+          const d = addDaysOttawa(base, i);
+          const dateStr = formatOttawaISO(d);
           
           if (isWeekend(dateStr) && !datesCopy[dateStr]) {
             datesCopy[dateStr] = {
@@ -282,24 +272,26 @@ const PlanificationGlobale: React.FC = () => {
   }, [planificationGlobale, applied.start, applied.range, today]);
 
   const days = useMemo(() => {
-    const base = new Date(applied.start || today);
+    const base = parseISODate(applied.start || today);
     return Array.from({ length: applied.range }).map((_, i) => {
-      const d = new Date(base);
-      d.setDate(base.getDate() + i);
-      return dateISO(d);
+      return formatOttawaISO(addDaysOttawa(base, i));
     });
   }, [applied.start, applied.range, today]);
 
   const handleApplyCustomRange = () => {
+    const start = parseISODate(customRangeStart);
+    const end = parseISODate(customRangeEnd);
+    const range = differenceInDaysOttawa(end, start) + 1; // +1 pour inclure le dernier jour
+    
     setPending((prev) => ({
       ...prev,
       start: customRangeStart,
-      range: Math.ceil((new Date(customRangeEnd).getTime() - new Date(customRangeStart).getTime()) / (1000 * 60 * 60 * 24)) as 7 | 14 | 30,
+      range: range as 7 | 14 | 30,
     }));
     setApplied((prev) => ({
       ...prev,
       start: customRangeStart,
-      range: Math.ceil((new Date(customRangeEnd).getTime() - new Date(customRangeStart).getTime()) / (1000 * 60 * 60 * 24)) as 7 | 14 | 30,
+      range: range as 7 | 14 | 30,
     }));
     setShowCustomRangeDialog(false);
   };
@@ -396,12 +388,13 @@ const PlanificationGlobale: React.FC = () => {
     const results: string[] = [];
 
     // Calculer le nombre de jours ouvrables dans la plage de recherche
-    const dateDebut = new Date(searchCriteria.dateDebut);
-    const dateFin = new Date(searchCriteria.dateFin);
+    const dateDebut = parseISODate(searchCriteria.dateDebut);
+    const dateFin = parseISODate(searchCriteria.dateFin);
     let joursOuvrables = 0;
-    for (let d = new Date(dateDebut); d <= dateFin; d.setDate(d.getDate() + 1)) {
-      const jour = d.getDay();
-      if (jour !== 0 && jour !== 6) { // Pas weekend
+    const nbJours = differenceInDaysOttawa(dateFin, dateDebut) + 1;
+    for (let i = 0; i < nbJours; i++) {
+      const d = addDaysOttawa(dateDebut, i);
+      if (!isWeekendOttawa(d)) {
         joursOuvrables++;
       }
     }
@@ -478,7 +471,7 @@ const PlanificationGlobale: React.FC = () => {
   const resetSearch = () => {
     setSearchCriteria({
       dateDebut: today,
-      dateFin: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      dateFin: formatOttawaISO(addDaysOttawa(todayOttawa(), 14)),
       heuresRequises: '',
       client: '',
       domaine: '',
@@ -1189,7 +1182,7 @@ const PlanificationGlobale: React.FC = () => {
 
   // Forcer la synchronisation de la date au montage du composant
   useEffect(() => {
-    const currentDate = dateISO(new Date());
+    const currentDate = formatOttawaISO(nowOttawa());
     console.log('[PlanificationGlobale] Synchronisation de la date au montage:', currentDate);
     setPending(prev => ({ ...prev, start: currentDate }));
     setApplied(prev => ({ ...prev, start: currentDate }));
@@ -1950,10 +1943,10 @@ const PlanificationGlobale: React.FC = () => {
                     <Button
                       variant="primaire"
                       onClick={() => {
-                        const nextDate = formTache.repartitionManuelle.length > 0
-                          ? new Date(formTache.repartitionManuelle[formTache.repartitionManuelle.length - 1].date)
-                          : new Date(today);
-                        nextDate.setDate(nextDate.getDate() + 1);
+                        const lastDate = formTache.repartitionManuelle.length > 0
+                          ? formTache.repartitionManuelle[formTache.repartitionManuelle.length - 1].date
+                          : today;
+                        const nextDate = addDaysOttawa(parseISODate(lastDate), 1);
                         setFormTache({
                           ...formTache,
                           repartitionManuelle: [
@@ -1998,7 +1991,7 @@ const PlanificationGlobale: React.FC = () => {
                       </div>
                     ) : (
                       formTache.repartitionManuelle.map((item, idx) => {
-                        const dateObj = new Date(item.date);
+                        const dateObj = parseISODate(item.date);
                         const jourSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][dateObj.getDay()];
                         return (
                           <div key={idx} className="flex gap-2 items-center p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
@@ -2841,7 +2834,7 @@ const PlanificationGlobale: React.FC = () => {
                     Traducteur
                   </th>
                   {days.map((iso) => {
-                    const d = new Date(iso);
+                    const d = parseISODate(iso);
                     const dayName = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d);
                     const dayNum = d.getDate();
                     const month = d.getMonth() + 1;
@@ -3191,7 +3184,7 @@ const PlanificationGlobale: React.FC = () => {
                     </thead>
                     <tbody>
                       {tacheDetaillee.ajustementsTemps
-                        .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime())
+                        .sort((a: any, b: any) => parseISODate(a.date).getTime() - parseISODate(b.date).getTime())
                         .map((aj: any, idx: number) => (
                           <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                             <td className="px-3 py-2">{parseISODate(aj.date).toLocaleDateString('fr-CA')}</td>
