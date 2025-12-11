@@ -264,9 +264,6 @@ async function collecterDonneesOrion(
               type: 'TACHE',
             },
           },
-          client: true,
-          sousDomaine: true,
-          paireLinguistique: true,
         },
       },
       ajustementsTemps: {
@@ -285,16 +282,12 @@ async function collecterDonneesOrion(
       dateEcheance: { gte: dateDebut, lte: dateFin },
     },
     include: {
-      traducteur: true,
       ajustementsTemps: {
         where: {
           date: { gte: dateDebut, lte: dateFin },
           type: 'TACHE',
         },
       },
-      client: true,
-      sousDomaine: true,
-      paireLinguistique: true,
     },
   });
 
@@ -532,18 +525,25 @@ function analyserDomaines(donnees: DonneesOrion): DiagnosticDomaines {
   const volumeParDomaine: { [key: string]: number } = {};
   const capaciteParDomaine: { [key: string]: number } = {};
   
-  // Calculer volume par domaine
+  // Calculer volume par domaine (basé sur spécialisation de la tâche)
   donnees.taches.forEach((tache) => {
-    const domaine = tache.sousDomaine?.nom || 'Non spécifié';
+    const domaine = tache.specialisation || 'Non spécifié';
     volumeParDomaine[domaine] = (volumeParDomaine[domaine] || 0) + tache.heuresTotal;
   });
 
-  // Calculer capacité par domaine (approximatif)
+  // Calculer capacité par domaine (approximatif basé sur spécialisations des traducteurs)
   donnees.traducteurs.forEach((trad) => {
-    trad.domaines.forEach((dom: string) => {
-      capaciteParDomaine[dom] = (capaciteParDomaine[dom] || 0) + 
+    const specialisations = Array.isArray(trad.specialisations) ? trad.specialisations : [];
+    if (specialisations.length > 0) {
+      specialisations.forEach((spec: string) => {
+        capaciteParDomaine[spec] = (capaciteParDomaine[spec] || 0) + 
+          (trad.capaciteHeuresParJour * donnees.joursOuvrables.length);
+      });
+    } else {
+      // Si pas de spécialisation, ajouter à "Généraliste"
+      capaciteParDomaine['Généraliste'] = (capaciteParDomaine['Généraliste'] || 0) + 
         (trad.capaciteHeuresParJour * donnees.joursOuvrables.length);
-    });
+    }
   });
 
   const volumeTotal = Object.values(volumeParDomaine).reduce((s, v) => s + v, 0);

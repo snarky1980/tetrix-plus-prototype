@@ -252,9 +252,6 @@ async function collecterDonnees(dateDebut: Date, dateFin: Date): Promise<Donnees
               type: 'TACHE',
             },
           },
-          client: true,
-          sousDomaine: true,
-          paireLinguistique: true,
         },
       },
       ajustementsTemps: {
