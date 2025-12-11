@@ -2138,197 +2138,225 @@ const PlanificationGlobale: React.FC = () => {
           {/* Étape 1 : Informations de base */}
           {etapeEdition === 1 && (
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Numéro de projet *</label>
-                <Input
-                  type="text"
-                  value={formEdition.numeroProjet}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                    const formatted = formatNumeroProjet(e.target.value);
-                    setFormEdition({ ...formEdition, numeroProjet: formatted });
-                  }}
-                  placeholder="123-4567-001"
-                  maxLength={12}
-                  required
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Traducteur *</label>
-                <Select
-                  value={formEdition.traducteurId}
-                  onChange={(e) => setFormEdition({ ...formEdition, traducteurId: e.target.value })}
-                  required
-                >
-                  <option value="">Sélectionner un traducteur...</option>
-                  {traducteurs.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
-                    </option>
-                  ))}
-                </Select>
-              </div>
-
-              {formEdition.traducteurId && (
+              {/* Section Champs obligatoires */}
+              <div className="space-y-4 p-4 bg-blue-50 border-2 border-blue-300 rounded">
+                <h3 className="text-sm font-bold text-blue-900 mb-2">📝 Informations obligatoires</h3>
+                
+                {/* Numéro de projet */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Paire linguistique</label>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Numéro de projet <span className="text-red-600">*</span></label>
+                  <Input
+                    type="text"
+                    value={formEdition.numeroProjet}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const formatted = formatNumeroProjet(e.target.value);
+                      setFormEdition({ ...formEdition, numeroProjet: formatted });
+                    }}
+                    placeholder="123-4567-001"
+                    maxLength={12}
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Traducteur */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Traducteur <span className="text-red-600">*</span></label>
                   <Select
-                    value={formEdition.paireLinguistiqueId}
-                    onChange={(e) => setFormEdition({ ...formEdition, paireLinguistiqueId: e.target.value })}
+                    value={formEdition.traducteurId}
+                    onChange={(e) => setFormEdition({ ...formEdition, traducteurId: e.target.value })}
+                    required
+                    className="border-2 border-blue-300"
                   >
-                    <option value="">Aucune paire linguistique</option>
-                    {pairesDisponibles.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.langueSource} → {p.langueCible}
+                    <option value="">Rechercher ou sélectionner un traducteur...</option>
+                    {traducteurs.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
                 </div>
-              )}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Type de tâche *</label>
-                <Select
-                  value={formEdition.typeTache}
-                  onChange={(e) => setFormEdition({ ...formEdition, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE' })}
-                  required
-                >
-                  <option value="TRADUCTION">Traduction</option>
-                  <option value="REVISION">Révision</option>
-                  <option value="RELECTURE">Relecture</option>
-                  <option value="AUTRE">Autre</option>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Client (optionnel)</label>
-                <Select
-                  value={formEdition.clientId}
-                  onChange={(e) => setFormEdition({ ...formEdition, clientId: e.target.value })}
-                >
-                  <option value="">Aucun client</option>
-                  {clients.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nom}</option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Sous-domaine (optionnel)</label>
-                <Select
-                  value={formEdition.sousDomaineId}
-                  onChange={(e) => setFormEdition({ ...formEdition, sousDomaineId: e.target.value })}
-                >
-                  <option value="">Aucun sous-domaine</option>
-                  {sousDomaines.map((sd) => (
-                    <option key={sd.id} value={sd.id}>{sd.nom}</option>
-                  ))}
-                </Select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Spécialisation (optionnel)</label>
-                <Input
-                  type="text"
-                  value={formEdition.specialisation}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, specialisation: e.target.value })}
-                  placeholder="Ex: Médical, Juridique, Technique..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-1">Description (optionnel)</label>
-                <textarea
-                  value={formEdition.description}
-                  onChange={(e) => setFormEdition({ ...formEdition, description: e.target.value })}
-                  placeholder="Décrivez la tâche..."
-                  rows={3}
-                  className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
+                {/* Type de tâche */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Heures totales *</label>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Type de tâche <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formEdition.typeTache}
+                    onChange={(e) => setFormEdition({ ...formEdition, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="TRADUCTION">Traduction</option>
+                    <option value="REVISION">Révision</option>
+                    <option value="RELECTURE">Relecture</option>
+                    <option value="AUTRE">Autre</option>
+                  </Select>
+                </div>
+
+                {/* Heures totales */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Heures totales <span className="text-red-600">*</span></label>
                   <Input
                     type="number"
-                    step="0.5"
+                    step="0.1"
                     min="0"
                     value={formEdition.heuresTotal || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, heuresTotal: parseFloat(e.target.value) || 0 })}
-                    placeholder="Ex: 4"
+                    placeholder="Ex: 4.5"
                     required
+                    className="border-2 border-blue-300"
                   />
                 </div>
+
+                {/* Date d'échéance */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Date d'échéance *</label>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Date d'échéance <span className="text-red-600">*</span></label>
                   <Input
                     type="date"
                     value={formEdition.dateEcheance}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateEcheance: e.target.value })}
                     min={today}
                     required
+                    className="border-2 border-blue-300"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Mode de répartition *</label>
+              {/* Section Champs optionnels */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">📎 Informations optionnelles</h3>
+                
+                {/* Paire linguistique (optionnel) */}
+                {formEdition.traducteurId && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Paire linguistique <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                    <Select
+                      value={formEdition.paireLinguistiqueId}
+                      onChange={(e) => setFormEdition({ ...formEdition, paireLinguistiqueId: e.target.value })}
+                    >
+                      <option value="">Aucune paire linguistique</option>
+                      {pairesDisponibles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.langueSource} → {p.langueCible}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+
+                {/* Client (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Client</label>
+                  <Select
+                    value={formEdition.clientId}
+                    onChange={(e) => setFormEdition({ ...formEdition, clientId: e.target.value })}
+                  >
+                    <option value="">Aucun client</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nom}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Sous-domaine (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Sous-domaine</label>
+                  <Select
+                    value={formEdition.sousDomaineId}
+                    onChange={(e) => setFormEdition({ ...formEdition, sousDomaineId: e.target.value })}
+                  >
+                    <option value="">Aucun sous-domaine</option>
+                    {sousDomaines.map((sd) => (
+                      <option key={sd.id} value={sd.id}>{sd.nom}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Spécialisation (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Spécialisation</label>
+                  <Input
+                    type="text"
+                    value={formEdition.specialisation}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, specialisation: e.target.value })}
+                    placeholder="Ex: Médical, Juridique, Technique..."
+                  />
+                </div>
+
+                {/* Commentaire (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Commentaire <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <textarea
+                    value={formEdition.description}
+                    onChange={(e) => setFormEdition({ ...formEdition, description: e.target.value })}
+                    placeholder="Ajoutez un commentaire ou des détails..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Mode de répartition */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-gray-900 mb-2">⚙️ Mode de répartition <span className="text-red-600">*</span></h3>
                 <div className="space-y-2">
-                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'JUSTE_TEMPS' ? '#3b82f6' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="typeRepartitionEdit"
                       value="JUSTE_TEMPS"
                       checked={formEdition.typeRepartition === 'JUSTE_TEMPS'}
-                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: true })}
-                      className="mt-0.5"
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
                     />
-                    <div>
-                      <div className="font-medium">Juste-à-temps (JAT)</div>
-                      <div className="text-xs text-muted">Remplit à rebours depuis l'échéance jusqu'à aujourd'hui</div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">📊 Juste à temps (JAT)</div>
+                      <div className="text-xs text-gray-600 mt-1">Optimise en fonction de la charge actuelle. Les heures sont réparties intelligemment pour maximiser l'utilisation de la capacité disponible jusqu'à l'échéance.</div>
                     </div>
                   </label>
-                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'PEPS' ? '#3b82f6' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="typeRepartitionEdit"
                       value="PEPS"
                       checked={formEdition.typeRepartition === 'PEPS'}
-                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: false })}
-                      className="mt-0.5"
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
                     />
-                    <div>
-                      <div className="font-medium">PEPS (Premier Entré, Premier Sorti)</div>
-                      <div className="text-xs text-muted">Remplit à pleine capacité jour après jour depuis la date de début</div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">🔄 Première entrée, première sortie (PEPS)</div>
+                      <div className="text-xs text-gray-600 mt-1">Commence dès que possible et termine à l'échéance. Les heures sont affectées dans l'ordre chronologique.</div>
                     </div>
                   </label>
-                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'EQUILIBRE' ? '#3b82f6' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="typeRepartitionEdit"
                       value="EQUILIBRE"
                       checked={formEdition.typeRepartition === 'EQUILIBRE'}
-                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: false })}
-                      className="mt-0.5"
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
                     />
-                    <div>
-                      <div className="font-medium">Équilibré</div>
-                      <div className="text-xs text-muted">Distribue uniformément les heures sur toute la période</div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">⚖️ Équilibré sur le temps</div>
+                      <div className="text-xs text-gray-600 mt-1">Répartit uniformément les heures entre une date de début et de fin. Idéal pour une charge de travail constante.</div>
                     </div>
                   </label>
-                  <label className="flex items-start gap-2 text-sm cursor-pointer">
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'MANUEL' ? '#3b82f6' : '#d1d5db' }}>
                     <input
                       type="radio"
                       name="typeRepartitionEdit"
                       value="MANUEL"
                       checked={formEdition.typeRepartition === 'MANUEL'}
-                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL', repartitionAuto: false })}
-                      className="mt-0.5"
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
                     />
-                    <div>
-                      <div className="font-medium">Manuel</div>
-                      <div className="text-xs text-muted">Définir manuellement les heures par jour</div>
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">✍️ Manuel</div>
+                      <div className="text-xs text-gray-600 mt-1">Vous définissez vous-même les heures pour chaque jour. Contrôle total de la répartition.</div>
                     </div>
                   </label>
                 </div>
