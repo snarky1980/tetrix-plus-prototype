@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authentificationMiddleware } from '../middleware/authMiddleware';
+import { authentifier } from '../middleware/auth';
 import { parseISO, differenceInDays } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { OTTAWA_TIMEZONE } from '../utils/dateTimeOttawa';
@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
  * GET /api/statistiques/productivite
  * Récupère les statistiques de productivité des traducteurs
  */
-router.get('/productivite', authentificationMiddleware, async (req, res) => {
+router.get('/productivite', authentifier, async (req, res) => {
   try {
     const { dateDebut, dateFin, divisionId, traducteurId } = req.query;
     const utilisateur = (req as any).utilisateur;

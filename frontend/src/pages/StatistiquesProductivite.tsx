@@ -7,11 +7,9 @@ import { LoadingSpinner } from '../components/ui/Spinner';
 import { usePageTitle } from '../hooks/usePageTitle';
 import statistiquesService, { type StatsProductivite } from '../services/statistiquesService';
 import { formatOttawaISO, todayOttawa, addDaysOttawa } from '../utils/dateTimeOttawa';
-import { useAuth } from '../contexts/AuthContext';
 
 const StatistiquesProductivite: React.FC = () => {
   usePageTitle('Statistiques de Productivité', 'Analysez la productivité des traducteurs');
-  const { utilisateur } = useAuth();
 
   const [stats, setStats] = useState<StatsProductivite | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,19 +26,19 @@ const StatistiquesProductivite: React.FC = () => {
 
   useEffect(() => {
     // Mettre à jour les dates en fonction de la période
-    const aujourd hui = todayOttawa();
-    const fin = formatOttawaISO(aujourd hui);
+    const aujourdhui = todayOttawa();
+    const fin = formatOttawaISO(aujourdhui);
     let debut: string;
 
     switch (periode) {
       case '7':
-        debut = formatOttawaISO(addDaysOttawa(aujourd hui, -7));
+        debut = formatOttawaISO(addDaysOttawa(aujourdhui, -7));
         break;
       case '30':
-        debut = formatOttawaISO(addDaysOttawa(aujourd hui, -30));
+        debut = formatOttawaISO(addDaysOttawa(aujourdhui, -30));
         break;
       case '90':
-        debut = formatOttawaISO(addDaysOttawa(aujourd hui, -90));
+        debut = formatOttawaISO(addDaysOttawa(aujourdhui, -90));
         break;
       default:
         debut = dateDebut;

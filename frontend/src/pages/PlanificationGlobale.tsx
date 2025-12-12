@@ -2776,7 +2776,7 @@ const PlanificationGlobale: React.FC = () => {
             </span>
             <Button
               variant="outline"
-              onClick={() => refresh()}
+              onClick={() => window.location.reload()}
               disabled={loading}
               className="px-2 py-1 text-xs ml-2"
               title="Rafraîchir les données"
@@ -2845,14 +2845,14 @@ const PlanificationGlobale: React.FC = () => {
                             )}
                             {ligne.traducteur.nom} • <span className="font-normal text-[9px]">{ligne.traducteur.division} • {ligne.traducteur.classification}</span>
                           </div>
-                          {ligne.traducteur.horaire && (
+                          {(ligne.traducteur as any).horaire && (
                             <div className="text-[9px] text-gray-700 font-medium leading-tight mt-0.5">
-                              🕐 {ligne.traducteur.horaire}
+                              🕐 {(ligne.traducteur as any).horaire}
                             </div>
                           )}
-                          {ligne.traducteur.specialisations && ligne.traducteur.specialisations.length > 0 && (
+                          {(ligne.traducteur as any).specialisations && (ligne.traducteur as any).specialisations.length > 0 && (
                             <div className="text-[9px] text-orange-600 leading-tight mt-0.5">
-                              📝 {ligne.traducteur.specialisations.join(', ')}
+                              📝 {(ligne.traducteur as any).specialisations.join(', ')}
                             </div>
                           )}
                           <div className="text-[8px] text-muted truncate leading-tight mt-0.5">
