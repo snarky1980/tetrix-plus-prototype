@@ -58,7 +58,7 @@ function App() {
     <ToastProvider>
       <AuthProvider>
         <UserPreferencesProvider>
-          <BrowserRouter basename="/tetrix-plus-prototype">
+          <BrowserRouter basename="/">
             <ToastContainer />
             <Routes>
           {/* Route publique */}
