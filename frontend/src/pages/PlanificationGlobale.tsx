@@ -16,7 +16,7 @@ import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
-import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateDisplay } from '../utils/dateTimeOttawa';
+import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateDisplay, formatDateTimeDisplay } from '../utils/dateTimeOttawa';
 import { formatNumeroProjet } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -3098,7 +3098,11 @@ const PlanificationGlobale: React.FC = () => {
               </div>
               <div>
                 <span className="font-medium text-muted">Date échéance:</span>
-                <p>{tacheDetaillee.dateEcheance ? formatDateDisplay(parseISODate(tacheDetaillee.dateEcheance)) : 'Non définie'}</p>
+                <p>{tacheDetaillee.dateEcheance ? 
+                  (tacheDetaillee.dateEcheance.includes('T') 
+                    ? formatDateTimeDisplay(parseOttawaTimestamp(tacheDetaillee.dateEcheance))
+                    : formatDateDisplay(parseISODate(tacheDetaillee.dateEcheance))
+                  ) : 'Non définie'}</p>
               </div>
               <div>
                 <span className="font-medium text-muted">Statut:</span>
@@ -3168,10 +3172,10 @@ const PlanificationGlobale: React.FC = () => {
                     </thead>
                     <tbody>
                       {tacheDetaillee.ajustementsTemps
-                        .sort((a: any, b: any) => parseISODate(a.date).getTime() - parseISODate(b.date).getTime())
+                        .sort((a: any, b: any) => parseOttawaTimestamp(a.date).getTime() - parseOttawaTimestamp(b.date).getTime())
                         .map((aj: any, idx: number) => (
                           <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                            <td className="px-3 py-2">{formatDateDisplay(parseISODate(aj.date))}</td>
+                            <td className="px-3 py-2">{formatDateDisplay(parseOttawaTimestamp(aj.date))}</td>
                             <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
                           </tr>
                         ))}

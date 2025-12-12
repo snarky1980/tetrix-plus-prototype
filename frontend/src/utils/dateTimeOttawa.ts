@@ -78,14 +78,23 @@ export function formatOttawaISO(date: Date): string {
 }
 
 /**
- * Parser une string YYYY-MM-DD comme date à minuit Ottawa
+ * Parser une string YYYY-MM-DD ou ISO timestamp comme date à minuit Ottawa
+ * Accepte: "2025-12-11" ou "2025-12-11T14:30:00Z" ou "2025-12-11T14:30:00.000Z"
  */
 export function parseOttawaDateISO(dateStr: string | null | undefined): Date {
-  if (!dateStr || typeof dateStr !== 'string' || !dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+  if (!dateStr || typeof dateStr !== 'string') {
     return new Date(NaN); // Return invalid date instead of throwing
   }
   
-  const [year, month, day] = dateStr.split('-').map(Number);
+  // Extract the date part if it's a full timestamp (YYYY-MM-DDTHH:mm:ss...)
+  const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+  
+  // Validate the date part is YYYY-MM-DD format
+  if (!datePart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    return new Date(NaN);
+  }
+  
+  const [year, month, day] = datePart.split('-').map(Number);
   
   // Validate the parsed numbers
   if (isNaN(year) || isNaN(month) || isNaN(day) || month < 1 || month > 12 || day < 1 || day > 31) {
@@ -249,6 +258,26 @@ export function formatDateWithWeekday(date: Date | null | undefined): string {
   });
   const dayMonth = format(zonedDate, 'd/M', { timeZone: displayTimezone });
   return `${weekday}. ${dayMonth}`;
+}
+
+/**
+ * Parser une string ISO timestamp complète (avec ou sans heure)
+ * Accepte: "2025-12-11T14:30:00Z", "2025-12-11T14:30:00.000Z", "2025-12-11"
+ * Retourne un objet Date avec la timezone Ottawa
+ */
+export function parseOttawaTimestamp(dateStr: string | null | undefined): Date {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return new Date(NaN);
+  }
+  
+  // Try to parse as ISO string first (handles timestamps with time)
+  const parsed = new Date(dateStr);
+  if (!isNaN(parsed.getTime())) {
+    return toZonedTime(parsed, OTTAWA_TIMEZONE);
+  }
+  
+  // Fallback to date-only parsing
+  return parseOttawaDateISO(dateStr);
 }
 
 /**
