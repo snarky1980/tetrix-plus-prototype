@@ -25,7 +25,9 @@ services:
       - key: PORT
         value: 3001
       - key: FRONTEND_URL
-        value: https://snarky1980.github.io
+        value: https://bt-tb.ca
+      - key: CORS_ORIGIN
+        value: https://bt-tb.ca
 
 databases:
   - name: tetrix-plus-db
