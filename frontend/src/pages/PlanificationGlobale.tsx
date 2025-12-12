@@ -3094,6 +3094,14 @@ const PlanificationGlobale: React.FC = () => {
                   </span>
                 </p>
               </div>
+              <div>
+                <span className="font-medium text-muted">Mode de distribution:</span>
+                <p>{tacheDetaillee.modeDistribution || 'JUSTE_A_TEMPS'}</p>
+              </div>
+              <div>
+                <span className="font-medium text-muted">Nombre de mots:</span>
+                <p>{tacheDetaillee.compteMots ? tacheDetaillee.compteMots.toLocaleString() : 's.o.'}</p>
+              </div>
               {tacheDetaillee.client && (
                 <div>
                   <span className="font-medium text-muted">Client:</span>
@@ -3307,12 +3315,7 @@ const PlanificationGlobale: React.FC = () => {
                           )}
                           {tache.compteMots && <span>📝 {tache.compteMots.toLocaleString()} mots</span>}
                           <span className="font-semibold">⏱️ {tache.heuresTotal}h</span>
-                          {tache.dateEcheance && (
-                            <span className="text-orange-600 font-medium">
-                              📅 {formatDateDisplay(tache.dateEcheance)}
-                            </span>
-                          )}
-                          <span>Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
+                          <span>📅 Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
                         </div>
                       </div>
                     </div>
