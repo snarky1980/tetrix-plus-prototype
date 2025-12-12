@@ -2846,7 +2846,17 @@ const PlanificationGlobale: React.FC = () => {
                             )}
                             {ligne.traducteur.nom} • <span className="font-normal text-[9px]">{ligne.traducteur.division} • {ligne.traducteur.classification}</span>
                           </div>
-                          <div className="text-[8px] text-muted truncate leading-tight">
+                          {ligne.traducteur.horaire && (
+                            <div className="text-[9px] text-gray-700 font-medium leading-tight mt-0.5">
+                              🕐 {ligne.traducteur.horaire}
+                            </div>
+                          )}
+                          {ligne.traducteur.specialisations && ligne.traducteur.specialisations.length > 0 && (
+                            <div className="text-[9px] text-orange-600 leading-tight mt-0.5">
+                              📝 {ligne.traducteur.specialisations.join(', ')}
+                            </div>
+                          )}
+                          <div className="text-[8px] text-muted truncate leading-tight mt-0.5">
                             {ligne.traducteur.domaines && ligne.traducteur.domaines.length > 0 && (
                               <span className="text-blue-600">
                                 📂 {ligne.traducteur.domaines.join(', ')}
