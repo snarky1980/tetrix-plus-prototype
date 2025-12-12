@@ -17,6 +17,7 @@ import importRoutes from './routes/importRoutes';
 import optimisationRoutes from './routes/optimisationRoutes';
 import utilisateurRoutes from './routes/utilisateurRoutes';
 import divisionRoutes from './routes/divisionRoutes';
+import statistiquesRoutes from './routes/statistiquesRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -120,6 +121,7 @@ app.use('/api/import', importRoutes);
 app.use('/api/optimisation', optimisationRoutes);
 app.use('/api/utilisateurs', utilisateurRoutes);
 app.use('/api/divisions', divisionRoutes);
+app.use('/api/statistiques', statistiquesRoutes);
 
 // Route 404
 app.use((req, res) => {

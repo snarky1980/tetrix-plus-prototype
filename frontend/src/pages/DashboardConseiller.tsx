@@ -109,8 +109,11 @@ const DashboardConseiller: React.FC = () => {
             <Button onClick={() => navigate('/conseiller/creation-tache')}>
               ➕ Nouvelle tâche
             </Button>
-            <Button variant="outline" onClick={() => navigate('/conseiller/planification-globale')}>
+            <Button variant="outline" onClick={() => navigate('/planification-globale')}>
               📅 Planification globale
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/statistiques-productivite')}>
+              📊 Statistiques
             </Button>
           </div>
         </div>

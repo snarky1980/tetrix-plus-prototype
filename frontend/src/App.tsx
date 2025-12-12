@@ -13,6 +13,7 @@ import PlanificationGlobale from './pages/PlanificationGlobale';
 import TacheCreation from './pages/TacheCreation';
 import DashboardAdmin from './pages/DashboardAdmin';
 import { GestionProfils } from './pages/GestionProfils';
+import StatistiquesProductivite from './pages/StatistiquesProductivite';
 
 /**
  * Route protégée - nécessite authentification
@@ -117,6 +118,16 @@ function App() {
             element={
               <RouteProtegee rolesAutorises={['ADMIN']}>
                 <GestionProfils />
+              </RouteProtegee>
+            }
+          />
+
+          {/* Statistiques de productivité - CONSEILLER et GESTIONNAIRE */}
+          <Route
+            path="/statistiques-productivite"
+            element={
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
+                <StatistiquesProductivite />
               </RouteProtegee>
             }
           />
