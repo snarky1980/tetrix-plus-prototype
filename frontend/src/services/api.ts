@@ -1,7 +1,10 @@
 import axios, { AxiosError } from 'axios';
 
 // Configuration de l'URL de l'API depuis les variables d'environnement
-const API_URL = import.meta.env.VITE_API_URL || '/api';
+// En production (bt-tb.ca), utilise api.bt-tb.ca
+// En développement, utilise le proxy Vite local
+const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? 'https://api.bt-tb.ca' : '/api');
 
 console.log('API URL:', API_URL); // Debug: vérifier l'URL utilisée
 
