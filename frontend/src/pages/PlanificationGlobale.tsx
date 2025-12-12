@@ -1686,19 +1686,6 @@ const PlanificationGlobale: React.FC = () => {
                   />
                 </div>
 
-                {/* Compte de mots */}
-                <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-900">Compte de mots</label>
-                  <Input
-                    type="number"
-                    min="0"
-                    value={formTache.compteMots}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, compteMots: e.target.value })}
-                    placeholder="Ex: 5000"
-                    className="border-2 border-blue-300"
-                  />
-                </div>
-
                 {/* Date d'échéance */}
                 <DateTimeInput
                   label="Date d'échéance"
@@ -1730,6 +1717,18 @@ const PlanificationGlobale: React.FC = () => {
                     </Select>
                   </div>
                 )}
+
+                {/* Compte de mots (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Compte de mots <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formTache.compteMots}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, compteMots: e.target.value })}
+                    placeholder="Ex: 5000"
+                  />
+                </div>
 
                 {/* Client (optionnel) */}
               <div>
