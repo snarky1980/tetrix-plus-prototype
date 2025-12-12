@@ -2761,7 +2761,7 @@ const PlanificationGlobale: React.FC = () => {
             </div>
           </div>
 
-          {/* Légende des couleurs - compacte */}
+          {/* Légende des couleurs et bouton rafraîchir */}
           <div className="flex gap-2 text-[10px] items-center">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100">
               <span className="w-2 h-2 rounded bg-green-400"></span>
@@ -2775,6 +2775,15 @@ const PlanificationGlobale: React.FC = () => {
               <span className="w-2 h-2 rounded bg-red-400"></span>
               Plein
             </span>
+            <Button
+              variant="outline"
+              onClick={() => refresh()}
+              disabled={loading}
+              className="px-2 py-1 text-xs ml-2"
+              title="Rafraîchir les données"
+            >
+              🔄 Rafraîchir
+            </Button>
           </div>
         </div>
 
