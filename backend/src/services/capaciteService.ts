@@ -1,5 +1,13 @@
 import prisma from '../config/database';
-import { startOfDayOttawa, differenceInHoursOttawa, OTTAWA_TIMEZONE } from '../utils/dateTimeOttawa';
+import { 
+  startOfDayOttawa, 
+  differenceInHoursOttawa, 
+  OTTAWA_TIMEZONE,
+  HoraireTraducteur,
+  parseHoraireTraducteur,
+  capaciteNetteJour,
+  getEffectiveEndDateTime
+} from '../utils/dateTimeOttawa';
 
 export interface CapaciteResult {
   capacite: number;

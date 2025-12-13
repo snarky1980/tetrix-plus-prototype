@@ -615,3 +615,199 @@ export function normalizeToOttawaWithTime(
   
   return { date, iso, hasTime };
 }
+
+/**
+ * ═══════════════════════════════════════════════════════════════════════
+ * GESTION HORAIRES TRADUCTEURS
+ * ═══════════════════════════════════════════════════════════════════════
+ */
+
+/**
+ * Interface représentant l'horaire de travail d'un traducteur
+ */
+export interface HoraireTraducteur {
+  heureDebut: number;  // Heure de début (ex: 7.5 pour 07:30)
+  heureFin: number;    // Heure de fin (ex: 15.5 pour 15:30)
+}
+
+/**
+ * Parse l'horaire textuel d'un traducteur en horaire structuré
+ * 
+ * Formats supportés:
+ * - "7h30-15h30" → { heureDebut: 7.5, heureFin: 15.5 }
+ * - "07:00-15:00" → { heureDebut: 7.0, heureFin: 15.0 }
+ * - "9h-17h" → { heureDebut: 9.0, heureFin: 17.0 }
+ * - "8h-16h" → { heureDebut: 8.0, heureFin: 16.0 }
+ * - null ou invalide → { heureDebut: 9.0, heureFin: 17.0 } (défaut)
+ * 
+ * @param horaire String décrivant l'horaire ou null
+ * @returns Horaire structuré avec heures décimales
+ * 
+ * @example
+ * parseHoraireTraducteur("7h30-15h30");
+ * // → { heureDebut: 7.5, heureFin: 15.5 }
+ * 
+ * parseHoraireTraducteur("9h-17h");
+ * // → { heureDebut: 9.0, heureFin: 17.0 }
+ * 
+ * parseHoraireTraducteur(null);
+ * // → { heureDebut: 9.0, heureFin: 17.0 } // Défaut
+ */
+export function parseHoraireTraducteur(horaire: string | null | undefined): HoraireTraducteur {
+  // Défaut si absent ou null
+  if (!horaire || horaire.trim() === '') {
+    return { heureDebut: 9.0, heureFin: 17.0 };
+  }
+  
+  // Regex pour capturer:
+  // - Groupe 1: Heure début (1-2 chiffres)
+  // - Groupe 2: Minutes début optionnelles (0-2 chiffres)
+  // - Groupe 3: Heure fin (1-2 chiffres)
+  // - Groupe 4: Minutes fin optionnelles (0-2 chiffres)
+  // Exemples: "7h30-15h30", "07:00-15:00", "9h-17h"
+  const regex = /(\d{1,2})h?:?(\d{0,2})\s*-\s*(\d{1,2})h?:?(\d{0,2})/;
+  const match = horaire.match(regex);
+  
+  if (!match) {
+    // Format non reconnu → défaut
+    console.warn(`[parseHoraireTraducteur] Format horaire non reconnu: "${horaire}", utilisation défaut 9h-17h`);
+    return { heureDebut: 9.0, heureFin: 17.0 };
+  }
+  
+  const [_, hDebut, mDebut, hFin, mFin] = match;
+  
+  // Convertir en heures décimales
+  const heureDebut = parseInt(hDebut, 10) + (mDebut ? parseInt(mDebut, 10) / 60 : 0);
+  const heureFin = parseInt(hFin, 10) + (mFin ? parseInt(mFin, 10) / 60 : 0);
+  
+  // Validation basique
+  if (heureDebut < 0 || heureDebut >= 24 || heureFin < 0 || heureFin >= 24 || heureDebut >= heureFin) {
+    console.warn(`[parseHoraireTraducteur] Horaire invalide: ${horaire} (début: ${heureDebut}, fin: ${heureFin}), utilisation défaut`);
+    return { heureDebut: 9.0, heureFin: 17.0 };
+  }
+  
+  return { heureDebut, heureFin };
+}
+
+/**
+ * Définit l'heure d'une date à une heure décimale spécifiée (timezone Ottawa)
+ * 
+ * @param date Date de base
+ * @param heureDecimale Heure en décimal (ex: 14.5 = 14h30)
+ * @returns Nouvelle Date avec l'heure spécifiée
+ * 
+ * @example
+ * const date = todayOttawa();
+ * const deadline14h = setHourDecimalOttawa(date, 14.0); // 14h00
+ * const deadline14h30 = setHourDecimalOttawa(date, 14.5); // 14h30
+ */
+export function setHourDecimalOttawa(date: Date, heureDecimale: number): Date {
+  const hours = Math.floor(heureDecimale);
+  const minutes = Math.round((heureDecimale - hours) * 60);
+  
+  // Obtenir la date en timezone Ottawa
+  const zonedDate = toZonedTime(date, OTTAWA_TIMEZONE);
+  
+  // Créer nouvelle date avec heure spécifiée
+  const newZonedDate = new Date(zonedDate);
+  newZonedDate.setHours(hours, minutes, 0, 0);
+  
+  // Reconvertir en UTC
+  return fromZonedTime(newZonedDate, OTTAWA_TIMEZONE);
+}
+
+/**
+ * Calcule la capacité travaillable nette pour une journée donnée en tenant compte:
+ * 1. De l'horaire du traducteur (ex: 07:00-15:00)
+ * 2. De la pause midi obligatoire (12:00-13:00)
+ * 3. D'une deadline potentielle le même jour
+ * 
+ * RÈGLES MÉTIER:
+ * - Pause 12h-13h TOUJOURS exclue (non travaillable)
+ * - Si deadline le jour J, fin effective = min(deadline, heureFin_horaire)
+ * - Capacité nette = heures dans [heureDebut, heureFinEffective] MOINS pause
+ * 
+ * @param horaire Horaire du traducteur
+ * @param jourConcerne Date du jour à analyser
+ * @param deadlineDateTime Deadline (optionnelle)
+ * @returns Heures travaillables nettes (décimal)
+ * 
+ * @example
+ * // Horaire 07:00-15:00, jour normal
+ * capaciteNetteJour({ heureDebut: 7, heureFin: 15 }, today);
+ * // → 7h (8h - 1h pause)
+ * 
+ * // Horaire 07:00-15:00, deadline 14:00 le même jour
+ * capaciteNetteJour({ heureDebut: 7, heureFin: 15 }, today, deadline14h);
+ * // → 6h (07-12 = 5h + 13-14 = 1h)
+ */
+export function capaciteNetteJour(
+  horaire: HoraireTraducteur,
+  jourConcerne: Date,
+  deadlineDateTime?: Date
+): number {
+  const { heureDebut, heureFin } = horaire;
+  
+  // Calculer heure fin effective pour ce jour
+  let heureFinEffective = heureFin;
+  
+  if (deadlineDateTime && isSameDayOttawa(deadlineDateTime, jourConcerne)) {
+    // Deadline le même jour → limiter à l'heure de la deadline
+    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
+    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
+    heureFinEffective = Math.min(heureFin, heureDeadline);
+  }
+  
+  // Vérifier si plage chevauche pause 12-13h
+  const pauseDebut = 12.0;
+  const pauseFin = 13.0;
+  
+  // Si plage complètement avant ou après pause, pas de soustraction
+  if (heureFinEffective <= pauseDebut || heureDebut >= pauseFin) {
+    return Math.max(heureFinEffective - heureDebut, 0);
+  }
+  
+  // Sinon, calculer heures avant et après pause
+  const avantPause = Math.max(Math.min(pauseDebut, heureFinEffective) - heureDebut, 0);
+  const apresPause = Math.max(heureFinEffective - Math.max(pauseFin, heureDebut), 0);
+  
+  return avantPause + apresPause;
+}
+
+/**
+ * Calcule l'heure effective de fin de travail pour un jour donné, en tenant compte:
+ * 1. De l'horaire du traducteur
+ * 2. De la deadline si elle est le même jour
+ * 
+ * @param horaire Horaire du traducteur
+ * @param jourConcerne Date du jour
+ * @param deadlineDateTime Deadline (optionnelle)
+ * @returns Date représentant l'heure effective de fin
+ * 
+ * @example
+ * // Horaire 07:00-15:00, deadline 14:00 le même jour
+ * getEffectiveEndDateTime(horaire, today, deadline14h);
+ * // → Date pour today à 14:00 (deadline avant fin horaire)
+ * 
+ * // Horaire 07:00-15:00, deadline 18:00 le même jour
+ * getEffectiveEndDateTime(horaire, today, deadline18h);
+ * // → Date pour today à 15:00 (horaire prime)
+ */
+export function getEffectiveEndDateTime(
+  horaire: HoraireTraducteur,
+  jourConcerne: Date,
+  deadlineDateTime?: Date
+): Date {
+  const { heureFin } = horaire;
+  
+  // Créer datetime pour heureFin du jour concerné
+  const finJournee = setHourDecimalOttawa(jourConcerne, heureFin);
+  
+  // Si deadline est le même jour ET avant finJournee, utiliser deadline
+  if (deadlineDateTime && isSameDayOttawa(deadlineDateTime, jourConcerne)) {
+    return deadlineDateTime < finJournee ? deadlineDateTime : finJournee;
+  }
+  
+  // Sinon, fin de journée normale
+  return finJournee;
+}

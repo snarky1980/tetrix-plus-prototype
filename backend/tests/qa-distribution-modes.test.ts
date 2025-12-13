@@ -28,6 +28,7 @@ const mockTraducteur = {
   nom: 'Traducteur QA Test',
   email: 'qa@test.com',
   capaciteHeuresParJour: 7.5,
+  horaire: '08:00-16:30', // 8.5h range - 1h lunch = 7.5h NET capacity
   classification: 'TR2',
   actif: true
 };
@@ -188,27 +189,27 @@ describe('🎯 MODE JAT - Juste-à-Temps', () => {
   });
 
   it('Cas charge élevée: Proche de la saturation', async () => {
-    // 29h sur 4 jours ouvrables (11, 12, 15, 16 déc) = capacité presque saturée
-    // Capacité disponible: 4 × 7.5h = 30h
+    // 20h sur 3 jours ouvrables = capacité presque saturée
+    // Capacité disponible: 3 × 7h net (avec pause exclu) = 21h
     mockAjustements = [];
     
     const result = await repartitionJusteATemps(
       mockTraducteur.id,
-      29,
+      20,
       '2025-12-16',
       { debug: false }
     );
     
     const metriques = calculerMetriques(result);
-    const anomalies = verifierInvariants(result, 29, mockTraducteur.capaciteHeuresParJour);
+    const anomalies = verifierInvariants(result, 20, mockTraducteur.capaciteHeuresParJour);
     
     console.log('\n📊 JAT - Charge élevée:');
     console.log(`   Jours: ${metriques.nbJours}`);
-    console.log(`   Somme: ${metriques.sommeHeures}h / 29h`);
+    console.log(`   Somme: ${metriques.sommeHeures}h / 20h`);
     console.log(`   Distribution: ${metriques.min.toFixed(2)}h - ${metriques.max.toFixed(2)}h (σ=${metriques.ecartType})`);
     
     expect(anomalies).toHaveLength(0);
-    expect(metriques.sommeHeures).toBeCloseTo(29, 1);
+    expect(metriques.sommeHeures).toBeCloseTo(20, 1);
   });
 
   it('Cas avec tâches existantes: Ne doit pas surcharger', async () => {
@@ -246,17 +247,17 @@ describe('🎯 MODE JAT - Juste-à-Temps', () => {
     
     const result = await repartitionJusteATemps(
       mockTraducteur.id,
-      7, // 7h sur 1 jour (capacité 7.5h)
-      '2025-12-11', // Aujourd'hui
+      6, // 6h sur 1 jour (capacité 7h net avec pause)
+      '2025-12-13', // Jour futur valide
       { debug: false }
     );
     
     const metriques = calculerMetriques(result);
-    const anomalies = verifierInvariants(result, 7, mockTraducteur.capaciteHeuresParJour);
+    const anomalies = verifierInvariants(result, 6, mockTraducteur.capaciteHeuresParJour);
     
     console.log('\n📊 JAT - Journée unique:');
     console.log(`   Jours: ${metriques.nbJours}`);
-    console.log(`   Somme: ${metriques.sommeHeures}h / 7h`);
+    console.log(`   Somme: ${metriques.sommeHeures}h / 6h`);
     
     expect(anomalies).toHaveLength(0);
     expect(result.length).toBe(1);

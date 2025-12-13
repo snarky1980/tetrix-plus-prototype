@@ -35,7 +35,8 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
       
       const result = await repartitionJusteATemps('t1', 10, echeance, {
         livraisonMatinale: true,
-        debug: false
+        debug: false,
+        modeTimestamp: false // Mode legacy pour date-only
       });
       
       // Le dernier jour (jour J) ne devrait pas dépasser 2h
@@ -62,7 +63,8 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
       
       const result = await repartitionJusteATemps('t1', 12, echeance, {
         livraisonMatinale: true,
-        heuresMaxJourJ: 3.5
+        heuresMaxJourJ: 3.5,
+        modeTimestamp: false // Mode legacy pour date-only
       });
       
       const jourJ = result.find(r => r.date === echeance);
@@ -170,7 +172,8 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
       mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
         id: 't1',
         nom: 'Test',
-        capaciteHeuresParJour: 2 // Capacité trop faible
+        capaciteHeuresParJour: 2, // Capacité trop faible
+        horaire: '09:00-11:00' // 2h net
       }));
       
       mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);

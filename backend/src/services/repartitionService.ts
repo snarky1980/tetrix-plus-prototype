@@ -14,7 +14,10 @@ import {
   businessDaysOttawa,
   isWeekendOttawa,
   validateNotPast,
-  validateDateRange
+  validateDateRange,
+  parseHoraireTraducteur,
+  capaciteNetteJour,
+  parseOttawaDateISO
 } from '../utils/dateTimeOttawa';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
 
@@ -69,7 +72,7 @@ export async function repartitionJusteATemps(
   const debug = options.debug || false;
   const livraisonMatinale = options.livraisonMatinale || false;
   const heuresMaxJourJ = options.heuresMaxJourJ ?? 2;
-  const modeTimestamp = options.modeTimestamp || false;
+  const modeTimestamp = options.modeTimestamp ?? true; // Activé par défaut pour deadlines avec heure
 
   // Mode legacy ou timestamp
   const { date: echeance, iso: dateEcheanceISO, hasTime: echeanceHasTime } = modeTimestamp
@@ -88,7 +91,13 @@ export async function repartitionJusteATemps(
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
   
-  if (debug) console.debug(`[JAT] Traducteur: ${traducteur.nom}, capacité=${traducteur.capaciteHeuresParJour}h/jour`);
+  // Parser l'horaire du traducteur pour respecter ses plages de travail
+  const horaire = parseHoraireTraducteur(traducteur.horaire);
+  
+  if (debug) {
+    console.debug(`[JAT] Traducteur: ${traducteur.nom}, capacité=${traducteur.capaciteHeuresParJour}h/jour`);
+    console.debug(`[JAT] Horaire: ${horaire.heureDebut}h-${horaire.heureFin}h`);
+  }
 
   const aujourdHui = todayOttawa();
   
@@ -109,11 +118,6 @@ export async function repartitionJusteATemps(
   const totalJours = differenceInDaysOttawa(aujourdHui, echeance) + 1;
   let capaciteDisponibleGlobale = 0;
   
-  // Si livraison matinale, limiter capacité du jour J
-  const capaciteJourJ = livraisonMatinale 
-    ? Math.min(heuresMaxJourJ, traducteur.capaciteHeuresParJour)
-    : traducteur.capaciteHeuresParJour;
-  
   for (let i = 0; i < totalJours; i++) {
     const d = addDaysOttawa(aujourdHui, i);
     const iso = formatOttawaISO(d);
@@ -121,11 +125,20 @@ export async function repartitionJusteATemps(
     if (isWeekendOttawa(d)) continue;
     const utilisees = heuresParJour[iso] || 0;
     
-    // Capacité différente pour le jour d'échéance si livraison matinale
+    // Calculer capacité nette pour ce jour:
+    // - Respecte l'horaire du traducteur (heureDebut-heureFin)
+    // - Exclut automatiquement la pause 12h-13h
+    // - Si deadline le même jour, limite à l'heure de la deadline
     const estJourEcheance = formatOttawaISO(d) === dateEcheanceISO;
-    const capaciteJour = estJourEcheance && livraisonMatinale ? capaciteJourJ : traducteur.capaciteHeuresParJour;
+    const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
+    let capaciteNette = capaciteNetteJour(horaire, d, deadlineDateTime);
     
-    capaciteDisponibleGlobale += Math.max(capaciteJour - utilisees, 0);
+    // Si livraison matinale, appliquer limite supplémentaire sur jour J
+    if (estJourEcheance && livraisonMatinale) {
+      capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
+    }
+    
+    capaciteDisponibleGlobale += Math.max(capaciteNette - utilisees, 0);
   }
   
   if (debug) {
@@ -149,11 +162,20 @@ export async function repartitionJusteATemps(
     if (!isWeekendOttawa(courant)) {
       const utilisees = heuresParJour[iso] || 0;
       
-      // Appliquer limite pour jour d'échéance si livraison matinale
+      // Calculer capacité nette pour ce jour:
+      // - Respecte l'horaire du traducteur
+      // - Exclut automatiquement la pause 12h-13h
+      // - Si deadline le même jour, limite à l'heure de la deadline
       const estJourEcheance = iso === dateEcheanceISO;
-      const capaciteJour = estJourEcheance && livraisonMatinale ? capaciteJourJ : traducteur.capaciteHeuresParJour;
+      const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
+      let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
       
-      const libre = Math.max(capaciteJour - utilisees, 0);
+      // Si livraison matinale, appliquer limite supplémentaire sur jour J
+      if (estJourEcheance && livraisonMatinale) {
+        capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
+      }
+      
+      const libre = Math.max(capaciteNette - utilisees, 0);
       if (libre > 0) {
         const alloue = Math.min(libre, restant);
         resultat.push({ date: iso, heures: alloue });
@@ -190,6 +212,9 @@ export async function repartitionEquilibree(
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
 
+  // Parse l'horaire du traducteur
+  const horaire = parseHoraireTraducteur(traducteur.horaire);
+
   const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
   const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
   validateDateRange(dateDebut, dateFin);
@@ -202,7 +227,9 @@ export async function repartitionEquilibree(
     .map((jour) => {
       const iso = formatOttawaISO(jour);
       const utilisees = heuresParJour[iso] || 0;
-      const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
+      // Utiliser la capacité nette réelle (horaire - pause)
+      const capaciteNette = capaciteNetteJour(horaire, jour);
+      const libre = Math.max(capaciteNette - utilisees, 0);
       return { iso, libre };
     })
     .filter((j) => j.libre > 0);
@@ -311,6 +338,9 @@ export async function repartitionPEPS(
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) throw new Error('Traducteur introuvable');
 
+  // Parse l'horaire du traducteur
+  const horaire = parseHoraireTraducteur(traducteur.horaire);
+
   const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
   const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
   validateDateRange(dateDebut, dateFin);
@@ -326,7 +356,9 @@ export async function repartitionPEPS(
     if (restant <= 0) break;
     const iso = formatOttawaISO(jour);
     const utilisees = heuresParJour[iso] || 0;
-    const libre = Math.max(traducteur.capaciteHeuresParJour - utilisees, 0);
+    // Utiliser la capacité nette réelle (horaire - pause)
+    const capaciteNette = capaciteNetteJour(horaire, jour);
+    const libre = Math.max(capaciteNette - utilisees, 0);
     if (libre <= 0) continue;
     const alloue = Math.min(libre, restant);
     resultat.push({ date: iso, heures: parseFloat(alloue.toFixed(4)) });
@@ -387,8 +419,13 @@ export async function validerRepartition(
   }
   const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
   if (!traducteur) erreurs.push('Traducteur introuvable.');
+  
+  // Parse l'horaire si traducteur trouvé
+  const horaire = traducteur ? parseHoraireTraducteur(traducteur.horaire) : null;
+
   for (const r of repartition) {
-    const dateObj = new Date(r.date);
+    // Utiliser parseOttawaDateISO pour garantir la bonne timezone
+    const dateObj = parseOttawaDateISO(r.date);
     const ajustements = await prisma.ajustementTemps.findMany({
       where: {
         traducteurId,
@@ -398,8 +435,12 @@ export async function validerRepartition(
     });
     const utilisees = ajustements.reduce((sum, a) => sum + a.heures, 0);
     const totalJour = utilisees + r.heures;
-    if (traducteur && totalJour > traducteur.capaciteHeuresParJour + 1e-6) {
-      erreurs.push(`Dépassement capacité le ${r.date} (utilisées + nouvelles = ${totalJour.toFixed(2)} / ${traducteur.capaciteHeuresParJour}).`);
+    
+    if (traducteur && horaire) {
+      const capaciteNette = capaciteNetteJour(horaire, dateObj);
+      if (totalJour > capaciteNette + 1e-6) {
+        erreurs.push(`Dépassement capacité le ${r.date} (utilisées + nouvelles = ${totalJour.toFixed(2)} / ${capaciteNette.toFixed(2)}).`);
+      }
     }
     if (r.heures < 0) erreurs.push(`Heures négatives interdites (${r.date}).`);
   }

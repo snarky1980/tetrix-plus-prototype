@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
+import { bloquerTemps as bloquerTempsService, supprimerBlocage as supprimerBlocageService } from '../services/timeBlockingService';
 
 /**
  * Synchronise les clients habituels avec la table clients
@@ -327,82 +328,24 @@ export const bloquerTemps = async (
 ): Promise<void> => {
   try {
     const { id: traducteurId } = req.params;
-    const { date, heures, raison } = req.body;
+    const { date, heureDebut, heureFin, motif } = req.body;
+    const utilisateurId = req.user?.id;
 
-    // Validation
-    if (!date) {
-      res.status(400).json({ erreur: 'Date requise' });
+    if (!utilisateurId) {
+      res.status(401).json({ message: 'Non authentifié' });
       return;
     }
 
-    if (!heures || heures <= 0) {
-      res.status(400).json({ erreur: 'Heures doivent être > 0' });
+    if (!date || !heureDebut || !heureFin || !motif) {
+      res.status(400).json({ message: 'Paramètres manquants (date, heureDebut, heureFin, motif)' });
       return;
     }
 
-    // Vérifier que le traducteur existe
-    const traducteur = await prisma.traducteur.findUnique({
-      where: { id: traducteurId },
-    });
-
-    if (!traducteur) {
-      res.status(404).json({ erreur: 'Traducteur non trouvé' });
-      return;
-    }
-
-    // Vérifier que le blocage ne dépasse pas la capacité journalière
-    const dateObj = new Date(date);
-    dateObj.setHours(0, 0, 0, 0);
-
-    // Récupérer les ajustements existants pour cette date
-    const ajustementsExistants = await prisma.ajustementTemps.findMany({
-      where: {
-        traducteurId,
-        date: dateObj,
-      },
-    });
-
-    const heuresUtilisees = ajustementsExistants.reduce((sum, a) => sum + a.heures, 0);
-    const capaciteRestante = traducteur.capaciteHeuresParJour - heuresUtilisees;
-
-    if (heures > capaciteRestante + 1e-6) {
-      res.status(400).json({
-        erreur: `Blocage de ${heures}h dépasse la capacité disponible de ${capaciteRestante.toFixed(2)}h pour cette date`,
-        capaciteDisponible: capaciteRestante,
-        capaciteTotale: traducteur.capaciteHeuresParJour,
-        heuresUtilisees,
-      });
-      return;
-    }
-
-    // Créer le blocage
-    const blocage = await prisma.ajustementTemps.create({
-      data: {
-        traducteurId,
-        date: dateObj,
-        heures,
-        type: 'BLOCAGE',
-        creePar: req.utilisateur?.id || 'system',
-      },
-    });
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[TIME BLOCK] Créé pour ${traducteur.nom}: ${heures}h le ${dateObj.toISOString().split('T')[0]}${raison ? ` (${raison})` : ''}`);
-    }
-
-    res.status(201).json({
-      message: 'Temps bloqué avec succès',
-      blocage: {
-        id: blocage.id,
-        date: blocage.date,
-        heures: blocage.heures,
-        type: blocage.type,
-      },
-      capaciteRestante: capaciteRestante - heures,
-    });
-  } catch (error) {
-    console.error('Erreur blocage temps:', error);
-    res.status(500).json({ erreur: 'Erreur lors du blocage de temps' });
+    const result = await bloquerTempsService(traducteurId, date, heureDebut, heureFin, motif, utilisateurId);
+    res.status(201).json(result);
+  } catch (error: any) {
+    console.error('Erreur lors du blocage de temps:', error);
+    res.status(500).json({ message: 'Erreur lors du blocage de temps', error: error.message });
   }
 };
 
@@ -436,6 +379,14 @@ export const obtenirBlocages = async (
     const blocages = await prisma.ajustementTemps.findMany({
       where,
       orderBy: { date: 'asc' },
+      include: {
+        tache: {
+          select: {
+            description: true,
+            specialisation: true,
+          },
+        },
+      },
     });
 
     res.json(blocages);
@@ -455,34 +406,11 @@ export const supprimerBlocage = async (
 ): Promise<void> => {
   try {
     const { blocageId } = req.params;
-
-    // Vérifier que c'est bien un blocage
-    const blocage = await prisma.ajustementTemps.findUnique({
-      where: { id: blocageId },
-    });
-
-    if (!blocage) {
-      res.status(404).json({ erreur: 'Blocage non trouvé' });
-      return;
-    }
-
-    if (blocage.type !== 'BLOCAGE') {
-      res.status(400).json({ erreur: 'Cet ajustement n\'est pas un blocage' });
-      return;
-    }
-
-    await prisma.ajustementTemps.delete({
-      where: { id: blocageId },
-    });
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(`[TIME BLOCK] Supprimé: ${blocage.heures}h le ${blocage.date.toISOString().split('T')[0]}`);
-    }
-
-    res.json({ message: 'Blocage supprimé avec succès' });
-  } catch (error) {
-    console.error('Erreur suppression blocage:', error);
-    res.status(500).json({ erreur: 'Erreur lors de la suppression du blocage' });
+    await supprimerBlocageService(blocageId);
+    res.status(200).json({ message: 'Blocage supprimé avec succès' });
+  } catch (error: any) {
+    console.error('Erreur lors de la suppression du blocage:', error);
+    res.status(500).json({ message: 'Erreur lors de la suppression du blocage', error: error.message });
   }
 };
 
@@ -549,3 +477,4 @@ export const mettreAJourDisponibilite = async (
     res.status(500).json({ erreur: 'Erreur lors de la mise à jour de la disponibilité' });
   }
 };
+
