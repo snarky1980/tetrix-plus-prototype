@@ -93,4 +93,38 @@ export const traducteurService = {
     );
     return data;
   },
+
+  /**
+   * Bloquer une plage horaire
+   */
+  async bloquerTemps(
+    id: string,
+    blocage: {
+      date: string;
+      heureDebut: string;
+      heureFin: string;
+      motif: string;
+    }
+  ): Promise<any> {
+    const { data } = await api.post(`/traducteurs/${id}/bloquer-temps`, blocage);
+    return data;
+  },
+
+  /**
+   * Supprimer un blocage
+   */
+  async supprimerBlocage(blocageId: string): Promise<void> {
+    await api.delete(`/traducteurs/blocages/${blocageId}`);
+  },
+
+  /**
+   * Obtenir les blocages d'un traducteur
+   */
+  async obtenirBlocages(
+    id: string,
+    params?: { dateDebut?: string; dateFin?: string }
+  ): Promise<any[]> {
+    const { data } = await api.get(`/traducteurs/${id}/blocages`, { params });
+    return data;
+  },
 };

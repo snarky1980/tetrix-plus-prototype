@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -13,7 +13,6 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanification } from '../hooks/usePlanification';
 import { formatHeures } from '../lib/format';
 import { JourDetail } from '../components/ui/JourDetail';
-import api from '../services/api';
 import { traducteurService } from '../services/traducteurService';
 import type { Traducteur } from '../types';
 
@@ -22,7 +21,7 @@ import type { Traducteur } from '../types';
  */
 const DashboardTraducteur: React.FC = () => {
   const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
-  const [blocageData, setBlocageData] = useState({ date: '', heures: 0 });
+  const [blocageData, setBlocageData] = useState({ date: '', heureDebut: '', heureFin: '', motif: '' });
   const [submitting, setSubmitting] = useState(false);
   const [erreur, setErreur] = useState('');
   const [_traducteur, setTraducteur] = useState<Traducteur | null>(null);
@@ -38,6 +37,38 @@ const DashboardTraducteur: React.FC = () => {
     dateDebut: dateISO(aujourdHui), 
     dateFin: dateISO(fin) 
   });
+
+  const [blocages, setBlocages] = useState<any[]>([]);
+
+  const fetchBlocages = useCallback(async () => {
+    if (utilisateur?.traducteurId) {
+      try {
+        const data = await traducteurService.obtenirBlocages(utilisateur.traducteurId, {
+          dateDebut: dateISO(aujourdHui),
+          dateFin: dateISO(fin)
+        });
+        setBlocages(data);
+      } catch (err) {
+        console.error('Erreur chargement blocages', err);
+      }
+    }
+  }, [utilisateur?.traducteurId, aujourdHui, fin]);
+
+  useEffect(() => {
+    fetchBlocages();
+  }, [fetchBlocages]);
+
+  const handleSupprimerBlocage = async (id: string) => {
+    if (!confirm('Voulez-vous vraiment supprimer ce blocage ?')) return;
+    try {
+      await traducteurService.supprimerBlocage(id);
+      fetchBlocages();
+      refresh();
+    } catch (err) {
+      console.error('Erreur suppression blocage', err);
+      alert('Erreur lors de la suppression');
+    }
+  };
 
   // Charger les infos du traducteur
   useEffect(() => {
@@ -86,17 +117,18 @@ const DashboardTraducteur: React.FC = () => {
     setErreur('');
 
     try {
-      await api.post('/planning/ajustements', {
-        traducteurId: utilisateur.traducteurId,
+      await traducteurService.bloquerTemps(utilisateur.traducteurId, {
         date: blocageData.date,
-        heures: blocageData.heures,
-        type: 'BLOCAGE',
+        heureDebut: blocageData.heureDebut,
+        heureFin: blocageData.heureFin,
+        motif: blocageData.motif,
       });
       setOuvrirBlocage(false);
-      setBlocageData({ date: '', heures: 0 });
+      setBlocageData({ date: '', heureDebut: '', heureFin: '', motif: '' });
       refresh();
+      fetchBlocages();
     } catch (err: any) {
-      setErreur(err.response?.data?.erreur || 'Erreur lors de la création du blocage');
+      setErreur(err.response?.data?.message || err.response?.data?.erreur || 'Erreur lors de la création du blocage');
     } finally {
       setSubmitting(false);
     }
@@ -293,9 +325,38 @@ const DashboardTraducteur: React.FC = () => {
             </div>
           )}
           {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
-          {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
         </CardContent>
       </Card>
+
+      {blocages.length > 0 && (
+        <Card>
+          <CardHeader><CardTitle>Mes blocages à venir</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {blocages.map((blocage: any) => (
+                <div key={blocage.id} className="flex items-center justify-between p-2 border rounded bg-gray-50">
+                  <div>
+                    <div className="font-medium">
+                      {new Date(blocage.date).toLocaleDateString()} 
+                      {blocage.tache?.specialisation ? ` (${blocage.tache.specialisation})` : ''}
+                    </div>
+                    <div className="text-sm text-muted">
+                      {blocage.tache?.description || 'Blocage'} - {blocage.heures}h impact
+                    </div>
+                  </div>
+                  <Button 
+                    variant="danger" 
+                    className="text-xs px-2 py-1 h-auto"
+                    onClick={() => handleSupprimerBlocage(blocage.id)}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Modal
         titre="Bloquer du temps"
@@ -324,15 +385,33 @@ const DashboardTraducteur: React.FC = () => {
             />
           </FormField>
 
-          <FormField label="Heures à bloquer" required>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField label="Heure de début" required>
+              <Input
+                type="time"
+                value={blocageData.heureDebut}
+                onChange={e => setBlocageData({ ...blocageData, heureDebut: e.target.value })}
+                required
+              />
+            </FormField>
+
+            <FormField label="Heure de fin" required>
+              <Input
+                type="time"
+                value={blocageData.heureFin}
+                onChange={e => setBlocageData({ ...blocageData, heureFin: e.target.value })}
+                required
+              />
+            </FormField>
+          </div>
+
+          <FormField label="Motif" required>
             <Input
-              type="number"
-              step="0.25"
-              min="0"
-              value={blocageData.heures || ''}
-              onChange={e => setBlocageData({ ...blocageData, heures: parseFloat(e.target.value) || 0 })}
+              type="text"
+              value={blocageData.motif}
+              onChange={e => setBlocageData({ ...blocageData, motif: e.target.value })}
               required
-              placeholder="7.5"
+              placeholder="Ex: Rendez-vous médical, Formation..."
             />
           </FormField>
 

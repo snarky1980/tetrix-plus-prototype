@@ -213,5 +213,7 @@ export interface CreerTacheForm {
 export interface CreerBlocageForm {
   traducteurId: string;
   date: string;
-  heures: number;
+  heureDebut: string;
+  heureFin: string;
+  motif: string;
 }

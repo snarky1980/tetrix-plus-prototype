@@ -65,7 +65,7 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
               >
                 <Calendar className="h-4 w-4" />
                 <div className="flex-1">
-                  <div className="font-medium text-foreground">Format de date</div>
+                  <div className="font-medium">Format de date</div>
                   <div className="text-xs text-muted-foreground">JJ/MM/AAAA, MM/JJ/AAAA, etc.</div>
                 </div>
               </button>
@@ -76,7 +76,7 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
               >
                 <Globe className="h-4 w-4" />
                 <div className="flex-1">
-                  <div className="font-medium text-foreground">Fuseau horaire</div>
+                  <div className="font-medium">Fuseau horaire</div>
                   <div className="text-xs text-muted-foreground">Ottawa, Local, UTC</div>
                 </div>
               </button>

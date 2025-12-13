@@ -38,6 +38,7 @@ const TacheCreation: React.FC = () => {
     heuresTotal: 0,
     compteMots: undefined as number | undefined,
     dateEcheance: '',
+    heureEcheance: '',
     repartitionAuto: true,
     repartitionManuelle: [] as { date: string; heures: number }[],
   });
@@ -83,10 +84,15 @@ const TacheCreation: React.FC = () => {
     }
     setLoadingPreview(true);
     try {
+      let dateEcheanceComplete = formData.dateEcheance;
+      if (formData.heureEcheance) {
+        dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance}:00`;
+      }
+
       const preview = await repartitionService.previewJAT({
         traducteurId: formData.traducteurId,
         heuresTotal: formData.heuresTotal,
-        dateEcheance: formData.dateEcheance,
+        dateEcheance: dateEcheanceComplete,
       });
       setPreviewJAT(preview);
     } catch (err: any) {
@@ -163,12 +169,17 @@ const TacheCreation: React.FC = () => {
     setErreur('');
 
     try {
+      let dateEcheanceComplete = formData.dateEcheance;
+      if (formData.heureEcheance) {
+        dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance}:00`;
+      }
+
       const tache: any = {
         traducteurId: formData.traducteurId,
         paireLinguistiqueId: formData.paireLinguistiqueId,
         description: formData.description,
         heuresTotal: formData.heuresTotal,
-        dateEcheance: formData.dateEcheance,
+        dateEcheance: dateEcheanceComplete,
       };
 
       if (formData.clientId) tache.clientId = formData.clientId;
@@ -322,15 +333,25 @@ const TacheCreation: React.FC = () => {
                   />
                 </FormField>
 
-                <FormField label="Date d'échéance" required>
-                  <Input
-                    type="date"
-                    value={formData.dateEcheance}
-                    onChange={e => setFormData({ ...formData, dateEcheance: e.target.value })}
-                    required
-                    min={new Date().toISOString().split('T')[0]}
-                  />
-                </FormField>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField label="Date d'échéance" required>
+                    <Input
+                      type="date"
+                      value={formData.dateEcheance}
+                      onChange={e => setFormData({ ...formData, dateEcheance: e.target.value })}
+                      required
+                      min={new Date().toISOString().split('T')[0]}
+                    />
+                  </FormField>
+
+                  <FormField label="Heure (optionnel)">
+                    <Input
+                      type="time"
+                      value={formData.heureEcheance}
+                      onChange={e => setFormData({ ...formData, heureEcheance: e.target.value })}
+                    />
+                  </FormField>
+                </div>
 
                 <FormField label="Type de répartition">
                   <div className="space-y-2">
@@ -376,7 +397,7 @@ const TacheCreation: React.FC = () => {
                       <span className="font-medium">Heures:</span> {formData.heuresTotal}h
                     </p>
                     <p>
-                      <span className="font-medium">Échéance:</span> {formData.dateEcheance}
+                      <span className="font-medium">Échéance:</span> {formData.dateEcheance} {formData.heureEcheance ? `à ${formData.heureEcheance}` : '(Fin de journée)'}
                     </p>
                     <p>
                       <span className="font-medium">Capacité/jour:</span>{' '}

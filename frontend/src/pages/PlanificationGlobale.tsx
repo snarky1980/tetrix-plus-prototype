@@ -2452,11 +2452,109 @@ const PlanificationGlobale: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div>
-                  <h3 className="text-sm font-semibold mb-2">Répartition manuelle</h3>
-                  <p className="text-xs text-muted mb-3">
-                    Vous pourrez ajuster la répartition après création de la tâche
-                  </p>
+                <div className="space-y-3 p-4 bg-purple-50 border-2 border-purple-300 rounded">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-purple-900">📅 Distribution des heures par jour</h3>
+                    <Button
+                      variant="primaire"
+                      onClick={() => {
+                        const lastDate = formEdition.repartitionManuelle.length > 0
+                          ? formEdition.repartitionManuelle[formEdition.repartitionManuelle.length - 1].date
+                          : today;
+                        const nextDate = addDaysOttawa(parseISODate(lastDate), 1);
+                        setFormEdition({
+                          ...formEdition,
+                          repartitionManuelle: [
+                            ...formEdition.repartitionManuelle,
+                            { date: dateISO(nextDate), heures: 0 }
+                          ]
+                        });
+                      }}
+                      className="text-xs px-3 py-1.5"
+                    >
+                      ➕ Ajouter un jour
+                    </Button>
+                  </div>
+
+                  {(() => {
+                    const totalManuel = formEdition.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+                    const heuresAttendu = Number(formEdition.heuresTotal) || 0;
+                    const correspondance = Math.abs(totalManuel - heuresAttendu) < 0.01;
+                    const restant = heuresAttendu - totalManuel;
+                    
+                    return (
+                      <div className={`p-3 rounded font-medium text-sm ${correspondance ? 'bg-green-100 border-2 border-green-500 text-green-900' : restant > 0 ? 'bg-yellow-100 border-2 border-yellow-500 text-yellow-900' : 'bg-red-100 border-2 border-red-500 text-red-900'}`}>
+                        <div className="flex justify-between items-center">
+                          <span>Total distribué: <strong>{totalManuel.toFixed(2)}h</strong> / {heuresAttendu.toFixed(2)}h</span>
+                          {correspondance ? (
+                            <span className="text-green-700 text-lg">✅ Complet</span>
+                          ) : restant > 0 ? (
+                            <span className="text-yellow-700">⚠️ Reste {restant.toFixed(2)}h à distribuer</span>
+                          ) : (
+                            <span className="text-red-700">❌ Dépassement de {Math.abs(restant).toFixed(2)}h</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  
+                  <div className="max-h-80 overflow-y-auto space-y-2 bg-white p-3 rounded border border-purple-200">
+                    {formEdition.repartitionManuelle.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-gray-500 mb-3">Aucun jour défini</p>
+                        <p className="text-xs text-gray-400">Cliquez sur "➕ Ajouter un jour" pour commencer</p>
+                      </div>
+                    ) : (
+                      formEdition.repartitionManuelle.map((item, idx) => {
+                        const dateObj = parseISODate(item.date);
+                        const jourSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][dateObj.getDay()];
+                        return (
+                          <div key={idx} className="flex gap-2 items-center p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
+                            <div className="flex-1 flex gap-2 items-center">
+                              <span className="text-xs font-semibold text-gray-600 w-8">{jourSemaine}</span>
+                              <Input
+                                type="date"
+                                value={item.date}
+                                onChange={(e) => {
+                                  const newRep = [...formEdition.repartitionManuelle];
+                                  newRep[idx].date = e.target.value;
+                                  setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm flex-1"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                step="0.25"
+                                min="0"
+                                value={item.heures}
+                                onChange={(e) => {
+                                  const newRep = [...formEdition.repartitionManuelle];
+                                  newRep[idx].heures = parseFloat(e.target.value) || 0;
+                                  setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm w-20 text-center font-semibold"
+                                placeholder="0.0"
+                              />
+                              <span className="text-xs text-gray-500">h</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const newRep = formEdition.repartitionManuelle.filter((_, i) => i !== idx);
+                                setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                              }}
+                              className="text-sm px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                              title="Supprimer ce jour"
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -3185,22 +3283,39 @@ const PlanificationGlobale: React.FC = () => {
               </div>
             )}
 
-            <div className="flex gap-2 justify-end pt-4 border-t">
-              <Button
-                variant="outline"
-                onClick={() => setTacheDetaillee(null)}
-              >
-                Fermer
-              </Button>
-              <Button
-                variant="primaire"
+            <div className="flex gap-3 justify-center pt-4 border-t">
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all duration-200 font-medium text-sm"
                 onClick={() => {
                   setTacheDetaillee(null);
                   handleEditTache(tacheDetaillee.id);
                 }}
               >
-                ✏️ Éditer cette tâche
-              </Button>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Éditer
+              </button>
+              
+              <button
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 font-medium text-sm"
+                onClick={async () => {
+                  if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+                    try {
+                      await tacheService.supprimerTache(tacheDetaillee.id);
+                      setTacheDetaillee(null);
+                      window.location.reload();
+                    } catch (err: any) {
+                      alert('Erreur lors de la suppression: ' + (err.message || 'Erreur inconnue'));
+                    }
+                  }
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Supprimer
+              </button>
             </div>
           </div>
         </Modal>
