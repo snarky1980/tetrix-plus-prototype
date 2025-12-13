@@ -163,7 +163,7 @@ export const creerTache = async (
     let repartitionEffective: RepartitionItem[] | undefined = undefined;
     if (repartition && Array.isArray(repartition) && repartition.length > 0) {
       // Validation répartition manuelle
-      const { valide, erreurs } = await validerRepartition(traducteurId, repartition, heuresTotal);
+      const { valide, erreurs } = await validerRepartition(traducteurId, repartition, heuresTotal, undefined, dateEcheance);
       if (!valide) {
         res.status(400).json({ erreur: 'Répartition invalide', details: erreurs });
         return;
@@ -284,7 +284,7 @@ export const mettreAJourTache = async (
     const echeanceCible = dateEcheance || existante.dateEcheance;
 
     if (repartition && Array.isArray(repartition) && repartition.length > 0) {
-      const { valide, erreurs } = await validerRepartition(existante.traducteurId, repartition, heuresCible, id);
+      const { valide, erreurs } = await validerRepartition(existante.traducteurId, repartition, heuresCible, id, echeanceCible);
       if (!valide) {
         res.status(400).json({ erreur: 'Répartition invalide', details: erreurs });
         return;

@@ -185,7 +185,9 @@ export function subDaysOttawa(date: Date, days: number): Date {
  * differenceInDaysOttawa(debut, fin); // 2
  */
 export function differenceInDaysOttawa(dateFrom: Date, dateTo: Date): number {
-  return differenceInCalendarDays(dateTo, dateFrom);
+  const startFrom = startOfDayOttawa(dateFrom);
+  const startTo = startOfDayOttawa(dateTo);
+  return differenceInCalendarDays(startTo, startFrom);
 }
 
 /**

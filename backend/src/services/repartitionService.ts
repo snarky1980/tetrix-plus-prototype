@@ -216,7 +216,7 @@ export async function repartitionEquilibree(
   const horaire = parseHoraireTraducteur(traducteur.horaire);
 
   const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
-  const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
+  const { date: dateFin, hasTime: finHasTime } = normalizeToOttawaWithTime(dateFinInput, true, 'dateFin');
   validateDateRange(dateDebut, dateFin);
 
   const jours = businessDaysOttawa(dateDebut, dateFin);
@@ -227,8 +227,13 @@ export async function repartitionEquilibree(
     .map((jour) => {
       const iso = formatOttawaISO(jour);
       const utilisees = heuresParJour[iso] || 0;
-      // Utiliser la capacité nette réelle (horaire - pause)
-      const capaciteNette = capaciteNetteJour(horaire, jour);
+      
+      // Déterminer si c'est le jour de la deadline avec heure précise
+      const estJourEcheance = iso === formatOttawaISO(dateFin);
+      const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
+
+      // Utiliser la capacité nette réelle (horaire - pause - deadline)
+      const capaciteNette = capaciteNetteJour(horaire, jour, deadlineDateTime);
       const libre = Math.max(capaciteNette - utilisees, 0);
       return { iso, libre };
     })
@@ -342,7 +347,7 @@ export async function repartitionPEPS(
   const horaire = parseHoraireTraducteur(traducteur.horaire);
 
   const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
-  const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
+  const { date: dateFin, hasTime: finHasTime } = normalizeToOttawaWithTime(dateFinInput, true, 'dateFin');
   validateDateRange(dateDebut, dateFin);
 
   const jours = businessDaysOttawa(dateDebut, dateFin);
@@ -356,8 +361,13 @@ export async function repartitionPEPS(
     if (restant <= 0) break;
     const iso = formatOttawaISO(jour);
     const utilisees = heuresParJour[iso] || 0;
-    // Utiliser la capacité nette réelle (horaire - pause)
-    const capaciteNette = capaciteNetteJour(horaire, jour);
+    
+    // Déterminer si c'est le jour de la deadline avec heure précise
+    const estJourEcheance = iso === formatOttawaISO(dateFin);
+    const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
+
+    // Utiliser la capacité nette réelle (horaire - pause - deadline)
+    const capaciteNette = capaciteNetteJour(horaire, jour, deadlineDateTime);
     const libre = Math.max(capaciteNette - utilisees, 0);
     if (libre <= 0) continue;
     const alloue = Math.min(libre, restant);
@@ -408,7 +418,8 @@ export async function validerRepartition(
   traducteurId: string,
   repartition: RepartitionItem[],
   heuresTotalAttendu: number,
-  ignorerTacheId?: string
+  ignorerTacheId?: string,
+  dateEcheanceInput?: DateInput
 ): Promise<{ valide: boolean; erreurs: string[] }> {
   const erreurs: string[] = [];
   const somme = repartition.reduce((s, r) => s + r.heures, 0);
@@ -422,6 +433,15 @@ export async function validerRepartition(
   
   // Parse l'horaire si traducteur trouvé
   const horaire = traducteur ? parseHoraireTraducteur(traducteur.horaire) : null;
+
+  // Parse deadline si fournie
+  let deadlineDate: Date | undefined;
+  let deadlineHasTime = false;
+  if (dateEcheanceInput) {
+    const { date, hasTime } = normalizeToOttawaWithTime(dateEcheanceInput, true, 'dateEcheance');
+    deadlineDate = date;
+    deadlineHasTime = hasTime;
+  }
 
   for (const r of repartition) {
     // Utiliser parseOttawaDateISO pour garantir la bonne timezone
@@ -437,7 +457,11 @@ export async function validerRepartition(
     const totalJour = utilisees + r.heures;
     
     if (traducteur && horaire) {
-      const capaciteNette = capaciteNetteJour(horaire, dateObj);
+      // Vérifier si c'est le jour de la deadline
+      const estJourEcheance = deadlineDate && formatOttawaISO(dateObj) === formatOttawaISO(deadlineDate);
+      const deadlineDateTime = estJourEcheance && deadlineHasTime ? deadlineDate : undefined;
+
+      const capaciteNette = capaciteNetteJour(horaire, dateObj, deadlineDateTime);
       if (totalJour > capaciteNette + 1e-6) {
         erreurs.push(`Dépassement capacité le ${r.date} (utilisées + nouvelles = ${totalJour.toFixed(2)} / ${capaciteNette.toFixed(2)}).`);
       }

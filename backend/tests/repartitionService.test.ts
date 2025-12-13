@@ -100,7 +100,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
     const echeance = new Date();
     echeance.setDate(echeance.getDate() + 4);
     const echeanceStr = echeance.toISOString().split('T')[0];
-    const isoAvecHeure = `${echeanceStr}T12:30:00.000Z`;
+    const isoAvecHeure = `${echeanceStr}T18:00:00.000Z`;
     const rep = await repartitionJusteATemps(traducteur.id, 5, isoAvecHeure);
     const dates = rep.map(r => r.date);
     expect(dates[dates.length - 1]).toBe(echeanceStr);
