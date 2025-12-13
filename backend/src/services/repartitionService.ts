@@ -166,7 +166,7 @@ export async function repartitionJusteATemps(
       // - Respecte l'horaire du traducteur
       // - Exclut automatiquement la pause 12h-13h
       // - Si deadline le même jour, limite à l'heure de la deadline
-      const estJourEcheance = iso === dateEcheanceISO;
+      const estJourEcheance = iso === dateEcheanceISO.split('T')[0];
       const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
       let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
       
