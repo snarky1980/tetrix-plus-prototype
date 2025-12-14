@@ -38,8 +38,9 @@ const TacheCreation: React.FC = () => {
     heuresTotal: 0,
     compteMots: undefined as number | undefined,
     dateEcheance: '',
-    heureEcheance: '',
+    heureEcheance: '17:00',
     repartitionAuto: true,
+    modeDistribution: 'JAT',
     repartitionManuelle: [] as { date: string; heures: number }[],
   });
 
@@ -89,11 +90,20 @@ const TacheCreation: React.FC = () => {
         dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance}:00`;
       }
 
-      const preview = await repartitionService.previewJAT({
+      const params = {
         traducteurId: formData.traducteurId,
         heuresTotal: formData.heuresTotal,
         dateEcheance: dateEcheanceComplete,
-      });
+      };
+
+      let preview;
+      if (formData.modeDistribution === 'PEPS') {
+        preview = await repartitionService.previewPEPS(params);
+      } else if (formData.modeDistribution === 'EQUILIBRE') {
+        preview = await repartitionService.previewEquilibre(params);
+      } else {
+        preview = await repartitionService.previewJAT(params);
+      }
       setPreviewJAT(preview);
     } catch (err: any) {
       setErreur(err.response?.data?.erreur || 'Erreur lors du calcul de la répartition');
@@ -245,7 +255,9 @@ const TacheCreation: React.FC = () => {
                     <option value="">Sélectionner un traducteur...</option>
                     {traducteurs.map(t => (
                       <option key={t.id} value={t.id}>
-                        {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                        {t.disponiblePourTravail ? '🟢 ' : ''}
+                        {t.nom}
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
@@ -344,7 +356,7 @@ const TacheCreation: React.FC = () => {
                     />
                   </FormField>
 
-                  <FormField label="Heure (optionnel)">
+                  <FormField label="Heure d'échéance (optionnel)">
                     <Input
                       type="time"
                       value={formData.heureEcheance}
@@ -353,21 +365,37 @@ const TacheCreation: React.FC = () => {
                   </FormField>
                 </div>
 
-                <FormField label="Type de répartition">
+                <FormField label="Mode de distribution">
                   <div className="space-y-2">
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"
-                        checked={formData.repartitionAuto}
-                        onChange={() => setFormData({ ...formData, repartitionAuto: true })}
+                        checked={formData.modeDistribution === 'JAT'}
+                        onChange={() => setFormData({ ...formData, modeDistribution: 'JAT', repartitionAuto: true })}
                       />
-                      <span className="text-sm">Automatique (Juste-à-temps)</span>
+                      <span className="text-sm">Juste-à-temps (JAT) - Recommandé</span>
                     </label>
                     <label className="flex items-center gap-2">
                       <input
                         type="radio"
-                        checked={!formData.repartitionAuto}
-                        onChange={() => setFormData({ ...formData, repartitionAuto: false })}
+                        checked={formData.modeDistribution === 'PEPS'}
+                        onChange={() => setFormData({ ...formData, modeDistribution: 'PEPS', repartitionAuto: true })}
+                      />
+                      <span className="text-sm">PEPS (Priorité échéance)</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        checked={formData.modeDistribution === 'EQUILIBRE'}
+                        onChange={() => setFormData({ ...formData, modeDistribution: 'EQUILIBRE', repartitionAuto: true })}
+                      />
+                      <span className="text-sm">Équilibré (Uniforme)</span>
+                    </label>
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        checked={formData.modeDistribution === 'MANUEL'}
+                        onChange={() => setFormData({ ...formData, modeDistribution: 'MANUEL', repartitionAuto: false })}
                       />
                       <span className="text-sm">Manuelle</span>
                     </label>
@@ -393,6 +421,11 @@ const TacheCreation: React.FC = () => {
                     <p>
                       <span className="font-medium">Traducteur:</span> {traducteurSelectionne?.nom}
                     </p>
+                    {traducteurSelectionne?.horaire && (
+                      <p>
+                        <span className="font-medium">Horaire:</span> {traducteurSelectionne.horaire}
+                      </p>
+                    )}
                     <p>
                       <span className="font-medium">Heures:</span> {formData.heuresTotal}h
                     </p>

@@ -17,6 +17,22 @@ export const repartitionService = {
     return data.repartition;
   },
 
+  async previewPEPS(params: JATPreviewParams): Promise<RepartitionItem[]> {
+    const { data } = await api.get<{ repartition: RepartitionItem[] }>(
+      '/repartition/peps-preview',
+      { params }
+    );
+    return data.repartition;
+  },
+
+  async previewEquilibre(params: JATPreviewParams): Promise<RepartitionItem[]> {
+    const { data } = await api.get<{ repartition: RepartitionItem[] }>(
+      '/repartition/equilibre-preview',
+      { params }
+    );
+    return data.repartition;
+  },
+
   repartitionUniforme(heuresTotal: number, dateDebut: string, dateFin: string): RepartitionItem[] {
     const debut = new Date(dateDebut);
     const fin = new Date(dateFin);

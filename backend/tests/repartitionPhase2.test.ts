@@ -22,13 +22,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
 
   describe('JAT avec livraison matinale', () => {
     it('devrait limiter les heures du jour J à 2h par défaut', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       // Utiliser date future fixe (lundi 16 décembre 2025)
       const echeance = '2025-12-16';
@@ -51,13 +51,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait respecter heuresMaxJourJ personnalisé', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const echeance = '2025-12-18'; // Mercredi
       
@@ -74,13 +74,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait fonctionner en mode normal sans option', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const echeance = '2025-12-17'; // Mardi
       
@@ -93,13 +93,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait maintenir compatibilité avec ancienne signature (debug: boolean)', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const echeance = '2025-12-19'; // Vendredi
       
@@ -112,13 +112,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
 
   describe('Mode Équilibré - Nouvelle méthode centimes', () => {
     it('devrait distribuer exactement sans boucle de rattrapage', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const debut = new Date('2025-12-16'); // Lundi
       const fin = new Date('2025-12-18');   // Mercredi (3 jours)
@@ -140,13 +140,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait gérer fractions complexes (ex: 10.33h sur 3 jours)', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const debut = new Date('2025-12-16');
       const fin = new Date('2025-12-18');
@@ -169,14 +169,14 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait rejeter si somme incorrecte (sécurité)', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 2, // Capacité trop faible
         horaire: '09:00-11:00' // 2h net
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const debut = new Date('2025-12-16');
       const fin = new Date('2025-12-18');
@@ -190,13 +190,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
 
   describe('capaciteDisponibleJour - Nouvelle fonction centralisée', () => {
     it('devrait retourner capacité totale si aucun ajustement', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => []);
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([]);
       
       const date = new Date('2025-12-16');
       const dispo = await capaciteDisponibleJour('t1', date);
@@ -205,13 +205,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait soustraire ajustements existants', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => [
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([
         { id: 'a1', traducteurId: 't1', date: new Date('2025-12-16'), heures: 3, tacheId: 'task1' },
         { id: 'a2', traducteurId: 't1', date: new Date('2025-12-16'), heures: 2, tacheId: 'task2' }
       ]);
@@ -224,14 +224,14 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait ignorer une tâche spécifique', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
       // Mock avec filtre NOT
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async (query) => {
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockImplementation(async (query) => {
         const ajustements = [
           { id: 'a1', traducteurId: 't1', date: new Date('2025-12-16'), heures: 3, tacheId: 'task1' },
           { id: 'a2', traducteurId: 't1', date: new Date('2025-12-16'), heures: 2, tacheId: 'task2' }
@@ -252,13 +252,13 @@ describe('Phase 2 - Nouvelles fonctionnalités', () => {
     });
 
     it('devrait retourner 0 si capacité saturée', async () => {
-      mockPrisma.default.traducteur.findUnique = vi.fn(async () => ({
+      mockPrisma.default.traducteur.findUnique = vi.fn().mockResolvedValue({
         id: 't1',
         nom: 'Test',
         capaciteHeuresParJour: 7.5
-      }));
+      } as any);
       
-      mockPrisma.default.ajustementTemps.findMany = vi.fn(async () => [
+      mockPrisma.default.ajustementTemps.findMany = vi.fn().mockResolvedValue([
         { id: 'a1', traducteurId: 't1', date: new Date('2025-12-16'), heures: 5, tacheId: 'task1' },
         { id: 'a2', traducteurId: 't1', date: new Date('2025-12-16'), heures: 3, tacheId: 'task2' }
       ]);

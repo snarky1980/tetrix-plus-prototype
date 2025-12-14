@@ -313,47 +313,58 @@ export const obtenirPlanificationGlobale = async (
       orderBy: { nom: 'asc' },
     });
 
-    // Pour chaque traducteur, récupérer ses ajustements
-    const planificationGlobale = await Promise.all(
-      traducteurs.map(async (traducteur) => {
-        const ajustements = await prisma.ajustementTemps.findMany({
-          where: {
-            traducteurId: traducteur.id,
-            date: {
-              gte: parseOttawaDateISO(dateDebut as string),
-              lte: parseOttawaDateISO(dateFin as string),
-            },
-          },
-        });
+    // Récupérer TOUS les ajustements en une seule requête (évite l'épuisement du pool de connexions)
+    const traducteurIds = traducteurs.map(t => t.id);
+    const tousAjustements = await prisma.ajustementTemps.findMany({
+      where: {
+        traducteurId: { in: traducteurIds },
+        date: {
+          gte: parseOttawaDateISO(dateDebut as string),
+          lte: parseOttawaDateISO(dateFin as string),
+        },
+      },
+    });
 
-        // Regrouper par date
-        const heuresParDate: Record<string, number> = {};
-        for (const ajust of ajustements) {
-          const dateStr = ajust.date.toISOString().split('T')[0];
-          heuresParDate[dateStr] = (heuresParDate[dateStr] || 0) + ajust.heures;
-        }
+    // Indexer les ajustements par traducteurId
+    const ajustementsParTraducteur: Record<string, typeof tousAjustements> = {};
+    for (const ajust of tousAjustements) {
+      if (!ajustementsParTraducteur[ajust.traducteurId]) {
+        ajustementsParTraducteur[ajust.traducteurId] = [];
+      }
+      ajustementsParTraducteur[ajust.traducteurId].push(ajust);
+    }
 
-        // Construire structure dates avec couleur + disponibilité
-        const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean }> = {};
-        Object.entries(heuresParDate).forEach(([dateStr, heures]) => {
-          const capacite = traducteur.capaciteHeuresParJour;
-          const isWeekend = estWeekend(dateStr);
-          const couleur = calculerCouleurDisponibilite(heures as number, capacite);
-          dates[dateStr] = {
-            heures: heures as number,
-            couleur,
-            capacite,
-            disponible: Math.max(capacite - (heures as number), 0),
-            estWeekend: isWeekend,
-          };
-        });
+    // Pour chaque traducteur, construire la structure de réponse
+    const planificationGlobale = traducteurs.map((traducteur) => {
+      const ajustements = ajustementsParTraducteur[traducteur.id] || [];
 
-        return {
-          traducteur,
-          dates,
+      // Regrouper par date
+      const heuresParDate: Record<string, number> = {};
+      for (const ajust of ajustements) {
+        const dateStr = ajust.date.toISOString().split('T')[0];
+        heuresParDate[dateStr] = (heuresParDate[dateStr] || 0) + ajust.heures;
+      }
+
+      // Construire structure dates avec couleur + disponibilité
+      const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean }> = {};
+      Object.entries(heuresParDate).forEach(([dateStr, heures]) => {
+        const capacite = traducteur.capaciteHeuresParJour;
+        const isWeekend = estWeekend(dateStr);
+        const couleur = calculerCouleurDisponibilite(heures as number, capacite);
+        dates[dateStr] = {
+          heures: heures as number,
+          couleur,
+          capacite,
+          disponible: Math.max(capacite - (heures as number), 0),
+          estWeekend: isWeekend,
         };
-      })
-    );
+      });
+
+      return {
+        traducteur,
+        dates,
+      };
+    });
 
     res.json({
       periode: {

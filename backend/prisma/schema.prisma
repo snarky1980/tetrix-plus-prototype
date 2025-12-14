@@ -130,6 +130,7 @@ model Tache {
   dateEcheance        DateTime
   statut              StatutTache        @default(PLANIFIEE)
   typeTache           TypeTache          @default(TRADUCTION)
+  modeDistribution    ModeDistribution   @default(JAT)
   traducteurId        String
   clientId            String?
   sousDomaineId       String?
@@ -190,4 +191,11 @@ enum TypeTache {
 enum TypeAjustement {
   TACHE
   BLOCAGE
+}
+
+enum ModeDistribution {
+  JAT
+  PEPS
+  EQUILIBRE
+  MANUEL
 }

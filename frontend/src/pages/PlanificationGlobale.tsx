@@ -140,6 +140,7 @@ const PlanificationGlobale: React.FC = () => {
     heuresTotal: '',
     compteMots: '' as string | number,
     dateEcheance: '',
+    heureEcheance: '17:00',
     typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL',
     dateDebut: today,
     dateFin: '',
@@ -508,6 +509,7 @@ const PlanificationGlobale: React.FC = () => {
       heuresTotal: '',
       compteMots: '',
       dateEcheance: '',
+      heureEcheance: '17:00',
       typeRepartition: 'JUSTE_TEMPS',
       dateDebut: today,
       dateFin: '',
@@ -1648,7 +1650,9 @@ const PlanificationGlobale: React.FC = () => {
                     <option value="">Rechercher ou sélectionner un traducteur...</option>
                     {traducteurs.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                        {t.disponiblePourTravail ? '🟢 ' : ''}
+                        {t.nom}
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
@@ -2166,7 +2170,9 @@ const PlanificationGlobale: React.FC = () => {
                     <option value="">Rechercher ou sélectionner un traducteur...</option>
                     {traducteurs.map((t) => (
                       <option key={t.id} value={t.id}>
-                        {t.disponiblePourTravail ? '🟢 ' : ''}{t.nom} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                        {t.disponiblePourTravail ? '🟢 ' : ''}
+                        {t.nom}
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
@@ -2945,7 +2951,7 @@ const PlanificationGlobale: React.FC = () => {
                           </div>
                           {(ligne.traducteur as any).horaire && (
                             <div className="text-[9px] text-gray-700 font-medium leading-tight mt-0.5">
-                              🕐 {(ligne.traducteur as any).horaire}
+                              🕐 {(ligne.traducteur as any).horaire} <span className="text-gray-500 font-normal">| 🍽️ 12h-13h</span>
                             </div>
                           )}
                           {(ligne.traducteur as any).specialisations && (ligne.traducteur as any).specialisations.length > 0 && (
@@ -3188,7 +3194,14 @@ const PlanificationGlobale: React.FC = () => {
               </div>
               <div>
                 <span className="font-medium text-muted">Traducteur:</span>
-                <p>{tacheDetaillee.traducteur?.nom || 'N/A'}</p>
+                <p>
+                  {tacheDetaillee.traducteur?.nom || 'N/A'}
+                  {tacheDetaillee.traducteur?.horaire && (
+                    <span className="text-xs text-gray-500 block">
+                      {tacheDetaillee.traducteur.horaire} | 🍽️ 12h-13h
+                    </span>
+                  )}
+                </p>
               </div>
               <div>
                 <span className="font-medium text-muted">Heures totales:</span>
@@ -3216,7 +3229,12 @@ const PlanificationGlobale: React.FC = () => {
               </div>
               <div>
                 <span className="font-medium text-muted">Mode de distribution:</span>
-                <p>{tacheDetaillee.modeDistribution || 'JUSTE_A_TEMPS'}</p>
+                <p>{
+                  tacheDetaillee.modeDistribution === 'PEPS' ? 'PEPS (Priorité échéance)' :
+                  tacheDetaillee.modeDistribution === 'EQUILIBRE' ? 'Équilibré' :
+                  tacheDetaillee.modeDistribution === 'MANUEL' ? 'Manuel' :
+                  'Juste à temps (JAT)'
+                }</p>
               </div>
               <div>
                 <span className="font-medium text-muted">Nombre de mots:</span>
@@ -3271,12 +3289,38 @@ const PlanificationGlobale: React.FC = () => {
                     <tbody>
                       {tacheDetaillee.ajustementsTemps
                         .sort((a: any, b: any) => parseOttawaTimestamp(a.date).getTime() - parseOttawaTimestamp(b.date).getTime())
-                        .map((aj: any, idx: number) => (
-                          <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                            <td className="px-3 py-2">{formatDateDisplay(parseOttawaTimestamp(aj.date))}</td>
-                            <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
-                          </tr>
-                        ))}
+                        .map((aj: any, idx: number) => {
+                          // Calcul de l'intervalle basé sur l'horaire du traducteur
+                          const horaire = tacheDetaillee.traducteur?.horaire || '9h-17h';
+                          let startHour = 9;
+                          const match = horaire.match(/^(\d{1,2})/);
+                          if (match) startHour = parseInt(match[1]);
+                          
+                          let endHour = startHour + aj.heures;
+                          
+                          // Si la plage couvre la pause de midi (12h-13h), on décale la fin d'une heure
+                          if (startHour < 12 && (startHour + aj.heures) > 12) {
+                            endHour += 1;
+                          }
+                          
+                          const formatTime = (h: number) => {
+                            const hour = Math.floor(h);
+                            const minutes = Math.round((h - hour) * 60);
+                            return `${hour.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                          };
+                          
+                          const intervalle = `${formatTime(startHour)} - ${formatTime(endHour)}`;
+
+                          return (
+                            <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
+                              <td className="px-3 py-2">
+                                <div>{formatDateDisplay(parseOttawaTimestamp(aj.date))}</div>
+                                <div className="text-xs text-gray-500 font-medium">{intervalle}</div>
+                              </td>
+                              <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
+                            </tr>
+                          );
+                        })}
                     </tbody>
                   </table>
                 </div>

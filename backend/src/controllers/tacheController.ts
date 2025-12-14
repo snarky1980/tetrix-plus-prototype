@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
-import { repartitionJusteATemps, validerRepartition, RepartitionItem } from '../services/repartitionService';
+import { repartitionJusteATemps, repartitionPEPS, repartitionEquilibree, validerRepartition, RepartitionItem } from '../services/repartitionService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
 import { parseOttawaDateISO, normalizeToOttawaWithTime, hasSignificantTime } from '../utils/dateTimeOttawa';
 
@@ -62,6 +62,7 @@ export const obtenirTaches = async (
           select: {
             id: true,
             nom: true,
+            horaire: true,
           },
         },
         client: true,
@@ -102,6 +103,7 @@ export const obtenirTache = async (
             id: true,
             nom: true,
             capaciteHeuresParJour: true,
+            horaire: true,
           },
         },
         client: true,
@@ -149,6 +151,7 @@ export const creerTache = async (
       dateEcheance,
       repartition, // Array de { date, heures }
       repartitionAuto, // bool: utiliser JAT si true et pas de répartition fournie
+      modeDistribution, // 'JAT', 'PEPS', 'EQUILIBRE', 'MANUEL'
     } = req.body;
 
     if (!numeroProjet || !traducteurId || !typeTache || !heuresTotal || !dateEcheance) {
@@ -170,14 +173,21 @@ export const creerTache = async (
       }
       repartitionEffective = repartition;
     } else if (repartitionAuto) {
-      // Génération JAT avec support timestamp si échéance a heure significative
+      // Génération automatique selon le mode
       try {
-        repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, dateEcheance, {
-          modeTimestamp: echeanceAHeureSignificative
-        });
+        if (modeDistribution === 'PEPS') {
+          repartitionEffective = await repartitionPEPS(traducteurId, heuresTotal, new Date(), dateEcheance);
+        } else if (modeDistribution === 'EQUILIBRE') {
+          repartitionEffective = await repartitionEquilibree(traducteurId, heuresTotal, new Date(), dateEcheance);
+        } else {
+          // JAT par défaut
+          repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, dateEcheance, {
+            modeTimestamp: echeanceAHeureSignificative
+          });
+        }
       } catch (e: any) {
-        console.error('[Erreur JAT]', e.message, '| traducteurId:', traducteurId, '| heuresTotal:', heuresTotal, '| dateEcheance:', dateEcheance);
-        res.status(400).json({ erreur: e.message || 'Erreur JAT' });
+        console.error(`[Erreur Répartition ${modeDistribution || 'JAT'}]`, e.message, '| traducteurId:', traducteurId, '| heuresTotal:', heuresTotal, '| dateEcheance:', dateEcheance);
+        res.status(400).json({ erreur: e.message || 'Erreur de répartition' });
         return;
       }
     }
@@ -193,6 +203,7 @@ export const creerTache = async (
           paireLinguistiqueId: paireLinguistiqueId || null,
           typeTache: typeTache || 'TRADUCTION',
           specialisation: req.body.specialisation || '',
+          modeDistribution: modeDistribution || (repartitionAuto ? 'JAT' : 'MANUEL'),
           description: description || '',
           heuresTotal,
           compteMots: compteMots ? parseInt(compteMots) : null,

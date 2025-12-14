@@ -100,6 +100,7 @@ export interface Tache {
   traducteur?: {
     id: string;
     nom: string;
+    horaire?: string;
   };
   clientId?: string;
   client?: Client;
