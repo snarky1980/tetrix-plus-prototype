@@ -45,8 +45,11 @@ export const obtenirTaches = async (
       if (dateFin) where.dateEcheance.lte = parseOttawaDateISO(dateFin as string);
     }
 
-    // Gestion du tri
-    let orderBy: any = { dateEcheance: 'asc' };
+    // Gestion du tri avec priorité
+    let orderBy: any = [
+      { priorite: 'desc' }, // URGENT avant REGULIER
+      { dateEcheance: 'asc' }
+    ];
     if (sort) {
       const [field, direction] = (sort as string).split(':');
       orderBy = { [field]: direction || 'asc' };

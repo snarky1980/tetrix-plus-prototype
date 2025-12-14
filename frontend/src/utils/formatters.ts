@@ -49,3 +49,41 @@ export function isValidNumeroProjet(value: string): boolean {
 export function unformatNumeroProjet(value: string): string {
   return value.replace(/\D/g, '');
 }
+
+/**
+ * Formate une date avec le jour de la semaine abrégé en français
+ * 
+ * @param dateString - Date au format ISO (YYYY-MM-DD)
+ * @returns Format "lun. 16 déc" ou "lun. 16 déc 2025"
+ */
+export function formatDateAvecJour(dateString: string, includeYear = false): string {
+  if (!dateString) return '';
+  
+  const joursAbrev = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+  const moisAbrev = ['jan', 'fév', 'mar', 'avr', 'mai', 'juin', 'juil', 'août', 'sep', 'oct', 'nov', 'déc'];
+  
+  const date = new Date(dateString + 'T12:00:00');
+  const jour = joursAbrev[date.getDay()];
+  const numero = date.getDate();
+  const mois = moisAbrev[date.getMonth()];
+  const annee = date.getFullYear();
+  
+  if (includeYear) {
+    return `${jour} ${numero} ${mois} ${annee}`;
+  }
+  return `${jour} ${numero} ${mois}`;
+}
+
+/**
+ * Obtient seulement le jour de la semaine abrégé
+ * 
+ * @param dateString - Date au format ISO (YYYY-MM-DD)
+ * @returns "lun.", "mar.", etc.
+ */
+export function getJourSemaine(dateString: string): string {
+  if (!dateString) return '';
+  
+  const joursAbrev = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+  const date = new Date(dateString + 'T12:00:00');
+  return joursAbrev[date.getDay()];
+}

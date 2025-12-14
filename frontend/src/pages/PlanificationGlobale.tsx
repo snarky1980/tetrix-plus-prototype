@@ -17,7 +17,7 @@ import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
 import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateDisplay, formatDateTimeDisplay } from '../utils/dateTimeOttawa';
-import { formatNumeroProjet } from '../utils/formatters';
+import { formatNumeroProjet, formatDateAvecJour, getJourSemaine } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -2912,7 +2912,7 @@ const PlanificationGlobale: React.FC = () => {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-xs font-semibold text-primary">
                               {tache.numeroProjet}
                             </span>
@@ -2924,19 +2924,30 @@ const PlanificationGlobale: React.FC = () => {
                               {tache.statut === 'TERMINEE' ? 'Terminée' :
                                tache.statut === 'EN_COURS' ? 'En cours' : 'Planifiée'}
                             </span>
+                            {tache.priorite === 'URGENT' && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">
+                                🔥 URGENT
+                              </span>
+                            )}
                             <span className="text-xs text-muted">
                               {tache.typeTache || 'TRADUCTION'}
                             </span>
                           </div>
-                          <p className="text-sm mb-1">{tache.description}</p>
-                          <div className="flex items-center gap-3 text-xs text-muted">
+                          {tache.description && <p className="text-sm mb-1">{tache.description}</p>}
+                          <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
                             {tache.paireLinguistique && (
                               <span>🌐 {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
                             )}
                             {tache.client && <span>👤 {tache.client.nom}</span>}
-                            <span>⏱️ {tache.heuresTotal}h</span>
-                            <span>📅 {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
+                            <span className="font-semibold">⏱️ {tache.heuresTotal}h</span>
+                            {tache.compteMots && <span className="font-semibold">📝 {tache.compteMots} mots</span>}
+                            <span className="font-semibold">📅 {tache.dateEcheance ? formatDateAvecJour(tache.dateEcheance.split('T')[0]) : 'Non définie'} à {tache.heureEcheance || '17:00'}</span>
                           </div>
+                          {tache.traducteur && (
+                            <div className="mt-1 text-xs text-muted">
+                              👤 {tache.traducteur.nom} • Horaire: {tache.traducteur.horaire || '9h-17h'}
+                            </div>
+                          )}
                         </div>
                         <Button
                           variant="outline"
@@ -3356,7 +3367,7 @@ const PlanificationGlobale: React.FC = () => {
                     >
                       <div className="flex items-start justify-between gap-3 mb-2">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-sm font-semibold text-primary">
                               {tache.numeroProjet}
                             </span>
@@ -3367,10 +3378,20 @@ const PlanificationGlobale: React.FC = () => {
                             }`}>
                               {tache.statut || 'PLANIFIEE'}
                             </span>
+                            {tache.priorite === 'URGENT' && (
+                              <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">
+                                🔥 URGENT
+                              </span>
+                            )}
                           </div>
                           <p className="text-xs text-muted mb-1">
                             {tache.typeTache || 'TRADUCTION'}
                           </p>
+                          {tache.compteMots && (
+                            <p className="text-xs font-semibold text-gray-700">
+                              📝 {tache.compteMots} mots
+                            </p>
+                          )}
                           {tache.client && (
                             <p className="text-xs text-muted">
                               Client: {tache.client.nom}
@@ -3397,8 +3418,8 @@ const PlanificationGlobale: React.FC = () => {
                         </p>
                       )}
                       <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                        <span className="text-xs text-muted">
-                          Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}
+                        <span className="text-xs text-muted font-semibold">
+                          📅 Échéance: {tache.dateEcheance ? formatDateAvecJour(tache.dateEcheance.split('T')[0]) : 'Non définie'} à {tache.heureEcheance || '17:00'}
                         </span>
                         <span className="text-xs text-primary font-medium">
                           Voir détails →
@@ -3705,7 +3726,7 @@ const PlanificationGlobale: React.FC = () => {
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="text-sm font-semibold text-primary">
                             {tache.numeroProjet}
                           </span>
@@ -3716,6 +3737,11 @@ const PlanificationGlobale: React.FC = () => {
                           }`}>
                             {tache.statut || 'PLANIFIEE'}
                           </span>
+                          {tache.priorite === 'URGENT' && (
+                            <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">
+                              🔥 URGENT
+                            </span>
+                          )}
                           <span className="text-xs text-muted">
                             {tache.typeTache || 'TRADUCTION'}
                           </span>
@@ -3726,16 +3752,16 @@ const PlanificationGlobale: React.FC = () => {
                           </p>
                         )}
                         <p className="text-xs text-muted mb-1">
-                          👤 {tache.traducteur?.nom || 'Traducteur non assigné'}
+                          👤 {tache.traducteur?.nom || 'Traducteur non assigné'} • Horaire: {tache.traducteur?.horaire || '9h-17h'}
                         </p>
                         <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
                           {tache.client && <span>📋 {tache.client.nom}</span>}
                           {tache.paireLinguistique && (
                             <span>🌐 {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
                           )}
-                          {tache.compteMots && <span>📝 {tache.compteMots.toLocaleString()} mots</span>}
+                          {tache.compteMots && <span className="font-semibold">📝 {tache.compteMots.toLocaleString()} mots</span>}
                           <span className="font-semibold">⏱️ {tache.heuresTotal}h</span>
-                          <span>📅 Échéance: {tache.dateEcheance ? formatDateDisplay(parseISODate(tache.dateEcheance)) : 'Non définie'}</span>
+                          <span className="font-semibold">📅 {tache.dateEcheance ? formatDateAvecJour(tache.dateEcheance.split('T')[0]) : 'Non définie'} à {tache.heureEcheance || '17:00'}</span>
                         </div>
                       </div>
                     </div>
