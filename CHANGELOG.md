@@ -2,7 +2,9 @@
 
 Toutes les modifications notables du projet sont documentées ici.
 
-## [2.1.0] - 2025-12-14
+---
+
+## [2.1.0] - 2025-12-14 🚀
 
 ### Ajouté
 - **Mode MANUEL avec suggestions automatiques**
