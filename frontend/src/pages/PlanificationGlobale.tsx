@@ -140,7 +140,7 @@ const PlanificationGlobale: React.FC = () => {
     heuresTotal: '',
     compteMots: '' as string | number,
     dateEcheance: '',
-    heureEcheance: '17:00',
+    heureEcheance: '15:00',
     typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL',
     dateDebut: today,
     dateFin: '',
@@ -149,7 +149,7 @@ const PlanificationGlobale: React.FC = () => {
   });
 
   // Preview de répartition
-  const [previewRepartition, setPreviewRepartition] = useState<{ date: string; heures: number }[] | null>(null);
+  const [previewRepartition, setPreviewRepartition] = useState<{ date: string; heures: number; heureDebut?: string; heureFin?: string }[] | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
   const [erreurPreview, setErreurPreview] = useState('');
 
@@ -509,7 +509,7 @@ const PlanificationGlobale: React.FC = () => {
       heuresTotal: '',
       compteMots: '',
       dateEcheance: '',
-      heureEcheance: '17:00',
+      heureEcheance: '15:00',
       typeRepartition: 'JUSTE_TEMPS',
       dateDebut: today,
       dateFin: '',
@@ -1608,12 +1608,6 @@ const PlanificationGlobale: React.FC = () => {
         ariaDescription="Formulaire de création de tâches"
       >
         <div className="space-y-4">
-          {erreurCreation && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-              {erreurCreation}
-            </div>
-          )}
-
           {/* Étape 1 : Informations de base */}
           {etapeCreation === 1 && (
             <div className="space-y-4">
@@ -1851,6 +1845,13 @@ const PlanificationGlobale: React.FC = () => {
                   </label>
                 </div>
               </div>
+
+              {/* Messages d'erreur - visibles après les modes */}
+              {erreurCreation && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700 sticky top-0 z-10 shadow-md">
+                  {erreurCreation}
+                </div>
+              )}
               
               {/* Champs spécifiques selon le mode */}
               {formTache.typeRepartition === 'PEPS' && (
@@ -2075,7 +2076,9 @@ const PlanificationGlobale: React.FC = () => {
                             {previewRepartition.map((r, idx) => (
                               <tr key={r.date} className={`border-t border-border transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                                 <td className="px-3 py-2">{r.date}</td>
-                                <td className="text-right px-3 py-2 font-semibold">{r.heures.toFixed(2)}h</td>
+                                <td className="text-right px-3 py-2 font-semibold">
+                                  {r.heures.toFixed(2)}h {r.heureDebut && r.heureFin ? `(${r.heureDebut}-${r.heureFin})` : ''}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
@@ -2626,6 +2629,10 @@ const PlanificationGlobale: React.FC = () => {
                   <p className="font-semibold">{chargeTraducteur.traducteur.division}</p>
                 </div>
                 <div>
+                  <p className="text-muted text-xs">Horaire</p>
+                  <p className="font-semibold">{(chargeTraducteur.traducteur as any).horaire || '9h-17h'} <span className="text-gray-500 font-normal text-xs">| 🍽️ 12h-13h</span></p>
+                </div>
+                <div>
                   <p className="text-muted text-xs">Capacité quotidienne</p>
                   <p className="font-semibold">{chargeTraducteur.traducteur.capaciteHeuresParJour}h/jour</p>
                 </div>
@@ -2947,13 +2954,13 @@ const PlanificationGlobale: React.FC = () => {
                             {(ligne.traducteur as any).disponiblePourTravail && (
                               <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1" title="Cherche du travail"></span>
                             )}
-                            {ligne.traducteur.nom} • <span className="font-normal text-[9px]">{ligne.traducteur.division} • {ligne.traducteur.classification}</span>
+                            {ligne.traducteur.nom} • <span className="font-normal text-[9px]">
+                              {ligne.traducteur.division} • {ligne.traducteur.classification}
+                              {(ligne.traducteur as any).horaire && (
+                                <> • 🕐 {(ligne.traducteur as any).horaire}</>
+                              )}
+                            </span>
                           </div>
-                          {(ligne.traducteur as any).horaire && (
-                            <div className="text-[9px] text-gray-700 font-medium leading-tight mt-0.5">
-                              🕐 {(ligne.traducteur as any).horaire} <span className="text-gray-500 font-normal">| 🍽️ 12h-13h</span>
-                            </div>
-                          )}
                           {(ligne.traducteur as any).specialisations && (ligne.traducteur as any).specialisations.length > 0 && (
                             <div className="text-[9px] text-orange-600 leading-tight mt-0.5">
                               📝 {(ligne.traducteur as any).specialisations.join(', ')}

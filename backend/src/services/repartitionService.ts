@@ -21,9 +21,94 @@ import {
 } from '../utils/dateTimeOttawa';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
 
-export interface RepartitionItem { date: string; heures: number }
+export interface RepartitionItem { 
+  date: string; 
+  heures: number;
+  heureDebut?: string; // Format: "10h" ou "10h30"
+  heureFin?: string;   // Format: "18h" ou "17h30"
+}
 
 const MAX_LOOKBACK_DAYS = 90; // Sécurité pour éviter boucle infinie
+
+/**
+ * Formate une heure décimale en format "Xh" ou "Xh30"
+ * @example formatHeure(10) => "10h"
+ * @example formatHeure(10.5) => "10h30"
+ * @example formatHeure(14.25) => "14h15"
+ */
+function formatHeure(heure: number): string {
+  const heureEntiere = Math.floor(heure);
+  const minutes = Math.round((heure - heureEntiere) * 60);
+  if (minutes === 0) {
+    return `${heureEntiere}h`;
+  }
+  return `${heureEntiere}h${minutes.toString().padStart(2, '0')}`;
+}
+
+/**
+ * Calcule les plages horaires exactes pour une allocation JAT
+ * RÈGLE MÉTIER JAT:
+ * - Jour J (échéance): allouer en DÉBUT de journée (premières heures disponibles)
+ * - Jours avant: allouer en FIN de journée (dernières heures disponibles)
+ * - Toujours exclure la pause 12h-13h du calcul
+ * 
+ * @example
+ * // Jour échéance, 2h à partir de 10h
+ * calculerPlageHoraireJAT(2, {heureDebut: 10, heureFin: 18}, true) 
+ * // => {heureDebut: "10h", heureFin: "12h"}
+ * 
+ * // Jour avant, 3h en fin de journée jusqu'à 18h
+ * calculerPlageHoraireJAT(3, {heureDebut: 10, heureFin: 18}, false)
+ * // => {heureDebut: "15h", heureFin: "18h"}
+ */
+function calculerPlageHoraireJAT(
+  heuresAllouees: number,
+  horaire: { heureDebut: number; heureFin: number },
+  estJourEcheance: boolean,
+  deadlineDateTime?: Date
+): { heureDebut: string; heureFin: string } {
+  
+  if (estJourEcheance) {
+    // JOUR J: Allouer du DÉBUT vers l'échéance
+    let debut = horaire.heureDebut;
+    let fin = debut + heuresAllouees;
+    
+    // Si on traverse la pause 12h-13h, ajouter 1h
+    if (debut < 12 && fin > 12) {
+      fin += 1; // Sauter la pause 12h-13h
+    }
+    
+    // Si deadline avec heure précise, limiter à cette heure
+    if (deadlineDateTime) {
+      const heureEcheance = deadlineDateTime.getHours() + deadlineDateTime.getMinutes() / 60;
+      fin = Math.min(fin, heureEcheance);
+    } else {
+      fin = Math.min(fin, horaire.heureFin);
+    }
+    
+    return {
+      heureDebut: formatHeure(debut),
+      heureFin: formatHeure(fin)
+    };
+  } else {
+    // JOURS AVANT: Allouer de la FIN vers le début (à rebours)
+    let fin = horaire.heureFin;
+    let debut = fin - heuresAllouees;
+    
+    // Si on traverse la pause 13h-12h (en remontant), soustraire 1h
+    if (debut < 13 && fin > 13) {
+      debut -= 1; // Remonter avant la pause 12h-13h
+    }
+    
+    // S'assurer qu'on ne commence pas avant l'heure de début
+    debut = Math.max(debut, horaire.heureDebut);
+    
+    return {
+      heureDebut: formatHeure(debut),
+      heureFin: formatHeure(fin)
+    };
+  }
+}
 
 async function heuresUtiliseesParJour(
   traducteurId: string,
@@ -151,6 +236,9 @@ export async function repartitionJusteATemps(
   }
 
   // Allocation JAT (remplir à rebours depuis l'échéance, en excluant les weekends)
+  // RÈGLE MÉTIER: À rebours pour distribuer les jours, mais:
+  // - Jour J: premières heures disponibles (début de journée)
+  // - Jours avant: dernières heures disponibles (fin de journée)
   let restant = heuresTotal;
   const resultat: RepartitionItem[] = [];
   let courant = echeance;
@@ -178,10 +266,23 @@ export async function repartitionJusteATemps(
       const libre = Math.max(capaciteNette - utilisees, 0);
       if (libre > 0) {
         const alloue = Math.min(libre, restant);
-        resultat.push({ date: iso, heures: alloue });
+        
+        // Calculer les plages horaires exactes
+        const plages = calculerPlageHoraireJAT(alloue, horaire, estJourEcheance, deadlineDateTime);
+        
+        resultat.push({ 
+          date: iso, 
+          heures: alloue,
+          heureDebut: plages.heureDebut,
+          heureFin: plages.heureFin
+        });
         restant -= alloue;
         // Mettre à jour mémoire pour éviter double comptage si futur usage
         heuresParJour[iso] = utilisees + alloue;
+        
+        if (debug) {
+          console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - début journée]' : '[à rebours - fin journée]'}`);
+        }
       }
     }
     courant = subDaysOttawa(courant, 1);
@@ -195,7 +296,7 @@ export async function repartitionJusteATemps(
   if (debug) {
     console.debug(`[JAT] Répartition finale (${resultTrie.length} jours):`);
     const totalAlloue = resultTrie.reduce((s, r) => s + r.heures, 0);
-    resultTrie.forEach(r => console.debug(`  ${r.date}: ${r.heures.toFixed(2)}h`));
+    resultTrie.forEach(r => console.debug(`  ${r.date}: ${r.heures.toFixed(2)}h ${r.heureDebut && r.heureFin ? `(${r.heureDebut}-${r.heureFin})` : ''}`));
     console.debug(`[JAT] Total alloué: ${totalAlloue.toFixed(2)}h (demandé: ${heuresTotal}h)`);
   }
   

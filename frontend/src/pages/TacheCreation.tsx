@@ -38,14 +38,14 @@ const TacheCreation: React.FC = () => {
     heuresTotal: 0,
     compteMots: undefined as number | undefined,
     dateEcheance: '',
-    heureEcheance: '17:00',
+    heureEcheance: '15:00',
     repartitionAuto: true,
     modeDistribution: 'JAT',
     repartitionManuelle: [] as { date: string; heures: number }[],
   });
 
   // Preview JAT
-  const [previewJAT, setPreviewJAT] = useState<{ date: string; heures: number }[] | null>(null);
+  const [previewJAT, setPreviewJAT] = useState<{ date: string; heures: number; heureDebut?: string; heureFin?: string }[] | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
   useEffect(() => {
@@ -457,7 +457,9 @@ const TacheCreation: React.FC = () => {
                             {previewJAT.map((r, i) => (
                               <tr key={i} className="border-t">
                                 <td className="px-4 py-2 text-sm">{r.date}</td>
-                                <td className="px-4 py-2 text-sm text-right">{r.heures}h</td>
+                                <td className="px-4 py-2 text-sm text-right">
+                                  {r.heures}h {r.heureDebut && r.heureFin ? `(${r.heureDebut}-${r.heureFin})` : ''}
+                                </td>
                               </tr>
                             ))}
                           </tbody>
