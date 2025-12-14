@@ -118,6 +118,12 @@ const PlanificationGlobale: React.FC = () => {
   // Référence pour le scroll horizontal
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
 
+  // Toggle pour afficher heures disponibles vs occupées
+  const [showAvailable, setShowAvailable] = useState(true);
+
+  // Recherche de traducteur pour éviter le défilement
+  const [searchTraducteur, setSearchTraducteur] = useState('');
+
   // Modal ajout de tâche - État complet
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
   const [etapeCreation, setEtapeCreation] = useState(1); // 1 = infos, 2 = répartition
@@ -3130,9 +3136,17 @@ const PlanificationGlobale: React.FC = () => {
             </span>
             <Button
               variant="outline"
+              onClick={() => setShowAvailable(!showAvailable)}
+              className={`px-2 py-1 text-xs ml-2 ${showAvailable ? 'bg-green-50' : 'bg-blue-50'}`}
+              title={showAvailable ? "Afficher les heures occupées" : "Afficher les heures disponibles"}
+            >
+              {showAvailable ? '✓ Disponibles' : '📊 Occupées'}
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => window.location.reload()}
               disabled={loading}
-              className="px-2 py-1 text-xs ml-2"
+              className="px-2 py-1 text-xs"
               title="Rafraîchir les données"
             >
               🔄 Rafraîchir
@@ -3142,6 +3156,25 @@ const PlanificationGlobale: React.FC = () => {
 
         {/* Zone de tableau avec défilement */}
         <div className="relative flex-1 overflow-hidden">
+          {/* Barre de recherche de traducteur */}
+          <div className="bg-gray-50 border-b border-border p-2">
+            <input
+              type="text"
+              placeholder="🔍 Rechercher un traducteur par nom..."
+              value={searchTraducteur}
+              onChange={(e) => setSearchTraducteur(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+            />
+            {searchTraducteur && (
+              <button
+                onClick={() => setSearchTraducteur('')}
+                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                title="Effacer la recherche"
+              >
+                ✕
+              </button>
+            )}
+          </div>
           <div ref={tableContainerRef} className="overflow-auto h-full w-full">
             {loading && <p className="text-xs text-muted text-center py-2">Chargement...</p>}
             {error && <p className="text-xs text-red-600 text-center py-2">{error}</p>}
@@ -3182,7 +3215,12 @@ const PlanificationGlobale: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {planificationEnrichie?.planification.map((ligne, idx) => {
+                {planificationEnrichie?.planification
+                  .filter(ligne => {
+                    if (!searchTraducteur) return true;
+                    return ligne.traducteur.nom.toLowerCase().includes(searchTraducteur.toLowerCase());
+                  })
+                  .map((ligne, idx) => {
                   const isSearchResult = searchResults.includes(ligne.traducteur.id);
                   return (
                     <tr key={ligne.traducteur.id} className={`group transition-all duration-200 ${isSearchResult ? 'ring-2 ring-yellow-400 ring-inset' : ''} ${idx % 2 === 0 ? 'bg-white hover:bg-blue-50' : 'bg-gray-100 hover:bg-blue-50'} hover:shadow-lg hover:relative hover:z-[5]`}>
@@ -3270,10 +3308,10 @@ const PlanificationGlobale: React.FC = () => {
                                   chargerTachesCellule(ligne.traducteur.id, ligne.traducteur.nom, iso);
                                 }}
                                 className="w-full h-full hover:opacity-80 transition-opacity cursor-pointer"
-                                title={`${ligne.traducteur.nom}\n${iso}\n${disponible.toFixed(1)}h disponibles sur ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
+                                title={`${ligne.traducteur.nom}\n${iso}\n${disponible.toFixed(1)}h disponibles / ${heures.toFixed(1)}h occupées sur ${capacite.toFixed(1)}h\nCliquer pour voir les tâches`}
                               >
                                 <div className={`font-semibold text-xs ${textClass}`}>
-                                  {disponible.toFixed(1)}
+                                  {showAvailable ? disponible.toFixed(1) : heures.toFixed(1)}
                                 </div>
                                 <div className="text-[9px] text-muted">
                                   /{capacite.toFixed(0)}h

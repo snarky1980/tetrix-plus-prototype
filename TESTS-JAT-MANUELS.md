@@ -1,4 +1,4 @@
-# 🧪 TESTS MANUELS - MODE JAT (Juste-à-temps)
+#m 🧪 TESTS MANUELS - MODE JAT (Juste-à-temps)
 
 **Date:** 14 décembre 2025  
 **Mode testé:** JAT (Juste-à-temps)  

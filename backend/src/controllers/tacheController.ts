@@ -211,6 +211,8 @@ export const creerTache = async (
           heuresTotal,
           compteMots: compteMots ? parseInt(compteMots) : null,
           dateEcheance: dateEcheanceParsee, // Utilise la date parsée avec support timestamp
+          heureEcheance: req.body.heureEcheance || '17:00',
+          priorite: req.body.priorite || 'REGULIER',
           statut: 'PLANIFIEE',
           creePar: req.utilisateur!.id,
         },
