@@ -329,7 +329,7 @@ export const bloquerTemps = async (
   try {
     const { id: traducteurId } = req.params;
     const { date, heureDebut, heureFin, motif } = req.body;
-    const utilisateurId = req.user?.id;
+    const utilisateurId = req.utilisateur?.id;
 
     if (!utilisateurId) {
       res.status(401).json({ message: 'Non authentifié' });
