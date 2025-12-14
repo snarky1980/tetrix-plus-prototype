@@ -128,6 +128,8 @@ model Tache {
   heuresTotal         Float
   compteMots          Int?
   dateEcheance        DateTime
+  heureEcheance       String             @default("17:00")
+  priorite            String             @default("REGULIER")
   statut              StatutTache        @default(PLANIFIEE)
   typeTache           TypeTache          @default(TRADUCTION)
   modeDistribution    ModeDistribution   @default(JAT)
@@ -147,6 +149,7 @@ model Tache {
   @@index([traducteurId])
   @@index([dateEcheance])
   @@index([statut])
+  @@index([priorite])
   @@map("taches")
 }
 

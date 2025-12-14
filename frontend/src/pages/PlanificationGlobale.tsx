@@ -140,7 +140,8 @@ const PlanificationGlobale: React.FC = () => {
     heuresTotal: '',
     compteMots: '' as string | number,
     dateEcheance: '',
-    heureEcheance: '15:00',
+    heureEcheance: '17:00',
+    priorite: 'REGULIER' as 'URGENT' | 'REGULIER',
     typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL',
     dateDebut: today,
     dateFin: '',
@@ -169,6 +170,8 @@ const PlanificationGlobale: React.FC = () => {
     heuresTotal: 0,
     compteMots: 0,
     dateEcheance: '',
+    heureEcheance: '17:00',
+    priorite: 'REGULIER' as 'URGENT' | 'REGULIER',
     typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
     dateDebut: '',
     dateFin: '',
@@ -1773,6 +1776,20 @@ const PlanificationGlobale: React.FC = () => {
                   includeTime={true}
                   required
                 />
+
+                {/* Priorité */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Priorité <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formTache.priorite}
+                    onChange={(e) => setFormTache({ ...formTache, priorite: e.target.value as 'URGENT' | 'REGULIER' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="REGULIER">Régulier</option>
+                    <option value="URGENT">Urgent</option>
+                  </Select>
+                </div>
               </div>
 
               {/* Section Champs optionnels */}
@@ -2286,14 +2303,19 @@ const PlanificationGlobale: React.FC = () => {
             {/* Motif */}
             <div>
               <label className="block text-sm font-bold mb-1 text-gray-900">Motif <span className="text-red-600">*</span></label>
-              <textarea
+              <Select
                 value={formBlocage.motif}
                 onChange={(e) => setFormBlocage({ ...formBlocage, motif: e.target.value })}
-                placeholder="Ex: Formation, Réunion, Congé, etc."
-                rows={3}
                 required
-                className="w-full px-3 py-2 border-2 border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
-              />
+                className="border-2 border-blue-300"
+              >
+                <option value="">Sélectionner un motif...</option>
+                <option value="Formation">Formation</option>
+                <option value="Réunion">Réunion</option>
+                <option value="Congé">Congé</option>
+                <option value="Défalcage">Défalcage</option>
+                <option value="Autre">Autre</option>
+              </Select>
             </div>
           </div>
 
