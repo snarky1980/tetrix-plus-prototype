@@ -63,10 +63,10 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
                 onClick={handleDateFormatClick}
                 className="w-full px-4 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground flex items-center gap-3 transition-colors"
               >
-                <Calendar className="h-4 w-4" />
+                <Calendar className="h-4 w-4 text-gray-700" />
                 <div className="flex-1">
-                  <div className="font-medium">Format de date</div>
-                  <div className="text-xs text-muted-foreground">JJ/MM/AAAA, MM/JJ/AAAA, etc.</div>
+                  <div className="font-medium text-gray-900">Format de date</div>
+                  <div className="text-xs text-gray-600">JJ/MM/AAAA, MM/JJ/AAAA, etc.</div>
                 </div>
               </button>
 
@@ -74,10 +74,10 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
                 onClick={handleDateFormatClick}
                 className="w-full px-4 py-2 text-sm text-left hover:bg-accent hover:text-accent-foreground flex items-center gap-3 transition-colors"
               >
-                <Globe className="h-4 w-4" />
+                <Globe className="h-4 w-4 text-gray-700" />
                 <div className="flex-1">
-                  <div className="font-medium">Fuseau horaire</div>
-                  <div className="text-xs text-muted-foreground">Ottawa, Local, UTC</div>
+                  <div className="font-medium text-gray-900">Fuseau horaire</div>
+                  <div className="text-xs text-gray-600">Ottawa, Local, UTC</div>
                 </div>
               </button>
 
@@ -91,23 +91,23 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
 
               <button
                 disabled
-                className="w-full px-4 py-2 text-sm text-left text-muted-foreground flex items-center gap-3 opacity-50 cursor-not-allowed"
+                className="w-full px-4 py-2 text-sm text-left flex items-center gap-3 opacity-50 cursor-not-allowed"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4 text-gray-500" />
                 <div className="flex-1">
-                  <div className="font-medium">Préférences générales</div>
-                  <div className="text-xs">Bientôt disponible</div>
+                  <div className="font-medium text-gray-700">Préférences générales</div>
+                  <div className="text-xs text-gray-500">Bientôt disponible</div>
                 </div>
               </button>
 
               <button
                 disabled
-                className="w-full px-4 py-2 text-sm text-left text-muted-foreground flex items-center gap-3 opacity-50 cursor-not-allowed"
+                className="w-full px-4 py-2 text-sm text-left flex items-center gap-3 opacity-50 cursor-not-allowed"
               >
-                <Settings className="h-4 w-4" />
+                <Settings className="h-4 w-4 text-gray-500" />
                 <div className="flex-1">
-                  <div className="font-medium">Notifications</div>
-                  <div className="text-xs">Bientôt disponible</div>
+                  <div className="font-medium text-gray-700">Notifications</div>
+                  <div className="text-xs text-gray-500">Bientôt disponible</div>
                 </div>
               </button>
             </div>
