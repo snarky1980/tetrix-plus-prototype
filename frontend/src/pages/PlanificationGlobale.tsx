@@ -192,6 +192,18 @@ const PlanificationGlobale: React.FC = () => {
   const [loadingTaches, setLoadingTaches] = useState(false);
   const [tacheDetaillee, setTacheDetaillee] = useState<any | null>(null);
 
+  // État pour la modal de blocage de temps
+  const [showBlocageModal, setShowBlocageModal] = useState(false);
+  const [formBlocage, setFormBlocage] = useState({
+    traducteurId: '',
+    date: today,
+    heureDebut: '09:00',
+    heureFin: '17:00',
+    motif: ''
+  });
+  const [submittingBlocage, setSubmittingBlocage] = useState(false);
+  const [erreurBlocage, setErreurBlocage] = useState('');
+
   // État pour la modal des tâches du conseiller
   const [showMesTachesModal, setShowMesTachesModal] = useState(false);
   const [mesTaches, setMesTaches] = useState<any[]>([]);
@@ -719,6 +731,55 @@ const PlanificationGlobale: React.FC = () => {
       setErreurCreation(messageErreur + detailsErreur);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // ============ Fonctions de blocage de temps ============
+
+  const handleSubmitBlocage = async () => {
+    setSubmittingBlocage(true);
+    setErreurBlocage('');
+
+    try {
+      // Validation
+      if (!formBlocage.traducteurId || !formBlocage.date || !formBlocage.heureDebut || !formBlocage.heureFin) {
+        setErreurBlocage('Veuillez remplir tous les champs obligatoires');
+        setSubmittingBlocage(false);
+        return;
+      }
+
+      if (!formBlocage.motif.trim()) {
+        setErreurBlocage('Veuillez indiquer le motif du blocage');
+        setSubmittingBlocage(false);
+        return;
+      }
+
+      // Appel au service
+      await traducteurService.bloquerTemps(formBlocage.traducteurId, {
+        date: formBlocage.date,
+        heureDebut: formBlocage.heureDebut,
+        heureFin: formBlocage.heureFin,
+        motif: formBlocage.motif
+      });
+
+      // Réinitialiser et fermer
+      setShowBlocageModal(false);
+      setFormBlocage({
+        traducteurId: '',
+        date: today,
+        heureDebut: '09:00',
+        heureFin: '17:00',
+        motif: ''
+      });
+
+      // Rafraîchir la planification
+      window.location.reload();
+    } catch (err: any) {
+      console.error('Erreur blocage:', err);
+      const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors du blocage de temps';
+      setErreurBlocage(messageErreur);
+    } finally {
+      setSubmittingBlocage(false);
     }
   };
 
@@ -1595,6 +1656,26 @@ const PlanificationGlobale: React.FC = () => {
         >
           ➕ Créer une tâche
         </Button>
+
+        {/* Bouton Bloquer du temps */}
+        <Button
+          variant="outline"
+          onClick={() => setShowBlocageModal(true)}
+          className="px-4 py-2 text-sm shadow hover:shadow-lg transition-all"
+          title="Bloquer du temps pour un traducteur"
+        >
+          🔒 Bloquer du temps
+        </Button>
+
+        {/* Bouton Statistiques de productivité */}
+        <Button
+          variant="outline"
+          onClick={() => window.location.href = '/statistiques-productivite'}
+          className="px-4 py-2 text-sm shadow hover:shadow-lg transition-all"
+          title="Voir les statistiques de productivité"
+        >
+          📊 Productivité
+        </Button>
       </div>
 
       {/* Modal Ajouter une tâche */}
@@ -2117,6 +2198,130 @@ const PlanificationGlobale: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      </Modal>
+
+      {/* Modal Bloquer du temps */}
+      <Modal
+        titre="Bloquer du temps pour un traducteur"
+        ouvert={showBlocageModal}
+        onFermer={() => {
+          setShowBlocageModal(false);
+          setFormBlocage({
+            traducteurId: '',
+            date: today,
+            heureDebut: '09:00',
+            heureFin: '17:00',
+            motif: ''
+          });
+          setErreurBlocage('');
+        }}
+        ariaDescription="Formulaire de blocage de temps"
+      >
+        <div className="space-y-4">
+          {erreurBlocage && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              {erreurBlocage}
+            </div>
+          )}
+
+          <div className="space-y-4 p-4 bg-blue-50 border-2 border-blue-300 rounded">
+            <h3 className="text-sm font-bold text-blue-900 mb-2">🔒 Informations du blocage</h3>
+            
+            {/* Traducteur */}
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">Traducteur <span className="text-red-600">*</span></label>
+              <Select
+                value={formBlocage.traducteurId}
+                onChange={(e) => setFormBlocage({ ...formBlocage, traducteurId: e.target.value })}
+                required
+                className="border-2 border-blue-300"
+              >
+                <option value="">Sélectionner un traducteur...</option>
+                {traducteurs.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.nom} - {t.division} ({t.horaire || '9h-17h'})
+                  </option>
+                ))}
+              </Select>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">Date <span className="text-red-600">*</span></label>
+              <Input
+                type="date"
+                value={formBlocage.date}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormBlocage({ ...formBlocage, date: e.target.value })}
+                min={today}
+                required
+                className="border-2 border-blue-300"
+              />
+            </div>
+
+            {/* Heure de début */}
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">Heure de début <span className="text-red-600">*</span></label>
+              <Input
+                type="time"
+                value={formBlocage.heureDebut}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormBlocage({ ...formBlocage, heureDebut: e.target.value })}
+                required
+                className="border-2 border-blue-300"
+              />
+            </div>
+
+            {/* Heure de fin */}
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">Heure de fin <span className="text-red-600">*</span></label>
+              <Input
+                type="time"
+                value={formBlocage.heureFin}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormBlocage({ ...formBlocage, heureFin: e.target.value })}
+                required
+                className="border-2 border-blue-300"
+              />
+            </div>
+
+            {/* Motif */}
+            <div>
+              <label className="block text-sm font-bold mb-1 text-gray-900">Motif <span className="text-red-600">*</span></label>
+              <textarea
+                value={formBlocage.motif}
+                onChange={(e) => setFormBlocage({ ...formBlocage, motif: e.target.value })}
+                placeholder="Ex: Formation, Réunion, Congé, etc."
+                rows={3}
+                required
+                className="w-full px-3 py-2 border-2 border-blue-300 rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-2 justify-end pt-4 border-t">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowBlocageModal(false);
+                setFormBlocage({
+                  traducteurId: '',
+                  date: today,
+                  heureDebut: '09:00',
+                  heureFin: '17:00',
+                  motif: ''
+                });
+                setErreurBlocage('');
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="primaire"
+              onClick={handleSubmitBlocage}
+              disabled={submittingBlocage}
+            >
+              {submittingBlocage ? 'Blocage en cours...' : 'Bloquer le temps'}
+            </Button>
+          </div>
         </div>
       </Modal>
 
