@@ -3,7 +3,7 @@
  * 
  * RÈGLES STRICTES:
  * - Toutes les opérations de dates utilisent le fuseau horaire America/Toronto (Ottawa)
- * - Une "journée" = minuit à 23:59:59 heure d'Ottawa
+ * - Une "journée" = minuit à 17:00:00 heure d'Ottawa (fin de journée de travail)
  * - Gère automatiquement les transitions DST (Daylight Saving Time)
  * - PostgreSQL stocke en UTC, conversions explicites à chaque lecture/écriture
  * 
@@ -416,31 +416,39 @@ export function formatOttawaDateTimeISO(date: Date): string {
 }
 
 /**
- * Obtient l'heure de fin de journée (23:59:59) pour une date donnée à Ottawa
+ * Obtient l'heure de fin de journée de travail (17:00:00) pour une date donnée à Ottawa
  * 
  * @param date Date de référence (Date ou string YYYY-MM-DD)
- * @returns Date représentant 23:59:59 ce jour-là à Ottawa
+ * @returns Date représentant 17:00:00 ce jour-là à Ottawa
  * 
  * @example
  * const date = parseOttawaDateISO('2025-12-15');
- * const finJour = endOfDayOttawa(date); // 2025-12-15 23:59:59 Ottawa
+ * const finJour = endOfWorkDayOttawa(date); // 2025-12-15 17:00:00 Ottawa
  */
-export function endOfDayOttawa(date: Date | string): Date {
+export function endOfWorkDayOttawa(date: Date | string): Date {
   const dateOnly = typeof date === 'string' ? parseOttawaDateISO(date) : date;
   const iso = formatOttawaISO(dateOnly);
-  return parseOttawaDateTimeISO(`${iso}T23:59:59`);
+  return parseOttawaDateTimeISO(`${iso}T17:00:00`);
+}
+
+/**
+ * @deprecated Utilisez endOfWorkDayOttawa à la place
+ * Alias pour compatibilité ascendante
+ */
+export function endOfDayOttawa(date: Date | string): Date {
+  return endOfWorkDayOttawa(date);
 }
 
 /**
  * Vérifie si une Date contient une heure significative
- * (différente de minuit 00:00:00 ou fin de journée 23:59:59)
+ * (différente de minuit 00:00:00 ou fin de journée de travail 17:00:00)
  * 
  * @param date Date à vérifier
  * @returns true si heure significative présente
  * 
  * @example
  * hasSignificantTime(parseOttawaDateISO('2025-12-15')); // false (minuit)
- * hasSignificantTime(endOfDayOttawa('2025-12-15')); // false (23:59:59)
+ * hasSignificantTime(endOfWorkDayOttawa('2025-12-15')); // false (17:00:00)
  * hasSignificantTime(parseOttawaDateTimeISO('2025-12-15T14:30:00')); // true
  */
 export function hasSignificantTime(date: Date): boolean {
@@ -452,8 +460,8 @@ export function hasSignificantTime(date: Date): boolean {
   // Minuit = pas d'heure fournie (legacy ou date seule)
   if (hours === 0 && minutes === 0 && seconds === 0) return false;
   
-  // 23:59:59 = fin de journée par défaut (date seule nouvelle UI)
-  if (hours === 23 && minutes === 59 && seconds === 59) return false;
+  // 17:00:00 = fin de journée de travail par défaut (date seule nouvelle UI)
+  if (hours === 17 && minutes === 0 && seconds === 0) return false;
   
   return true; // Heure significative présente
 }
@@ -481,7 +489,7 @@ export function differenceInHoursOttawa(dateFrom: Date, dateTo: Date): number {
  * Version étendue de normalizeToOttawa() pour gérer les timestamps
  * 
  * @param input Date ou string (YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss)
- * @param includeTime Si true, parse l'heure si fournie, sinon utilise 23:59:59 par défaut
+ * @param includeTime Si true, parse l'heure si fournie, sinon utilise 17:00:00 par défaut
  * @param label Label pour messages d'erreur
  * @returns Objet { date: Date, iso: string, hasTime: boolean }
  * 
@@ -492,7 +500,7 @@ export function differenceInHoursOttawa(dateFrom: Date, dateTo: Date): number {
  * 
  * // Date seule avec support heure
  * normalizeToOttawaWithTime('2025-12-15', true);
- * // → { date: 23:59:59, iso: '2025-12-15T23:59:59', hasTime: false }
+ * // → { date: 17:00:00, iso: '2025-12-15T17:00:00', hasTime: false }
  * 
  * // Timestamp complet
  * normalizeToOttawaWithTime('2025-12-15T14:30:00', true);
@@ -515,8 +523,8 @@ export function normalizeToOttawaWithTime(
       date = input;
       hasTime = true;
     } else if (includeTime && !inputHasSignificantTime) {
-      // Mode timestamp + date à minuit → convertir en fin de journée
-      date = endOfDayOttawa(input);
+      // Mode timestamp + date à minuit → convertir en fin de journée de travail
+      date = endOfWorkDayOttawa(input);
       hasTime = false; // Pas fournie explicitement
     } else {
       // Mode legacy: normaliser à minuit (ignore l'heure)
@@ -545,8 +553,8 @@ export function normalizeToOttawaWithTime(
     // Cas 2: Date seule (YYYY-MM-DD)
     else if (ISO_DATE_REGEX.test(trimmed)) {
       if (includeTime) {
-        // Mode timestamp: utiliser fin de journée par défaut
-        date = endOfDayOttawa(trimmed);
+        // Mode timestamp: utiliser fin de journée de travail par défaut (17:00:00)
+        date = endOfWorkDayOttawa(trimmed);
         hasTime = false; // Pas d'heure fournie explicitement
       } else {
         // Mode legacy: minuit
@@ -588,7 +596,7 @@ export function normalizeToOttawaWithTime(
     iso = formatOttawaISO(date);
   } else {
     // Mode timestamp: format avec l'heure réellement stockée
-    // Si hasTime=false mais qu'on a converti en 23:59:59, on doit le montrer
+    // Si hasTime=false mais qu'on a converti en 17:00:00, on doit le montrer
     // Si hasTime=false et c'est minuit, on peut montrer juste la date
     // Si hasTime=true, toujours montrer l'heure
     if (hasTime) {
@@ -600,8 +608,8 @@ export function normalizeToOttawaWithTime(
       const minutes = ottawaDate.getMinutes();
       const seconds = ottawaDate.getSeconds();
       
-      // Si c'est 23:59:59, l'afficher explicitement
-      if (hours === 23 && minutes === 59 && seconds === 59) {
+      // Si c'est 17:00:00, l'afficher explicitement
+      if (hours === 17 && minutes === 0 && seconds === 0) {
         iso = formatOttawaDateTimeISO(date);
       } 
       // Si c'est minuit, format date seule suffit

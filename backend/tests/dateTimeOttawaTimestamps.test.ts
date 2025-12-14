@@ -74,22 +74,22 @@ describe('formatOttawaDateTimeISO', () => {
   });
 });
 
-describe('endOfDayOttawa', () => {
-  it('convertit date en fin de journée (23:59:59)', () => {
+describe('endOfDayOttawa / endOfWorkDayOttawa', () => {
+  it('convertit date en fin de journée de travail (17:00:00)', () => {
     const date = parseOttawaDateISO('2025-12-15');
     const finJour = endOfDayOttawa(date);
-    expect(formatOttawaDateTimeISO(finJour)).toBe('2025-12-15T23:59:59');
+    expect(formatOttawaDateTimeISO(finJour)).toBe('2025-12-15T17:00:00');
   });
 
   it('accepte string YYYY-MM-DD directement', () => {
     const finJour = endOfDayOttawa('2025-12-15');
-    expect(formatOttawaDateTimeISO(finJour)).toBe('2025-12-15T23:59:59');
+    expect(formatOttawaDateTimeISO(finJour)).toBe('2025-12-15T17:00:00');
   });
 
   it('écrase heure existante si Date fournie', () => {
     const midi = parseOttawaDateTimeISO('2025-12-15T12:00:00');
     const finJour = endOfDayOttawa(midi);
-    expect(formatOttawaDateTimeISO(finJour)).toBe('2025-12-15T23:59:59');
+    expect(formatOttawaDateTimeISO(finJour)).toBe('2025-12-15T17:00:00');
   });
 });
 
@@ -99,7 +99,7 @@ describe('hasSignificantTime', () => {
     expect(hasSignificantTime(minuit)).toBe(false);
   });
 
-  it('retourne false pour fin de journée (23:59:59)', () => {
+  it('retourne false pour fin de journée de travail (17:00:00)', () => {
     const finJour = endOfDayOttawa('2025-12-15');
     expect(hasSignificantTime(finJour)).toBe(false);
   });
@@ -176,11 +176,11 @@ describe('normalizeToOttawaWithTime', () => {
   });
 
   describe('Mode timestamp (includeTime = true)', () => {
-    it('date seule → 23:59:59 par défaut', () => {
+    it('date seule → 17:00:00 par défaut', () => {
       const result = normalizeToOttawaWithTime('2025-12-15', true);
-      expect(result.iso).toBe('2025-12-15T23:59:59');
+      expect(result.iso).toBe('2025-12-15T17:00:00');
       expect(result.hasTime).toBe(false); // Pas fournie explicitement
-      expect(formatOttawaDateTimeISO(result.date)).toBe('2025-12-15T23:59:59');
+      expect(formatOttawaDateTimeISO(result.date)).toBe('2025-12-15T17:00:00');
     });
 
     it('timestamp complet → conserve heure', () => {
@@ -196,10 +196,17 @@ describe('normalizeToOttawaWithTime', () => {
       expect(result.hasTime).toBe(false); // Minuit = pas d'heure significative
     });
 
-    it('23:59:59 explicite → conserve 23:59:59', () => {
+    it('17:00:00 explicite → conserve 17:00:00', () => {
+      const result = normalizeToOttawaWithTime('2025-12-15T17:00:00', true);
+      expect(result.iso).toBe('2025-12-15T17:00:00');
+      expect(result.hasTime).toBe(false); // Fin journée de travail = pas d'heure significative
+      expect(formatOttawaDateTimeISO(result.date)).toBe('2025-12-15T17:00:00');
+    });
+
+    it('23:59:59 explicite → considéré comme heure significative', () => {
       const result = normalizeToOttawaWithTime('2025-12-15T23:59:59', true);
       expect(result.iso).toBe('2025-12-15T23:59:59');
-      expect(result.hasTime).toBe(false); // Fin journée = pas d'heure significative
+      expect(result.hasTime).toBe(true); // 23:59:59 n'est plus l'heure par défaut
       expect(formatOttawaDateTimeISO(result.date)).toBe('2025-12-15T23:59:59');
     });
   });
@@ -213,7 +220,7 @@ describe('normalizeToOttawaWithTime', () => {
       expect(legacy.hasTime).toBe(false);
       
       const withTime = normalizeToOttawaWithTime(date, true);
-      expect(withTime.iso).toBe('2025-12-15T23:59:59');
+      expect(withTime.iso).toBe('2025-12-15T17:00:00');
       expect(withTime.hasTime).toBe(false);
     });
 
@@ -274,7 +281,7 @@ describe('Intégration: Scénarios réels', () => {
     const { date, hasTime } = normalizeToOttawaWithTime(input, true);
     
     expect(hasTime).toBe(false); // Pas fournie explicitement
-    expect(formatOttawaDateTimeISO(date)).toBe('2025-12-20T23:59:59'); // Fin journée
+    expect(formatOttawaDateTimeISO(date)).toBe('2025-12-20T17:00:00'); // Fin journée de travail
   });
 
   it('Scénario 3: Création tâche avec heure précise', () => {
@@ -332,9 +339,9 @@ describe('Tests de régression', () => {
     const date = parseOttawaDateISO('2025-12-15');
     expect(formatOttawaDateTimeISO(date)).toBe('2025-12-15T00:00:00');
     
-    // Test endOfDayOttawa (nouveau mais ne doit pas impacter legacy)
+    // Test endOfDayOttawa (nouveau: 17:00:00 = fin de journée de travail)
     const fin = endOfDayOttawa('2025-12-15');
-    expect(formatOttawaDateTimeISO(fin)).toBe('2025-12-15T23:59:59');
+    expect(formatOttawaDateTimeISO(fin)).toBe('2025-12-15T17:00:00');
     expect(fin).not.toEqual(date); // Bien différentes
   });
 });

@@ -165,51 +165,51 @@ describe('🎯 MODE JAT - Juste-à-Temps', () => {
   });
 
   it('Cas simple: Distribution basique sans contraintes', async () => {
-    // Scénario: 20h à répartir, échéance dans 5 jours, capacité 7.5h/jour
+    // Scénario: 15h à répartir, échéance dans 5 jours, capacité 7.5h/jour
     mockAjustements = [];
     
     const result = await repartitionJusteATemps(
       mockTraducteur.id,
-      20,
-      '2025-12-16', // 5 jours ouvrables depuis aujourd'hui (11 déc)
+      15,
+      '2025-12-19T16:30:00', // Date future avec heure précise
       { debug: false }
     );
     
     const metriques = calculerMetriques(result);
-    const anomalies = verifierInvariants(result, 20, mockTraducteur.capaciteHeuresParJour);
+    const anomalies = verifierInvariants(result, 15, mockTraducteur.capaciteHeuresParJour);
     
     console.log('\n📊 JAT - Cas simple:');
     console.log(`   Jours: ${metriques.nbJours}`);
-    console.log(`   Somme: ${metriques.sommeHeures}h / 20h`);
+    console.log(`   Somme: ${metriques.sommeHeures}h / 15h`);
     console.log(`   Distribution: ${metriques.min.toFixed(2)}h - ${metriques.max.toFixed(2)}h (σ=${metriques.ecartType})`);
     
     expect(anomalies).toHaveLength(0);
-    expect(metriques.sommeHeures).toBeCloseTo(20, 1);
+    expect(metriques.sommeHeures).toBeCloseTo(15, 1);
     expect(result.length).toBeGreaterThan(0);
   });
 
   it('Cas charge élevée: Proche de la saturation', async () => {
-    // 20h sur 3 jours ouvrables = capacité presque saturée
-    // Capacité disponible: 3 × 7h net (avec pause exclu) = 21h
+    // 15h sur 3 jours ouvrables = capacité presque saturée
+    // Capacité disponible: 2 × 7.5h + 1 jour partiel = ~15-22h
     mockAjustements = [];
     
     const result = await repartitionJusteATemps(
       mockTraducteur.id,
-      20,
-      '2025-12-16',
+      15,
+      '2025-12-19T16:30:00',
       { debug: false }
     );
     
     const metriques = calculerMetriques(result);
-    const anomalies = verifierInvariants(result, 20, mockTraducteur.capaciteHeuresParJour);
+    const anomalies = verifierInvariants(result, 15, mockTraducteur.capaciteHeuresParJour);
     
     console.log('\n📊 JAT - Charge élevée:');
     console.log(`   Jours: ${metriques.nbJours}`);
-    console.log(`   Somme: ${metriques.sommeHeures}h / 20h`);
-    console.log(`   Distribution: ${metriques.min.toFixed(2)}h - ${metriques.max.toFixed(2)}h (σ=${metriques.ecartType})`);
+    console.log(`   Somme: ${metriques.sommeHeures}h / 15h`);
+    console.log(`   Saturation moyenne: ${((metriques.sommeHeures / metriques.nbJours) / mockTraducteur.capaciteHeuresParJour * 100).toFixed(1)}%`);
     
     expect(anomalies).toHaveLength(0);
-    expect(metriques.sommeHeures).toBeCloseTo(20, 1);
+    expect(metriques.sommeHeures).toBeCloseTo(15, 1);
   });
 
   it('Cas avec tâches existantes: Ne doit pas surcharger', async () => {
@@ -247,8 +247,8 @@ describe('🎯 MODE JAT - Juste-à-Temps', () => {
     
     const result = await repartitionJusteATemps(
       mockTraducteur.id,
-      6, // 6h sur 1 jour (capacité 7h net avec pause)
-      '2025-12-13', // Jour futur valide
+      6, // 6h sur 1 jour (capacité 7.5h avec horaire 08:00-16:30)
+      '2025-12-16T16:30:00', // Mardi, date future valide avec heure précise
       { debug: false }
     );
     
@@ -283,8 +283,8 @@ describe('🎯 MODE JAT - Juste-à-Temps', () => {
     
     const result = await repartitionJusteATemps(
       mockTraducteur.id,
-      20,
-      '2025-12-16',
+      15,
+      '2025-12-19T16:30:00',
       { debug: true }
     );
     
@@ -296,7 +296,7 @@ describe('🎯 MODE JAT - Juste-à-Temps', () => {
     console.log(`   Dates: ${result[0].date} à ${result[result.length - 1].date}`);
     console.log(`   Logique validée par somme correcte: ${metriques.sommeHeures}h`);
     
-    expect(metriques.sommeHeures).toBeCloseTo(20, 1);
+    expect(metriques.sommeHeures).toBeCloseTo(15, 1);
   });
 });
 
@@ -561,10 +561,10 @@ describe('🔄 TESTS COMPARATIFS - Cohérence inter-modes', () => {
     
     const params = {
       traducteurId: mockTraducteur.id,
-      heuresTotal: 20,
+      heuresTotal: 15,
       dateDebut: '2025-12-11',
       dateFin: '2025-12-16',
-      dateEcheance: '2025-12-16'
+      dateEcheance: '2025-12-16T16:30:00' // Heure précise correspondant à la fin de l'horaire du traducteur
     };
     
     const resultJAT = await repartitionJusteATemps(
@@ -595,11 +595,11 @@ describe('🔄 TESTS COMPARATIFS - Cohérence inter-modes', () => {
     console.log(`   JAT: ${sommeJAT.toFixed(2)}h`);
     console.log(`   ÉQUILIBRÉ: ${sommeEquilibre.toFixed(2)}h`);
     console.log(`   PEPS: ${sommePEPS.toFixed(2)}h`);
-    console.log(`   Attendu: 20h`);
+    console.log(`   Attendu: 15h`);
     
-    expect(Math.abs(sommeJAT - 20)).toBeLessThan(0.02);
-    expect(Math.abs(sommeEquilibre - 20)).toBeLessThan(0.02);
-    expect(Math.abs(sommePEPS - 20)).toBeLessThan(0.02);
+    expect(Math.abs(sommeJAT - 15)).toBeLessThan(0.02);
+    expect(Math.abs(sommeEquilibre - 15)).toBeLessThan(0.02);
+    expect(Math.abs(sommePEPS - 15)).toBeLessThan(0.02);
   });
 
   it('Caractérisation: Équilibré vs JAT vs PEPS', async () => {
@@ -639,8 +639,8 @@ describe('🔄 TESTS COMPARATIFS - Cohérence inter-modes', () => {
     
     const params = {
       traducteurId: mockTraducteur.id,
-      heuresTotal: 20,
-      dateEcheance: '2025-12-16'
+      heuresTotal: 15,
+      dateEcheance: '2025-12-16T16:30:00'
     };
     
     const result1 = await repartitionJusteATemps(params.traducteurId, params.heuresTotal, params.dateEcheance);

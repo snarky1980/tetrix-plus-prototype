@@ -46,16 +46,33 @@ function formatHeure(heure: number): string {
 }
 
 /**
+ * Parse une chaîne d'heure au format "Xh" ou "Xh30" en décimal
+ * @example parseHeureString("10h") => 10
+ * @example parseHeureString("10h30") => 10.5
+ * @example parseHeureString("14h15") => 14.25
+ */
+function parseHeureString(heureStr: string): number {
+  const match = heureStr.match(/^(\d+)h(\d+)?$/);
+  if (!match) {
+    throw new Error(`Format d'heure invalide: ${heureStr}. Format attendu: "10h" ou "10h30"`);
+  }
+  const heures = parseInt(match[1], 10);
+  const minutes = match[2] ? parseInt(match[2], 10) : 0;
+  return heures + minutes / 60;
+}
+
+/**
  * Calcule les plages horaires exactes pour une allocation JAT
- * RÈGLE MÉTIER JAT:
- * - Jour J (échéance): allouer en DÉBUT de journée (premières heures disponibles)
- * - Jours avant: allouer en FIN de journée (dernières heures disponibles)
+ * RÈGLE MÉTIER JAT RÉVISÉE:
+ * - STRICTEMENT À REBOURS pour TOUS les jours, y compris le jour J
+ * - Si deadline à 11h et tâche de 2h, allouer de 9h à 11h (pas à partir de 8h)
  * - Toujours exclure la pause 12h-13h du calcul
+ * - En remontant, si on traverse des pauses, ajuster
  * 
  * @example
- * // Jour échéance, 2h à partir de 10h
- * calculerPlageHoraireJAT(2, {heureDebut: 10, heureFin: 18}, true) 
- * // => {heureDebut: "10h", heureFin: "12h"}
+ * // Jour échéance, deadline 11h, 2h à allouer
+ * calculerPlageHoraireJAT(2, {heureDebut: 8, heureFin: 17}, true, deadline11h) 
+ * // => {heureDebut: "9h", heureFin: "11h"} (strictement à rebours)
  * 
  * // Jour avant, 3h en fin de journée jusqu'à 18h
  * calculerPlageHoraireJAT(3, {heureDebut: 10, heureFin: 18}, false)
@@ -67,47 +84,99 @@ function calculerPlageHoraireJAT(
   estJourEcheance: boolean,
   deadlineDateTime?: Date
 ): { heureDebut: string; heureFin: string } {
+  // NOUVELLE RÈGLE: TOUT À REBOURS, même le jour J
   
-  if (estJourEcheance) {
-    // JOUR J: Allouer du DÉBUT vers l'échéance
-    let debut = horaire.heureDebut;
-    let fin = debut + heuresAllouees;
-    
-    // Si on traverse la pause 12h-13h, ajouter 1h
-    if (debut < 12 && fin > 12) {
-      fin += 1; // Sauter la pause 12h-13h
-    }
-    
-    // Si deadline avec heure précise, limiter à cette heure
-    if (deadlineDateTime) {
-      const heureEcheance = deadlineDateTime.getHours() + deadlineDateTime.getMinutes() / 60;
-      fin = Math.min(fin, heureEcheance);
-    } else {
-      fin = Math.min(fin, horaire.heureFin);
-    }
-    
-    return {
-      heureDebut: formatHeure(debut),
-      heureFin: formatHeure(fin)
-    };
+  // Déterminer l'heure de fin effective
+  let heureFin: number;
+  if (estJourEcheance && deadlineDateTime) {
+    // Jour J: l'heure de fin est l'heure de deadline
+    heureFin = deadlineDateTime.getHours() + deadlineDateTime.getMinutes() / 60;
   } else {
-    // JOURS AVANT: Allouer de la FIN vers le début (à rebours)
-    let fin = horaire.heureFin;
-    let debut = fin - heuresAllouees;
-    
-    // Si on traverse la pause 13h-12h (en remontant), soustraire 1h
-    if (debut < 13 && fin > 13) {
-      debut -= 1; // Remonter avant la pause 12h-13h
-    }
-    
-    // S'assurer qu'on ne commence pas avant l'heure de début
-    debut = Math.max(debut, horaire.heureDebut);
-    
-    return {
-      heureDebut: formatHeure(debut),
-      heureFin: formatHeure(fin)
-    };
+    // Autres jours: l'heure de fin est la fin de l'horaire
+    heureFin = horaire.heureFin;
   }
+  
+  // Calculer le début en remontant depuis la fin
+  let heureDebut = heureFin - heuresAllouees;
+  
+  // Si on traverse la pause 12h-13h en remontant, ajuster
+  if (heureDebut < 13 && heureFin > 13) {
+    // On traverse la pause en descendant
+    heureDebut -= 1; // Remonter d'une heure supplémentaire pour exclure la pause
+  } else if (heureDebut < 12 && heureFin > 12 && heureFin <= 13) {
+    // Cas spécial: on finit pendant ou juste avant la pause
+    heureDebut -= 1;
+  }
+  
+  // S'assurer qu'on ne commence pas avant l'heure de début de l'horaire
+  heureDebut = Math.max(heureDebut, horaire.heureDebut);
+  
+  return {
+    heureDebut: formatHeure(heureDebut),
+    heureFin: formatHeure(heureFin)
+  };
+}
+
+/**
+ * Calcule les plages horaires pour une allocation ÉQUILIBRÉE
+ * RÈGLE MÉTIER: Allouer le plus TÔT possible dans la journée
+ * En tenant compte des autres tâches déjà allouées, pauses, heures bloquées
+ * 
+ * @param heuresAllouees Nombre d'heures à allouer ce jour
+ * @param horaire Horaire du traducteur
+ * @param heuresDejaUtilisees Heures déjà utilisées ce jour (autres tâches)
+ * @param dateJour Date du jour (pour vérifier pause midi)
+ * @returns {heureDebut, heureFin} Plages horaires au format "8h30", "12h", etc.
+ * 
+ * @example
+ * // Allouer 4h sur un jour où 2h sont déjà utilisées (9h-11h)
+ * calculerPlageHoraireEquilibree(4, {heureDebut: 8, heureFin: 17}, 2, date)
+ * // => {heureDebut: "11h", heureFin: "16h"} (4h après les 2h existantes, pause exclue)
+ */
+function calculerPlageHoraireEquilibree(
+  heuresAllouees: number,
+  horaire: { heureDebut: number; heureFin: number },
+  heuresDejaUtilisees: number,
+  dateJour: Date
+): { heureDebut: string; heureFin: string } {
+  // Stratégie: Allouer le plus tôt possible, en évitant la pause midi
+  
+  // Commencer au début de l'horaire
+  let debut = horaire.heureDebut;
+  
+  // Si des heures sont déjà utilisées, avancer en conséquence
+  if (heuresDejaUtilisees > 0) {
+    debut += heuresDejaUtilisees;
+    
+    // Si on traverse la pause 12h-13h, sauter
+    if (horaire.heureDebut < 12 && debut > 12 && debut < 13) {
+      debut = 13; // Commencer après la pause
+    } else if (debut >= 12 && debut < 13) {
+      debut = 13; // Commencer après la pause
+    }
+  }
+  
+  // Calculer la fin en tenant compte de la pause
+  let fin = debut + heuresAllouees;
+  
+  // Si on traverse la pause 12h-13h, ajouter 1h
+  if (debut < 12 && fin > 12) {
+    // On commence avant midi et on termine après
+    // Ajouter 1h pour la pause
+    fin += 1;
+  } else if (debut < 13 && fin >= 13 && debut >= 12) {
+    // On commence pendant la pause (12h-13h) ou juste avant
+    // Ajouter 1h pour sauter la pause
+    fin += 1;
+  }
+  
+  // S'assurer qu'on ne dépasse pas la fin de l'horaire
+  fin = Math.min(fin, horaire.heureFin);
+  
+  return {
+    heureDebut: formatHeure(debut),
+    heureFin: formatHeure(fin)
+  };
 }
 
 async function heuresUtiliseesParJour(
@@ -281,7 +350,7 @@ export async function repartitionJusteATemps(
         heuresParJour[iso] = utilisees + alloue;
         
         if (debug) {
-          console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - début journée]' : '[à rebours - fin journée]'}`);
+          console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - à rebours depuis deadline]' : '[à rebours depuis fin journée]'}`);
         }
       }
     }
@@ -419,11 +488,26 @@ export async function repartitionEquilibree(
     }
   }
   
-  // ÉTAPE 4: Construire le résultat final
-  const resultat: RepartitionItem[] = allocations.map(alloc => ({
-    date: alloc.iso,
-    heures: parseFloat(alloc.heuresAllouees.toFixed(4))
-  }));
+  // ÉTAPE 4: Construire le résultat final avec plages horaires
+  const resultat: RepartitionItem[] = allocations.map(alloc => {
+    const dateJour = parseOttawaDateISO(alloc.iso);
+    const utilisees = heuresParJour[alloc.iso] || 0;
+    
+    // Calculer les plages horaires (le plus tôt possible)
+    const plages = calculerPlageHoraireEquilibree(
+      alloc.heuresAllouees,
+      horaire,
+      utilisees,
+      dateJour
+    );
+    
+    return {
+      date: alloc.iso,
+      heures: parseFloat(alloc.heuresAllouees.toFixed(4)),
+      heureDebut: plages.heureDebut,
+      heureFin: plages.heureFin
+    };
+  });
   
   // Vérifier somme exacte (tolérance 0.01h pour arrondis)
   const somme = resultat.reduce((s, r) => s + r.heures, 0);
@@ -472,7 +556,16 @@ export async function repartitionPEPS(
     const libre = Math.max(capaciteNette - utilisees, 0);
     if (libre <= 0) continue;
     const alloue = Math.min(libre, restant);
-    resultat.push({ date: iso, heures: parseFloat(alloue.toFixed(4)) });
+    
+    // Calculer les plages horaires (PEPS = le plus tôt possible, comme ÉQUILIBRÉ)
+    const plages = calculerPlageHoraireEquilibree(alloue, horaire, utilisees, jour);
+    
+    resultat.push({ 
+      date: iso, 
+      heures: parseFloat(alloue.toFixed(4)),
+      heureDebut: plages.heureDebut,
+      heureFin: plages.heureFin
+    });
     restant = parseFloat((restant - alloue).toFixed(4));
   }
 
@@ -512,6 +605,59 @@ export function repartitionUniforme(
     items[items.length - 1].heures = parseFloat((items[items.length - 1].heures + diff).toFixed(4));
   }
   return items;
+}
+
+/**
+ * Suggère des heures par défaut pour une répartition manuelle
+ * RÈGLE MÉTIER: Propose le plus TÔT possible dans la journée où il y a de la capacité
+ * 
+ * @param traducteurId ID du traducteur
+ * @param repartition Répartition manuelle (avec dates et heures, sans heureDebut/heureFin)
+ * @param ignorerTacheId ID de tâche à ignorer (pour édition)
+ * @returns Répartition avec heureDebut/heureFin suggérés
+ */
+export async function suggererHeuresManuel(
+  traducteurId: string,
+  repartition: RepartitionItem[],
+  ignorerTacheId?: string
+): Promise<RepartitionItem[]> {
+  const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
+  if (!traducteur) throw new Error('Traducteur introuvable');
+
+  const horaire = parseHoraireTraducteur(traducteur.horaire);
+  const suggestions: RepartitionItem[] = [];
+
+  for (const item of repartition) {
+    // Si l'utilisateur a déjà spécifié les heures, les conserver
+    if (item.heureDebut && item.heureFin) {
+      suggestions.push({ ...item });
+      continue;
+    }
+
+    const dateObj = parseOttawaDateISO(item.date);
+    
+    // Récupérer heures déjà utilisées ce jour
+    const ajustements = await prisma.ajustementTemps.findMany({
+      where: {
+        traducteurId,
+        date: { equals: dateObj },
+        ...(ignorerTacheId ? { NOT: { tacheId: ignorerTacheId } } : {})
+      }
+    });
+    const heuresUtilisees = ajustements.reduce((sum, a) => sum + a.heures, 0);
+    
+    // Calculer les plages horaires suggérées (le plus tôt possible)
+    const plages = calculerPlageHoraireEquilibree(item.heures, horaire, heuresUtilisees, dateObj);
+    
+    suggestions.push({
+      date: item.date,
+      heures: item.heures,
+      heureDebut: plages.heureDebut,
+      heureFin: plages.heureFin
+    });
+  }
+
+  return suggestions;
 }
 
 // Validation répartition manuelle / uniforme
@@ -565,6 +711,36 @@ export async function validerRepartition(
       const capaciteNette = capaciteNetteJour(horaire, dateObj, deadlineDateTime);
       if (totalJour > capaciteNette + 1e-6) {
         erreurs.push(`Dépassement capacité le ${r.date} (utilisées + nouvelles = ${totalJour.toFixed(2)} / ${capaciteNette.toFixed(2)}).`);
+      }
+      
+      // Validation des heures précises si fournies
+      if (r.heureDebut && r.heureFin) {
+        const debut = parseHeureString(r.heureDebut);
+        const fin = parseHeureString(r.heureFin);
+        
+        // Vérifier que début < fin
+        if (debut >= fin) {
+          erreurs.push(`Heures invalides le ${r.date}: heureDebut (${r.heureDebut}) doit être < heureFin (${r.heureFin}).`);
+        }
+        
+        // Vérifier que les heures sont dans l'horaire du traducteur
+        if (debut < horaire.heureDebut) {
+          erreurs.push(`Heures invalides le ${r.date}: heureDebut (${r.heureDebut}) avant l'horaire du traducteur (${formatHeure(horaire.heureDebut)}).`);
+        }
+        if (fin > horaire.heureFin) {
+          erreurs.push(`Heures invalides le ${r.date}: heureFin (${r.heureFin}) après l'horaire du traducteur (${formatHeure(horaire.heureFin)}).`);
+        }
+        
+        // Calculer la durée en tenant compte de la pause
+        let dureeCalculee = fin - debut;
+        if (debut < 13 && fin > 13) {
+          dureeCalculee -= 1; // Exclure la pause midi
+        }
+        
+        // Vérifier que la durée correspond aux heures spécifiées (tolérance 0.1h)
+        if (Math.abs(dureeCalculee - r.heures) > 0.1) {
+          erreurs.push(`Incohérence le ${r.date}: plage horaire (${r.heureDebut}-${r.heureFin}) = ${dureeCalculee.toFixed(2)}h mais ${r.heures}h spécifiées.`);
+        }
       }
     }
     if (r.heures < 0) erreurs.push(`Heures négatives interdites (${r.date}).`);
