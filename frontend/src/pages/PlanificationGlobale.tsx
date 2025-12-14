@@ -16,8 +16,8 @@ import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
-import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateDisplay, formatDateTimeDisplay } from '../utils/dateTimeOttawa';
-import { formatNumeroProjet, formatDateAvecJour, getJourSemaine } from '../utils/formatters';
+import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateTimeDisplay } from '../utils/dateTimeOttawa';
+import { formatNumeroProjet, formatDateAvecJour } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -3352,24 +3352,21 @@ const PlanificationGlobale: React.FC = () => {
               {(() => {
                 const traducteur = traducteurs.find(t => t.nom === celluleSelectionnee.traducteurNom);
                 const horaire = traducteur?.horaire || '9h-17h';
-                const [debut, fin] = horaire.split('-');
-                const heureDebut = parseInt(debut.replace('h', ''));
-                const heureFin = parseInt(fin.replace('h', ''));
                 
-                // Récupérer les blocages pour cette date
-                const blocagesCeJour = planificationEnrichie?.planification
-                  .find(p => p.traducteur.id === traducteur?.id)
-                  ?.dates.find(d => d.date === celluleSelectionnee.date)
-                  ?.blocages || [];
+                // Récupérer les données du jour
+                const ligneTraducteur = planificationEnrichie?.planification
+                  .find(p => p.traducteur.id === traducteur?.id);
+                const dateData = ligneTraducteur?.dates[celluleSelectionnee.date];
                 
                 const heuresTotal = celluleSelectionnee.taches.reduce((sum, t) => {
                   const aj = t.ajustementsTemps?.find((a: any) => a.date.split('T')[0] === celluleSelectionnee.date);
                   return sum + (aj ? aj.heures : 0);
                 }, 0);
                 
-                const capaciteJour = traducteur?.capaciteJour || 7.5;
-                const tempsBloque = blocagesCeJour.reduce((sum: number, b: any) => sum + (b.heures || 0), 0);
-                const tempsDisponible = capaciteJour - heuresTotal - tempsBloque;
+                const capaciteJour = dateData?.capacite || 7.5;
+                const disponible = dateData?.disponible || 0;
+                const tempsUtilise = capaciteJour - disponible;
+                const tempsDisponible = disponible;
                 
                 return (
                   <div className="bg-white border border-gray-200 rounded-lg p-4">
@@ -3381,30 +3378,33 @@ const PlanificationGlobale: React.FC = () => {
                     {/* Barres de capacité */}
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2">
-                        <div className="w-24 text-xs text-muted">Capacité totale:</div>
+                        <div className="w-24 text-xs text-muted">Capacité:</div>
                         <div className="flex-1 h-6 bg-gray-100 rounded-lg overflow-hidden flex">
                           {heuresTotal > 0 && (
                             <div 
                               className="bg-blue-500 flex items-center justify-center text-white text-xs font-semibold"
                               style={{ width: `${(heuresTotal / capaciteJour) * 100}%` }}
+                              title={`Tâches: ${heuresTotal.toFixed(1)}h`}
                             >
-                              {heuresTotal.toFixed(1)}h
+                              {heuresTotal > 0.5 ? `${heuresTotal.toFixed(1)}h` : ''}
                             </div>
                           )}
-                          {tempsBloque > 0 && (
+                          {tempsUtilise > heuresTotal && (
                             <div 
                               className="bg-orange-400 flex items-center justify-center text-white text-xs font-semibold"
-                              style={{ width: `${(tempsBloque / capaciteJour) * 100}%` }}
+                              style={{ width: `${((tempsUtilise - heuresTotal) / capaciteJour) * 100}%` }}
+                              title={`Temps bloqué: ${(tempsUtilise - heuresTotal).toFixed(1)}h`}
                             >
-                              {tempsBloque.toFixed(1)}h
+                              {(tempsUtilise - heuresTotal) > 0.5 ? `${(tempsUtilise - heuresTotal).toFixed(1)}h` : ''}
                             </div>
                           )}
                           {tempsDisponible > 0 && (
                             <div 
                               className="bg-green-200 flex items-center justify-center text-green-800 text-xs font-semibold"
                               style={{ width: `${(tempsDisponible / capaciteJour) * 100}%` }}
+                              title={`Disponible: ${tempsDisponible.toFixed(1)}h`}
                             >
-                              {tempsDisponible.toFixed(1)}h
+                              {tempsDisponible > 0.5 ? `${tempsDisponible.toFixed(1)}h` : ''}
                             </div>
                           )}
                         </div>
@@ -3414,33 +3414,24 @@ const PlanificationGlobale: React.FC = () => {
                       <div className="flex gap-4 text-xs">
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-blue-500 rounded"></div>
-                          <span>Tâches</span>
+                          <span>Tâches ({heuresTotal.toFixed(1)}h)</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <div className="w-3 h-3 bg-orange-400 rounded"></div>
-                          <span>Blocages</span>
-                        </div>
+                        {tempsUtilise > heuresTotal && (
+                          <div className="flex items-center gap-1">
+                            <div className="w-3 h-3 bg-orange-400 rounded"></div>
+                            <span>Bloqué ({(tempsUtilise - heuresTotal).toFixed(1)}h)</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1">
                           <div className="w-3 h-3 bg-green-200 rounded"></div>
-                          <span>Disponible</span>
+                          <span>Disponible ({tempsDisponible.toFixed(1)}h)</span>
                         </div>
+                      </div>
+                      
+                      <div className="text-xs text-muted mt-2">
+                        💡 Taux d'utilisation: {((tempsUtilise / capaciteJour) * 100).toFixed(0)}%
                       </div>
                     </div>
-                    
-                    {/* Détails des blocages si présents */}
-                    {blocagesCeJour.length > 0 && (
-                      <div className="bg-orange-50 border border-orange-200 rounded p-3 mt-3">
-                        <h5 className="text-xs font-semibold text-orange-900 mb-2">🚫 Blocages ce jour:</h5>
-                        <div className="space-y-1">
-                          {blocagesCeJour.map((b: any, idx: number) => (
-                            <div key={idx} className="text-xs text-orange-800 flex items-center justify-between">
-                              <span>{b.motif || 'Blocage'}</span>
-                              <span className="font-semibold">{b.heures}h</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })()}
