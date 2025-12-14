@@ -2025,14 +2025,14 @@ const PlanificationGlobale: React.FC = () => {
                   <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
                   <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
                   <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
-                  <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? formatDateDisplay(parseISODate(formTache.dateEcheance)) : 'Non définie'}</p>
+                  <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? formatDateAvecJour(formTache.dateEcheance) + ' à ' + formTache.heureEcheance : 'Non définie'}</p>
                   <p><span className="font-medium">Répartition:</span> {
                     formTache.typeRepartition === 'JUSTE_TEMPS' ? 'Juste à temps (JAT)' :
                     formTache.typeRepartition === 'EQUILIBRE' ? 'Équilibré' :
                     formTache.typeRepartition === 'PEPS' ? 'PEPS' : 'Manuelle'
                   }</p>
                   {formTache.typeRepartition === 'EQUILIBRE' && formTache.dateDebut && formTache.dateFin && (
-                    <p><span className="font-medium">Période:</span> {formatDateDisplay(parseISODate(formTache.dateDebut))} → {formatDateDisplay(parseISODate(formTache.dateFin))}</p>
+                    <p><span className="font-medium">Période:</span> {formatDateAvecJour(formTache.dateDebut)} → {formatDateAvecJour(formTache.dateFin)}</p>
                   )}
                 </div>
               </div>
@@ -2178,7 +2178,7 @@ const PlanificationGlobale: React.FC = () => {
                           <tbody>
                             {previewRepartition.map((r, idx) => (
                               <tr key={r.date} className={`border-t border-border transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                <td className="px-3 py-2">{r.date}</td>
+                                <td className="px-3 py-2">{formatDateAvecJour(r.date)}</td>
                                 <td className="text-right px-3 py-2 font-semibold">
                                   {r.heures.toFixed(2)}h {r.heureDebut && r.heureFin ? `(${r.heureDebut}-${r.heureFin})` : ''}
                                 </td>
@@ -2679,7 +2679,7 @@ const PlanificationGlobale: React.FC = () => {
                       <div className="space-y-1.5">
                         {previewJATEdit.map((r, idx) => (
                           <div key={idx} className="flex justify-between items-center text-xs bg-white px-2 py-1 rounded">
-                            <span className="font-medium">{formatDateDisplay(parseISODate(r.date))}</span>
+                            <span className="font-medium">{formatDateAvecJour(r.date)}</span>
                             <span className="text-primary font-semibold">{r.heures}h</span>
                           </div>
                         ))}
@@ -3304,7 +3304,7 @@ const PlanificationGlobale: React.FC = () => {
       {/* Modal Tâches d'une cellule */}
       {celluleSelectionnee && (
         <Modal
-          titre={`📋 ${celluleSelectionnee.traducteurNom} - ${formatDateDisplay(parseISODate(celluleSelectionnee.date))}`}
+          titre={`📋 ${celluleSelectionnee.traducteurNom} - ${formatDateAvecJour(celluleSelectionnee.date)}`}
           ouvert={!!celluleSelectionnee}
           onFermer={() => setCelluleSelectionnee(null)}
           ariaDescription="Liste des tâches pour ce traducteur à cette date"
@@ -3347,6 +3347,103 @@ const PlanificationGlobale: React.FC = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Timeline de la journée */}
+              {(() => {
+                const traducteur = traducteurs.find(t => t.nom === celluleSelectionnee.traducteurNom);
+                const horaire = traducteur?.horaire || '9h-17h';
+                const [debut, fin] = horaire.split('-');
+                const heureDebut = parseInt(debut.replace('h', ''));
+                const heureFin = parseInt(fin.replace('h', ''));
+                
+                // Récupérer les blocages pour cette date
+                const blocagesCeJour = planificationEnrichie?.planification
+                  .find(p => p.traducteur.id === traducteur?.id)
+                  ?.dates.find(d => d.date === celluleSelectionnee.date)
+                  ?.blocages || [];
+                
+                const heuresTotal = celluleSelectionnee.taches.reduce((sum, t) => {
+                  const aj = t.ajustementsTemps?.find((a: any) => a.date.split('T')[0] === celluleSelectionnee.date);
+                  return sum + (aj ? aj.heures : 0);
+                }, 0);
+                
+                const capaciteJour = traducteur?.capaciteJour || 7.5;
+                const tempsBloque = blocagesCeJour.reduce((sum: number, b: any) => sum + (b.heures || 0), 0);
+                const tempsDisponible = capaciteJour - heuresTotal - tempsBloque;
+                
+                return (
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      ⏰ Aperçu de la journée
+                      <span className="text-xs font-normal text-muted">({horaire})</span>
+                    </h4>
+                    
+                    {/* Barres de capacité */}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-24 text-xs text-muted">Capacité totale:</div>
+                        <div className="flex-1 h-6 bg-gray-100 rounded-lg overflow-hidden flex">
+                          {heuresTotal > 0 && (
+                            <div 
+                              className="bg-blue-500 flex items-center justify-center text-white text-xs font-semibold"
+                              style={{ width: `${(heuresTotal / capaciteJour) * 100}%` }}
+                            >
+                              {heuresTotal.toFixed(1)}h
+                            </div>
+                          )}
+                          {tempsBloque > 0 && (
+                            <div 
+                              className="bg-orange-400 flex items-center justify-center text-white text-xs font-semibold"
+                              style={{ width: `${(tempsBloque / capaciteJour) * 100}%` }}
+                            >
+                              {tempsBloque.toFixed(1)}h
+                            </div>
+                          )}
+                          {tempsDisponible > 0 && (
+                            <div 
+                              className="bg-green-200 flex items-center justify-center text-green-800 text-xs font-semibold"
+                              style={{ width: `${(tempsDisponible / capaciteJour) * 100}%` }}
+                            >
+                              {tempsDisponible.toFixed(1)}h
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted whitespace-nowrap">{capaciteJour}h</div>
+                      </div>
+                      
+                      <div className="flex gap-4 text-xs">
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-blue-500 rounded"></div>
+                          <span>Tâches</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-orange-400 rounded"></div>
+                          <span>Blocages</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <div className="w-3 h-3 bg-green-200 rounded"></div>
+                          <span>Disponible</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Détails des blocages si présents */}
+                    {blocagesCeJour.length > 0 && (
+                      <div className="bg-orange-50 border border-orange-200 rounded p-3 mt-3">
+                        <h5 className="text-xs font-semibold text-orange-900 mb-2">🚫 Blocages ce jour:</h5>
+                        <div className="space-y-1">
+                          {blocagesCeJour.map((b: any, idx: number) => (
+                            <div key={idx} className="text-xs text-orange-800 flex items-center justify-between">
+                              <span>{b.motif || 'Blocage'}</span>
+                              <span className="font-semibold">{b.heures}h</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Liste des tâches */}
               <div className="space-y-2 max-h-96 overflow-y-auto">
@@ -3472,7 +3569,7 @@ const PlanificationGlobale: React.FC = () => {
                 <p>{tacheDetaillee.dateEcheance ? 
                   (tacheDetaillee.dateEcheance.includes('T') 
                     ? formatDateTimeDisplay(parseOttawaTimestamp(tacheDetaillee.dateEcheance))
-                    : formatDateDisplay(parseISODate(tacheDetaillee.dateEcheance))
+                    : formatDateAvecJour(tacheDetaillee.dateEcheance.split('T')[0]) + ' à ' + (tacheDetaillee.heureEcheance || '17:00')
                   ) : 'Non définie'}</p>
               </div>
               <div>
@@ -3574,7 +3671,7 @@ const PlanificationGlobale: React.FC = () => {
                           return (
                             <tr key={idx} className={`border-t border-gray-200 transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
                               <td className="px-3 py-2">
-                                <div>{formatDateDisplay(parseOttawaTimestamp(aj.date))}</div>
+                                <div>{formatDateAvecJour(aj.date.split('T')[0])}</div>
                                 <div className="text-xs text-gray-500 font-medium">{intervalle}</div>
                               </td>
                               <td className="px-3 py-2 text-right font-semibold">{aj.heures.toFixed(2)}h</td>
