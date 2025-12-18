@@ -197,13 +197,59 @@ export const creerTache = async (
 
     // Protection contre le double booking (race condition)
     const tache = await prisma.$transaction(async (tx) => {
-      // 1. Vérifier la capacité disponible DANS la transaction pour éviter les race conditions
-      if (repartitionEffective && repartitionEffective.length > 0) {
-        // Obtenir le traducteur avec un verrou de lecture
-        const traducteur = await tx.traducteur.findUnique({
-          where: { id: traducteurId },
-          select: { id: true, nom: true, capaciteHeuresParJour: true }
+      // 1. Vérifier la disponibilité et l'accès AVANT toute autre opération
+      const traducteur = await tx.traducteur.findUnique({
+        where: { id: traducteurId },
+        select: { 
+          id: true, 
+          nom: true, 
+          division: true,
+          capaciteHeuresParJour: true,
+          actif: true,
+          disponiblePourTravail: true
+        }
+      });
+
+      if (!traducteur) {
+        throw new Error('Traducteur introuvable');
+      }
+
+      // Vérifier que le traducteur est actif
+      if (!traducteur.actif) {
+        throw new Error(
+          `${traducteur.nom} est désactivé(e) et ne peut pas recevoir de nouvelles tâches. ` +
+          `Veuillez contacter l'administrateur.`
+        );
+      }
+
+      // Vérifier que le traducteur est disponible
+      if (!traducteur.disponiblePourTravail) {
+        throw new Error(
+          `${traducteur.nom} est actuellement marqué(e) comme indisponible. ` +
+          `Veuillez vérifier son statut avant d'assigner une nouvelle tâche.`
+        );
+      }
+
+      // Vérifier l'accès à la division (sauf pour ADMIN)
+      if (req.utilisateur!.role !== 'ADMIN') {
+        const acces = await tx.divisionAccess.findFirst({
+          where: {
+            utilisateurId: req.utilisateur!.id,
+            division: { nom: traducteur.division },
+            peutEcrire: true
+          }
         });
+
+        if (!acces) {
+          throw new Error(
+            `Vous n'avez pas accès en écriture à la division ${traducteur.division}. ` +
+            `Vos permissions ont peut-être changé. Veuillez rafraîchir et réessayer.`
+          );
+        }
+      }
+
+      // 2. Vérifier la capacité disponible pour éviter les race conditions
+      if (repartitionEffective && repartitionEffective.length > 0) {
 
         if (!traducteur) {
           throw new Error('Traducteur introuvable');
