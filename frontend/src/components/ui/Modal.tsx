@@ -8,9 +8,10 @@ interface ModalProps {
   onFermer: () => void;
   children: React.ReactNode;
   ariaDescription?: string;
+  wide?: boolean;
 }
 
-export const Modal: React.FC<ModalProps> = ({ titre, ouvert, onFermer, children, ariaDescription }) => {
+export const Modal: React.FC<ModalProps> = ({ titre, ouvert, onFermer, children, ariaDescription, wide }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const previouslyFocused = useRef<HTMLElement | null>(null);
 
@@ -68,7 +69,7 @@ export const Modal: React.FC<ModalProps> = ({ titre, ouvert, onFermer, children,
       aria-describedby={ariaDescription ? titre + '-desc' : undefined}
     >
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onFermer} aria-hidden="true" />
-      <div ref={containerRef} className={cn('relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-[14px] bg-card border border-border shadow-lg')}>
+      <div ref={containerRef} className={cn('relative w-full max-h-[90vh] flex flex-col rounded-[14px] bg-card border border-border shadow-lg', wide ? 'max-w-4xl' : 'max-w-lg')}>
         <div className="flex items-start justify-between p-6 pb-4 border-b border-border shrink-0">
           <h2 className="text-lg font-semibold">{titre}</h2>
           <Button variant="ghost" aria-label="Fermer le dialogue" onClick={onFermer}>✕</Button>

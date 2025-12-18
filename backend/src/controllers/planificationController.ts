@@ -238,7 +238,51 @@ export const obtenirPlanificationGlobale = async (
     // Construire les filtres pour les traducteurs
     const whereTraducteur: any = { actif: true };
 
-    if (division) {
+    // Pour les GESTIONNAIRES, limiter aux divisions auxquelles ils ont accès
+    if (req.utilisateur!.role === 'GESTIONNAIRE') {
+      const divisionsAutorisees = await prisma.divisionAccess.findMany({
+        where: {
+          utilisateurId: req.utilisateur!.id,
+          peutLire: true
+        },
+        include: {
+          division: {
+            select: { nom: true }
+          }
+        }
+      });
+
+      const nomsDiv = divisionsAutorisees.map(d => d.division.nom);
+      
+      if (nomsDiv.length === 0) {
+        // Aucune division autorisée - retourner vide
+        res.json({
+          periode: { debut: dateDebut, fin: dateFin },
+          planification: []
+        });
+        return;
+      }
+
+      // Filtrer par les divisions autorisées
+      if (division) {
+        // Si une division spécifique est demandée, vérifier qu'elle est autorisée
+        const divisionsDemandees = (division as string).split(',').map(d => d.trim());
+        const divisionsValides = divisionsDemandees.filter(d => nomsDiv.includes(d));
+        
+        if (divisionsValides.length === 0) {
+          res.status(403).json({ erreur: 'Vous n\'avez pas accès à ces divisions' });
+          return;
+        }
+        
+        whereTraducteur.division = divisionsValides.length > 1 
+          ? { in: divisionsValides } 
+          : divisionsValides[0];
+      } else {
+        // Limiter à toutes les divisions autorisées
+        whereTraducteur.division = nomsDiv.length > 1 ? { in: nomsDiv } : nomsDiv[0];
+      }
+    } else if (division) {
+      // Pour ADMIN, CONSEILLER - pas de restriction
       const divisions = (division as string).split(',').map(d => d.trim());
       if (divisions.length > 1) {
         whereTraducteur.division = { in: divisions };
@@ -303,6 +347,8 @@ export const obtenirPlanificationGlobale = async (
         capaciteHeuresParJour: true,
         clientsHabituels: true,
         domaines: true,
+        horaire: true,
+        disponiblePourTravail: true,
         pairesLinguistiques: {
           select: {
             langueSource: true,
@@ -346,19 +392,31 @@ export const obtenirPlanificationGlobale = async (
       }
 
       // Construire structure dates avec couleur + disponibilité
+      // Inclure TOUTES les dates de la période, même celles sans heures
       const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean }> = {};
-      Object.entries(heuresParDate).forEach(([dateStr, heures]) => {
+      
+      // Générer toutes les dates de la période
+      const dateDebutParsed = parseOttawaDateISO(dateDebut as string);
+      const dateFinParsed = parseOttawaDateISO(dateFin as string);
+      let currentDate = new Date(dateDebutParsed);
+      
+      while (currentDate <= dateFinParsed) {
+        const dateStr = currentDate.toISOString().split('T')[0];
+        const heures = heuresParDate[dateStr] || 0;
         const capacite = traducteur.capaciteHeuresParJour;
         const isWeekend = estWeekend(dateStr);
-        const couleur = calculerCouleurDisponibilite(heures as number, capacite);
+        const couleur = calculerCouleurDisponibilite(heures, capacite);
+        
         dates[dateStr] = {
-          heures: heures as number,
+          heures,
           couleur,
           capacite,
-          disponible: Math.max(capacite - (heures as number), 0),
+          disponible: Math.max(capacite - heures, 0),
           estWeekend: isWeekend,
         };
-      });
+        
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
 
       return {
         traducteur,

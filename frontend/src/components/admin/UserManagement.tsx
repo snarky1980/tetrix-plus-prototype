@@ -20,6 +20,7 @@ export const UserManagement: React.FC = () => {
   const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOuvert, setModalOuvert] = useState(false);
+  const [modalPermissionsOuvert, setModalPermissionsOuvert] = useState(false);
   const [utilisateurSelectionne, setUtilisateurSelectionne] = useState<Utilisateur | undefined>();
 
   const chargerDonnees = async () => {
@@ -50,6 +51,11 @@ export const UserManagement: React.FC = () => {
   const handleEditerUtilisateur = (utilisateur: Utilisateur) => {
     setUtilisateurSelectionne(utilisateur);
     setModalOuvert(true);
+  };
+
+  const handleGererPermissions = (utilisateur: Utilisateur) => {
+    setUtilisateurSelectionne(utilisateur);
+    setModalPermissionsOuvert(true);
   };
 
   const handleDesactiverUtilisateur = async (id: string) => {
@@ -113,6 +119,18 @@ export const UserManagement: React.FC = () => {
           >
             Modifier
           </Button>
+          {(row.role === 'GESTIONNAIRE' || row.role === 'CONSEILLER') && (
+            <Button
+              variant="secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleGererPermissions(row);
+              }}
+              className="py-1 px-2 text-xs"
+            >
+              Permissions
+            </Button>
+          )}
           <Button
             variant="danger"
             onClick={(e) => {
@@ -172,6 +190,13 @@ export const UserManagement: React.FC = () => {
         traducteurs={traducteurs}
         ouvert={modalOuvert}
         onFermer={() => setModalOuvert(false)}
+        onSauvegarder={chargerDonnees}
+      />
+
+      <DivisionPermissionsModal
+        utilisateur={utilisateurSelectionne}
+        ouvert={modalPermissionsOuvert}
+        onFermer={() => setModalPermissionsOuvert(false)}
         onSauvegarder={chargerDonnees}
       />
     </>
@@ -341,6 +366,199 @@ const UserForm: React.FC<{
           </Button>
         </div>
       </form>
+    </Modal>
+  );
+};
+
+// Modal de gestion des permissions de divisions
+const DivisionPermissionsModal: React.FC<{
+  utilisateur?: Utilisateur;
+  ouvert: boolean;
+  onFermer: () => void;
+  onSauvegarder: () => void;
+}> = ({ utilisateur, ouvert, onFermer, onSauvegarder }) => {
+  const { addToast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [divisions, setDivisions] = useState<any[]>([]);
+  const [permissions, setPermissions] = useState<Map<string, {
+    peutLire: boolean;
+    peutEcrire: boolean;
+    peutGerer: boolean;
+  }>>(new Map());
+
+  useEffect(() => {
+    if (ouvert && utilisateur) {
+      chargerDonnees();
+    }
+  }, [ouvert, utilisateur]);
+
+  const chargerDonnees = async () => {
+    if (!utilisateur) return;
+    
+    setLoading(true);
+    try {
+      const [divisionsData, permissionsData] = await Promise.all([
+        import('../../services/divisionService').then(m => m.divisionService.obtenirDivisions()),
+        import('../../services/divisionAccessService').then(m => 
+          m.divisionAccessService.obtenirPermissions(utilisateur.id)
+        ),
+      ]);
+      
+      setDivisions(divisionsData);
+      
+      const permMap = new Map();
+      permissionsData.forEach((perm: any) => {
+        permMap.set(perm.divisionId, {
+          peutLire: perm.peutLire,
+          peutEcrire: perm.peutEcrire,
+          peutGerer: perm.peutGerer,
+        });
+      });
+      setPermissions(permMap);
+    } catch (err) {
+      console.error('Erreur chargement permissions:', err);
+      addToast('Erreur lors du chargement des permissions', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const togglePermission = (divisionId: string, type: 'peutLire' | 'peutEcrire' | 'peutGerer') => {
+    const newPermissions = new Map(permissions);
+    const current = newPermissions.get(divisionId) || {
+      peutLire: false,
+      peutEcrire: false,
+      peutGerer: false,
+    };
+    
+    // Si on désactive peutLire, désactiver aussi les autres
+    if (type === 'peutLire' && current.peutLire) {
+      newPermissions.set(divisionId, {
+        peutLire: false,
+        peutEcrire: false,
+        peutGerer: false,
+      });
+    } else {
+      // Si on active peutEcrire ou peutGerer, activer aussi peutLire
+      const newValue = !current[type];
+      newPermissions.set(divisionId, {
+        ...current,
+        [type]: newValue,
+        peutLire: type !== 'peutLire' && newValue ? true : current.peutLire,
+      });
+    }
+    
+    setPermissions(newPermissions);
+  };
+
+  const handleSauvegarder = async () => {
+    if (!utilisateur) return;
+    
+    setLoading(true);
+    try {
+      const permissionsArray = Array.from(permissions.entries())
+        .filter(([_, perm]) => perm.peutLire) // Sauvegarder seulement celles où peutLire est true
+        .map(([divisionId, perm]) => ({
+          divisionId,
+          ...perm,
+        }));
+      
+      await import('../../services/divisionAccessService').then(m =>
+        m.divisionAccessService.definirPermissions(utilisateur.id, permissionsArray)
+      );
+      
+      addToast('Permissions mises à jour avec succès', 'success');
+      onSauvegarder();
+      onFermer();
+    } catch (err) {
+      console.error('Erreur sauvegarde permissions:', err);
+      addToast('Erreur lors de la sauvegarde des permissions', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!utilisateur) return null;
+
+  return (
+    <Modal
+      titre={`Permissions de divisions - ${utilisateur.email}`}
+      ouvert={ouvert}
+      onFermer={onFermer}
+      wide
+    >
+      <div className="space-y-4">
+        <p className="text-sm text-muted mb-4">
+          Définissez les divisions auxquelles cet utilisateur a accès et les actions qu'il peut effectuer.
+        </p>
+
+        {loading ? (
+          <div className="text-center py-8">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="grid grid-cols-4 gap-2 px-4 py-2 bg-surface-100 rounded font-medium text-sm">
+              <div>Division</div>
+              <div className="text-center">Lecture</div>
+              <div className="text-center">Écriture</div>
+              <div className="text-center">Gestion</div>
+            </div>
+            
+            {divisions.map((division) => {
+              const perm = permissions.get(division.id) || {
+                peutLire: false,
+                peutEcrire: false,
+                peutGerer: false,
+              };
+              
+              return (
+                <div
+                  key={division.id}
+                  className="grid grid-cols-4 gap-2 px-4 py-3 border border-border rounded hover:bg-surface-50 transition-colors"
+                >
+                  <div className="font-medium">{division.nom}</div>
+                  <div className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={perm.peutLire}
+                      onChange={() => togglePermission(division.id, 'peutLire')}
+                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={perm.peutEcrire}
+                      onChange={() => togglePermission(division.id, 'peutEcrire')}
+                      disabled={!perm.peutLire}
+                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                  <div className="text-center">
+                    <input
+                      type="checkbox"
+                      checked={perm.peutGerer}
+                      onChange={() => togglePermission(division.id, 'peutGerer')}
+                      disabled={!perm.peutLire}
+                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
+          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>
+            Annuler
+          </Button>
+          <Button onClick={handleSauvegarder} loading={loading}>
+            Sauvegarder
+          </Button>
+        </div>
+      </div>
     </Modal>
   );
 };

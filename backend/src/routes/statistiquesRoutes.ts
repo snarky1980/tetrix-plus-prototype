@@ -25,10 +25,56 @@ router.get('/productivite', authentifier, async (req, res) => {
     const debut = toZonedTime(parseISO(dateDebut as string), OTTAWA_TIMEZONE);
     const fin = toZonedTime(parseISO(dateFin as string), OTTAWA_TIMEZONE);
 
-    // Contrôle d'accès : GESTIONNAIRE ne peut voir que sa division
-    let filtreDivision = divisionId ? { division: divisionId as string } : {};
-    if (utilisateur.role === 'GESTIONNAIRE' && utilisateur.traducteur?.division) {
-      filtreDivision = { division: utilisateur.traducteur.division };
+    // Contrôle d'accès : GESTIONNAIRE ne peut voir que les divisions autorisées
+    let filtreDivision: any = {};
+    let divisionsAutorisees: string[] = [];
+    
+    if (utilisateur.role === 'GESTIONNAIRE') {
+      const accesDiv = await prisma.divisionAccess.findMany({
+        where: {
+          utilisateurId: utilisateur.id,
+          peutLire: true
+        },
+        include: {
+          division: {
+            select: { nom: true }
+          }
+        }
+      });
+
+      divisionsAutorisees = accesDiv.map(d => d.division.nom);
+      
+      if (divisionsAutorisees.length === 0) {
+        // Aucune division autorisée
+        return res.json({
+          resume: {
+            motsTotaux: 0,
+            heuresTotales: 0,
+            productiviteMoyenne: 0,
+            tendanceMots: 0,
+            tendanceHeures: 0,
+            tendanceProductivite: 0
+          },
+          parTraducteur: [],
+          parClient: [],
+          parDomaine: []
+        });
+      }
+
+      // Si une division spécifique est demandée, vérifier qu'elle est autorisée
+      if (divisionId) {
+        if (!divisionsAutorisees.includes(divisionId as string)) {
+          return res.status(403).json({ message: 'Vous n\'avez pas accès à cette division' });
+        }
+        filtreDivision = { division: divisionId as string };
+      } else {
+        filtreDivision = divisionsAutorisees.length > 1 
+          ? { division: { in: divisionsAutorisees } } 
+          : { division: divisionsAutorisees[0] };
+      }
+    } else if (divisionId) {
+      // Pour ADMIN, CONSEILLER - pas de restriction
+      filtreDivision = { division: divisionId as string };
     }
 
     // Récupérer les tâches dans la période
@@ -58,9 +104,21 @@ router.get('/productivite', authentifier, async (req, res) => {
     const taches = await prisma.tache.findMany(tachesQuery);
 
     // Filtrer par division si nécessaire
-    const tachesFiltrees = Object.keys(filtreDivision).length > 0
-      ? taches.filter((t: any) => t.traducteur && t.traducteur.division === filtreDivision.division)
-      : taches;
+    let tachesFiltrees = taches;
+    if (utilisateur.role === 'GESTIONNAIRE') {
+      tachesFiltrees = taches.filter((t: any) => 
+        t.traducteur && divisionsAutorisees.includes(t.traducteur.division)
+      );
+    } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.division) {
+      const divCible = typeof filtreDivision.division === 'string' 
+        ? filtreDivision.division 
+        : null;
+      if (divCible) {
+        tachesFiltrees = taches.filter((t: any) => 
+          t.traducteur && t.traducteur.division === divCible
+        );
+      }
+    }
 
     // Calculer les stats globales
     const motsTotaux = tachesFiltrees.reduce((sum, t) => sum + (t.compteMots || 0), 0);
@@ -91,9 +149,21 @@ router.get('/productivite', authentifier, async (req, res) => {
       },
     });
 
-    const tachesPrecedentesFiltrees = Object.keys(filtreDivision).length > 0
-      ? tachesPrecedentes.filter((t: any) => t.traducteur && t.traducteur.division === filtreDivision.division)
-      : tachesPrecedentes;
+    let tachesPrecedentesFiltrees = tachesPrecedentes;
+    if (utilisateur.role === 'GESTIONNAIRE') {
+      tachesPrecedentesFiltrees = tachesPrecedentes.filter((t: any) => 
+        t.traducteur && divisionsAutorisees.includes(t.traducteur.division)
+      );
+    } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.division) {
+      const divCible = typeof filtreDivision.division === 'string' 
+        ? filtreDivision.division 
+        : null;
+      if (divCible) {
+        tachesPrecedentesFiltrees = tachesPrecedentes.filter((t: any) => 
+          t.traducteur && t.traducteur.division === divCible
+        );
+      }
+    }
 
     const motsPrecedents = tachesPrecedentesFiltrees.reduce((sum, t) => sum + (t.compteMots || 0), 0);
     const heuresPrecedentes = tachesPrecedentesFiltrees.reduce((sum, t) => sum + t.heuresTotal, 0);
@@ -105,31 +175,51 @@ router.get('/productivite', authentifier, async (req, res) => {
       ? ((productiviteMoyenne - productivitePrecedente) / productivitePrecedente) * 100 
       : 0;
 
-    // Stats par traducteur
+    // Récupérer TOUS les traducteurs actifs (même sans tâches)
+    const tousLesTraducteurs = await prisma.traducteur.findMany({
+      where: {
+        actif: true,
+        ...filtreDivision,
+      },
+      select: {
+        id: true,
+        nom: true,
+        division: true,
+        classification: true,
+        specialisations: true,
+      },
+      orderBy: { nom: 'asc' },
+    });
+
+    // Stats par traducteur - initialiser avec TOUS les traducteurs
     const parTraducteur = new Map<string, any>();
     
+    // Initialiser tous les traducteurs avec des stats à zéro
+    for (const trad of tousLesTraducteurs) {
+      parTraducteur.set(trad.id, {
+        id: trad.id,
+        nom: trad.nom,
+        division: trad.division,
+        classification: trad.classification,
+        specialisations: trad.specialisations,
+        mots: 0,
+        heures: 0,
+        taches: 0,
+      });
+    }
+    
+    // Ajouter les stats des tâches
     for (const tache of tachesFiltrees) {
       const tacheTyped = tache as any;
       if (!tacheTyped.traducteur) continue;
 
       const tradId = (tache as any).traducteurId;
-      if (!parTraducteur.has(tradId)) {
-        parTraducteur.set(tradId, {
-          id: tradId,
-          nom: tacheTyped.traducteur.nom,
-          division: tacheTyped.traducteur.division,
-          classification: tacheTyped.traducteur.classification,
-          specialisations: tacheTyped.traducteur.specialisations,
-          mots: 0,
-          heures: 0,
-          taches: 0,
-        });
-      }
-
       const stats = parTraducteur.get(tradId);
-      stats.mots += (tache as any).compteMots || 0;
-      stats.heures += (tache as any).heuresTotal;
-      stats.taches += 1;
+      if (stats) {
+        stats.mots += (tache as any).compteMots || 0;
+        stats.heures += (tache as any).heuresTotal;
+        stats.taches += 1;
+      }
     }
 
     // Calculer productivité et tendance par traducteur

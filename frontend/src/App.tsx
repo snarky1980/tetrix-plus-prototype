@@ -40,7 +40,7 @@ const RouteProtegee: React.FC<{
 };
 
 /**
- * Redirection vers la planification globale après login
+ * Redirection vers le bon dashboard après login selon le rôle
  */
 const RedirectionDashboard: React.FC = () => {
   const { utilisateur } = useAuth();
@@ -49,8 +49,19 @@ const RedirectionDashboard: React.FC = () => {
     return <Navigate to="/connexion" replace />;
   }
 
-  // Tous les utilisateurs vont vers la planification globale
-  return <Navigate to="/planification-globale" replace />;
+  // Redirection selon le rôle
+  switch (utilisateur.role) {
+    case 'ADMIN':
+      return <Navigate to="/admin" replace />;
+    case 'CONSEILLER':
+      return <Navigate to="/conseiller" replace />;
+    case 'GESTIONNAIRE':
+      return <Navigate to="/planification-globale" replace />;
+    case 'TRADUCTEUR':
+      return <Navigate to="/traducteur" replace />;
+    default:
+      return <Navigate to="/planification-globale" replace />;
+  }
 };
 
 function App() {
@@ -90,8 +101,17 @@ function App() {
           <Route
             path="/conseiller/*"
             element={
-              <RouteProtegee rolesAutorises={['CONSEILLER', 'ADMIN']}>
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
                 <DashboardConseiller />
+              </RouteProtegee>
+            }
+          />
+
+          <Route
+            path="/gestionnaire"
+            element={
+              <RouteProtegee rolesAutorises={['GESTIONNAIRE', 'ADMIN']}>
+                <PlanificationGlobale />
               </RouteProtegee>
             }
           />

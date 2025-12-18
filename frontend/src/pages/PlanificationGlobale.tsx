@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-// import { useNavigate } from 'react-router-dom'; // Reserved for future navigation
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
@@ -24,7 +24,7 @@ import { useAuth } from '../contexts/AuthContext';
 
 const PlanificationGlobale: React.FC = () => {
   usePageTitle('Tetrix PLUS Planification', 'Consultez le planification globale des traductions');
-  // const navigate = useNavigate(); // Reserved for future navigation
+  const navigate = useNavigate();
   const { utilisateur } = useAuth();
   
   // Utiliser les fonctions timezone-aware d'Ottawa
@@ -1725,7 +1725,7 @@ const PlanificationGlobale: React.FC = () => {
         {/* Bouton Statistiques de productivité */}
         <Button
           variant="outline"
-          onClick={() => window.location.href = '/statistiques-productivite'}
+          onClick={() => navigate('/statistiques-productivite')}
           className="px-4 py-2 text-sm shadow hover:shadow-lg transition-all"
           title="Voir les statistiques de productivité"
         >
@@ -3179,9 +3179,9 @@ const PlanificationGlobale: React.FC = () => {
               variant="outline"
               onClick={() => setShowAvailable(!showAvailable)}
               className={`px-2 py-1 text-xs ml-2 ${showAvailable ? 'bg-green-50' : 'bg-blue-50'}`}
-              title={showAvailable ? "Afficher les heures occupées" : "Afficher les heures disponibles"}
+              title={showAvailable ? "Afficher la charge" : "Afficher la disponibilité"}
             >
-              {showAvailable ? '✓ Disponibles' : '📊 Occupées'}
+              {showAvailable ? '✓ Disponibilité' : '📊 Charge'}
             </Button>
             <Button
               variant="outline"
@@ -3278,9 +3278,8 @@ const PlanificationGlobale: React.FC = () => {
                             )}
                             {ligne.traducteur.nom} • <span className="font-normal text-[9px]">
                               {ligne.traducteur.division} • {ligne.traducteur.classification}
-                              {(ligne.traducteur as any).horaire && (
-                                <> • 🕐 {(ligne.traducteur as any).horaire}</>
-                              )}
+                              {' • 🕐 '}
+                              {(ligne.traducteur as any).horaire || <span className="text-gray-400 italic">non défini</span>}
                             </span>
                           </div>
                           {(ligne.traducteur as any).specialisations && (ligne.traducteur as any).specialisations.length > 0 && (
