@@ -121,7 +121,7 @@ export const UserManagement: React.FC = () => {
           </Button>
           {(row.role === 'GESTIONNAIRE' || row.role === 'CONSEILLER') && (
             <Button
-              variant="secondary"
+              variant="secondaire"
               onClick={(e) => {
                 e.stopPropagation();
                 handleGererPermissions(row);

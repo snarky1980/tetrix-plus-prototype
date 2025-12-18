@@ -127,8 +127,7 @@ model Tache {
   specialisation      String             @default("")
   heuresTotal         Float
   compteMots          Int?
-  dateEcheance        DateTime
-  heureEcheance       String             @default("17:00")
+  dateEcheance        DateTime           // Stocke date + heure complète (ex: 2025-02-14T10:30:00)
   priorite            String             @default("REGULIER")
   statut              StatutTache        @default(PLANIFIEE)
   typeTache           TypeTache          @default(TRADUCTION)
@@ -158,6 +157,8 @@ model AjustementTemps {
   id           String         @id @default(uuid())
   date         DateTime       @db.Date
   heures       Float
+  heureDebut   String?        // Format: "10h" ou "10h30" - Heure de début de l'allocation
+  heureFin     String?        // Format: "17h" ou "17h30" - Heure de fin de l'allocation
   type         TypeAjustement
   traducteurId String
   tacheId      String?

@@ -302,8 +302,7 @@ export const creerTache = async (
           description: description || '',
           heuresTotal,
           compteMots: compteMots ? parseInt(compteMots) : null,
-          dateEcheance: dateEcheanceParsee, // Utilise la date parsée avec support timestamp
-          heureEcheance: req.body.heureEcheance || '17:00',
+          dateEcheance: dateEcheanceParsee, // Stocke date + heure complète (ex: 2025-02-14T10:30:00)
           priorite: req.body.priorite || 'REGULIER',
           statut: 'PLANIFIEE',
           creePar: req.utilisateur!.id,
@@ -319,6 +318,9 @@ export const creerTache = async (
               tacheId: nouvelleTache.id,
               date: parseOttawaDateISO(ajust.date),
               heures: ajust.heures,
+              // TODO: Activer après application de la migration SQL
+              // heureDebut: ajust.heureDebut || null,
+              // heureFin: ajust.heureFin || null,
               type: 'TACHE',
               creePar: req.utilisateur!.id,
             },
