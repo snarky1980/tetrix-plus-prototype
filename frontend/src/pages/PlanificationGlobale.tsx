@@ -10,6 +10,7 @@ import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisp
 import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
+import { useAutoRefresh, formatTimeAgo } from '../hooks/useAutoRefresh';
 import { clientService } from '../services/clientService';
 import { sousDomaineService } from '../services/sousDomaineService';
 import { traducteurService } from '../services/traducteurService';
@@ -261,7 +262,15 @@ const PlanificationGlobale: React.FC = () => {
     [applied, endDate]
   );
 
-  const { planificationGlobale, loading, error } = usePlanificationGlobal(params);
+  const { planificationGlobale, loading, error, refresh } = usePlanificationGlobal(params);
+
+  // Auto-refresh toutes les 2 minutes (modifiable par l'utilisateur)
+  const { lastRefresh, isRefreshing, isEnabled, toggleEnabled } = useAutoRefresh({
+    enabled: true,
+    intervalMs: 120000, // 2 minutes
+    onRefresh: refresh,
+    pauseWhenHidden: true,
+  });
 
   // Fonction utilitaire pour détecter les weekends (timezone Ottawa)
   const isWeekend = (iso: string) => {
@@ -1638,6 +1647,38 @@ const PlanificationGlobale: React.FC = () => {
         </div>
       </div>
         )}
+
+      {/* Indicateur de rafraîchissement automatique - Coin supérieur droit */}
+      <div className="fixed top-20 right-6 z-50">
+        <div className="bg-white border border-gray-200 rounded-lg shadow-md px-3 py-2 text-xs">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleEnabled}
+              className={`flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                isEnabled 
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+              title={isEnabled ? 'Désactiver le rafraîchissement automatique' : 'Activer le rafraîchissement automatique'}
+            >
+              {isEnabled ? '🟢' : '⚪'} Auto-refresh
+            </button>
+            <div className="flex items-center gap-1 text-gray-600">
+              {isRefreshing ? (
+                <>
+                  <span className="animate-spin">↻</span>
+                  <span>Actualisation...</span>
+                </>
+              ) : (
+                <>
+                  <span>✓</span>
+                  <span>{formatTimeAgo(lastRefresh)}</span>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Groupe de boutons flottants - Coin inférieur droit */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
