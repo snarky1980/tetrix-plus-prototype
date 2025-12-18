@@ -195,8 +195,54 @@ export const creerTache = async (
       }
     }
 
+    // Protection contre le double booking (race condition)
     const tache = await prisma.$transaction(async (tx) => {
-      // Créer la tâche
+      // 1. Vérifier la capacité disponible DANS la transaction pour éviter les race conditions
+      if (repartitionEffective && repartitionEffective.length > 0) {
+        // Obtenir le traducteur avec un verrou de lecture
+        const traducteur = await tx.traducteur.findUnique({
+          where: { id: traducteurId },
+          select: { id: true, nom: true, capaciteHeuresParJour: true }
+        });
+
+        if (!traducteur) {
+          throw new Error('Traducteur introuvable');
+        }
+
+        // Vérifier chaque jour de la répartition
+        const conflits: string[] = [];
+        for (const ajust of repartitionEffective) {
+          const dateJour = parseOttawaDateISO(ajust.date);
+          
+          // Récupérer les ajustements existants pour ce jour (dans la transaction)
+          const ajustementsExistants = await tx.ajustementTemps.findMany({
+            where: {
+              traducteurId,
+              date: dateJour,
+            }
+          });
+          
+          const heuresDejaUtilisees = ajustementsExistants.reduce((sum, a) => sum + a.heures, 0);
+          const heuresDisponibles = traducteur.capaciteHeuresParJour - heuresDejaUtilisees;
+          
+          // Vérifier si l'ajout dépasserait la capacité
+          if (ajust.heures > heuresDisponibles + 0.001) { // Tolérance pour erreurs d'arrondi
+            conflits.push(
+              `${ajust.date}: ${ajust.heures}h demandées, seulement ${heuresDisponibles.toFixed(2)}h disponibles (${heuresDejaUtilisees.toFixed(2)}h/${traducteur.capaciteHeuresParJour}h utilisées)`
+            );
+          }
+        }
+
+        // Si des conflits sont détectés, rejeter la transaction
+        if (conflits.length > 0) {
+          throw new Error(
+            `Conflit de capacité détecté pour ${traducteur.nom}:\n${conflits.join('\n')}\n\n` +
+            `Un autre conseiller a peut-être créé une tâche en même temps. Veuillez rafraîchir et réessayer.`
+          );
+        }
+      }
+
+      // 2. Créer la tâche (seulement si la capacité est validée)
       const nouvelleTache = await tx.tache.create({
         data: {
           numeroProjet,
