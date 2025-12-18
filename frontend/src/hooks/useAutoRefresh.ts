@@ -30,7 +30,7 @@ export function useAutoRefresh({
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPageVisible, setIsPageVisible] = useState(!document.hidden);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<number | null>(null);
 
   // Détecte quand l'onglet devient visible/caché
   useEffect(() => {
@@ -76,7 +76,7 @@ export function useAutoRefresh({
   useEffect(() => {
     if (!isEnabled) {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
       return;
@@ -86,13 +86,13 @@ export function useAutoRefresh({
     doRefresh();
 
     // Configure l'intervalle
-    intervalRef.current = setInterval(() => {
+    intervalRef.current = window.setInterval(() => {
       doRefresh();
     }, intervalMs);
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+        window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
     };
