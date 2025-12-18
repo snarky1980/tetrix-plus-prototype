@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "taches" ADD COLUMN "version" INTEGER NOT NULL DEFAULT 0;

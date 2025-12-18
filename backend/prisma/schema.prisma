@@ -140,6 +140,7 @@ model Tache {
   creePar             String
   creeLe              DateTime           @default(now())
   modifieLe           DateTime           @updatedAt
+  version             Int                @default(0)
   ajustementsTemps    AjustementTemps[]
   client              Client?            @relation(fields: [clientId], references: [id])
   paireLinguistique   PaireLinguistique? @relation(fields: [paireLinguistiqueId], references: [id])

@@ -32,6 +32,7 @@ export const creerTacheSchema = z.object({
 export const mettreAJourTacheSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
+    version: z.number().int().nonnegative().optional(), // Pour optimistic locking
     numeroProjet: z.string().min(1).optional(),
     description: z.string().optional(),
     specialisation: z.string().optional(),

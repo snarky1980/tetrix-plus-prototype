@@ -367,6 +367,7 @@ export const mettreAJourTache = async (
   try {
     const { id } = req.params;
     const {
+      version: expectedVersion,
       numeroProjet,
       description,
       specialisation,
@@ -417,7 +418,32 @@ export const mettreAJourTache = async (
     }
 
     const tache = await prisma.$transaction(async (tx) => {
-      // Mettre à jour la tâche
+      // Optimistic Locking: Vérifier la version
+      if (expectedVersion !== undefined) {
+        const current = await tx.tache.findUnique({
+          where: { id },
+          select: { version: true, modifieLe: true }
+        });
+
+        if (!current) {
+          throw new Error('TASK_NOT_FOUND');
+        }
+
+        if (current.version !== expectedVersion) {
+          const error: any = new Error(
+            `Conflit de modification détecté: cette tâche a été modifiée par un autre utilisateur ` +
+            `(version actuelle: ${current.version}, version attendue: ${expectedVersion}). ` +
+            `Dernière modification: ${current.modifieLe.toISOString()}. ` +
+            `Veuillez rafraîchir la page et réessayer.`
+          );
+          error.code = 'VERSION_CONFLICT';
+          error.currentVersion = current.version;
+          error.expectedVersion = expectedVersion;
+          throw error;
+        }
+      }
+
+      // Mettre à jour la tâche avec incrémentation de version
       const tacheMiseAJour = await tx.tache.update({
         where: { id },
         data: {
@@ -429,6 +455,7 @@ export const mettreAJourTache = async (
           ...(dateEcheanceParsee && { dateEcheance: dateEcheanceParsee }),
           ...(statut && { statut }),
           ...(typeTache && { typeTache }),
+          version: { increment: 1 }, // Incrémenter la version
         },
       });
 
@@ -475,8 +502,28 @@ export const mettreAJourTache = async (
     });
 
     res.json(tacheComplete);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur mise à jour tâche:', error);
+    
+    // Gestion spécifique des erreurs de conflit
+    if (error.code === 'VERSION_CONFLICT') {
+      res.status(409).json({ 
+        erreur: error.message,
+        code: 'VERSION_CONFLICT',
+        currentVersion: error.currentVersion,
+        expectedVersion: error.expectedVersion
+      });
+      return;
+    }
+    
+    if (error.message === 'TASK_NOT_FOUND') {
+      res.status(410).json({ 
+        erreur: 'Cette tâche a été supprimée par un autre utilisateur',
+        code: 'DELETED_ENTITY'
+      });
+      return;
+    }
+    
     res.status(500).json({ erreur: 'Erreur lors de la mise à jour de la tâche' });
   }
 };
