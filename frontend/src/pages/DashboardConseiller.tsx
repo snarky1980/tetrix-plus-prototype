@@ -101,23 +101,54 @@ const DashboardConseiller: React.FC = () => {
     <AppLayout titre="Portail Conseiller">
       <div className="space-y-6">
         {/* En-tête avec actions rapides */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Bienvenue, {utilisateur?.prenom || 'Conseiller'}</h1>
-            <p className="text-muted mt-1">Gérez vos tâches et la planification</p>
+        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-3xl font-bold">Bienvenue, {utilisateur?.prenom || 'Conseiller'}</h1>
+              <p className="text-muted mt-1">Gérez vos tâches et la planification</p>
+            </div>
           </div>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate('/conseiller/creation-tache')}>
-              ➕ Nouvelle tâche
+          
+          {/* Menu de navigation */}
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+            <Button 
+              onClick={() => navigate('/conseiller/creation-tache')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">➕</span>
+              <span className="text-sm">Nouvelle tâche</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/planification-globale')}>
-              📅 Planification globale
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/planification-globale')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">📅</span>
+              <span className="text-sm">Planification</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/liaisons')}>
-              🔗 Liaisons TR
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/liaisons')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">🔗</span>
+              <span className="text-sm">Liaisons TR</span>
             </Button>
-            <Button variant="outline" onClick={() => navigate('/statistiques-productivite')}>
-              📊 Statistiques
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/statistiques-productivite')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">📊</span>
+              <span className="text-sm">Statistiques</span>
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/conflict-resolution')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">⚠️</span>
+              <span className="text-sm">Conflits</span>
             </Button>
           </div>
         </div>

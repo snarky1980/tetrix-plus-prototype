@@ -107,6 +107,31 @@ const StatistiquesProductivite: React.FC = () => {
 
   return (
     <AppLayout titre="Statistiques de Productivité">
+      {/* Barre de navigation */}
+      <div className="mb-6 flex items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-4">
+        <Button
+          variant="outline"
+          onClick={() => window.location.href = '/tetrix-plus-prototype/conseiller'}
+          className="flex items-center gap-2"
+        >
+          ← Portail Conseiller
+        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => window.location.href = '/tetrix-plus-prototype/conseiller/creation-tache'}>
+            ➕ Nouvelle tâche
+          </Button>
+          <Button variant="ghost" onClick={() => window.location.href = '/tetrix-plus-prototype/planification-globale'}>
+            📅 Planification
+          </Button>
+          <Button variant="ghost" onClick={() => window.location.href = '/tetrix-plus-prototype/liaisons'}>
+            🔗 Liaisons
+          </Button>
+          <Button variant="ghost" onClick={() => window.location.href = '/tetrix-plus-prototype/conflict-resolution'}>
+            ⚠️ Conflits
+          </Button>
+        </div>
+      </div>
+
       <div className="space-y-6">
         {/* En-tête */}
         <div className="flex items-center justify-between">

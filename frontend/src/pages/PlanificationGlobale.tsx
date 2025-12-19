@@ -1263,6 +1263,33 @@ const PlanificationGlobale: React.FC = () => {
 
   return (
     <AppLayout titre="Planification globale" compact>
+      {/* Barre de navigation - Affiché uniquement pour les conseillers */}
+      {utilisateur?.role === 'CONSEILLER' && (
+        <div className="mb-2 flex items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg px-4 py-2">
+          <Button
+            variant="outline"
+            onClick={() => navigate('/conseiller')}
+            className="flex items-center gap-2 text-sm py-1"
+          >
+            ← Portail Conseiller
+          </Button>
+          <div className="flex gap-2">
+            <Button variant="ghost" onClick={() => navigate('/conseiller/creation-tache')} className="text-sm py-1">
+              ➕ Nouvelle tâche
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/liaisons')} className="text-sm py-1">
+              🔗 Liaisons
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/statistiques-productivite')} className="text-sm py-1">
+              📊 Statistiques
+            </Button>
+            <Button variant="ghost" onClick={() => navigate('/conflict-resolution')} className="text-sm py-1">
+              ⚠️ Conflits
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-0.5 h-[calc(100vh-3rem)]">
         {/* Bouton pour toggle le panneau */}
         <button

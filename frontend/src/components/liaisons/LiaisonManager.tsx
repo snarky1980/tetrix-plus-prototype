@@ -543,6 +543,42 @@ export const LiaisonManager: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Barre de navigation */}
+        <div className="mb-6 flex items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-4">
+          <button
+            onClick={() => window.location.href = '/tetrix-plus-prototype/conseiller'}
+            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            ← Portail Conseiller
+          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.location.href = '/tetrix-plus-prototype/conseiller/creation-tache'}
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              ➕ Nouvelle tâche
+            </button>
+            <button
+              onClick={() => window.location.href = '/tetrix-plus-prototype/planification-globale'}
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              📅 Planification
+            </button>
+            <button
+              onClick={() => window.location.href = '/tetrix-plus-prototype/statistiques-productivite'}
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              📊 Statistiques
+            </button>
+            <button
+              onClick={() => window.location.href = '/tetrix-plus-prototype/conflict-resolution'}
+              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              ⚠️ Conflits
+            </button>
+          </div>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">

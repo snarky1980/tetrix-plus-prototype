@@ -39,7 +39,7 @@ const TacheCreation: React.FC = () => {
     heuresTotal: 0,
     compteMots: undefined as number | undefined,
     dateEcheance: '',
-    heureEcheance: '15:00',
+    heureEcheance: '17:00',
     repartitionAuto: true,
     modeDistribution: 'JAT',
     repartitionManuelle: [] as { date: string; heures: number }[],
@@ -225,6 +225,31 @@ const TacheCreation: React.FC = () => {
 
   return (
     <AppLayout titre="Créer une tâche">
+      {/* Barre de navigation */}
+      <div className="mb-6 flex items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-4">
+        <Button
+          variant="outline"
+          onClick={() => navigate('/conseiller')}
+          className="flex items-center gap-2"
+        >
+          ← Portail Conseiller
+        </Button>
+        <div className="flex gap-2">
+          <Button variant="ghost" onClick={() => navigate('/planification-globale')}>
+            📅 Planification
+          </Button>
+          <Button variant="ghost" onClick={() => navigate('/liaisons')}>
+            🔗 Liaisons
+          </Button>
+          <Button variant="ghost" onClick={() => navigate('/statistiques-productivite')}>
+            📊 Statistiques
+          </Button>
+          <Button variant="ghost" onClick={() => navigate('/conflict-resolution')}>
+            ⚠️ Conflits
+          </Button>
+        </div>
+      </div>
+
       <div className="max-w-3xl mx-auto">
         <Card>
           <CardHeader>
