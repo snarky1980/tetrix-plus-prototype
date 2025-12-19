@@ -7,6 +7,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/Spinner';
+import { ConflictOverview } from '../components/ConflictOverview';
 import { useAuth } from '../contexts/AuthContext';
 import { tacheService } from '../services/tacheService';
 import { formatDateDisplay } from '../utils/dateTimeOttawa';
@@ -118,48 +119,58 @@ const DashboardConseiller: React.FC = () => {
           </div>
         </div>
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-primary">{stats.total}</p>
-                <p className="text-sm text-muted mt-1">Tâches créées</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-gray-600">{stats.planifiees}</p>
-                <p className="text-sm text-muted mt-1">Planifiées</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">{stats.enCours}</p>
-                <p className="text-sm text-muted mt-1">En cours</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-green-600">{stats.terminees}</p>
-                <p className="text-sm text-muted mt-1">Terminées</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <p className="text-3xl font-bold text-orange-600">{stats.heuresTotal.toFixed(0)}</p>
-                <p className="text-sm text-muted mt-1">Heures totales</p>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Statistiques et Conflits */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Statistiques */}
+          <div className="lg:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-primary">{stats.total}</p>
+                    <p className="text-sm text-muted mt-1">Tâches créées</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-gray-600">{stats.planifiees}</p>
+                    <p className="text-sm text-muted mt-1">Planifiées</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-blue-600">{stats.enCours}</p>
+                    <p className="text-sm text-muted mt-1">En cours</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-green-600">{stats.terminees}</p>
+                    <p className="text-sm text-muted mt-1">Terminées</p>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="text-center">
+                    <p className="text-3xl font-bold text-orange-600">{stats.heuresTotal.toFixed(0)}</p>
+                    <p className="text-sm text-muted mt-1">Heures totales</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* Vue d'ensemble des conflits */}
+          <div className="lg:col-span-1">
+            <ConflictOverview />
+          </div>
         </div>
 
         {/* Liste des tâches */}

@@ -1,0 +1,4 @@
+
+# Fichiers de pseudonymisation (contiennent des noms réels)
+backend/prisma/pseudonym-mapping.json
+backend/prisma/backup-*.json

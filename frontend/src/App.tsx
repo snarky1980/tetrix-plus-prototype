@@ -14,6 +14,7 @@ import TacheCreation from './pages/TacheCreation';
 import DashboardAdmin from './pages/DashboardAdmin';
 import { GestionProfils } from './pages/GestionProfils';
 import StatistiquesProductivite from './pages/StatistiquesProductivite';
+import ConflictResolution from './pages/ConflictResolution';
 
 /**
  * Route protégée - nécessite authentification
@@ -148,6 +149,16 @@ function App() {
             element={
               <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
                 <StatistiquesProductivite />
+              </RouteProtegee>
+            }
+          />
+
+          {/* Résolution des conflits - CONSEILLER et GESTIONNAIRE */}
+          <Route
+            path="/conflict-resolution"
+            element={
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
+                <ConflictResolution />
               </RouteProtegee>
             }
           />

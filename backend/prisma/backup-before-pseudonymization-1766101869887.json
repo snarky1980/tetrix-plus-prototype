@@ -1,0 +1,3890 @@
+[
+  {
+    "id": "29ffab18-57de-42cf-afae-012d9278be44",
+    "nom": "Parent, Geneviève",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "492650d2-1ed1-4731-804d-3c4e708fe140",
+    "creeLe": "2025-12-17T15:02:50.467Z",
+    "modifieLe": "2025-12-18T23:50:03.688Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "492650d2-1ed1-4731-804d-3c4e708fe140",
+      "email": "genevieve.parent@tetrix.com",
+      "motDePasse": "$2b$10$C07Du62M3YYiL6e/LX6SJeEbxfBGeK6g0lrn3ws.tkRJNOdDciunW",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T14:24:28.704Z",
+      "modifieLe": "2025-12-18T23:50:03.772Z"
+    }
+  },
+  {
+    "id": "a958c15e-af27-4964-a695-180656e3a71a",
+    "nom": "Bel Hassan, Meriem",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "bb28d490-237d-4acf-b9be-e51ff92c13bf",
+    "creeLe": "2025-12-17T15:02:53.651Z",
+    "modifieLe": "2025-12-18T23:50:01.827Z",
+    "classification": "TR-03",
+    "horaire": "11h-19h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "bb28d490-237d-4acf-b9be-e51ff92c13bf",
+      "email": "meriem.belhossan@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:53.481Z",
+      "modifieLe": "2025-12-18T23:50:01.997Z"
+    }
+  },
+  {
+    "id": "b39d14a4-4398-45dd-8cda-da871918a097",
+    "nom": "Ahlgren, Anna",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "c1f30f35-12fe-4ad2-a019-785a44239221",
+    "creeLe": "2025-12-17T15:02:51.503Z",
+    "modifieLe": "2025-12-18T23:50:02.166Z",
+    "classification": "TR-02",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "c1f30f35-12fe-4ad2-a019-785a44239221",
+      "email": "anna.ahlgren@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:51.242Z",
+      "modifieLe": "2025-12-18T23:50:02.250Z"
+    }
+  },
+  {
+    "id": "0d25474b-b9fc-4e02-bb9e-ef15a7391f54",
+    "nom": "Baillargeon, Véronique",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "c8e28ab8-e1d2-48a8-966b-20ab33415f7b",
+    "creeLe": "2025-12-17T15:02:52.202Z",
+    "modifieLe": "2025-12-18T23:50:02.335Z",
+    "classification": "TR-03",
+    "horaire": "8h30-16h30",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "c8e28ab8-e1d2-48a8-966b-20ab33415f7b",
+      "email": "veronique.baillargeon@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:52.014Z",
+      "modifieLe": "2025-12-18T23:50:02.420Z"
+    }
+  },
+  {
+    "id": "f40c7e79-714d-4866-890d-e0f7aa07b1a3",
+    "nom": "Bayer, Annie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "d13c9927-7379-40aa-b7f7-0ff4f3627a10",
+    "creeLe": "2025-12-17T15:02:52.970Z",
+    "modifieLe": "2025-12-18T23:50:02.506Z",
+    "classification": "TR-03",
+    "horaire": "8h-16h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "d13c9927-7379-40aa-b7f7-0ff4f3627a10",
+      "email": "annie.bayer@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:52.795Z",
+      "modifieLe": "2025-12-18T23:50:02.590Z"
+    }
+  },
+  {
+    "id": "5391de16-244a-44b9-b9f7-b15ace29fea7",
+    "nom": "Bergeron, Julie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "0e139fe5-df6f-431a-ac1f-d57fa79339cd",
+    "creeLe": "2025-12-17T15:02:54.338Z",
+    "modifieLe": "2025-12-18T23:50:02.674Z",
+    "classification": "TR-02",
+    "horaire": "8h30-16h30",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "0e139fe5-df6f-431a-ac1f-d57fa79339cd",
+      "email": "julie.bergeron@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:54.167Z",
+      "modifieLe": "2025-12-18T23:50:02.759Z"
+    }
+  },
+  {
+    "id": "f082a873-21a2-489b-a69e-c89c20ee86ec",
+    "nom": "Bissonnette, Julie-Marie",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "a493de0a-92ab-41d8-80b4-3d49c28caf97",
+    "creeLe": "2025-12-17T15:02:55.025Z",
+    "modifieLe": "2025-12-18T23:50:02.843Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "Droit"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "a493de0a-92ab-41d8-80b4-3d49c28caf97",
+      "email": "julie-marie.bissonnette@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:54.848Z",
+      "modifieLe": "2025-12-18T23:50:02.928Z"
+    }
+  },
+  {
+    "id": "f27df8fe-2ccb-4f18-9586-22490a40290b",
+    "nom": "Blais, Marie-France",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "6645b432-d869-43b8-b483-55025c584e7c",
+    "creeLe": "2025-12-17T15:02:55.714Z",
+    "modifieLe": "2025-12-18T23:50:03.014Z",
+    "classification": "TR-02",
+    "horaire": "8h-16h",
+    "notes": null,
+    "specialisations": [
+      "Droit"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "6645b432-d869-43b8-b483-55025c584e7c",
+      "email": "marie-france.blais@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:55.541Z",
+      "modifieLe": "2025-12-18T23:50:03.098Z"
+    }
+  },
+  {
+    "id": "6ee6a896-deea-477a-802e-cb617f6f8315",
+    "nom": "Charette, Léanne",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "bf31c035-196b-4b52-b1ec-bb504b606c0e",
+    "creeLe": "2025-12-17T15:02:56.393Z",
+    "modifieLe": "2025-12-18T23:50:03.182Z",
+    "classification": "TR-03",
+    "horaire": "7h-15h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "bf31c035-196b-4b52-b1ec-bb504b606c0e",
+      "email": "leanne.charette@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:56.222Z",
+      "modifieLe": "2025-12-18T23:50:03.266Z"
+    }
+  },
+  {
+    "id": "6b8b1b87-4542-49b0-a635-2810dc1b6294",
+    "nom": "Gagnon, Hugo",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "5265a3b3-1cbd-450d-a187-b41adcb42d39",
+    "creeLe": "2025-12-17T15:02:57.074Z",
+    "modifieLe": "2025-12-18T23:50:03.350Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "5265a3b3-1cbd-450d-a187-b41adcb42d39",
+      "email": "hugo.gagnon@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:56.903Z",
+      "modifieLe": "2025-12-18T23:50:03.435Z"
+    }
+  },
+  {
+    "id": "8f7ec079-8199-4566-9cee-4a226bf5192b",
+    "nom": "Kadnikov, Patrick",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [
+      "CLO",
+      "Patrimoine",
+      "SPAC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "5c31469f-53d5-4db9-af52-c5038ec90469",
+    "creeLe": "2025-12-17T15:02:57.751Z",
+    "modifieLe": "2025-12-18T23:50:03.520Z",
+    "classification": "TR-01",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "5c31469f-53d5-4db9-af52-c5038ec90469",
+      "email": "patrick.kadnikov@tetrix.com",
+      "motDePasse": "$2b$10$zRzCa7lYfasc62V91Z.oaeB3iwVp2mB2jFYZv20jT1lRL4PCujsKK",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:02:57.582Z",
+      "modifieLe": "2025-12-18T23:50:03.604Z"
+    }
+  },
+  {
+    "id": "4cdfc80f-50e5-47ab-8f07-6af1dd3d4ff7",
+    "nom": "Armin-Pereda, Jennifer",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3dd74f0e-3d05-486f-838c-8216be697d62",
+    "creeLe": "2025-12-17T15:09:47.853Z",
+    "modifieLe": "2025-12-18T23:50:03.856Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3dd74f0e-3d05-486f-838c-8216be697d62",
+      "email": "jennifer.armin-pereda@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:47.599Z",
+      "modifieLe": "2025-12-18T23:50:03.942Z"
+    }
+  },
+  {
+    "id": "e89245a2-56b4-47df-b711-591541675051",
+    "nom": "Borduas, Mylène",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "1631c06e-d09b-4072-8c68-3c0493b743e3",
+    "creeLe": "2025-12-17T15:09:58.393Z",
+    "modifieLe": "2025-12-18T23:50:04.531Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "1631c06e-d09b-4072-8c68-3c0493b743e3",
+      "email": "mylene.borduas@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:58.220Z",
+      "modifieLe": "2025-12-18T23:50:04.616Z"
+    }
+  },
+  {
+    "id": "85e3be5f-8ff9-4355-a589-9ae53cce3277",
+    "nom": "Ballard, Natalie",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [
+      "SPAC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "2d0ee877-5de8-4fd5-8e3a-833b27fb16e0",
+    "creeLe": "2025-12-17T15:09:52.634Z",
+    "modifieLe": "2025-12-18T23:50:04.194Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "2d0ee877-5de8-4fd5-8e3a-833b27fb16e0",
+      "email": "natalie.ballard@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:52.457Z",
+      "modifieLe": "2025-12-18T23:50:04.279Z"
+    }
+  },
+  {
+    "id": "5449cfbe-022e-487f-a790-fc685cdd46f2",
+    "nom": "Dumont, Isala",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP",
+      "CRIM SCorr.",
+      "CRIM Front."
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3871a87f-5264-4d19-98a5-22691cb2d0da",
+    "creeLe": "2025-12-17T15:09:51.942Z",
+    "modifieLe": "2025-12-18T23:47:49.415Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3871a87f-5264-4d19-98a5-22691cb2d0da",
+      "email": "isala.dumont@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:51.769Z",
+      "modifieLe": "2025-12-18T23:47:49.670Z"
+    }
+  },
+  {
+    "id": "b82e631f-e144-4fed-bc8d-c289a4c02385",
+    "nom": "Lecon, Juelle",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "PMO",
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "5964d144-0bf1-43ad-b3ff-3ab9bebaa66d",
+    "creeLe": "2025-12-17T15:09:59.783Z",
+    "modifieLe": "2025-12-18T23:47:53.880Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "5964d144-0bf1-43ad-b3ff-3ab9bebaa66d",
+      "email": "juelle.lecon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:59.606Z",
+      "modifieLe": "2025-12-18T23:47:54.135Z"
+    }
+  },
+  {
+    "id": "0baedc23-3b96-40ce-8a60-f31b4a615f92",
+    "nom": "Belton, Miel",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "ENV",
+      "AGRI",
+      "BIO",
+      "SCN",
+      "EMP"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "a2b719be-38eb-4139-a95c-710a97b1c8bf",
+    "creeLe": "2025-12-17T15:10:00.473Z",
+    "modifieLe": "2025-12-18T23:47:54.222Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "a2b719be-38eb-4139-a95c-710a97b1c8bf",
+      "email": "miel.belton@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:00.297Z",
+      "modifieLe": "2025-12-18T23:47:54.477Z"
+    }
+  },
+  {
+    "id": "adc01042-b332-4399-b52c-b4454e94fe8e",
+    "nom": "Bourbec, Lana",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "GAC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "7e4237dd-0e9e-4b48-8cc3-9a57256591fb",
+    "creeLe": "2025-12-17T15:10:01.157Z",
+    "modifieLe": "2025-12-18T23:47:54.563Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "7e4237dd-0e9e-4b48-8cc3-9a57256591fb",
+      "email": "lana.bourbec@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:00.984Z",
+      "modifieLe": "2025-12-18T23:47:54.822Z"
+    }
+  },
+  {
+    "id": "72bf3228-4153-4431-96b1-7e06b707584a",
+    "nom": "Sauson, Luelle",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "90f31d2a-34a4-4a4c-aa13-f2b3f7fb1e70",
+    "creeLe": "2025-12-17T15:10:01.880Z",
+    "modifieLe": "2025-12-18T23:47:54.908Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "90f31d2a-34a4-4a4c-aa13-f2b3f7fb1e70",
+      "email": "luelle.sauson@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:01.697Z",
+      "modifieLe": "2025-12-18T23:47:55.164Z"
+    }
+  },
+  {
+    "id": "fd106a5c-092d-43d8-9a9a-b42a1e26be42",
+    "nom": "Jolmont, Taline",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "cda28873-fb9b-49db-a025-6385cb9b852f",
+    "creeLe": "2025-12-17T15:10:03.388Z",
+    "modifieLe": "2025-12-18T23:47:55.598Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "cda28873-fb9b-49db-a025-6385cb9b852f",
+      "email": "taline.jolmont@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:03.205Z",
+      "modifieLe": "2025-12-18T23:47:55.855Z"
+    }
+  },
+  {
+    "id": "c988a39a-180f-472c-a1b6-ee2cbf0bd663",
+    "nom": "Saunet, Gara",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "CRIM SCorr.",
+      "CRIM Front.",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [
+      "CBSA",
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "baa149a8-3881-439a-9384-8436190665c8",
+    "creeLe": "2025-12-17T15:10:04.085Z",
+    "modifieLe": "2025-12-18T23:47:55.941Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "baa149a8-3881-439a-9384-8436190665c8",
+      "email": "gara.saunet@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:03.913Z",
+      "modifieLe": "2025-12-18T23:47:56.200Z"
+    }
+  },
+  {
+    "id": "69a7959f-d7dd-4d6d-8fa1-b5da742b1e06",
+    "nom": "Vernet, Nilie",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "SOC",
+      "AUT"
+    ],
+    "clientsHabituels": [
+      "Patrimoine",
+      "VAC",
+      "CIRNAC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "782d1f3e-81b2-4a4c-a791-cb603e04e52d",
+    "creeLe": "2025-12-17T15:10:04.880Z",
+    "modifieLe": "2025-12-18T23:47:56.286Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "782d1f3e-81b2-4a4c-a791-cb603e04e52d",
+      "email": "nilie.vernet@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:04.619Z",
+      "modifieLe": "2025-12-18T23:47:56.542Z"
+    }
+  },
+  {
+    "id": "8b61fd47-75fe-4468-ba86-e3f49a4a4c43",
+    "nom": "Forton, Floène",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "1e460fe2-2fe5-43e3-bd67-4c19d31a776c",
+    "creeLe": "2025-12-17T15:10:05.568Z",
+    "modifieLe": "2025-12-18T23:47:56.628Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "1e460fe2-2fe5-43e3-bd67-4c19d31a776c",
+      "email": "floene.forton@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:05.396Z",
+      "modifieLe": "2025-12-18T23:47:56.882Z"
+    }
+  },
+  {
+    "id": "95ae9247-8534-46de-b0a3-bf2a870104b4",
+    "nom": "Monzon, Gana",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "daa18e94-a10f-46f4-9038-d6fcfcf708a9",
+    "creeLe": "2025-12-17T15:10:06.251Z",
+    "modifieLe": "2025-12-18T23:47:56.968Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "daa18e94-a10f-46f4-9038-d6fcfcf708a9",
+      "email": "gana.monzon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:06.080Z",
+      "modifieLe": "2025-12-18T23:47:57.224Z"
+    }
+  },
+  {
+    "id": "56e6e669-fa76-4d11-badd-43faf2d6c72e",
+    "nom": "Saulon, Brilia",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "76f0e45e-d344-4ec1-8a6a-07abc7246034",
+    "creeLe": "2025-12-17T15:10:06.970Z",
+    "modifieLe": "2025-12-18T23:47:57.332Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "76f0e45e-d344-4ec1-8a6a-07abc7246034",
+      "email": "brilia.saulon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:06.798Z",
+      "modifieLe": "2025-12-18T23:47:57.587Z"
+    }
+  },
+  {
+    "id": "e42f9ece-127e-47cf-a090-f6992446fc83",
+    "nom": "Fonzon, Isaelle",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "DROIT"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "0918403a-1bc5-4ee6-906d-b4af5bbe0e2b",
+    "creeLe": "2025-12-17T15:10:07.657Z",
+    "modifieLe": "2025-12-18T23:47:57.673Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "0918403a-1bc5-4ee6-906d-b4af5bbe0e2b",
+      "email": "isaelle.fonzon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:07.482Z",
+      "modifieLe": "2025-12-18T23:47:57.930Z"
+    }
+  },
+  {
+    "id": "786d7e18-95f5-4d33-bb9d-d9617b6d606a",
+    "nom": "Dortin, Vaie",
+    "division": "Droit 1",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "f418ffca-c278-4d6b-9c39-dbca80319a70",
+    "creeLe": "2025-12-17T15:10:08.669Z",
+    "modifieLe": "2025-12-18T23:47:58.016Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "f418ffca-c278-4d6b-9c39-dbca80319a70",
+      "email": "vaie.dortin@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:08.489Z",
+      "modifieLe": "2025-12-18T23:47:58.270Z"
+    }
+  },
+  {
+    "id": "b413a234-18ba-4044-8680-bdb8285cbf87",
+    "nom": "Pouson, Maène",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "8ef608f7-4e6d-445d-8d8a-572d49c833de",
+    "creeLe": "2025-12-17T15:10:09.478Z",
+    "modifieLe": "2025-12-18T23:47:58.356Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "8ef608f7-4e6d-445d-8d8a-572d49c833de",
+      "email": "maene.pouson@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:09.284Z",
+      "modifieLe": "2025-12-18T23:47:58.611Z"
+    }
+  },
+  {
+    "id": "a14eb8eb-937b-4bbb-a1ec-8c0b9fff53a9",
+    "nom": "Nortel, Nina",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "TECH",
+      "TRA",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "97399c77-04a5-432f-a778-3f4cc0f1cbd3",
+    "creeLe": "2025-12-17T15:10:10.374Z",
+    "modifieLe": "2025-12-18T23:47:58.697Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "97399c77-04a5-432f-a778-3f4cc0f1cbd3",
+      "email": "nina.nortel@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:10.153Z",
+      "modifieLe": "2025-12-18T23:47:58.954Z"
+    }
+  },
+  {
+    "id": "87376865-e6ff-463d-a089-90afefd2a181",
+    "nom": "Fonbon, Pael",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "TECH",
+      "TRA",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "f1ad4e3f-846d-4269-8030-c26e8188b496",
+    "creeLe": "2025-12-17T15:10:11.155Z",
+    "modifieLe": "2025-12-18T23:47:59.040Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "f1ad4e3f-846d-4269-8030-c26e8188b496",
+      "email": "pael.fonbon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:10.970Z",
+      "modifieLe": "2025-12-18T23:47:59.303Z"
+    }
+  },
+  {
+    "id": "a8cdf2b8-7bde-4dbf-b87d-fe6b8a928854",
+    "nom": "Jollon, Nia",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "TECH",
+      "TRA",
+      "CRIM SCorr.",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "2aaa2906-6ad5-4c5c-87d2-a3f8a9f06bda",
+    "creeLe": "2025-12-17T15:10:12.058Z",
+    "modifieLe": "2025-12-18T23:47:59.390Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "2aaa2906-6ad5-4c5c-87d2-a3f8a9f06bda",
+      "email": "nia.jollon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:11.865Z",
+      "modifieLe": "2025-12-18T23:47:59.648Z"
+    }
+  },
+  {
+    "id": "b7d7ff38-6c0b-4539-bf02-4183630d57f2",
+    "nom": "Dorson, Sanne",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "00b7fb41-b93b-443a-a38a-d4e8c80b3340",
+    "creeLe": "2025-12-17T15:10:12.761Z",
+    "modifieLe": "2025-12-18T23:47:59.735Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "00b7fb41-b93b-443a-a38a-d4e8c80b3340",
+      "email": "sanne.dorson@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:12.590Z",
+      "modifieLe": "2025-12-18T23:47:59.990Z"
+    }
+  },
+  {
+    "id": "ee8b9513-58c3-44c0-9470-6798d773e0fb",
+    "nom": "Bourlon, Lurie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "6bd8ab98-8ec2-40da-853a-d5fb8e52bf40",
+    "creeLe": "2025-12-17T15:10:13.448Z",
+    "modifieLe": "2025-12-18T23:48:00.076Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "6bd8ab98-8ec2-40da-853a-d5fb8e52bf40",
+      "email": "lurie.bourlon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:13.277Z",
+      "modifieLe": "2025-12-18T23:48:00.331Z"
+    }
+  },
+  {
+    "id": "e508e3a1-b12c-4186-b598-68e5f82a16ca",
+    "nom": "Leton, Naline",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "MIL TERRE",
+      "MIL AIR",
+      "SOC"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "c603180b-71bc-4caf-b98f-9dd37848c679",
+    "creeLe": "2025-12-17T15:10:14.165Z",
+    "modifieLe": "2025-12-18T23:48:00.418Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "c603180b-71bc-4caf-b98f-9dd37848c679",
+      "email": "naline.leton@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:13.994Z",
+      "modifieLe": "2025-12-18T23:48:00.677Z"
+    }
+  },
+  {
+    "id": "60d3c8a7-8ef8-4d9e-9579-1eee41d03c22",
+    "nom": "Jolval, Annne",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "a5245d90-0098-41f0-9708-e3ca1dabc2d8",
+    "creeLe": "2025-12-17T15:10:14.845Z",
+    "modifieLe": "2025-12-18T23:48:00.764Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "a5245d90-0098-41f0-9708-e3ca1dabc2d8",
+      "email": "annne.jolval@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:14.674Z",
+      "modifieLe": "2025-12-18T23:48:01.026Z"
+    }
+  },
+  {
+    "id": "9b1afdc0-3e53-4ef2-99da-ba142c734331",
+    "nom": "Lauron, Maie",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "CRIM SCorr.",
+      "CRIM Front.",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "CBSA",
+      "CISR/IRB",
+      "VAC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "efaa7339-8174-4f3e-991f-6598fb60894b",
+    "creeLe": "2025-12-17T15:10:15.535Z",
+    "modifieLe": "2025-12-18T23:48:01.113Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "efaa7339-8174-4f3e-991f-6598fb60894b",
+      "email": "maie.lauron@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:15.363Z",
+      "modifieLe": "2025-12-18T23:48:01.368Z"
+    }
+  },
+  {
+    "id": "ca6684c8-5a03-45b3-9fd7-6a22449d2ef1",
+    "nom": "Blouin, Anabel",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 5.75,
+    "actif": true,
+    "utilisateurId": "44296273-4575-403b-a224-9bb268f497fd",
+    "creeLe": "2025-12-17T15:09:57.707Z",
+    "modifieLe": "2025-12-18T23:50:04.026Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "44296273-4575-403b-a224-9bb268f497fd",
+      "email": "anabel.blouin@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:57.533Z",
+      "modifieLe": "2025-12-18T23:50:04.109Z"
+    }
+  },
+  {
+    "id": "97461f5f-8f76-46b2-9874-d00fddc43d6f",
+    "nom": "Beauchemin, Priscilla",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "92a788cd-a8e3-4941-8b5c-ae956f7f97fa",
+    "creeLe": "2025-12-17T15:09:54.101Z",
+    "modifieLe": "2025-12-18T23:50:04.364Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "92a788cd-a8e3-4941-8b5c-ae956f7f97fa",
+      "email": "priscilla.beauchemin@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:53.930Z",
+      "modifieLe": "2025-12-18T23:50:04.448Z"
+    }
+  },
+  {
+    "id": "625494a4-f956-49ed-ab22-8c67276f455a",
+    "nom": "Brégent, Delphine",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "CRIM SCorr.",
+      "CRIM Front."
+    ],
+    "clientsHabituels": [
+      "CBSA",
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3b2cd23c-c08f-47db-ac2d-3b30dab1ec7d",
+    "creeLe": "2025-12-17T15:09:59.077Z",
+    "modifieLe": "2025-12-18T23:50:04.702Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3b2cd23c-c08f-47db-ac2d-3b30dab1ec7d",
+      "email": "clalia.verbec@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:58.903Z",
+      "modifieLe": "2025-12-18T23:47:53.794Z"
+    }
+  },
+  {
+    "id": "8db3e740-851e-4625-81b6-a5fdac5cfb5e",
+    "nom": "Leton, Chasa",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB",
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4bc88493-15fe-48a0-b2aa-18677093f9e4",
+    "creeLe": "2025-12-17T15:10:21.829Z",
+    "modifieLe": "2025-12-18T23:48:04.276Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "4bc88493-15fe-48a0-b2aa-18677093f9e4",
+      "email": "chasa.leton@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:21.656Z",
+      "modifieLe": "2025-12-18T23:48:04.532Z"
+    }
+  },
+  {
+    "id": "2c20ba71-d29e-4534-b2e6-3629013f970c",
+    "nom": "Charcourt, Banne",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "368ceffe-8c2b-45ea-bc6c-1b4f00919438",
+    "creeLe": "2025-12-17T15:10:22.520Z",
+    "modifieLe": "2025-12-18T23:48:04.618Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "368ceffe-8c2b-45ea-bc6c-1b4f00919438",
+      "email": "banne.charcourt@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:22.349Z",
+      "modifieLe": "2025-12-18T23:48:04.873Z"
+    }
+  },
+  {
+    "id": "90833295-f9b7-4508-9dbc-414a42f11185",
+    "nom": "Letier, Lilia",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "TECH",
+      "TRA",
+      "CRIM SCorr.",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "41457615-4624-43c3-9a16-1c42c7592208",
+    "creeLe": "2025-12-17T15:10:23.910Z",
+    "modifieLe": "2025-12-18T23:48:04.960Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "41457615-4624-43c3-9a16-1c42c7592208",
+      "email": "lilia.letier@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:23.736Z",
+      "modifieLe": "2025-12-18T23:48:05.217Z"
+    }
+  },
+  {
+    "id": "062ec5e1-f25a-4c35-bd75-97fa9aa41253",
+    "nom": "Beltin, Malie",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "2f2768b6-7c11-465c-b56f-06b1e0d713d4",
+    "creeLe": "2025-12-17T15:10:24.609Z",
+    "modifieLe": "2025-12-18T23:48:05.304Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "2f2768b6-7c11-465c-b56f-06b1e0d713d4",
+      "email": "malie.beltin@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:24.423Z",
+      "modifieLe": "2025-12-18T23:48:05.560Z"
+    }
+  },
+  {
+    "id": "5e3cd5d7-fe68-4683-8f40-8d7b42f10367",
+    "nom": "Belcher, Chada",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "665baae3-d88f-46e2-b582-c8d9f3f85562",
+    "creeLe": "2025-12-17T15:10:25.292Z",
+    "modifieLe": "2025-12-18T23:48:05.646Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "665baae3-d88f-46e2-b582-c8d9f3f85562",
+      "email": "chada.belcher@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:25.119Z",
+      "modifieLe": "2025-12-18T23:48:05.905Z"
+    }
+  },
+  {
+    "id": "b79d515a-9f88-4077-9445-0623c50fab8d",
+    "nom": "Blanlin, Miel",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "786fdbbf-aa90-4b8e-ac4d-20ce026684dc",
+    "creeLe": "2025-12-17T15:10:16.234Z",
+    "modifieLe": "2025-12-18T23:48:01.453Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "786fdbbf-aa90-4b8e-ac4d-20ce026684dc",
+      "email": "miel.blanlin@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:16.061Z",
+      "modifieLe": "2025-12-18T23:48:01.708Z"
+    }
+  },
+  {
+    "id": "4de6ffb9-292c-4099-93b0-aab1d7b8429a",
+    "nom": "Monson, Lirie",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "DROIT"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "39b3e3db-98bf-4a38-b569-4669287c83d5",
+    "creeLe": "2025-12-17T15:10:16.930Z",
+    "modifieLe": "2025-12-18T23:48:01.794Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "39b3e3db-98bf-4a38-b569-4669287c83d5",
+      "email": "lirie.monson@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:16.759Z",
+      "modifieLe": "2025-12-18T23:48:02.049Z"
+    }
+  },
+  {
+    "id": "1e1708d4-6fe2-44a2-9510-d43074431cac",
+    "nom": "Lenet, Calia",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "7132d48d-67b0-4248-9b2a-adcad3e7dbbe",
+    "creeLe": "2025-12-17T15:10:18.305Z",
+    "modifieLe": "2025-12-18T23:48:02.564Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "7132d48d-67b0-4248-9b2a-adcad3e7dbbe",
+      "email": "calia.lenet@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:18.131Z",
+      "modifieLe": "2025-12-18T23:48:02.820Z"
+    }
+  },
+  {
+    "id": "5246d6e8-1ae6-48d1-94f1-49b64b9efb8f",
+    "nom": "Jolzon, Céline",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "DROIT",
+      "SOC"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "b182f570-1c9c-41ed-be98-19c3db31e311",
+    "creeLe": "2025-12-17T15:10:18.999Z",
+    "modifieLe": "2025-12-18T23:48:02.906Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "b182f570-1c9c-41ed-be98-19c3db31e311",
+      "email": "celine.jolzon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:18.826Z",
+      "modifieLe": "2025-12-18T23:48:03.161Z"
+    }
+  },
+  {
+    "id": "0d7443be-3760-43ec-beb4-7641f642b07b",
+    "nom": "Fonton, Isaelle",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC",
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "8c42d802-4233-4f75-b1fd-f7f2a0ef66a1",
+    "creeLe": "2025-12-17T15:10:19.694Z",
+    "modifieLe": "2025-12-18T23:48:03.248Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "8c42d802-4233-4f75-b1fd-f7f2a0ef66a1",
+      "email": "isaelle.fonton@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:19.523Z",
+      "modifieLe": "2025-12-18T23:48:03.504Z"
+    }
+  },
+  {
+    "id": "065559a6-8420-4309-bc66-7537f243566b",
+    "nom": "Dunet, Chael",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "DROIT"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "c0d6fa52-e6e1-49dc-b1e6-f7640ad017a0",
+    "creeLe": "2025-12-17T15:10:20.460Z",
+    "modifieLe": "2025-12-18T23:48:03.590Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "c0d6fa52-e6e1-49dc-b1e6-f7640ad017a0",
+      "email": "chael.dunet@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:20.289Z",
+      "modifieLe": "2025-12-18T23:48:03.848Z"
+    }
+  },
+  {
+    "id": "2319b9d8-31ed-472d-81ec-183fb8e57bca",
+    "nom": "Viltin, Vara",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM",
+      "ENV",
+      "AGRI",
+      "BIO",
+      "SCN"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "200d30e3-70bc-45dd-8814-bf1da7adaca5",
+    "creeLe": "2025-12-17T15:10:21.145Z",
+    "modifieLe": "2025-12-18T23:48:03.934Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "200d30e3-70bc-45dd-8814-bf1da7adaca5",
+      "email": "vara.viltin@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:10:20.972Z",
+      "modifieLe": "2025-12-18T23:48:04.189Z"
+    }
+  },
+  {
+    "id": "dfe76f99-0305-4405-8e95-71eb0121e74c",
+    "nom": "Fontier, Taine",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [
+      "Patrimoine",
+      "DFO"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "0e53fd70-2e92-4b96-9ef5-a14a80546dce",
+    "creeLe": "2025-12-17T15:19:44.145Z",
+    "modifieLe": "2025-12-18T23:48:06.675Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "0e53fd70-2e92-4b96-9ef5-a14a80546dce",
+      "email": "taine.fontier@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:43.968Z",
+      "modifieLe": "2025-12-18T23:48:06.930Z"
+    }
+  },
+  {
+    "id": "a6a56e7a-f3f7-42ce-ab32-aba94a2b3cd9",
+    "nom": "Blanbec, Anra",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "DROIT"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "c52e278a-8675-4514-aa2e-8b644f62cae2",
+    "creeLe": "2025-12-17T15:19:44.845Z",
+    "modifieLe": "2025-12-18T23:48:07.016Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "c52e278a-8675-4514-aa2e-8b644f62cae2",
+      "email": "anra.blanbec@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:44.653Z",
+      "modifieLe": "2025-12-18T23:48:07.272Z"
+    }
+  },
+  {
+    "id": "6fae6537-f9de-461e-b75a-46a63fd22c6d",
+    "nom": "Poucourt, Claine",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "88966962-ddd3-4795-b3c4-aa9f40dfa478",
+    "creeLe": "2025-12-17T15:19:47.289Z",
+    "modifieLe": "2025-12-18T23:48:07.358Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "88966962-ddd3-4795-b3c4-aa9f40dfa478",
+      "email": "claine.poucourt@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:47.119Z",
+      "modifieLe": "2025-12-18T23:48:07.614Z"
+    }
+  },
+  {
+    "id": "a272de40-8a11-4b07-9150-16be1162641b",
+    "nom": "Mornet, Lalia",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "GAC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "d1079d1b-3b43-4d0e-be86-99c0e677c93e",
+    "creeLe": "2025-12-17T15:19:49.335Z",
+    "modifieLe": "2025-12-18T23:48:09.067Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "d1079d1b-3b43-4d0e-be86-99c0e677c93e",
+      "email": "lalia.mornet@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:49.163Z",
+      "modifieLe": "2025-12-18T23:48:09.322Z"
+    }
+  },
+  {
+    "id": "4da0bd9f-62d6-4ee9-8eb2-22b2013b71ae",
+    "nom": "Trembon, Labelle",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "ad944423-020f-4794-98dd-b28b99c29e22",
+    "creeLe": "2025-12-17T15:19:47.964Z",
+    "modifieLe": "2025-12-18T23:48:07.700Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "ad944423-020f-4794-98dd-b28b99c29e22",
+      "email": "labelle.trembon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:47.792Z",
+      "modifieLe": "2025-12-18T23:48:07.956Z"
+    }
+  },
+  {
+    "id": "2c811c92-4f75-4a2d-868f-194a1ca04cad",
+    "nom": "Dutin, Baanne",
+    "division": "Droit 1",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "d83f3262-a0de-480b-871c-af65d0098586",
+    "creeLe": "2025-12-17T15:19:48.652Z",
+    "modifieLe": "2025-12-18T23:48:08.385Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "d83f3262-a0de-480b-871c-af65d0098586",
+      "email": "baanne.dutin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:48.475Z",
+      "modifieLe": "2025-12-18T23:48:08.639Z"
+    }
+  },
+  {
+    "id": "618cda15-63ae-407e-8433-29679a9ef391",
+    "nom": "Pounet, Céna",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "42a4e4ca-9c2a-4cad-b8b3-bbc20f298baa",
+    "creeLe": "2025-12-17T15:19:45.563Z",
+    "modifieLe": "2025-12-18T23:48:08.725Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "42a4e4ca-9c2a-4cad-b8b3-bbc20f298baa",
+      "email": "cena.pounet@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:45.380Z",
+      "modifieLe": "2025-12-18T23:48:08.981Z"
+    }
+  },
+  {
+    "id": "5cfb5818-ac22-4013-988f-8e0deb28e4a1",
+    "nom": "Clalin, Clara",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "1b7618da-02a9-47c5-a25b-beb725c68edc",
+    "creeLe": "2025-12-17T15:19:50.018Z",
+    "modifieLe": "2025-12-18T23:48:09.408Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "1b7618da-02a9-47c5-a25b-beb725c68edc",
+      "email": "clara.clalin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:49.844Z",
+      "modifieLe": "2025-12-18T23:48:09.664Z"
+    }
+  },
+  {
+    "id": "0dae71fb-3e75-41f2-ac0e-895297643f57",
+    "nom": "Fonton, Ananne",
+    "division": "Droit 1",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4982c531-fd28-4e52-a305-c7bb459a497e",
+    "creeLe": "2025-12-17T15:19:50.704Z",
+    "modifieLe": "2025-12-18T23:48:09.750Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "4982c531-fd28-4e52-a305-c7bb459a497e",
+      "email": "ananne.fonton@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:50.531Z",
+      "modifieLe": "2025-12-18T23:48:10.005Z"
+    }
+  },
+  {
+    "id": "0c5bea37-6fb1-4a21-ab71-9c792e1a922e",
+    "nom": "Poumont, Oline",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP",
+      "ENV",
+      "AGRI",
+      "BIO",
+      "SCN",
+      "MED",
+      "DROIT"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "ef860105-f1da-4469-b333-9750dab6896d",
+    "creeLe": "2025-12-17T15:19:51.399Z",
+    "modifieLe": "2025-12-18T23:48:10.091Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "ef860105-f1da-4469-b333-9750dab6896d",
+      "email": "oline.poumont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:51.206Z",
+      "modifieLe": "2025-12-18T23:48:10.346Z"
+    }
+  },
+  {
+    "id": "04dde11c-f3bf-4b18-a4a5-454252737c5e",
+    "nom": "Foutier, Clala",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "699896d4-822b-45f5-ae45-98e39069bc72",
+    "creeLe": "2025-12-17T15:19:52.082Z",
+    "modifieLe": "2025-12-18T23:48:10.433Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "699896d4-822b-45f5-ae45-98e39069bc72",
+      "email": "clala.foutier@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:51.909Z",
+      "modifieLe": "2025-12-18T23:48:10.688Z"
+    }
+  },
+  {
+    "id": "e486d274-009f-4ce1-af89-aaa7ecc5c005",
+    "nom": "Lauzon, Chada",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "bdc5f14e-8330-4f31-8ee4-9ce46516e37f",
+    "creeLe": "2025-12-17T15:19:52.785Z",
+    "modifieLe": "2025-12-18T23:48:10.774Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "bdc5f14e-8330-4f31-8ee4-9ce46516e37f",
+      "email": "chada.lauzon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:52.593Z",
+      "modifieLe": "2025-12-18T23:48:11.033Z"
+    }
+  },
+  {
+    "id": "a2801da7-bdc9-4deb-8aac-f1571f0d2f6d",
+    "nom": "Gautin, Lusa",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "be08e003-0e31-434d-a54c-8a855b978009",
+    "creeLe": "2025-12-17T15:19:53.591Z",
+    "modifieLe": "2025-12-18T23:48:11.119Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "be08e003-0e31-434d-a54c-8a855b978009",
+      "email": "lusa.gautin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:53.416Z",
+      "modifieLe": "2025-12-18T23:48:11.375Z"
+    }
+  },
+  {
+    "id": "121269cc-d6cc-4a08-8071-c97f1d1032c1",
+    "nom": "Verson, Brilie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "415814e1-1d26-485e-a7e0-ec039726f4ef",
+    "creeLe": "2025-12-17T15:19:54.310Z",
+    "modifieLe": "2025-12-18T23:48:11.461Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "415814e1-1d26-485e-a7e0-ec039726f4ef",
+      "email": "brilie.verson@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:54.112Z",
+      "modifieLe": "2025-12-18T23:48:11.716Z"
+    }
+  },
+  {
+    "id": "0a425f85-c09b-4afd-b189-8d6b35f257cf",
+    "nom": "Joldon, Laria",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "519b41d6-657a-49fb-9c15-e24ae4f3f521",
+    "creeLe": "2025-12-17T15:19:55.104Z",
+    "modifieLe": "2025-12-18T23:48:11.801Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "519b41d6-657a-49fb-9c15-e24ae4f3f521",
+      "email": "laria.joldon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:54.918Z",
+      "modifieLe": "2025-12-18T23:48:12.059Z"
+    }
+  },
+  {
+    "id": "024baf7c-55be-4406-ab18-2285366fc122",
+    "nom": "Belzon, Caanne",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "b306e4ff-7052-4772-b82f-ee3d5aac1642",
+    "creeLe": "2025-12-17T15:19:55.788Z",
+    "modifieLe": "2025-12-18T23:48:12.145Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "b306e4ff-7052-4772-b82f-ee3d5aac1642",
+      "email": "caanne.belzon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:55.606Z",
+      "modifieLe": "2025-12-18T23:48:12.402Z"
+    }
+  },
+  {
+    "id": "b39a98f0-7d29-41a6-855c-3513ceaa7f37",
+    "nom": "Moncher, Masa",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "2189c200-76a6-4026-9b5e-be03a79f1c71",
+    "creeLe": "2025-12-17T15:19:56.494Z",
+    "modifieLe": "2025-12-18T23:48:12.488Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "2189c200-76a6-4026-9b5e-be03a79f1c71",
+      "email": "masa.moncher@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:56.305Z",
+      "modifieLe": "2025-12-18T23:48:12.748Z"
+    }
+  },
+  {
+    "id": "d3df045e-4455-4be1-99d8-65267fe7a611",
+    "nom": "Claval, Naie",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "00d92eab-99ca-4c99-9a0b-02e161483a90",
+    "creeLe": "2025-12-17T15:19:58.074Z",
+    "modifieLe": "2025-12-18T23:48:12.833Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "00d92eab-99ca-4c99-9a0b-02e161483a90",
+      "email": "naie.claval@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:57.893Z",
+      "modifieLe": "2025-12-18T23:48:13.089Z"
+    }
+  },
+  {
+    "id": "39645cbf-87f6-4ec2-a081-86d13bde6e10",
+    "nom": "Dorbec, Briène",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3ab50f64-e1aa-4bca-8bf8-8435c35fe90d",
+    "creeLe": "2025-12-17T15:19:59.441Z",
+    "modifieLe": "2025-12-18T23:48:13.858Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3ab50f64-e1aa-4bca-8bf8-8435c35fe90d",
+      "email": "briene.dorbec@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:59.270Z",
+      "modifieLe": "2025-12-18T23:48:14.115Z"
+    }
+  },
+  {
+    "id": "8ec86f59-afaa-4f3b-a9b8-b845c12be975",
+    "nom": "Charson, Narie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3d3c9ff2-d88c-4223-931b-d7c7415c99c1",
+    "creeLe": "2025-12-17T15:19:58.763Z",
+    "modifieLe": "2025-12-18T23:48:13.175Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3d3c9ff2-d88c-4223-931b-d7c7415c99c1",
+      "email": "narie.charson@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:58.589Z",
+      "modifieLe": "2025-12-18T23:48:13.432Z"
+    }
+  },
+  {
+    "id": "c86210c7-3fb2-4877-beaf-9d96a740b86e",
+    "nom": "Beldon, Clana",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "ENV",
+      "AGRI",
+      "BIO",
+      "SCN"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "f6ed6e2b-80c9-4e96-9397-88e0c357c0e0",
+    "creeLe": "2025-12-17T15:19:57.290Z",
+    "modifieLe": "2025-12-18T23:48:13.517Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "f6ed6e2b-80c9-4e96-9397-88e0c357c0e0",
+      "email": "clana.beldon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:57.111Z",
+      "modifieLe": "2025-12-18T23:48:13.772Z"
+    }
+  },
+  {
+    "id": "0caf2cf8-5715-4bfd-bfec-1f53d5c2df25",
+    "nom": "Mortin, Jurie",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "ENV",
+      "AGRI",
+      "BIO",
+      "SCN"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "438db1f1-1afd-47aa-a04f-98391a5cc3f2",
+    "creeLe": "2025-12-17T15:20:00.832Z",
+    "modifieLe": "2025-12-18T23:48:14.547Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "438db1f1-1afd-47aa-a04f-98391a5cc3f2",
+      "email": "jurie.mortin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:00.638Z",
+      "modifieLe": "2025-12-18T23:48:14.801Z"
+    }
+  },
+  {
+    "id": "95fd6b41-0e32-478a-9870-b7fcc3c899ff",
+    "nom": "Marlin, Calia",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "ddfe44c4-42c3-4257-8409-36982024df0c",
+    "creeLe": "2025-12-17T15:20:01.539Z",
+    "modifieLe": "2025-12-18T23:48:14.888Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "ddfe44c4-42c3-4257-8409-36982024df0c",
+      "email": "calia.marlin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:01.361Z",
+      "modifieLe": "2025-12-18T23:48:15.149Z"
+    }
+  },
+  {
+    "id": "726cc420-9a95-4b1d-a0b2-f676a5f58115",
+    "nom": "Garcher, Dada",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "5e1d99a9-8315-420b-aa34-622fe5def784",
+    "creeLe": "2025-12-17T15:20:02.223Z",
+    "modifieLe": "2025-12-18T23:48:15.240Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "5e1d99a9-8315-420b-aa34-622fe5def784",
+      "email": "dada.garcher@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:02.049Z",
+      "modifieLe": "2025-12-18T23:48:15.557Z"
+    }
+  },
+  {
+    "id": "06faaec0-1c5b-469a-9e9b-002ec06c2f21",
+    "nom": "Belcon, Mala",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC",
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "03193469-e6bb-4164-b039-0a685f65eb7d",
+    "creeLe": "2025-12-17T15:20:02.926Z",
+    "modifieLe": "2025-12-18T23:48:15.719Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "03193469-e6bb-4164-b039-0a685f65eb7d",
+      "email": "mala.belcon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:02.748Z",
+      "modifieLe": "2025-12-18T23:48:16.418Z"
+    }
+  },
+  {
+    "id": "70baaa97-8e01-48f4-9ad8-e16b469c543d",
+    "nom": "Piermont, Jurie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4d2c83cb-2bee-43b1-8a6d-702ed1e1c5a0",
+    "creeLe": "2025-12-17T15:20:03.620Z",
+    "modifieLe": "2025-12-18T23:48:16.537Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "4d2c83cb-2bee-43b1-8a6d-702ed1e1c5a0",
+      "email": "jurie.piermont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:03.443Z",
+      "modifieLe": "2025-12-18T23:48:16.986Z"
+    }
+  },
+  {
+    "id": "76db5749-b39c-4af8-bd2b-dcb61e3975a0",
+    "nom": "Morson, Nael",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "9215b36c-e887-4b03-8be7-494362a2bb82",
+    "creeLe": "2025-12-17T15:20:04.340Z",
+    "modifieLe": "2025-12-18T23:48:17.109Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "9215b36c-e887-4b03-8be7-494362a2bb82",
+      "email": "nael.morson@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:04.157Z",
+      "modifieLe": "2025-12-18T23:48:17.364Z"
+    }
+  },
+  {
+    "id": "d9dca1e6-e56f-4df3-b816-0f6eace2d55e",
+    "nom": "Berlon, Chaie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "7ad9aacd-269e-4a83-b284-a1f4bb234afb",
+    "creeLe": "2025-12-17T15:20:05.150Z",
+    "modifieLe": "2025-12-18T23:48:17.451Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "7ad9aacd-269e-4a83-b284-a1f4bb234afb",
+      "email": "chaie.berlon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:04.857Z",
+      "modifieLe": "2025-12-18T23:48:17.789Z"
+    }
+  },
+  {
+    "id": "33535dde-f458-4871-a3da-2a241c74bcbb",
+    "nom": "Rouville, Bada",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "56fa3efb-94e0-48fe-9856-508b175b967a",
+    "creeLe": "2025-12-17T15:19:42.511Z",
+    "modifieLe": "2025-12-18T23:48:05.991Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "56fa3efb-94e0-48fe-9856-508b175b967a",
+      "email": "bada.rouville@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:42.257Z",
+      "modifieLe": "2025-12-18T23:48:06.247Z"
+    }
+  },
+  {
+    "id": "647815f4-fb47-4e15-b70d-1e9541c961ca",
+    "nom": "Formont, Nielle",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "df7f9327-b35e-4aef-b8c3-f8e01b6c404e",
+    "creeLe": "2025-12-17T15:20:17.886Z",
+    "modifieLe": "2025-12-18T23:48:23.352Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "df7f9327-b35e-4aef-b8c3-f8e01b6c404e",
+      "email": "nielle.formont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:17.707Z",
+      "modifieLe": "2025-12-18T23:48:23.607Z"
+    }
+  },
+  {
+    "id": "d5080166-e560-40ba-952e-3c68d433e363",
+    "nom": "Pierdin, Brilia",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "AUT",
+      "EMP"
+    ],
+    "clientsHabituels": [
+      "CIRNAC",
+      "EDSC",
+      "FPC",
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "2866c23f-7288-4a91-9444-0f327a0da798",
+    "creeLe": "2025-12-17T15:20:18.681Z",
+    "modifieLe": "2025-12-18T23:48:23.693Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "2866c23f-7288-4a91-9444-0f327a0da798",
+      "email": "brilia.pierdin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:18.501Z",
+      "modifieLe": "2025-12-18T23:48:23.948Z"
+    }
+  },
+  {
+    "id": "8acb7678-ae73-40d4-a2c9-a4c1c5236cd4",
+    "nom": "Jolbon, Sonne",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "fefbcdc4-3a4b-4337-9d05-f6e3f24ebdcb",
+    "creeLe": "2025-12-17T15:20:19.389Z",
+    "modifieLe": "2025-12-18T23:48:24.034Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "fefbcdc4-3a4b-4337-9d05-f6e3f24ebdcb",
+      "email": "sonne.jolbon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:19.212Z",
+      "modifieLe": "2025-12-18T23:48:24.290Z"
+    }
+  },
+  {
+    "id": "5b18edd5-2ff7-412d-9d8b-c813a9933b81",
+    "nom": "Monmont, Luie",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "CRIM SCorr.",
+      "CRIM Front."
+    ],
+    "clientsHabituels": [
+      "CBSA",
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "bd245bac-37f1-485c-b252-b14c24cf32d8",
+    "creeLe": "2025-12-17T15:20:20.184Z",
+    "modifieLe": "2025-12-18T23:48:24.376Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "bd245bac-37f1-485c-b252-b14c24cf32d8",
+      "email": "luie.monmont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:19.995Z",
+      "modifieLe": "2025-12-18T23:48:24.633Z"
+    }
+  },
+  {
+    "id": "69c448f6-945a-4707-91ae-c72671f4317e",
+    "nom": "Foudin, Saline",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "f0ef73c9-8020-475c-a23d-9e257204582f",
+    "creeLe": "2025-12-17T15:20:20.876Z",
+    "modifieLe": "2025-12-18T23:48:24.719Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "f0ef73c9-8020-475c-a23d-9e257204582f",
+      "email": "saline.foudin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:20.697Z",
+      "modifieLe": "2025-12-18T23:48:24.974Z"
+    }
+  },
+  {
+    "id": "bd670aaf-499a-45fc-a7c7-ad7749467e9c",
+    "nom": "Boiston, Chada",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4618ebaa-776a-4ad8-a922-50ac6d3887e6",
+    "creeLe": "2025-12-17T15:20:21.574Z",
+    "modifieLe": "2025-12-18T23:48:25.060Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "4618ebaa-776a-4ad8-a922-50ac6d3887e6",
+      "email": "chada.boiston@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:21.403Z",
+      "modifieLe": "2025-12-18T23:48:25.317Z"
+    }
+  },
+  {
+    "id": "a5500fcb-b6d7-4e90-b250-ac06f04aac03",
+    "nom": "Lebec, Vara",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 6,
+    "actif": true,
+    "utilisateurId": "ddc8bc61-dee5-44e9-98d0-1ebda6c1e363",
+    "creeLe": "2025-12-17T15:20:22.265Z",
+    "modifieLe": "2025-12-18T23:48:25.405Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "ddc8bc61-dee5-44e9-98d0-1ebda6c1e363",
+      "email": "vara.lebec@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:22.090Z",
+      "modifieLe": "2025-12-18T23:48:25.660Z"
+    }
+  },
+  {
+    "id": "1b845965-f25f-41cc-87cb-5c755199cdd1",
+    "nom": "Foumont, Laine",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "e637ccf1-67d0-4869-bc0e-3f06d5ae35b2",
+    "creeLe": "2025-12-17T15:20:24.459Z",
+    "modifieLe": "2025-12-18T23:48:26.448Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "e637ccf1-67d0-4869-bc0e-3f06d5ae35b2",
+      "email": "laine.foumont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:24.288Z",
+      "modifieLe": "2025-12-18T23:48:26.703Z"
+    }
+  },
+  {
+    "id": "b4d7c350-c31b-40e5-92d5-b2302bca8188",
+    "nom": "Tremnet, Fala",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "f5c9d6b5-4232-4ab9-9f60-e5348ae2912a",
+    "creeLe": "2025-12-17T15:20:25.252Z",
+    "modifieLe": "2025-12-18T23:48:26.789Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "f5c9d6b5-4232-4ab9-9f60-e5348ae2912a",
+      "email": "fala.tremnet@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:25.070Z",
+      "modifieLe": "2025-12-18T23:48:27.044Z"
+    }
+  },
+  {
+    "id": "ccbb7766-6136-4d22-9507-ffd65046fb05",
+    "nom": "Valnet, Célia",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "7113679a-5980-4430-a1fb-10ce4b342e34",
+    "creeLe": "2025-12-17T15:20:25.955Z",
+    "modifieLe": "2025-12-18T23:48:27.130Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "7113679a-5980-4430-a1fb-10ce4b342e34",
+      "email": "celia.valnet@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:25.783Z",
+      "modifieLe": "2025-12-18T23:48:27.400Z"
+    }
+  },
+  {
+    "id": "ec4e3433-0f46-495e-b2a2-5b61ae1a3524",
+    "nom": "Monson, Lurie",
+    "division": "Droit 1",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "890a80b3-adf0-4311-b207-d5d8078c00f0",
+    "creeLe": "2025-12-17T15:20:26.743Z",
+    "modifieLe": "2025-12-18T23:48:27.486Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "890a80b3-adf0-4311-b207-d5d8078c00f0",
+      "email": "lurie.monson@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:26.567Z",
+      "modifieLe": "2025-12-18T23:48:27.746Z"
+    }
+  },
+  {
+    "id": "2760b9ea-914b-4cc5-9d9d-d8954bdb20de",
+    "nom": "Bermont, Roel",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "MIL TERRE",
+      "MIL AIR"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "0feacf89-03f0-47ff-b081-9f11d80b3c3e",
+    "creeLe": "2025-12-17T15:19:46.343Z",
+    "modifieLe": "2025-12-18T23:48:08.042Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "0feacf89-03f0-47ff-b081-9f11d80b3c3e",
+      "email": "roel.bermont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:46.072Z",
+      "modifieLe": "2025-12-18T23:48:08.299Z"
+    }
+  },
+  {
+    "id": "79502a61-d3be-4bdf-a10a-0f9c7ae0bb40",
+    "nom": "Blanbec, Roine",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "36044036-b980-4132-ad50-7e2318cf5ae9",
+    "creeLe": "2025-12-17T15:20:12.421Z",
+    "modifieLe": "2025-12-18T23:48:20.953Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "36044036-b980-4132-ad50-7e2318cf5ae9",
+      "email": "roine.blanbec@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:12.250Z",
+      "modifieLe": "2025-12-18T23:48:21.210Z"
+    }
+  },
+  {
+    "id": "2444cebf-ef60-412c-93d3-f950030b77db",
+    "nom": "Marcher, Mibelle",
+    "division": "Droit 1",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "edfb0b8a-8d34-46e8-ade9-980d41c82d93",
+    "creeLe": "2025-12-17T15:20:13.319Z",
+    "modifieLe": "2025-12-18T23:48:21.296Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "edfb0b8a-8d34-46e8-ade9-980d41c82d93",
+      "email": "mibelle.marcher@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:13.147Z",
+      "modifieLe": "2025-12-18T23:48:21.551Z"
+    }
+  },
+  {
+    "id": "41ff2b6c-6c78-44d7-9d5d-22a8472430d8",
+    "nom": "Nordin, Naria",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC",
+      "CLO"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "bbe6aecd-2ce3-4670-b1eb-b5ed06b66b00",
+    "creeLe": "2025-12-17T15:20:15.002Z",
+    "modifieLe": "2025-12-18T23:48:21.985Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "bbe6aecd-2ce3-4670-b1eb-b5ed06b66b00",
+      "email": "naria.nordin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:14.828Z",
+      "modifieLe": "2025-12-18T23:48:22.239Z"
+    }
+  },
+  {
+    "id": "e987c1de-8c02-468f-9817-da7b2d81932f",
+    "nom": "Gaucourt, Brielle",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "GAC",
+      "PMO"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "deb593b1-2837-4b93-9e6e-a7f67922a36c",
+    "creeLe": "2025-12-17T15:20:15.710Z",
+    "modifieLe": "2025-12-18T23:48:22.326Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "deb593b1-2837-4b93-9e6e-a7f67922a36c",
+      "email": "brielle.gaucourt@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:15.539Z",
+      "modifieLe": "2025-12-18T23:48:22.581Z"
+    }
+  },
+  {
+    "id": "901dea05-740a-4861-a316-006a31505702",
+    "nom": "Sauron, Tanne",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "MED"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "1b90c5f7-68df-4fc2-ba38-19aaba05ec89",
+    "creeLe": "2025-12-17T15:20:16.408Z",
+    "modifieLe": "2025-12-18T23:48:22.667Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "1b90c5f7-68df-4fc2-ba38-19aaba05ec89",
+      "email": "tanne.sauron@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:16.231Z",
+      "modifieLe": "2025-12-18T23:48:22.923Z"
+    }
+  },
+  {
+    "id": "b8075956-c517-407e-aac5-1b388cd5a6fa",
+    "nom": "Trelin, Paa",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "MED"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3c75f95a-3fee-46ee-a9b6-411de8bd24d1",
+    "creeLe": "2025-12-17T15:20:17.183Z",
+    "modifieLe": "2025-12-18T23:48:23.009Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3c75f95a-3fee-46ee-a9b6-411de8bd24d1",
+      "email": "paa.trelin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:17.006Z",
+      "modifieLe": "2025-12-18T23:48:23.266Z"
+    }
+  },
+  {
+    "id": "7f70202b-b6ab-411c-8076-84433ffd65d5",
+    "nom": "Tremtel, Floine",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4f982c41-df1f-4577-9ce4-84c4942e81f6",
+    "creeLe": "2025-12-17T15:20:22.977Z",
+    "modifieLe": "2025-12-18T23:48:25.747Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "4f982c41-df1f-4577-9ce4-84c4942e81f6",
+      "email": "floine.tremtel@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:22.782Z",
+      "modifieLe": "2025-12-18T23:48:26.018Z"
+    }
+  },
+  {
+    "id": "5ef751be-0613-42be-97a8-3b386a4117a7",
+    "nom": "Vildon, Nala",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "AUT",
+      "EMP"
+    ],
+    "clientsHabituels": [
+      "CIRNAC",
+      "EDSC",
+      "FPC",
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "dbe7c037-b667-4465-8c58-7de6bcded5d1",
+    "creeLe": "2025-12-17T15:20:23.769Z",
+    "modifieLe": "2025-12-18T23:48:26.104Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "dbe7c037-b667-4465-8c58-7de6bcded5d1",
+      "email": "nala.vildon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:23.592Z",
+      "modifieLe": "2025-12-18T23:48:26.362Z"
+    }
+  },
+  {
+    "id": "bf9593a0-3fd9-4652-a163-bd527ba5b12d",
+    "nom": "Vilron, Clabelle",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "07c41902-b187-455f-a002-315593764917",
+    "creeLe": "2025-12-17T15:20:05.857Z",
+    "modifieLe": "2025-12-18T23:48:17.875Z",
+    "classification": "TR-01",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "07c41902-b187-455f-a002-315593764917",
+      "email": "clabelle.vilron@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:05.673Z",
+      "modifieLe": "2025-12-18T23:48:18.131Z"
+    }
+  },
+  {
+    "id": "6fafa6ec-cdca-441d-b397-8675b84d791b",
+    "nom": "Clabec, Gasa",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "MED"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "b4ff444f-250e-4a96-b1e1-cfe4f4b2fde3",
+    "creeLe": "2025-12-17T15:20:06.637Z",
+    "modifieLe": "2025-12-18T23:48:18.218Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "b4ff444f-250e-4a96-b1e1-cfe4f4b2fde3",
+      "email": "gasa.clabec@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:06.462Z",
+      "modifieLe": "2025-12-18T23:48:18.473Z"
+    }
+  },
+  {
+    "id": "eac4a920-988a-4a54-a7d7-0c3509b135ad",
+    "nom": "Poumont, Ena",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "SOC"
+    ],
+    "clientsHabituels": [
+      "DFO"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "e5df362b-95a1-4c69-bb11-b4363e704e65",
+    "creeLe": "2025-12-17T15:20:07.335Z",
+    "modifieLe": "2025-12-18T23:48:18.561Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "e5df362b-95a1-4c69-bb11-b4363e704e65",
+      "email": "ena.poumont@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:07.153Z",
+      "modifieLe": "2025-12-18T23:48:18.815Z"
+    }
+  },
+  {
+    "id": "d9e039a8-0d78-4381-b57b-dd466869d7d0",
+    "nom": "Jolron, Clana",
+    "division": "Droit 2",
+    "domaines": [
+      "Droit"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "57882998-8692-42e3-82b4-fd086bc7127e",
+    "creeLe": "2025-12-17T15:20:08.081Z",
+    "modifieLe": "2025-12-18T23:48:18.902Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "57882998-8692-42e3-82b4-fd086bc7127e",
+      "email": "clana.jolron@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:07.903Z",
+      "modifieLe": "2025-12-18T23:48:19.157Z"
+    }
+  },
+  {
+    "id": "94a2dc58-30c1-4c44-b26a-2ec852bf0ffe",
+    "nom": "Gauzon, Mabelle",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "TECH",
+      "TRA"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "97c1eff3-0d8f-479d-9c3c-eb1f550b0287",
+    "creeLe": "2025-12-17T15:20:08.889Z",
+    "modifieLe": "2025-12-18T23:48:19.243Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "97c1eff3-0d8f-479d-9c3c-eb1f550b0287",
+      "email": "mabelle.gauzon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:08.693Z",
+      "modifieLe": "2025-12-18T23:48:19.499Z"
+    }
+  },
+  {
+    "id": "7e05b686-09cc-4cee-a609-65c1764df6f6",
+    "nom": "Ledin, Tada",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4badeb00-e324-410e-92ca-981c3c01687f",
+    "creeLe": "2025-12-17T15:20:09.593Z",
+    "modifieLe": "2025-12-18T23:48:19.585Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "4badeb00-e324-410e-92ca-981c3c01687f",
+      "email": "tada.ledin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:09.418Z",
+      "modifieLe": "2025-12-18T23:48:19.842Z"
+    }
+  },
+  {
+    "id": "6b229665-9785-4a93-ae32-e77a842683de",
+    "nom": "Leval, Roa",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "9240483e-fc98-48bc-bc28-67b8bb39db52",
+    "creeLe": "2025-12-17T15:20:10.380Z",
+    "modifieLe": "2025-12-18T23:48:19.928Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "9240483e-fc98-48bc-bc28-67b8bb39db52",
+      "email": "roa.leval@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:10.198Z",
+      "modifieLe": "2025-12-18T23:48:20.183Z"
+    }
+  },
+  {
+    "id": "77b40b39-b8e9-4e93-810e-234f3db19711",
+    "nom": "Tremcon, Channe",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "DROIT"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "214ca781-c16c-4100-9d6b-37cebdca16dd",
+    "creeLe": "2025-12-17T15:20:11.061Z",
+    "modifieLe": "2025-12-18T23:48:20.269Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "214ca781-c16c-4100-9d6b-37cebdca16dd",
+      "email": "channe.tremcon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:10.891Z",
+      "modifieLe": "2025-12-18T23:48:20.524Z"
+    }
+  },
+  {
+    "id": "59c2bf55-9b94-4252-a14c-7d5fb51f8bb1",
+    "nom": "Foulon, Anna",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG",
+      "ENV",
+      "AGRI",
+      "BIO",
+      "SCN"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "e8f5367f-0cb5-4497-9627-640be8ef5f1c",
+    "creeLe": "2025-12-17T15:20:11.744Z",
+    "modifieLe": "2025-12-18T23:48:20.610Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "e8f5367f-0cb5-4497-9627-640be8ef5f1c",
+      "email": "anna.foulon@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:11.571Z",
+      "modifieLe": "2025-12-18T23:48:20.866Z"
+    }
+  },
+  {
+    "id": "3ff5bdd8-69ca-4b47-b3a9-12fb1c483cf1",
+    "nom": "Charcourt, Raa",
+    "division": "Multilingue",
+    "domaines": [
+      "TAG"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "1aefb04f-69c5-44b7-b3d9-007d6b35308f",
+    "creeLe": "2025-12-17T15:20:27.451Z",
+    "modifieLe": "2025-12-18T23:48:27.832Z",
+    "classification": "TR-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "1aefb04f-69c5-44b7-b3d9-007d6b35308f",
+      "email": "raa.charcourt@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:27.258Z",
+      "modifieLe": "2025-12-18T23:48:28.087Z"
+    }
+  },
+  {
+    "id": "7b2f1943-515e-4832-bcd3-472423866186",
+    "nom": "Belson, Olie",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "CRIM SCorr.",
+      "IMM"
+    ],
+    "clientsHabituels": [
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "d1605dda-f63a-424a-8217-b51a5e3d4daa",
+    "creeLe": "2025-12-17T15:20:28.432Z",
+    "modifieLe": "2025-12-18T23:48:28.173Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "d1605dda-f63a-424a-8217-b51a5e3d4daa",
+      "email": "olie.belson@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:28.173Z",
+      "modifieLe": "2025-12-18T23:48:28.427Z"
+    }
+  },
+  {
+    "id": "1a870547-a714-48a8-a964-848b43b458c0",
+    "nom": "Boisdin, Céna",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "CRIM SCorr.",
+      "CRIM Front."
+    ],
+    "clientsHabituels": [
+      "CBSA",
+      "CISR/IRB"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "96c3bcae-da2a-44ce-932d-68614a23a951",
+    "creeLe": "2025-12-17T15:20:29.108Z",
+    "modifieLe": "2025-12-18T23:48:28.513Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "96c3bcae-da2a-44ce-932d-68614a23a951",
+      "email": "cena.boisdin@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:20:28.940Z",
+      "modifieLe": "2025-12-18T23:48:28.770Z"
+    }
+  },
+  {
+    "id": "7accf42e-e329-41eb-b690-1ffd492993cb",
+    "nom": "Ducon, Lunne",
+    "division": "Traduction anglaise 2",
+    "domaines": [
+      "TAG",
+      "AUT",
+      "CRIM SCorr.",
+      "CRIM Front."
+    ],
+    "clientsHabituels": [
+      "CIRNAC",
+      "CBSA",
+      "CISR/IRB",
+      "PMO"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3373b4f5-ad3a-4191-bfa1-71617664e799",
+    "creeLe": "2025-12-17T15:09:50.721Z",
+    "modifieLe": "2025-12-18T23:47:49.067Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "3373b4f5-ad3a-4191-bfa1-71617664e799",
+      "email": "lunne.ducon@tetrix.com",
+      "motDePasse": "$2b$10$qAsFj8vioA61MD.h0TsCAec979nrVSqI1zuxVpXeDdnUJjJQMXk1u",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:09:50.378Z",
+      "modifieLe": "2025-12-18T23:47:49.326Z"
+    }
+  },
+  {
+    "id": "cd041b28-111f-4629-b815-e5fc7d351353",
+    "nom": "Pierval, Chasa",
+    "division": "Traduction anglaise 1",
+    "domaines": [
+      "TAG",
+      "EMP"
+    ],
+    "clientsHabituels": [
+      "EDSC",
+      "FPC",
+      "CLO",
+      "Patrimoine"
+    ],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "b6ef3181-c77b-455e-8ea0-b2f3440e820e",
+    "creeLe": "2025-12-17T15:20:00.129Z",
+    "modifieLe": "2025-12-18T23:48:14.200Z",
+    "classification": "TR-02",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "utilisateur": {
+      "id": "b6ef3181-c77b-455e-8ea0-b2f3440e820e",
+      "email": "chasa.pierval@tetrix.com",
+      "motDePasse": "$2b$10$9w66zBhlIRlzWxDx5cOCnuu0PrNmgzzo7RonXACK1My705HY38EeC",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T15:19:59.945Z",
+      "modifieLe": "2025-12-18T23:48:14.460Z"
+    }
+  },
+  {
+    "id": "6ae3752c-002f-44fb-bcf0-af64933a8c1b",
+    "nom": "Jean Exemple",
+    "division": "FINANCE",
+    "domaines": [
+      "FINANCE",
+      "LEGAL"
+    ],
+    "clientsHabituels": [
+      "ClientA"
+    ],
+    "capaciteHeuresParJour": 7.5,
+    "actif": true,
+    "utilisateurId": "e5134815-c278-43a2-bf65-a879b81244e4",
+    "creeLe": "2025-12-17T14:20:25.111Z",
+    "modifieLe": "2025-12-18T22:51:39.448Z",
+    "classification": "TI-03",
+    "horaire": null,
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": "",
+    "utilisateur": {
+      "id": "e5134815-c278-43a2-bf65-a879b81244e4",
+      "email": "traducteur@tetrix.com",
+      "motDePasse": "$2b$10$/FBlGb.FS.vJ34QplfBLzuQ4T0Wn64CFsu53N2mDs4/NwPO3lGjY6",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-17T14:20:24.823Z",
+      "modifieLe": "2025-12-17T14:20:24.823Z"
+    }
+  }
+]

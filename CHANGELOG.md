@@ -4,6 +4,62 @@ Toutes les modifications notables du projet sont documentées ici.
 
 ---
 
+## [2.2.0] - 2025-12-19 🔍✨
+
+### Ajouté - Système de Détection de Conflits
+- **Détection automatique de conflits** (5 types)
+  - `CHEVAUCHEMENT_BLOCAGE` - Allocation chevauche un blocage
+  - `DEPASSEMENT_CAPACITE` - Heures totales > capacité journalière
+  - `HORS_HORAIRE` - Allocation hors des heures de travail
+  - `EMPIETE_PAUSE` - Allocation chevauche la pause déjeuner
+  - `ECHEANCE_IMPOSSIBLE` - Impossible de terminer avant l'échéance
+
+- **Génération intelligente de suggestions** (3 types)
+  - `REPARATION_LOCALE` - Déplacement sur autres plages (même traducteur)
+  - `REATTRIBUTION` - Réassignation à un autre traducteur (jusqu'à 5 candidats)
+  - `IMPOSSIBLE` - Aucune solution automatique disponible
+
+- **Score d'impact détaillé** (0-100)
+  - Heures déplacées (+1 à +20)
+  - Nombre de tâches affectées (+5 par tâche)
+  - Changement de traducteur (+15)
+  - Risque échéance (+10 à +30)
+  - Morcellement (+5 par plage)
+  - Niveau: FAIBLE / MODERE / ELEVE
+
+- **API REST complète** (5 endpoints)
+  - `POST /api/conflicts/detect/allocation/:id` - Détecter conflits d'une allocation
+  - `POST /api/conflicts/detect/blocage/:id` - Détecter conflits d'un blocage
+  - `POST /api/conflicts/suggest` - Générer suggestions de résolution
+  - `POST /api/conflicts/report/blocage/:id` - Rapport complet
+  - `GET /api/conflicts/allocation/:id/full` - Analyse complète (optimisé frontend)
+
+- **Composants React prêts à l'emploi**
+  - `ConflictDetectionModal` - Modal complet avec conflits et suggestions
+  - `ConflictBadge` - Badge de notification dans les listes
+  - `ConflictCard` - Affichage d'un conflit
+  - `SuggestionCard` - Affichage d'une suggestion avec actions
+
+- **Documentation exhaustive**
+  - `DETECTION-CONFLITS-GUIDE.md` - Guide technique complet
+  - `backend/docs/API-CONFLICTS.md` - Documentation API REST
+  - `frontend/INTEGRATION-CONFLICTS.md` - Guide d'intégration frontend
+  - `IMPLEMENTATION-CONFLICTS-SUMMARY.md` - Récapitulatif de l'implémentation
+
+- **Tests complets** (13 nouveaux tests)
+  - 7 tests unitaires (détection + suggestions) ✅
+  - 6 tests d'intégration API ✅
+  - Coverage > 80% des scénarios critiques
+
+### Technique
+- Service: `backend/src/services/conflictDetectionService.ts` (967 lignes)
+- Routes: `backend/src/routes/conflicts.routes.ts`
+- Composants: `frontend/src/components/ConflictDetection.tsx`
+- Performance: < 8s pour analyse complète
+- Principe: **AUCUNE modification automatique** - Suggestions uniquement
+
+---
+
 ## [2.1.0] - 2025-12-14 🚀
 
 ### Ajouté

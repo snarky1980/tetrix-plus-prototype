@@ -50,3 +50,11 @@ export const authService = {
     });
   },
 };
+
+/**
+ * Récupérer les headers d'authentification
+ */
+export function getAuthHeaders(): Record<string, string> {
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
