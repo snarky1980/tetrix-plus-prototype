@@ -569,7 +569,7 @@ export const LiaisonManager: React.FC = () => {
 
         {/* Stats Cards */}
         {resume && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
             <StatCard
               title="TR01 Débutants"
               value={resume.statistiques.tr01}
@@ -603,11 +603,32 @@ export const LiaisonManager: React.FC = () => {
               color="purple"
             />
             <StatCard
+              title="Liaisons attitrées"
+              value={resume.statistiques.liaisonsAttitres}
+              icon={<IconLink />}
+              color="blue"
+              subtitle="Attitrés"
+            />
+            <StatCard
+              title="Liaisons ponctuelles"
+              value={resume.statistiques.liaisonsPonctuelles}
+              icon={<IconLink />}
+              color="purple"
+              subtitle="Affectations ponctuelles"
+            />
+            <StatCard
+              title="Couverture obligatoire"
+              value={resume.statistiques.tauxCouvertureObligatoire}
+              icon={<IconCheck />}
+              color="green"
+              subtitle="% TR01/TR02 couverts"
+            />
+            <StatCard
               title="Sans réviseur"
               value={resume.statistiques.sansReviseur}
               icon={<IconWarning />}
-              color="red"
-              subtitle="À corriger"
+              color="amber"
+              subtitle="TR01/TR02 à couvrir"
             />
           </div>
         )}
@@ -693,5 +714,3 @@ export const LiaisonManager: React.FC = () => {
     </div>
   );
 };
-
-export default LiaisonManager;

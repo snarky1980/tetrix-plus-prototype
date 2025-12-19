@@ -230,6 +230,9 @@ model LiaisonReviseur {
   reviseurId      String     // TR03 qui effectue la révision
   estPrincipal    Boolean    @default(true)  // Réviseur attitré principal
   actif           Boolean    @default(true)
+  mode         ModeLiaison @default(ATTITRE)
+  domaine      String?
+  dateFin      DateTime?
   notes           String?
   creeLe          DateTime   @default(now())
   modifieLe       DateTime   @updatedAt
@@ -242,4 +245,9 @@ model LiaisonReviseur {
   @@index([reviseurId])
   @@index([estPrincipal])
   @@map("liaisons_reviseur")
+}
+
+enum ModeLiaison {
+  ATTITRE
+  PONCTUEL
 }

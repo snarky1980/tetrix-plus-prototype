@@ -37,7 +37,8 @@ router.get('/resume', async (req: Request, res: Response) => {
 router.get('/reviseurs-potentiels', async (req: Request, res: Response) => {
   try {
     const division = req.query.division as string | undefined;
-    const reviseurs = await liaisonService.obtenirReviseursPotentiels(division);
+    const domaine = req.query.domaine as string | undefined;
+    const reviseurs = await liaisonService.obtenirReviseursPotentiels(division, domaine);
     
     res.json({
       success: true,
@@ -145,7 +146,7 @@ router.get('/traducteur/:traducteurId/reviseur-principal', async (req: Request, 
  */
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const { traducteurId, reviseurId, estPrincipal, notes } = req.body;
+    const { traducteurId, reviseurId, estPrincipal, notes, mode, domaine, dateFin } = req.body;
     
     if (!traducteurId || !reviseurId) {
       return res.status(400).json({
@@ -158,6 +159,9 @@ router.post('/', async (req: Request, res: Response) => {
       traducteurId,
       reviseurId,
       estPrincipal,
+      mode,
+      domaine,
+      dateFin: dateFin ? new Date(dateFin) : undefined,
       notes,
     });
     
@@ -203,7 +207,7 @@ router.delete('/:liaisonId', async (req: Request, res: Response) => {
  */
 router.post('/verifier-disponibilite', async (req: Request, res: Response) => {
   try {
-    const { traducteurId, heuresTraduction, dateEcheance } = req.body;
+    const { traducteurId, heuresTraduction, dateEcheance, reviseurId, domaine, forceRevision, mode } = req.body;
     
     if (!traducteurId || !heuresTraduction || !dateEcheance) {
       return res.status(400).json({
@@ -215,7 +219,13 @@ router.post('/verifier-disponibilite', async (req: Request, res: Response) => {
     const result = await liaisonService.verifierDisponibiliteCombinee(
       traducteurId,
       parseFloat(heuresTraduction),
-      new Date(dateEcheance)
+      new Date(dateEcheance),
+      {
+        reviseurId,
+        domaine,
+        forceRevision,
+        mode,
+      }
     );
     
     res.json({

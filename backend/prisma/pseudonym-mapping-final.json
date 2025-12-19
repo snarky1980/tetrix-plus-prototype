@@ -1,0 +1,807 @@
+[
+  {
+    "traducteurId": "a958c15e-af27-4964-a695-180656e3a71a",
+    "realName": "Bel Hassan, Meriem",
+    "pseudonymName": "Bel Hassane, Mériam",
+    "realEmail": "meriem.belhossan@tetrix.com",
+    "pseudonymEmail": "meriam.belhassane@tetrix.com"
+  },
+  {
+    "traducteurId": "b39d14a4-4398-45dd-8cda-da871918a097",
+    "realName": "Ahlgren, Anna",
+    "pseudonymName": "Aulgrenne, Annah",
+    "realEmail": "anna.ahlgren@tetrix.com",
+    "pseudonymEmail": "annah.aulgrenne@tetrix.com"
+  },
+  {
+    "traducteurId": "0d25474b-b9fc-4e02-bb9e-ef15a7391f54",
+    "realName": "Baillargeon, Véronique",
+    "pseudonymName": "Baillarjon, Véronike",
+    "realEmail": "veronique.baillargeon@tetrix.com",
+    "pseudonymEmail": "veronike.baillarjon@tetrix.com"
+  },
+  {
+    "traducteurId": "f40c7e79-714d-4866-890d-e0f7aa07b1a3",
+    "realName": "Bayer, Annie",
+    "pseudonymName": "Bayère, Annye",
+    "realEmail": "annie.bayer@tetrix.com",
+    "pseudonymEmail": "annye.bayere@tetrix.com"
+  },
+  {
+    "traducteurId": "5391de16-244a-44b9-b9f7-b15ace29fea7",
+    "realName": "Bergeron, Julie",
+    "pseudonymName": "Berjeron, Julië",
+    "realEmail": "julie.bergeron@tetrix.com",
+    "pseudonymEmail": "julie.berjeron@tetrix.com"
+  },
+  {
+    "traducteurId": "f082a873-21a2-489b-a69e-c89c20ee86ec",
+    "realName": "Bissonnette, Julie-Marie",
+    "pseudonymName": "Bissonnel, Julië-Maryse",
+    "realEmail": "julie-marie.bissonnette@tetrix.com",
+    "pseudonymEmail": "julie-maryse.bissonnel@tetrix.com"
+  },
+  {
+    "traducteurId": "f27df8fe-2ccb-4f18-9586-22490a40290b",
+    "realName": "Blais, Marie-France",
+    "pseudonymName": "Blay, Mary-Françine",
+    "realEmail": "marie-france.blais@tetrix.com",
+    "pseudonymEmail": "mary-francine.blay@tetrix.com"
+  },
+  {
+    "traducteurId": "6ee6a896-deea-477a-802e-cb617f6f8315",
+    "realName": "Charette, Léanne",
+    "pseudonymName": "Charrête, Léanna",
+    "realEmail": "leanne.charette@tetrix.com",
+    "pseudonymEmail": "leanna.charrete@tetrix.com"
+  },
+  {
+    "traducteurId": "6b8b1b87-4542-49b0-a635-2810dc1b6294",
+    "realName": "Gagnon, Hugo",
+    "pseudonymName": "Gagnône, Hugot",
+    "realEmail": "hugo.gagnon@tetrix.com",
+    "pseudonymEmail": "hugot.gagnone@tetrix.com"
+  },
+  {
+    "traducteurId": "8f7ec079-8199-4566-9cee-4a226bf5192b",
+    "realName": "Kadnikov, Patrick",
+    "pseudonymName": "Kadnikoff, Patrik",
+    "realEmail": "patrick.kadnikov@tetrix.com",
+    "pseudonymEmail": "patrik.kadnikoff@tetrix.com"
+  },
+  {
+    "traducteurId": "29ffab18-57de-42cf-afae-012d9278be44",
+    "realName": "Parent, Geneviève",
+    "pseudonymName": "Parant, Génévyève",
+    "realEmail": "genevieve.parent@tetrix.com",
+    "pseudonymEmail": "genevyeve.parant@tetrix.com"
+  },
+  {
+    "traducteurId": "4cdfc80f-50e5-47ab-8f07-6af1dd3d4ff7",
+    "realName": "Armin-Pereda, Jennifer",
+    "pseudonymName": "Arvyn-Peréna, Jénifère",
+    "realEmail": "jennifer.armin-pereda@tetrix.com",
+    "pseudonymEmail": "jenifere.arvyn-perena@tetrix.com"
+  },
+  {
+    "traducteurId": "ca6684c8-5a03-45b3-9fd7-6a22449d2ef1",
+    "realName": "Blouin, Anabel",
+    "pseudonymName": "Blouain, Anabèle",
+    "realEmail": "anabel.blouin@tetrix.com",
+    "pseudonymEmail": "anabele.blouain@tetrix.com"
+  },
+  {
+    "traducteurId": "85e3be5f-8ff9-4355-a589-9ae53cce3277",
+    "realName": "Ballard, Natalie",
+    "pseudonymName": "Ballarde, Natalië",
+    "realEmail": "natalie.ballard@tetrix.com",
+    "pseudonymEmail": "natalie.ballarde@tetrix.com"
+  },
+  {
+    "traducteurId": "97461f5f-8f76-46b2-9874-d00fddc43d6f",
+    "realName": "Beauchemin, Priscilla",
+    "pseudonymName": "Beauchamie, Priscelle",
+    "realEmail": "priscilla.beauchemin@tetrix.com",
+    "pseudonymEmail": "priscelle.beauchamie@tetrix.com"
+  },
+  {
+    "traducteurId": "e89245a2-56b4-47df-b711-591541675051",
+    "realName": "Borduas, Mylène",
+    "pseudonymName": "Bordoua, Mylayne",
+    "realEmail": "mylene.borduas@tetrix.com",
+    "pseudonymEmail": "mylayne.bordoua@tetrix.com"
+  },
+  {
+    "traducteurId": "625494a4-f956-49ed-ab22-8c67276f455a",
+    "realName": "Brégent, Delphine",
+    "pseudonymName": "Brégand, Dalphine",
+    "realEmail": "delphine.bregent@tetrix.com",
+    "pseudonymEmail": "dalphine.bregand@tetrix.com"
+  },
+  {
+    "traducteurId": "b82e631f-e144-4fed-bc8d-c289a4c02385",
+    "realName": "Cavanaugh, Mavis",
+    "pseudonymName": "Cavanô, Mavys",
+    "realEmail": "mavis.cavanaugh@tetrix.com",
+    "pseudonymEmail": "mavys.cavano@tetrix.com"
+  },
+  {
+    "traducteurId": "0baedc23-3b96-40ce-8a60-f31b4a615f92",
+    "realName": "Centomo-Bozzo, Olivia",
+    "pseudonymName": "Centomo-Bozzi, Olivya",
+    "realEmail": "olivia.centomo-bozzo@tetrix.com",
+    "pseudonymEmail": "olivya.centomo-bozzi@tetrix.com"
+  },
+  {
+    "traducteurId": "adc01042-b332-4399-b52c-b4454e94fe8e",
+    "realName": "Cerutti, Carol",
+    "pseudonymName": "Ceroutti, Caryle",
+    "realEmail": "carol.cerutti@tetrix.com",
+    "pseudonymEmail": "caryle.ceroutti@tetrix.com"
+  },
+  {
+    "traducteurId": "72bf3228-4153-4431-96b1-7e06b707584a",
+    "realName": "Champagne, Stéphanie",
+    "pseudonymName": "Champaigne, Stéphanya",
+    "realEmail": "stephanie.champagne@tetrix.com",
+    "pseudonymEmail": "stephanya.champaigne@tetrix.com"
+  },
+  {
+    "traducteurId": "fd106a5c-092d-43d8-9a9a-b42a1e26be42",
+    "realName": "Couture, Sharon",
+    "pseudonymName": "Couturie, Sharrone",
+    "realEmail": "sharon.couture@tetrix.com",
+    "pseudonymEmail": "sharrone.couturie@tetrix.com"
+  },
+  {
+    "traducteurId": "c988a39a-180f-472c-a1b6-ee2cbf0bd663",
+    "realName": "Cox, Trevor",
+    "pseudonymName": "Cokks, Trévyr",
+    "realEmail": "trevor.cox@tetrix.com",
+    "pseudonymEmail": "trevyr.cokks@tetrix.com"
+  },
+  {
+    "traducteurId": "69a7959f-d7dd-4d6d-8fa1-b5da742b1e06",
+    "realName": "Dalrymple, Sarah",
+    "pseudonymName": "Dalrimpel, Sarrah",
+    "realEmail": "sarah.dalrymple@tetrix.com",
+    "pseudonymEmail": "sarrah.dalrimpel@tetrix.com"
+  },
+  {
+    "traducteurId": "8b61fd47-75fe-4468-ba86-e3f49a4a4c43",
+    "realName": "De Angelis, Claudia",
+    "pseudonymName": "De Anjélis, Claudya",
+    "realEmail": "claudia.de-angelis@tetrix.com",
+    "pseudonymEmail": "claudya.deanjelis@tetrix.com"
+  },
+  {
+    "traducteurId": "95ae9247-8534-46de-b0a3-bf2a870104b4",
+    "realName": "De Lorimier, Maya",
+    "pseudonymName": "De Lorimère, Mayah",
+    "realEmail": "maya.de-lorimier@tetrix.com",
+    "pseudonymEmail": "mayah.delorimere@tetrix.com"
+  },
+  {
+    "traducteurId": "56e6e669-fa76-4d11-badd-43faf2d6c72e",
+    "realName": "Deschênes, Valérie",
+    "pseudonymName": "Déchènes, Valérye",
+    "realEmail": "valerie.deschenes@tetrix.com",
+    "pseudonymEmail": "valerye.dechenes@tetrix.com"
+  },
+  {
+    "traducteurId": "e42f9ece-127e-47cf-a090-f6992446fc83",
+    "realName": "Desharats, Sebastian",
+    "pseudonymName": "Décharats, Sébastyan",
+    "realEmail": "sebastian.desharats@tetrix.com",
+    "pseudonymEmail": "sebastyan.decharats@tetrix.com"
+  },
+  {
+    "traducteurId": "786d7e18-95f5-4d33-bb9d-d9617b6d606a",
+    "realName": "Deslippes, Maxime",
+    "pseudonymName": "Déslipes, Maxyme",
+    "realEmail": "maxime.deslippes@tetrix.com",
+    "pseudonymEmail": "maxyme.deslipes@tetrix.com"
+  },
+  {
+    "traducteurId": "b413a234-18ba-4044-8680-bdb8285cbf87",
+    "realName": "Ducharme, Suzanne",
+    "pseudonymName": "Ducharmé, Suzaine",
+    "realEmail": "suzanne.ducharme@tetrix.com",
+    "pseudonymEmail": "suzaine.ducharme@tetrix.com"
+  },
+  {
+    "traducteurId": "a14eb8eb-937b-4bbb-a1ec-8c0b9fff53a9",
+    "realName": "Duquette, Evan",
+    "pseudonymName": "Duquêtte, Évann",
+    "realEmail": "evan.duquette@tetrix.com",
+    "pseudonymEmail": "evann.duquette@tetrix.com"
+  },
+  {
+    "traducteurId": "87376865-e6ff-463d-a089-90afefd2a181",
+    "realName": "Echeverri, Sergio",
+    "pseudonymName": "Échévéry, Sérjio",
+    "realEmail": "sergio.echeverri@tetrix.com",
+    "pseudonymEmail": "serjio.echevery@tetrix.com"
+  },
+  {
+    "traducteurId": "a8cdf2b8-7bde-4dbf-b87d-fe6b8a928854",
+    "realName": "Eland, Andrea",
+    "pseudonymName": "Élande, Andréya",
+    "realEmail": "andrea.eland@tetrix.com",
+    "pseudonymEmail": "andreya.elande@tetrix.com"
+  },
+  {
+    "traducteurId": "b7d7ff38-6c0b-4539-bf02-4183630d57f2",
+    "realName": "Feltes, Michael",
+    "pseudonymName": "Feltès, Mickaël",
+    "realEmail": "michael.feltes@tetrix.com",
+    "pseudonymEmail": "mickael.feltes@tetrix.com"
+  },
+  {
+    "traducteurId": "ee8b9513-58c3-44c0-9470-6798d773e0fb",
+    "realName": "Fennebresque, Claire",
+    "pseudonymName": "Fennebresk, Clére",
+    "realEmail": "claire.fennebresque@tetrix.com",
+    "pseudonymEmail": "clere.fennebresk@tetrix.com"
+  },
+  {
+    "traducteurId": "e508e3a1-b12c-4186-b598-68e5f82a16ca",
+    "realName": "Forster, Kate",
+    "pseudonymName": "Forstère, Kaïte",
+    "realEmail": "kate.forster@tetrix.com",
+    "pseudonymEmail": "kaite.forstere@tetrix.com"
+  },
+  {
+    "traducteurId": "60d3c8a7-8ef8-4d9e-9579-1eee41d03c22",
+    "realName": "Foucreault, Luna",
+    "pseudonymName": "Foucrô, Lunah",
+    "realEmail": "luna.foucreault@tetrix.com",
+    "pseudonymEmail": "lunah.foucro@tetrix.com"
+  },
+  {
+    "traducteurId": "9b1afdc0-3e53-4ef2-99da-ba142c734331",
+    "realName": "Fraser, Jennifer",
+    "pseudonymName": "Frézère, Jénifère",
+    "realEmail": "jennifer.fraser@tetrix.com",
+    "pseudonymEmail": "jenifere.frezere@tetrix.com"
+  },
+  {
+    "traducteurId": "5449cfbe-022e-487f-a790-fc685cdd46f2",
+    "realName": "Balkwill, Janna",
+    "pseudonymName": "Balkwil, Jannia",
+    "realEmail": "janna.balkwill@tetrix.com",
+    "pseudonymEmail": "jannia.balkwil@tetrix.com"
+  },
+  {
+    "traducteurId": "0d7443be-3760-43ec-beb4-7641f642b07b",
+    "realName": "Grant, Gail",
+    "pseudonymName": "Grante, Gaëlle",
+    "realEmail": "gail.grant@tetrix.com",
+    "pseudonymEmail": "gaelle.grante@tetrix.com"
+  },
+  {
+    "traducteurId": "065559a6-8420-4309-bc66-7537f243566b",
+    "realName": "Gueglietta, Daniela",
+    "pseudonymName": "Guélietta, Danyéla",
+    "realEmail": "daniela.gueglietta@tetrix.com",
+    "pseudonymEmail": "danyela.guelietta@tetrix.com"
+  },
+  {
+    "traducteurId": "2319b9d8-31ed-472d-81ec-183fb8e57bca",
+    "realName": "Harries, Emma",
+    "pseudonymName": "Haryès, Emmah",
+    "realEmail": "emma.harries@tetrix.com",
+    "pseudonymEmail": "emmah.haryes@tetrix.com"
+  },
+  {
+    "traducteurId": "8db3e740-851e-4625-81b6-a5fdac5cfb5e",
+    "realName": "Hentel, Magda",
+    "pseudonymName": "Hentelle, Magdah",
+    "realEmail": "magda.hentel@tetrix.com",
+    "pseudonymEmail": "magdah.hentelle@tetrix.com"
+  },
+  {
+    "traducteurId": "b79d515a-9f88-4077-9445-0623c50fab8d",
+    "realName": "Fritz, Monica",
+    "pseudonymName": "Fritze, Mônika",
+    "realEmail": "monica.fritz@tetrix.com",
+    "pseudonymEmail": "monika.fritze@tetrix.com"
+  },
+  {
+    "traducteurId": "4de6ffb9-292c-4099-93b0-aab1d7b8429a",
+    "realName": "Fung, Hillary",
+    "pseudonymName": "Fonge, Hilarya",
+    "realEmail": "hillary.fung@tetrix.com",
+    "pseudonymEmail": "hilarya.fonge@tetrix.com"
+  },
+  {
+    "traducteurId": "1e1708d4-6fe2-44a2-9510-d43074431cac",
+    "realName": "Gelhoas, Mathilde",
+    "pseudonymName": "Gelhoaz, Mathylde",
+    "realEmail": "mathilde.gelhoas@tetrix.com",
+    "pseudonymEmail": "mathylde.gelhoaz@tetrix.com"
+  },
+  {
+    "traducteurId": "5246d6e8-1ae6-48d1-94f1-49b64b9efb8f",
+    "realName": "Gow, Francie",
+    "pseudonymName": "Gaud, Francy",
+    "realEmail": "francie.gow@tetrix.com",
+    "pseudonymEmail": "francy.gaud@tetrix.com"
+  },
+  {
+    "traducteurId": "2c20ba71-d29e-4534-b2e6-3629013f970c",
+    "realName": "Hill, Kara",
+    "pseudonymName": "Hille, Karah",
+    "realEmail": "kara.hill@tetrix.com",
+    "pseudonymEmail": "karah.hille@tetrix.com"
+  },
+  {
+    "traducteurId": "90833295-f9b7-4508-9dbc-414a42f11185",
+    "realName": "Hosek Lee, Jane",
+    "pseudonymName": "Hossek Li, Jaine",
+    "realEmail": "jane.hosek-lee@tetrix.com",
+    "pseudonymEmail": "jaine.hossekli@tetrix.com"
+  },
+  {
+    "traducteurId": "062ec5e1-f25a-4c35-bd75-97fa9aa41253",
+    "realName": "Humbert, Alexandra",
+    "pseudonymName": "Hombair, Alexandrah",
+    "realEmail": "alexandra.humbert@tetrix.com",
+    "pseudonymEmail": "alexandrah.hombair@tetrix.com"
+  },
+  {
+    "traducteurId": "5e3cd5d7-fe68-4683-8f40-8d7b42f10367",
+    "realName": "Isailovic, Renata",
+    "pseudonymName": "Isaylovitch, Rénatah",
+    "realEmail": "renata.isailovic@tetrix.com",
+    "pseudonymEmail": "renatah.isaylovitch@tetrix.com"
+  },
+  {
+    "traducteurId": "33535dde-f458-4871-a3da-2a241c74bcbb",
+    "realName": "Julien-Fillion, Marie-Ève",
+    "pseudonymName": "Julièn-Filyon, Marry-Èva",
+    "realEmail": "marie-eve.julien-fillion@tetrix.com",
+    "pseudonymEmail": "marry-eva.julien-filyon@tetrix.com"
+  },
+  {
+    "traducteurId": "dfe76f99-0305-4405-8e95-71eb0121e74c",
+    "realName": "Klamph, Efraim Iederman",
+    "pseudonymName": "Klampf, Ephraïm Iédermon",
+    "realEmail": "efraim-iederman.klamph@tetrix.com",
+    "pseudonymEmail": "ephraim.klampf@tetrix.com"
+  },
+  {
+    "traducteurId": "a6a56e7a-f3f7-42ce-ab32-aba94a2b3cd9",
+    "realName": "Kratz, Johanna",
+    "pseudonymName": "Krats, Johannah",
+    "realEmail": "johanna.kratz@tetrix.com",
+    "pseudonymEmail": "johannah.krats@tetrix.com"
+  },
+  {
+    "traducteurId": "618cda15-63ae-407e-8433-29679a9ef391",
+    "realName": "La Salle, Ginette",
+    "pseudonymName": "La Sâle, Ginnette",
+    "realEmail": "ginette.la-salle@tetrix.com",
+    "pseudonymEmail": "ginnette.lasale@tetrix.com"
+  },
+  {
+    "traducteurId": "6fae6537-f9de-461e-b75a-46a63fd22c6d",
+    "realName": "Lacasse, Mélanie",
+    "pseudonymName": "Lacasseau, Mélanya",
+    "realEmail": "melanie.lacasse@tetrix.com",
+    "pseudonymEmail": "melanya.lacasseau@tetrix.com"
+  },
+  {
+    "traducteurId": "4da0bd9f-62d6-4ee9-8eb2-22b2013b71ae",
+    "realName": "Lampron, Jimmy",
+    "pseudonymName": "Lamprôn, Jymmy",
+    "realEmail": "jimmy.lampron@tetrix.com",
+    "pseudonymEmail": "jymmy.lampron@tetrix.com"
+  },
+  {
+    "traducteurId": "2c811c92-4f75-4a2d-868f-194a1ca04cad",
+    "realName": "Laroche, Christian",
+    "pseudonymName": "Laroshe, Christyan",
+    "realEmail": "christian.laroche@tetrix.com",
+    "pseudonymEmail": "christyan.laroshe@tetrix.com"
+  },
+  {
+    "traducteurId": "a272de40-8a11-4b07-9150-16be1162641b",
+    "realName": "Lavigne, Benoit",
+    "pseudonymName": "Lavin, Bénwâ",
+    "realEmail": "benoit.lavigne@tetrix.com",
+    "pseudonymEmail": "benwa.lavin@tetrix.com"
+  },
+  {
+    "traducteurId": "5cfb5818-ac22-4013-988f-8e0deb28e4a1",
+    "realName": "Leblanc, Patrick",
+    "pseudonymName": "Leblann, Patrik",
+    "realEmail": "patrick.leblanc@tetrix.com",
+    "pseudonymEmail": "patrik.leblann@tetrix.com"
+  },
+  {
+    "traducteurId": "0dae71fb-3e75-41f2-ac0e-895297643f57",
+    "realName": "Leclerc, Claude",
+    "pseudonymName": "Leclaire, Claud",
+    "realEmail": "claude.leclerc@tetrix.com",
+    "pseudonymEmail": "claud.leclaire@tetrix.com"
+  },
+  {
+    "traducteurId": "0c5bea37-6fb1-4a21-ab71-9c792e1a922e",
+    "realName": "Lee, Pamela",
+    "pseudonymName": "Lhée, Pamyla",
+    "realEmail": "pamela.lee@tetrix.com",
+    "pseudonymEmail": "pamyla.lhee@tetrix.com"
+  },
+  {
+    "traducteurId": "04dde11c-f3bf-4b18-a4a5-454252737c5e",
+    "realName": "Legault, Michèle",
+    "pseudonymName": "Légô, Michela",
+    "realEmail": "michele.legault@tetrix.com",
+    "pseudonymEmail": "michela.lego@tetrix.com"
+  },
+  {
+    "traducteurId": "e486d274-009f-4ce1-af89-aaa7ecc5c005",
+    "realName": "Leighton, Heather",
+    "pseudonymName": "Layton, Hèther",
+    "realEmail": "heather.leighton@tetrix.com",
+    "pseudonymEmail": "hether.layton@tetrix.com"
+  },
+  {
+    "traducteurId": "a2801da7-bdc9-4deb-8aac-f1571f0d2f6d",
+    "realName": "Li, Baoyu",
+    "pseudonymName": "Lhi, Baoyun",
+    "realEmail": "baoyu.li@tetrix.com",
+    "pseudonymEmail": "baoyun.lhi@tetrix.com"
+  },
+  {
+    "traducteurId": "121269cc-d6cc-4a08-8071-c97f1d1032c1",
+    "realName": "Longchamps, Christine",
+    "pseudonymName": "Longshan, Christyne",
+    "realEmail": "christine.longchamps@tetrix.com",
+    "pseudonymEmail": "christyne.longshan@tetrix.com"
+  },
+  {
+    "traducteurId": "0a425f85-c09b-4afd-b189-8d6b35f257cf",
+    "realName": "Mabuishi, Espérance",
+    "pseudonymName": "Mabouïshi, Espéranza",
+    "realEmail": "esperance.mabuishi@tetrix.com",
+    "pseudonymEmail": "esperanza.mabouishi@tetrix.com"
+  },
+  {
+    "traducteurId": "024baf7c-55be-4406-ab18-2285366fc122",
+    "realName": "Manktelow, Jennifer",
+    "pseudonymName": "Manktelô, Jannifère",
+    "realEmail": "jennifer.manktelow@tetrix.com",
+    "pseudonymEmail": "jannifere.manktelo@tetrix.com"
+  },
+  {
+    "traducteurId": "b39a98f0-7d29-41a6-855c-3513ceaa7f37",
+    "realName": "Mann, Elizabeth",
+    "pseudonymName": "Mâne, Élyzabeth",
+    "realEmail": "elizabeth.mann@tetrix.com",
+    "pseudonymEmail": "elyzabeth.mane@tetrix.com"
+  },
+  {
+    "traducteurId": "c86210c7-3fb2-4877-beaf-9d96a740b86e",
+    "realName": "Mar, Vincent",
+    "pseudonymName": "Marr, Vincant",
+    "realEmail": "vincent.mar@tetrix.com",
+    "pseudonymEmail": "vincant.marr@tetrix.com"
+  },
+  {
+    "traducteurId": "d3df045e-4455-4be1-99d8-65267fe7a611",
+    "realName": "Mardirosian, Alexandros",
+    "pseudonymName": "Mardirozian, Aléxandros",
+    "realEmail": "alexandros.mardirosian@tetrix.com",
+    "pseudonymEmail": "alexandros.mardirozian@tetrix.com"
+  },
+  {
+    "traducteurId": "8ec86f59-afaa-4f3b-a9b8-b845c12be975",
+    "realName": "Martin, Isabelle",
+    "pseudonymName": "Martyn, Ysabelle",
+    "realEmail": "isabelle.martin@tetrix.com",
+    "pseudonymEmail": "ysabelle.martyn@tetrix.com"
+  },
+  {
+    "traducteurId": "39645cbf-87f6-4ec2-a081-86d13bde6e10",
+    "realName": "Maurice, Annie",
+    "pseudonymName": "Morisse, Anny",
+    "realEmail": "annie.maurice@tetrix.com",
+    "pseudonymEmail": "anny.morisse@tetrix.com"
+  },
+  {
+    "traducteurId": "0caf2cf8-5715-4bfd-bfec-1f53d5c2df25",
+    "realName": "McFarlane, Elizabeth",
+    "pseudonymName": "MacFarlenn, Élyzabeth",
+    "realEmail": "elizabeth.mcfarlane@tetrix.com",
+    "pseudonymEmail": "elyzabeth.macfarlenn@tetrix.com"
+  },
+  {
+    "traducteurId": "95fd6b41-0e32-478a-9870-b7fcc3c899ff",
+    "realName": "McGivern, Vanessa",
+    "pseudonymName": "McGiverne, Vanéssa",
+    "realEmail": "vanessa.mcgivern@tetrix.com",
+    "pseudonymEmail": "vanessa.mcgiverne@tetrix.com"
+  },
+  {
+    "traducteurId": "726cc420-9a95-4b1d-a0b2-f676a5f58115",
+    "realName": "Mean, Sun-Kiri",
+    "pseudonymName": "Miène, Sun-Kyree",
+    "realEmail": "sun-kiri.mean@tetrix.com",
+    "pseudonymEmail": "sun-kyree.miene@tetrix.com"
+  },
+  {
+    "traducteurId": "06faaec0-1c5b-469a-9e9b-002ec06c2f21",
+    "realName": "Mercy, Madeleine",
+    "pseudonymName": "Mersy, Madelène",
+    "realEmail": "madeleine.mercy@tetrix.com",
+    "pseudonymEmail": "madelene.mersy@tetrix.com"
+  },
+  {
+    "traducteurId": "70baaa97-8e01-48f4-9ad8-e16b469c543d",
+    "realName": "Michaud, Marie-Ève",
+    "pseudonymName": "Mischô, Marry-Èva",
+    "realEmail": "marie-eve.michaud@tetrix.com",
+    "pseudonymEmail": "marry-eva.mischo@tetrix.com"
+  },
+  {
+    "traducteurId": "76db5749-b39c-4af8-bd2b-dcb61e3975a0",
+    "realName": "Michel, Natacha",
+    "pseudonymName": "Michèl, Natasha",
+    "realEmail": "natacha.michel@tetrix.com",
+    "pseudonymEmail": "natasha.michel@tetrix.com"
+  },
+  {
+    "traducteurId": "d9dca1e6-e56f-4df3-b816-0f6eace2d55e",
+    "realName": "Milliard, Sophie",
+    "pseudonymName": "Milyar, Sophy",
+    "realEmail": "sophie.milliard@tetrix.com",
+    "pseudonymEmail": "sophy.milyar@tetrix.com"
+  },
+  {
+    "traducteurId": "2760b9ea-914b-4cc5-9d9d-d8954bdb20de",
+    "realName": "LaPalme, Hazel",
+    "pseudonymName": "La Palm, Hazelle",
+    "realEmail": "hazel.lapalme@tetrix.com",
+    "pseudonymEmail": "hazelle.lapalm@tetrix.com"
+  },
+  {
+    "traducteurId": "79502a61-d3be-4bdf-a10a-0f9c7ae0bb40",
+    "realName": "Papadopetrakis, Mélanie",
+    "pseudonymName": "Papadopétris, Mélanya",
+    "realEmail": "melanie.papadopetrakis@tetrix.com",
+    "pseudonymEmail": "melanya.papadopetris@tetrix.com"
+  },
+  {
+    "traducteurId": "2444cebf-ef60-412c-93d3-f950030b77db",
+    "realName": "Paquette, Lyne",
+    "pseudonymName": "Paquète, Lynne",
+    "realEmail": "lyne.paquette@tetrix.com",
+    "pseudonymEmail": "lynne.paquete@tetrix.com"
+  },
+  {
+    "traducteurId": "41ff2b6c-6c78-44d7-9d5d-22a8472430d8",
+    "realName": "Paul, Eloise",
+    "pseudonymName": "Paule, Éloyze",
+    "realEmail": "eloise.paul@tetrix.com",
+    "pseudonymEmail": "eloyze.paule@tetrix.com"
+  },
+  {
+    "traducteurId": "e987c1de-8c02-468f-9817-da7b2d81932f",
+    "realName": "Perles, Michelle",
+    "pseudonymName": "Perlès, Michèlle",
+    "realEmail": "michelle.perles@tetrix.com",
+    "pseudonymEmail": "michelle.perles@tetrix.com"
+  },
+  {
+    "traducteurId": "901dea05-740a-4861-a316-006a31505702",
+    "realName": "Rabussier, Juliette",
+    "pseudonymName": "Rabussièrre, Juliètte",
+    "realEmail": "juliette.rabussier@tetrix.com",
+    "pseudonymEmail": "juliette.rabussierre@tetrix.com"
+  },
+  {
+    "traducteurId": "b8075956-c517-407e-aac5-1b388cd5a6fa",
+    "realName": "Rathjen, Claudia",
+    "pseudonymName": "Ratjenn, Claudya",
+    "realEmail": "claudia.rathjen@tetrix.com",
+    "pseudonymEmail": "claudya.ratjenn@tetrix.com"
+  },
+  {
+    "traducteurId": "647815f4-fb47-4e15-b70d-1e9541c961ca",
+    "realName": "Rubio, Zoubair",
+    "pseudonymName": "Roubio, Zoubayr",
+    "realEmail": "zoubair.rubio@tetrix.com",
+    "pseudonymEmail": "zoubayr.roubio@tetrix.com"
+  },
+  {
+    "traducteurId": "d5080166-e560-40ba-952e-3c68d433e363",
+    "realName": "Ruddock, Amber",
+    "pseudonymName": "Ruddok, Ambre",
+    "realEmail": "amber.ruddock@tetrix.com",
+    "pseudonymEmail": "ambre.ruddok@tetrix.com"
+  },
+  {
+    "traducteurId": "8acb7678-ae73-40d4-a2c9-a4c1c5236cd4",
+    "realName": "Schultz, Barbara",
+    "pseudonymName": "Schultze, Barbarah",
+    "realEmail": "barbara.schultz@tetrix.com",
+    "pseudonymEmail": "barbarah.schultze@tetrix.com"
+  },
+  {
+    "traducteurId": "5b18edd5-2ff7-412d-9d8b-c813a9933b81",
+    "realName": "Tan, Elizabeth",
+    "pseudonymName": "Tann, Élyzabeth",
+    "realEmail": "elizabeth.tan@tetrix.com",
+    "pseudonymEmail": "elyzabeth.tann@tetrix.com"
+  },
+  {
+    "traducteurId": "69c448f6-945a-4707-91ae-c72671f4317e",
+    "realName": "Tardif, Caroline",
+    "pseudonymName": "Tardiffe, Karolyne",
+    "realEmail": "caroline.tardif@tetrix.com",
+    "pseudonymEmail": "karolyne.tardiffe@tetrix.com"
+  },
+  {
+    "traducteurId": "bd670aaf-499a-45fc-a7c7-ad7749467e9c",
+    "realName": "Tremblay, Geneviève",
+    "pseudonymName": "Tremblé, Génévyève",
+    "realEmail": "genevieve.tremblay@tetrix.com",
+    "pseudonymEmail": "genevyeve.tremble@tetrix.com"
+  },
+  {
+    "traducteurId": "a5500fcb-b6d7-4e90-b250-ac06f04aac03",
+    "realName": "Trudel, Josée",
+    "pseudonymName": "Trudèl, Jozée",
+    "realEmail": "josee.trudel@tetrix.com",
+    "pseudonymEmail": "jozee.trudel@tetrix.com"
+  },
+  {
+    "traducteurId": "7f70202b-b6ab-411c-8076-84433ffd65d5",
+    "realName": "Tsuruta, Sayuri",
+    "pseudonymName": "Tsurruta, Sayoury",
+    "realEmail": "sayuri.tsuruta@tetrix.com",
+    "pseudonymEmail": "sayoury.tsurruta@tetrix.com"
+  },
+  {
+    "traducteurId": "5ef751be-0613-42be-97a8-3b386a4117a7",
+    "realName": "Turpin, Laurie",
+    "pseudonymName": "Turpyn, Laury",
+    "realEmail": "laurie.turpin@tetrix.com",
+    "pseudonymEmail": "laury.turpyn@tetrix.com"
+  },
+  {
+    "traducteurId": "1b845965-f25f-41cc-87cb-5c755199cdd1",
+    "realName": "Urdininea, Frances",
+    "pseudonymName": "Urdinéea, Françès",
+    "realEmail": "frances.urdininea@tetrix.com",
+    "pseudonymEmail": "frances.urdineea@tetrix.com"
+  },
+  {
+    "traducteurId": "b4d7c350-c31b-40e5-92d5-b2302bca8188",
+    "realName": "Vaughan, Nicholas",
+    "pseudonymName": "Vôghan, Nikolas",
+    "realEmail": "nicholas.vaughan@tetrix.com",
+    "pseudonymEmail": "nikolas.voghan@tetrix.com"
+  },
+  {
+    "traducteurId": "ccbb7766-6136-4d22-9507-ffd65046fb05",
+    "realName": "Vega Iraneta, Beatriz De",
+    "pseudonymName": "Véga Irenata, Béatryce De",
+    "realEmail": "beatriz-de.vega-iraneta@tetrix.com",
+    "pseudonymEmail": "beatryce.vegairenata@tetrix.com"
+  },
+  {
+    "traducteurId": "ec4e3433-0f46-495e-b2a2-5b61ae1a3524",
+    "realName": "Vincent, Jean-François",
+    "pseudonymName": "Vincènt, Jéan-Françoix",
+    "realEmail": "jean-francois.vincent@tetrix.com",
+    "pseudonymEmail": "jean-francoix.vincent@tetrix.com"
+  },
+  {
+    "traducteurId": "bf9593a0-3fd9-4652-a163-bd527ba5b12d",
+    "realName": "Mirarabshahi, Seyedsina",
+    "pseudonymName": "Mirarabchahi, Seyed-Sena",
+    "realEmail": "seyedsina.mirarabshahi@tetrix.com",
+    "pseudonymEmail": "seyed-sena.mirarabchahi@tetrix.com"
+  },
+  {
+    "traducteurId": "6fafa6ec-cdca-441d-b397-8675b84d791b",
+    "realName": "Mullin, Maryann",
+    "pseudonymName": "Mullane, Mariann",
+    "realEmail": "maryann.mullin@tetrix.com",
+    "pseudonymEmail": "mariann.mullane@tetrix.com"
+  },
+  {
+    "traducteurId": "eac4a920-988a-4a54-a7d7-0c3509b135ad",
+    "realName": "Oettel, Jason",
+    "pseudonymName": "Oettell, Jayson",
+    "realEmail": "jason.oettel@tetrix.com",
+    "pseudonymEmail": "jayson.oettell@tetrix.com"
+  },
+  {
+    "traducteurId": "d9e039a8-0d78-4381-b57b-dd466869d7d0",
+    "realName": "Omer, Semra-Denise",
+    "pseudonymName": "Ômer, Selmra-Dénize",
+    "realEmail": "semra-denise.omer@tetrix.com",
+    "pseudonymEmail": "selmra-denize.omer@tetrix.com"
+  },
+  {
+    "traducteurId": "94a2dc58-30c1-4c44-b26a-2ec852bf0ffe",
+    "realName": "Oostveen, Karen A",
+    "pseudonymName": "Oostvane, Karenn A.",
+    "realEmail": "karen-a.oostveen@tetrix.com",
+    "pseudonymEmail": "karenn.oostvane@tetrix.com"
+  },
+  {
+    "traducteurId": "7e05b686-09cc-4cee-a609-65c1764df6f6",
+    "realName": "Ouellet, Diane",
+    "pseudonymName": "Ouellay, Dyanne",
+    "realEmail": "diane.ouellet@tetrix.com",
+    "pseudonymEmail": "dyanne.ouellay@tetrix.com"
+  },
+  {
+    "traducteurId": "6b229665-9785-4a93-ae32-e77a842683de",
+    "realName": "Pagé, Stéphanie",
+    "pseudonymName": "Paget, Stéphanya",
+    "realEmail": "stephanie.page@tetrix.com",
+    "pseudonymEmail": "stephanya.paget@tetrix.com"
+  },
+  {
+    "traducteurId": "77b40b39-b8e9-4e93-810e-234f3db19711",
+    "realName": "Palles, Michael",
+    "pseudonymName": "Pallès, Mickaël",
+    "realEmail": "michael.palles@tetrix.com",
+    "pseudonymEmail": "mickael.palles@tetrix.com"
+  },
+  {
+    "traducteurId": "59c2bf55-9b94-4252-a14c-7d5fb51f8bb1",
+    "realName": "Pang, Wingshun",
+    "pseudonymName": "Pangg, Wingzun",
+    "realEmail": "wingshun.pang@tetrix.com",
+    "pseudonymEmail": "wingzun.pangg@tetrix.com"
+  },
+  {
+    "traducteurId": "3ff5bdd8-69ca-4b47-b3a9-12fb1c483cf1",
+    "realName": "Whimster, Peter",
+    "pseudonymName": "Wimstère, Pêter",
+    "realEmail": "peter.whimster@tetrix.com",
+    "pseudonymEmail": "peter.wimstere@tetrix.com"
+  },
+  {
+    "traducteurId": "7b2f1943-515e-4832-bcd3-472423866186",
+    "realName": "Winfield, Stefan",
+    "pseudonymName": "Wynfeld, Stéfan",
+    "realEmail": "stefan.winfield@tetrix.com",
+    "pseudonymEmail": "stefan.wynfeld@tetrix.com"
+  },
+  {
+    "traducteurId": "1a870547-a714-48a8-a964-848b43b458c0",
+    "realName": "Winslow, Kimberley",
+    "pseudonymName": "Wynslô, Kimbêrley",
+    "realEmail": "kimberley.winslow@tetrix.com",
+    "pseudonymEmail": "kimberley.wynslo@tetrix.com"
+  },
+  {
+    "traducteurId": "7accf42e-e329-41eb-b690-1ffd492993cb",
+    "realName": "Baldakin, Jennifer",
+    "pseudonymName": "Baldakyn, Jannifère",
+    "realEmail": "jennifer.baldakin@tetrix.com",
+    "pseudonymEmail": "jannifere.baldakyn@tetrix.com"
+  },
+  {
+    "traducteurId": "cd041b28-111f-4629-b815-e5fc7d351353",
+    "realName": "McCarthy, Stephanie",
+    "pseudonymName": "McCarthie, Stéphanya",
+    "realEmail": "stephanie.mccarthy@tetrix.com",
+    "pseudonymEmail": "stephanya.mccarthie@tetrix.com"
+  },
+  {
+    "traducteurId": "6ae3752c-002f-44fb-bcf0-af64933a8c1b",
+    "realName": "Jean Exemple",
+    "pseudonymName": "Jéhan Exomple",
+    "realEmail": "traducteur@tetrix.com",
+    "pseudonymEmail": "traducteur@tetrix.com"
+  }
+]

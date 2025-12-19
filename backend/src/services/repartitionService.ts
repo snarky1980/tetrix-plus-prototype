@@ -20,6 +20,7 @@ import {
   parseOttawaDateISO
 } from '../utils/dateTimeOttawa';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
+import { JoursFeriesService } from './joursFeriesService';
 
 export interface RepartitionItem { 
   date: string; 
@@ -268,15 +269,15 @@ export async function repartitionJusteATemps(
     });
   }
 
-  // Calculer capacité totale disponible sur la fenêtre (excluant les weekends)
+  // Calculer capacité totale disponible sur la fenêtre (excluant les weekends ET jours fériés)
   const totalJours = differenceInDaysOttawa(aujourdHui, echeance) + 1;
   let capaciteDisponibleGlobale = 0;
   
   for (let i = 0; i < totalJours; i++) {
     const d = addDaysOttawa(aujourdHui, i);
     const iso = formatOttawaISO(d);
-    // Ignorer les weekends dans le calcul de capacité
-    if (isWeekendOttawa(d)) continue;
+    // Ignorer les weekends ET jours fériés dans le calcul de capacité
+    if (isWeekendOttawa(d) || JoursFeriesService.estJourFerie(d)) continue;
     const utilisees = heuresParJour[iso] || 0;
     
     // Calculer capacité nette pour ce jour:
@@ -315,8 +316,8 @@ export async function repartitionJusteATemps(
   while (restant > 0 && iterations < MAX_LOOKBACK_DAYS) {
     if (courant < aujourdHui) break;
     const iso = formatOttawaISO(courant);
-    // Ignorer les weekends pour l'allocation
-    if (!isWeekendOttawa(courant)) {
+    // Ignorer les weekends ET jours fériés pour l'allocation
+    if (!isWeekendOttawa(courant) && !JoursFeriesService.estJourFerie(courant)) {
       const utilisees = heuresParJour[iso] || 0;
       
       // Calculer capacité nette pour ce jour:
@@ -394,6 +395,7 @@ export async function repartitionEquilibree(
 
   const heuresParJour = await heuresUtiliseesParJour(traducteurId, dateDebut, dateFin);
   const disponibilites = jours
+    .filter((jour) => !JoursFeriesService.estJourFerie(jour)) // Exclure les jours fériés
     .map((jour) => {
       const iso = formatOttawaISO(jour);
       const utilisees = heuresParJour[iso] || 0;
@@ -544,6 +546,8 @@ export async function repartitionPEPS(
 
   for (const jour of jours) {
     if (restant <= 0) break;
+    // Ignorer les jours fériés
+    if (JoursFeriesService.estJourFerie(jour)) continue;
     const iso = formatOttawaISO(jour);
     const utilisees = heuresParJour[iso] || 0;
     

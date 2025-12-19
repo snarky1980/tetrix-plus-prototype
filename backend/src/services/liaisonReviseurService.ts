@@ -5,7 +5,7 @@
  * et vérifie les disponibilités combinées pour respecter les échéances.
  */
 
-import { PrismaClient, CategorieTraducteur } from '@prisma/client';
+import { PrismaClient, CategorieTraducteur, ModeLiaison } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
@@ -19,7 +19,10 @@ export interface LiaisonReviseur {
   reviseurId: string;
   estPrincipal: boolean;
   actif: boolean;
-  notes?: string;
+  mode: ModeLiaison;
+  domaine?: string | null;
+  dateFin?: Date | null;
+  notes?: string | null;
   creeLe: Date;
   modifieLe: Date;
   traducteur?: TraducteurInfo;
@@ -82,7 +85,17 @@ export interface CreerLiaisonParams {
   traducteurId: string;
   reviseurId: string;
   estPrincipal?: boolean;
+  mode?: ModeLiaison;
+  domaine?: string;
+  dateFin?: Date;
   notes?: string;
+}
+
+export interface VerificationOptions {
+  reviseurId?: string; // force un réviseur ponctuel
+  domaine?: string;    // spécialisation recherchée
+  forceRevision?: boolean; // impose une étape de révision même si le traducteur n'est pas TR01/02 nécessitant révision
+  mode?: ModeLiaison;  // ATTITRE ou PONCTUEL
 }
 
 // =====================================================
@@ -93,7 +106,7 @@ export interface CreerLiaisonParams {
  * Crée une liaison entre un traducteur et un réviseur
  */
 export async function creerLiaison(params: CreerLiaisonParams): Promise<LiaisonReviseur> {
-  const { traducteurId, reviseurId, estPrincipal = true, notes } = params;
+  const { traducteurId, reviseurId, estPrincipal = true, notes, mode = 'ATTITRE', domaine, dateFin } = params;
 
   // Vérifier que le traducteur existe et n'est pas TR03
   const traducteur = await prisma.traducteur.findUnique({
@@ -121,8 +134,8 @@ export async function creerLiaison(params: CreerLiaisonParams): Promise<LiaisonR
     throw new Error('Seul un TR03 peut être désigné comme réviseur');
   }
 
-  // Si c'est un réviseur principal, désactiver les autres liaisons principales
-  if (estPrincipal) {
+  // Si c'est un réviseur principal et liaison attitrée, désactiver les autres liaisons principales
+  if (mode === 'ATTITRE' && estPrincipal) {
     await prisma.liaisonReviseur.updateMany({
       where: {
         traducteurId,
@@ -144,14 +157,20 @@ export async function creerLiaison(params: CreerLiaisonParams): Promise<LiaisonR
       },
     },
     update: {
-      estPrincipal,
+      estPrincipal: mode === 'ATTITRE' ? estPrincipal : false,
       actif: true,
+      mode,
+      domaine,
+      dateFin,
       notes,
     },
     create: {
       traducteurId,
       reviseurId,
-      estPrincipal,
+      estPrincipal: mode === 'ATTITRE' ? estPrincipal : false,
+      mode,
+      domaine,
+      dateFin,
       notes,
     },
     include: {
@@ -236,12 +255,13 @@ export async function supprimerLiaison(liaisonId: string): Promise<void> {
 /**
  * Récupère tous les TR03 disponibles pour être réviseurs
  */
-export async function obtenirReviseursPotentiels(division?: string): Promise<TraducteurInfo[]> {
+export async function obtenirReviseursPotentiels(division?: string, domaine?: string): Promise<TraducteurInfo[]> {
   const reviseurs = await prisma.traducteur.findMany({
     where: {
       categorie: 'TR03',
       actif: true,
       ...(division ? { division } : {}),
+      ...(domaine ? { specialisations: { has: domaine } } : {}),
     },
     orderBy: { nom: 'asc' },
   });
@@ -364,7 +384,8 @@ async function obtenirDisponibilites(
 export async function verifierDisponibiliteCombinee(
   traducteurId: string,
   heuresTraduction: number,
-  dateEcheance: Date
+  dateEcheance: Date,
+  options: VerificationOptions = {}
 ): Promise<VerificationDisponibiliteResult> {
   const alertes: string[] = [];
   const recommandations: string[] = [];
@@ -416,7 +437,7 @@ export async function verifierDisponibiliteCombinee(
   }
 
   // Vérifier si le traducteur nécessite une révision
-  const necessiteRevision = traducteur.categorie === 'TR01' ||
+  const necessiteRevision = options.forceRevision || traducteur.categorie === 'TR01' ||
     (traducteur.categorie === 'TR02' && traducteur.necessiteRevision);
 
   let reviseurInfo: VerificationDisponibiliteResult['reviseur'] = null;
@@ -425,8 +446,17 @@ export async function verifierDisponibiliteCombinee(
 
   if (necessiteRevision) {
     const heuresRevision = calculerHeuresRevision(heuresTraduction);
-    const liaisonPrincipale = traducteur.revisePar.find(l => l.estPrincipal);
-    const reviseur = liaisonPrincipale?.reviseur;
+    // Si l'appel fournit un réviseur ponctuel, on le prend en priorité
+    let reviseur = options.reviseurId
+      ? await prisma.traducteur.findUnique({ where: { id: options.reviseurId } })
+      : undefined;
+
+    const liaisonPrincipale = !reviseur
+      ? traducteur.revisePar.find(l => l.estPrincipal)
+      : undefined;
+    if (!reviseur) {
+      reviseur = liaisonPrincipale?.reviseur;
+    }
 
     if (!reviseur) {
       alertes.push(`⚠️ Ce ${traducteur.categorie} n'a pas de réviseur attitré`);
@@ -434,7 +464,7 @@ export async function verifierDisponibiliteCombinee(
       reviseurDisponible = false;
 
       // Proposer des réviseurs potentiels
-      reviseurAlternatifs = await obtenirReviseursPotentiels(traducteur.division);
+      reviseurAlternatifs = await obtenirReviseursPotentiels(traducteur.division, options.domaine);
     } else {
       // Date de début de révision = fin de traduction + 1 jour
       const dateDebutRevision = dateFinTraduction 
@@ -471,7 +501,7 @@ export async function verifierDisponibiliteCombinee(
       reviseurInfo = {
         id: reviseur.id,
         nom: reviseur.nom,
-        estPrincipal: liaisonPrincipale?.estPrincipal || false,
+        estPrincipal: liaisonPrincipale?.estPrincipal || options.mode === 'ATTITRE',
         disponibilites: disponibilitesReviseur,
         heuresNecessaires: heuresRevision,
         dateFin: dateFinRevision,
@@ -589,7 +619,7 @@ export async function mettreAJourCategorie(
 export async function obtenirResumeLiaisons(division?: string) {
   const whereClause = division ? { division } : {};
 
-  const [tr01, tr02NecessiteRevision, tr02Autonome, tr03, liaisonsActives] = await Promise.all([
+  const [tr01, tr02NecessiteRevision, tr02Autonome, tr03, liaisonsAttitres, liaisonsPonctuelles] = await Promise.all([
     prisma.traducteur.count({
       where: { ...whereClause, categorie: 'TR01', actif: true },
     }),
@@ -603,7 +633,10 @@ export async function obtenirResumeLiaisons(division?: string) {
       where: { ...whereClause, categorie: 'TR03', actif: true },
     }),
     prisma.liaisonReviseur.count({
-      where: { actif: true },
+      where: { actif: true, mode: 'ATTITRE' },
+    }),
+    prisma.liaisonReviseur.count({
+      where: { actif: true, mode: 'PONCTUEL' },
     }),
   ]);
 
@@ -623,14 +656,20 @@ export async function obtenirResumeLiaisons(division?: string) {
     select: { id: true, nom: true, categorie: true },
   });
 
+  const baseRevision = tr01 + tr02NecessiteRevision;
+  const couverture = baseRevision > 0 ? Math.round(((baseRevision - sansReviseur.length) / baseRevision) * 100) : 100;
+
   return {
     statistiques: {
       tr01,
       tr02NecessiteRevision,
       tr02Autonome,
       tr03,
-      liaisonsActives,
+      liaisonsActives: liaisonsAttitres + liaisonsPonctuelles,
+      liaisonsAttitres,
+      liaisonsPonctuelles,
       sansReviseur: sansReviseur.length,
+      tauxCouvertureObligatoire: couverture,
     },
     traducteursSansReviseur: sansReviseur,
   };

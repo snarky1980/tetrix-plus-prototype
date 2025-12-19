@@ -4,6 +4,7 @@ import api from './api';
  * Types pour les liaisons Traducteur-Réviseur
  */
 export type CategorieTraducteur = 'TR01' | 'TR02' | 'TR03';
+export type ModeLiaison = 'ATTITRE' | 'PONCTUEL';
 
 export interface TraducteurInfo {
   id: string;
@@ -21,7 +22,10 @@ export interface LiaisonReviseur {
   reviseurId: string;
   estPrincipal: boolean;
   actif: boolean;
-  notes?: string;
+  mode: ModeLiaison;
+  domaine?: string;
+  dateFin?: string | null;
+  notes?: string | null;
   creeLe: string;
   modifieLe: string;
   traducteur?: TraducteurInfo;
@@ -77,7 +81,10 @@ export interface ResumeLiaisons {
     tr02Autonome: number;
     tr03: number;
     liaisonsActives: number;
+    liaisonsAttitres: number;
+    liaisonsPonctuelles: number;
     sansReviseur: number;
+    tauxCouvertureObligatoire: number;
   };
   traducteursSansReviseur: { id: string; nom: string; categorie: CategorieTraducteur }[];
 }
@@ -101,6 +108,15 @@ class LiaisonService {
   async obtenirReviseursPotentiels(division?: string): Promise<TraducteurInfo[]> {
     const params = division ? `?division=${encodeURIComponent(division)}` : '';
     const response = await api.get(`/liaisons/reviseurs-potentiels${params}`);
+    return response.data.data;
+  }
+
+  async obtenirReviseursPotentielsParDomaine(division?: string, domaine?: string): Promise<TraducteurInfo[]> {
+    const searchParams = new URLSearchParams();
+    if (division) searchParams.set('division', division);
+    if (domaine) searchParams.set('domaine', domaine);
+    const query = searchParams.toString();
+    const response = await api.get(`/liaisons/reviseurs-potentiels${query ? `?${query}` : ''}`);
     return response.data.data;
   }
 
@@ -143,6 +159,9 @@ class LiaisonService {
     traducteurId: string;
     reviseurId: string;
     estPrincipal?: boolean;
+    mode?: ModeLiaison;
+    domaine?: string;
+    dateFin?: string;
     notes?: string;
   }): Promise<LiaisonReviseur> {
     const response = await api.post('/liaisons', params);
@@ -163,6 +182,10 @@ class LiaisonService {
     traducteurId: string;
     heuresTraduction: number;
     dateEcheance: string;
+    reviseurId?: string;
+    domaine?: string;
+    forceRevision?: boolean;
+    mode?: ModeLiaison;
   }): Promise<VerificationDisponibiliteResult> {
     const response = await api.post('/liaisons/verifier-disponibilite', params);
     return response.data.data;

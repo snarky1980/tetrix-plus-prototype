@@ -21,6 +21,7 @@ import statistiquesRoutes from './routes/statistiquesRoutes';
 import divisionAccessRoutes from './routes/divisionAccessRoutes';
 import conflictRoutes from './routes/conflicts.routes';
 import liaisonsRoutes from './routes/liaisons.routes';
+import joursFeriesRoutes from './routes/jours-feries.routes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -128,6 +129,7 @@ app.use('/api/statistiques', statistiquesRoutes);
 app.use('/api/division-access', divisionAccessRoutes);
 app.use('/api/conflicts', conflictRoutes);
 app.use('/api/liaisons', liaisonsRoutes);
+app.use('/api/jours-feries', joursFeriesRoutes);
 
 // Route 404
 app.use((req, res) => {
