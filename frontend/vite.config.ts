@@ -17,6 +17,11 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    host: true, // Écouter sur toutes les interfaces pour Codespaces
+    strictPort: true,
+    hmr: {
+      clientPort: 443, // Pour GitHub Codespaces
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:3001',
