@@ -81,8 +81,8 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
       // Combiner date + heure
       onChange(`${newDate}T${timeValue}:00`);
     } else if (includeTime) {
-      // Par défaut à 15:00 si l'heure n'est pas définie
-      const defaultTime = '15:00';
+      // Par défaut à 17:00 si l'heure n'est pas définie
+      const defaultTime = '17:00';
       setTimeValue(defaultTime);
       onChange(`${newDate}T${defaultTime}:00`);
     } else {
