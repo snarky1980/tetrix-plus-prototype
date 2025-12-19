@@ -20,6 +20,7 @@ import divisionRoutes from './routes/divisionRoutes';
 import statistiquesRoutes from './routes/statistiquesRoutes';
 import divisionAccessRoutes from './routes/divisionAccessRoutes';
 import conflictRoutes from './routes/conflicts.routes';
+import liaisonsRoutes from './routes/liaisons.routes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -126,6 +127,7 @@ app.use('/api/divisions', divisionRoutes);
 app.use('/api/statistiques', statistiquesRoutes);
 app.use('/api/division-access', divisionAccessRoutes);
 app.use('/api/conflicts', conflictRoutes);
+app.use('/api/liaisons', liaisonsRoutes);
 
 // Route 404
 app.use((req, res) => {

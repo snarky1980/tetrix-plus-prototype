@@ -71,14 +71,25 @@ model Traducteur {
   specialisations          String[]            @default([])
   disponiblePourTravail    Boolean             @default(false)
   commentaireDisponibilite String?
+  
+  // Catégorie de traducteur (TR01, TR02, TR03)
+  categorie                CategorieTraducteur @default(TR01)
+  // TR02 qui nécessitent révision (par défaut false)
+  necessiteRevision        Boolean             @default(true)
+  
   ajustementsTemps         AjustementTemps[]
   pairesLinguistiques      PaireLinguistique[]
   taches                   Tache[]
   utilisateur              Utilisateur         @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  
+  // Liaisons réviseur-traducteur
+  reviseursDe              LiaisonReviseur[]   @relation("TraducteurReviseur")
+  revisePar                LiaisonReviseur[]   @relation("TraducteurRevise")
 
   @@index([division])
   @@index([actif])
   @@index([disponiblePourTravail])
+  @@index([categorie])
   @@map("traducteurs")
 }
 
@@ -203,4 +214,32 @@ enum ModeDistribution {
   PEPS
   EQUILIBRE
   MANUEL
+}
+
+// Catégorie de traducteur
+enum CategorieTraducteur {
+  TR01  // Débutant - doit toujours être révisé
+  TR02  // Intermédiaire - peut nécessiter révision
+  TR03  // Senior/Réviseur - peut réviser les autres
+}
+
+// Liaison entre un traducteur et son réviseur attitré
+model LiaisonReviseur {
+  id              String     @id @default(uuid())
+  traducteurId    String     // TR01 ou TR02 qui sera révisé
+  reviseurId      String     // TR03 qui effectue la révision
+  estPrincipal    Boolean    @default(true)  // Réviseur attitré principal
+  actif           Boolean    @default(true)
+  notes           String?
+  creeLe          DateTime   @default(now())
+  modifieLe       DateTime   @updatedAt
+  
+  traducteur      Traducteur @relation("TraducteurRevise", fields: [traducteurId], references: [id], onDelete: Cascade)
+  reviseur        Traducteur @relation("TraducteurReviseur", fields: [reviseurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, reviseurId])
+  @@index([traducteurId])
+  @@index([reviseurId])
+  @@index([estPrincipal])
+  @@map("liaisons_reviseur")
 }

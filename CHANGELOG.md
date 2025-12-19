@@ -4,7 +4,47 @@ Toutes les modifications notables du projet sont documentées ici.
 
 ---
 
-## [2.2.0] - 2025-12-19 🔍✨
+## [2.3.0] - 2024-12-19 🔗👥
+
+### Ajouté - Système de Liaison Traducteur-Réviseur
+- **Catégorisation des traducteurs** (3 niveaux)
+  - `TR01` - Traducteurs juniors (nécessitent toujours révision)
+  - `TR02` - Traducteurs intermédiaires (révision optionnelle)
+  - `TR03` - Traducteurs seniors / Réviseurs
+
+- **Gestion des liaisons traducteur-réviseur**
+  - Création de liaisons avec priorités (principal/secondaire)
+  - Désactivation/réactivation des liaisons
+  - Association multiple (un traducteur peut avoir plusieurs réviseurs)
+  - Notes personnalisées par liaison
+
+- **Vérification de disponibilité combinée**
+  - Analyse de disponibilité traducteur + réviseur
+  - Calcul automatique des échéances (traduction + révision)
+  - Vérification du respect des délais
+  - Suggestions de réviseurs alternatifs
+  - Alertes et recommandations intelligentes
+
+- **Interface utilisateur complète**
+  - Page dédiée "Gestion des liaisons" (Conseillers)
+  - Système d'onglets par catégorie (TR01/TR02/TR03)
+  - Visualisation des liaisons avec indicateurs visuels
+  - Ajout/suppression de liaisons en temps réel
+  - Modal de vérification intégré à la création de tâches
+
+- **Backend robuste**
+  - Service `liaisonReviseurService` (651 lignes, 10 fonctions)
+  - 6 endpoints API REST
+  - Tests automatisés (6 tests, 100% de couverture)
+  - Validation des catégories et liaisons
+
+- **Documentation complète**
+  - Guide utilisateur (GUIDE-LIAISON-REVISEUR.md)
+  - Architecture technique détaillée
+  - Exemples d'utilisation
+  - Bonnes pratiques
+
+## [2.2.0] - 2024-12-19 🔍✨
 
 ### Ajouté - Système de Détection de Conflits
 - **Détection automatique de conflits** (5 types)

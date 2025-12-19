@@ -13,6 +13,7 @@ import { clientService } from '../services/clientService';
 import { sousDomaineService } from '../services/sousDomaineService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
+import { VerificationReviseurButton } from '../components/liaisons';
 import { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 
 const TacheCreation: React.FC = () => {
@@ -401,6 +402,13 @@ const TacheCreation: React.FC = () => {
                     </label>
                   </div>
                 </FormField>
+
+                {/* Vérification disponibilité réviseur */}
+                <VerificationReviseurButton
+                  traducteurId={formData.traducteurId}
+                  heuresTraduction={formData.heuresTotal}
+                  dateEcheance={formData.dateEcheance}
+                />
 
                 <div className="flex justify-end gap-2 mt-6">
                   <Button variant="outline" onClick={() => navigate('/conseiller')}>

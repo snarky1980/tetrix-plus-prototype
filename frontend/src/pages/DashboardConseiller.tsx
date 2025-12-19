@@ -113,6 +113,9 @@ const DashboardConseiller: React.FC = () => {
             <Button variant="outline" onClick={() => navigate('/planification-globale')}>
               📅 Planification globale
             </Button>
+            <Button variant="outline" onClick={() => navigate('/liaisons')}>
+              🔗 Liaisons TR
+            </Button>
             <Button variant="outline" onClick={() => navigate('/statistiques-productivite')}>
               📊 Statistiques
             </Button>

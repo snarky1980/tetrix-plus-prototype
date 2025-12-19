@@ -15,6 +15,7 @@ import DashboardAdmin from './pages/DashboardAdmin';
 import { GestionProfils } from './pages/GestionProfils';
 import StatistiquesProductivite from './pages/StatistiquesProductivite';
 import ConflictResolution from './pages/ConflictResolution';
+import LiaisonsPage from './pages/LiaisonsPage';
 
 /**
  * Route protégée - nécessite authentification
@@ -159,6 +160,16 @@ function App() {
             element={
               <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
                 <ConflictResolution />
+              </RouteProtegee>
+            }
+          />
+
+          {/* Liaisons Traducteur-Réviseur - CONSEILLER et GESTIONNAIRE */}
+          <Route
+            path="/liaisons"
+            element={
+              <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
+                <LiaisonsPage />
               </RouteProtegee>
             }
           />
