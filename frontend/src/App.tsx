@@ -67,11 +67,20 @@ const RedirectionDashboard: React.FC = () => {
 };
 
 function App() {
+  // Déterminer le basename selon l'environnement
+  const basename = import.meta.env.MODE === 'production' ? '/tetrix-plus-prototype' : '';
+
   return (
     <ToastProvider>
       <AuthProvider>
         <UserPreferencesProvider>
-          <BrowserRouter basename="/tetrix-plus-prototype">
+          <BrowserRouter 
+            basename={basename}
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <ToastContainer />
             <Routes>
           {/* Route publique */}
