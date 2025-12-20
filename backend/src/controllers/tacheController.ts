@@ -174,8 +174,32 @@ export const creerTache = async (
         res.status(400).json({ erreur: 'Répartition invalide', details: erreurs });
         return;
       }
+
+      // La disponibilité au moment de la création n'est pas vérifiée
+      // Ce qui compte est la disponibilité lors de l'exécution de la tâche
       repartitionEffective = repartition;
-    } else if (repartitionAuto) {
+    } else if (repartitionAuto === true) {
+      // Vérifier que le traducteur est actif
+      const traducteurCheck = await prisma.traducteur.findUnique({
+        where: { id: traducteurId },
+        select: { nom: true, actif: true }
+      });
+
+      if (!traducteurCheck) {
+        res.status(404).json({ erreur: 'Traducteur introuvable' });
+        return;
+      }
+
+      if (!traducteurCheck.actif) {
+        res.status(400).json({ 
+          erreur: `${traducteurCheck.nom} est désactivé(e) et ne peut pas recevoir de nouvelles tâches.` 
+        });
+        return;
+      }
+
+      // La disponibilité actuelle (disponiblePourTravail) n'est pas vérifiée
+      // Ce qui compte est la disponibilité lors de l'exécution de la tâche
+
       // Génération automatique selon le mode
       try {
         if (modeDistribution === 'PEPS') {
@@ -197,7 +221,7 @@ export const creerTache = async (
 
     // Protection contre le double booking (race condition)
     const tache = await prisma.$transaction(async (tx) => {
-      // 1. Vérifier la disponibilité et l'accès AVANT toute autre opération
+      // 1. Vérifier l'accès AVANT toute autre opération
       const traducteur = await tx.traducteur.findUnique({
         where: { id: traducteurId },
         select: { 
@@ -205,8 +229,7 @@ export const creerTache = async (
           nom: true, 
           division: true,
           capaciteHeuresParJour: true,
-          actif: true,
-          disponiblePourTravail: true
+          actif: true
         }
       });
 
@@ -222,13 +245,8 @@ export const creerTache = async (
         );
       }
 
-      // Vérifier que le traducteur est disponible
-      if (!traducteur.disponiblePourTravail) {
-        throw new Error(
-          `${traducteur.nom} est actuellement marqué(e) comme indisponible. ` +
-          `Veuillez vérifier son statut avant d'assigner une nouvelle tâche.`
-        );
-      }
+      // Note: Le champ disponiblePourTravail n'est plus vérifié lors de la création de tâches.
+      // Ce qui importe est la disponibilité au moment de l'exécution, pas au moment de la planification.
 
       // Vérifier l'accès à la division (sauf pour ADMIN)
       if (req.utilisateur!.role !== 'ADMIN') {

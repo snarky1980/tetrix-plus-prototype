@@ -8,6 +8,7 @@ import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
 import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
 import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
+import BoutonPlanificationTraducteur from '../components/BoutonPlanificationTraducteur';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { useAutoRefresh, formatTimeAgo } from '../hooks/useAutoRefresh';
@@ -17,7 +18,7 @@ import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
-import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateTimeDisplay } from '../utils/dateTimeOttawa';
+import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, subDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateTimeDisplay, getNextBusinessDay } from '../utils/dateTimeOttawa';
 import { formatNumeroProjet, formatDateAvecJour } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 import { useAuth } from '../contexts/AuthContext';
@@ -30,6 +31,43 @@ const PlanificationGlobale: React.FC = () => {
   // Utiliser les fonctions timezone-aware d'Ottawa
   const dateISO = formatOttawaISO;
   const parseISODate = parseOttawaDateISO;
+  
+  // Fonction helper pour convertir "9h", "13h30" en "09:00", "13:30"
+  const convertirHeureVersFomatHTML = (heure: string | undefined): string => {
+    if (!heure) return '09:00';
+    // Si déjà au bon format (HH:MM), retourner tel quel
+    if (/^\d{2}:\d{2}$/.test(heure)) return heure;
+    
+    // Convertir "9h", "13h30", "9h00" etc. en "09:00", "13:30"
+    const match = heure.match(/^(\d{1,2})h(\d{2})?$/);
+    if (match) {
+      const heures = match[1].padStart(2, '0');
+      const minutes = match[2] || '00';
+      return `${heures}:${minutes}`;
+    }
+    return '09:00'; // Fallback
+  };
+  
+  // Fonction pour calculer l'heure de fin en fonction du début et de la durée
+  const calculerHeureFin = (heureDebut: string, heures: number): string => {
+    // Convertir l'heure de début en nombre décimal (ex: "09:30" -> 9.5)
+    const [h, m] = heureDebut.split(':').map(Number);
+    let debut = h + m / 60;
+    
+    // Calculer la fin
+    let fin = debut + heures;
+    
+    // Si on traverse la pause midi (12h-13h), ajouter 1h
+    if (debut < 12 && fin > 12) {
+      fin += 1;
+    }
+    
+    // Convertir en format HH:MM
+    const heuresFin = Math.floor(fin);
+    const minutesFin = Math.round((fin - heuresFin) * 60);
+    
+    return `${heuresFin.toString().padStart(2, '0')}:${minutesFin.toString().padStart(2, '0')}`;
+  };
   
   // Calculer la date actuelle à Ottawa (pas en cache pour avoir l'heure exacte)
   const now = nowOttawa();
@@ -562,6 +600,75 @@ const PlanificationGlobale: React.FC = () => {
     }
   }, [formTache.traducteurId, traducteurs]);
 
+  // Auto-remplir les dates pour le mode ÉQUILIBRÉ
+  useEffect(() => {
+    if (formTache.typeRepartition === 'EQUILIBRE' && formTache.dateEcheance) {
+      // Extraire la date seule si timestamp
+      const dateEcheanceStr = formTache.dateEcheance.includes('T') 
+        ? formTache.dateEcheance.split('T')[0] 
+        : formTache.dateEcheance;
+      
+      try {
+        // Date de début: Prochain jour ouvrable à 9h00
+        const nextBusinessDay = getNextBusinessDay();
+        const dateDebutStr = formatOttawaISO(nextBusinessDay) + 'T09:00';
+        
+        // Date de fin: Échéance - 1 jour à 17h00
+        const dateEcheance = parseOttawaDateISO(dateEcheanceStr);
+        const dateFinObj = subDaysOttawa(dateEcheance, 1);
+        const dateFinStr = formatOttawaISO(dateFinObj) + 'T17:00';
+        
+        setFormTache(prev => ({
+          ...prev,
+          dateDebut: dateDebutStr,
+          dateFin: dateFinStr
+        }));
+      } catch (error) {
+        console.error('Erreur calcul dates ÉQUILIBRÉ:', error);
+      }
+    }
+  }, [formTache.typeRepartition, formTache.dateEcheance]);
+
+  // Auto-remplir la date de début pour le mode PEPS
+  useEffect(() => {
+    if (formTache.typeRepartition === 'PEPS' && !formTache.dateDebut) {
+      try {
+        // PEPS: Date courante avec prochaine heure arrondie
+        const maintenant = nowOttawa();
+        const heureActuelle = maintenant.getHours();
+        const minuteActuelle = maintenant.getMinutes();
+        
+        // Arrondir à la prochaine heure
+        let prochaineHeure = heureActuelle;
+        if (minuteActuelle > 0) {
+          prochaineHeure = heureActuelle + 1;
+        }
+        
+        // Si on est après 17h, passer au lendemain à 9h
+        let dateDebut: Date;
+        if (prochaineHeure >= 17) {
+          dateDebut = getNextBusinessDay();
+          prochaineHeure = 9;
+        } else {
+          dateDebut = maintenant;
+          // Si on est avant 9h, commencer à 9h
+          if (prochaineHeure < 9) {
+            prochaineHeure = 9;
+          }
+        }
+        
+        const dateDebutStr = formatOttawaISO(dateDebut) + 'T' + String(prochaineHeure).padStart(2, '0') + ':00';
+        
+        setFormTache(prev => ({
+          ...prev,
+          dateDebut: dateDebutStr
+        }));
+      } catch (error) {
+        console.error('Erreur calcul date début PEPS:', error);
+      }
+    }
+  }, [formTache.typeRepartition]);
+
   const chargerPreviewRepartition = async () => {
     const heures = parseFloat(formTache.heuresTotal as string);
     if (heures <= 0) return;
@@ -569,7 +676,7 @@ const PlanificationGlobale: React.FC = () => {
     setLoadingPreview(true);
     setErreurPreview('');
     try {
-      let result: { date: string; heures: number }[] = [];
+      let result: { date: string; heures: number; heureDebut?: string; heureFin?: string }[] = [];
       
       if (formTache.typeRepartition === 'JUSTE_TEMPS') {
         if (!formTache.traducteurId || !formTache.dateEcheance) return;
@@ -610,10 +717,17 @@ const PlanificationGlobale: React.FC = () => {
         });
       } else if (formTache.typeRepartition === 'MANUEL') {
         // Mode manuel : utiliser la répartition saisie par l'utilisateur
-        result = formTache.repartitionManuelle;
+        result = formTache.repartitionManuelle as any;
       }
       
-      setPreviewRepartition(result);
+      // S'assurer que tous les items ont des heures par défaut si non fournies par le backend
+      const resultWithDefaults = result.map(item => ({
+        ...item,
+        heureDebut: item.heureDebut || '09:00',
+        heureFin: item.heureFin || '17:00'
+      }));
+      
+      setPreviewRepartition(resultWithDefaults);
     } catch (err: any) {
       console.error('Erreur preview répartition:', err);
       setErreurPreview('Erreur : ' + (err.message || 'Calcul impossible'));
@@ -672,7 +786,7 @@ const PlanificationGlobale: React.FC = () => {
     }
   };
 
-  const handleSubmitTache = async () => {
+  const handleSubmitTache = async (forcerCreation = false) => {
     setSubmitting(true);
     setErreurCreation('');
 
@@ -723,6 +837,10 @@ const PlanificationGlobale: React.FC = () => {
       } else if (formTache.typeRepartition === 'MANUEL') {
         tache.repartition = formTache.repartitionManuelle;
         tache.repartitionAuto = false;
+        // Ajouter le flag forcer si demandé
+        if (forcerCreation) {
+          tache.forcer = true;
+        }
       } else {
         // Pour EQUILIBRE et PEPS, utiliser la prévisualisation calculée
         if (previewRepartition && previewRepartition.length > 0) {
@@ -745,6 +863,28 @@ const PlanificationGlobale: React.FC = () => {
     } catch (err: any) {
       console.error('Erreur complète:', err);
       console.error('Response data:', err.response?.data);
+      
+      // Gestion du conflit de disponibilité en mode manuel
+      if (err.response?.status === 409 && err.response?.data?.erreur === 'CONFLIT_DISPONIBILITE') {
+        const data = err.response.data;
+        const confirmer = window.confirm(
+          `⚠️ AVERTISSEMENT DE DISPONIBILITÉ\n\n` +
+          `${data.message}\n` +
+          `Commentaire: ${data.details}\n\n` +
+          `Voulez-vous quand même créer cette tâche?\n` +
+          `(La tâche sera assignée même si le traducteur est actuellement indisponible)`
+        );
+        
+        if (confirmer) {
+          // Réessayer avec le flag forcer
+          await handleSubmitTache(true);
+          return;
+        } else {
+          setSubmitting(false);
+          return;
+        }
+      }
+      
       const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de la création de la tâche';
       const detailsErreur = err.response?.data?.details ? `\nDétails: ${JSON.stringify(err.response.data.details)}` : '';
       setErreurCreation(messageErreur + detailsErreur);
@@ -1036,6 +1176,19 @@ const PlanificationGlobale: React.FC = () => {
         }
       }
       
+      // Mapper le mode de distribution de l'API vers le format du formulaire
+      // API: JAT/PEPS/EQUILIBRE/MANUEL → Formulaire: JUSTE_TEMPS/PEPS/EQUILIBRE/MANUEL
+      const modeDistributionAPI = tache.modeDistribution || 'JAT';
+      const typeRepartitionForm = modeDistributionAPI === 'JAT' ? 'JUSTE_TEMPS' : modeDistributionAPI;
+      const estModeAuto = ['JAT', 'PEPS', 'EQUILIBRE'].includes(modeDistributionAPI);
+      
+      // Extraire la date et l'heure d'échéance
+      const dateEcheanceParts = tache.dateEcheance?.split('T') || [];
+      const dateEcheanceStr = dateEcheanceParts[0] || '';
+      const heureEcheanceStr = dateEcheanceParts[1] 
+        ? dateEcheanceParts[1].substring(0, 5) // Format HH:MM
+        : '17:00';
+      
       // Pré-remplir le formulaire
       setFormEdition({
         numeroProjet: tache.numeroProjet || '',
@@ -1048,16 +1201,16 @@ const PlanificationGlobale: React.FC = () => {
         description: tache.description || '',
         heuresTotal: tache.heuresTotal || 0,
         compteMots: tache.compteMots || 0,
-        dateEcheance: tache.dateEcheance?.split('T')[0] || '',
-        heureEcheance: tache.heureEcheance || '17:00',
+        dateEcheance: dateEcheanceStr,
+        heureEcheance: heureEcheanceStr,
         priorite: tache.priorite || 'REGULIER',
-        typeRepartition: 'MANUEL',
+        typeRepartition: typeRepartitionForm as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
         dateDebut: today,
-        dateFin: tache.dateEcheance?.split('T')[0] || '',
-        repartitionAuto: false,
-        repartitionManuelle: tache.repartitions?.map((r: any) => ({
-          date: r.date.split('T')[0],
-          heures: r.heuresPrevues
+        dateFin: dateEcheanceStr,
+        repartitionAuto: estModeAuto,
+        repartitionManuelle: tache.ajustementsTemps?.map((ajustement: any) => ({
+          date: ajustement.date.split('T')[0],
+          heures: ajustement.heures
         })) || [],
       });
       
@@ -1813,6 +1966,12 @@ const PlanificationGlobale: React.FC = () => {
                       </option>
                     ))}
                   </Select>
+                  {formTache.traducteurId && (
+                    <BoutonPlanificationTraducteur 
+                      traducteurId={formTache.traducteurId}
+                      className="mt-2 text-xs px-3 py-1.5 w-full hover:bg-blue-50"
+                    />
+                  )}
                 </div>
 
                 {/* Type de tâche */}
@@ -1972,7 +2131,7 @@ const PlanificationGlobale: React.FC = () => {
                     />
                     <div className="flex-1">
                       <div className="font-semibold text-sm">📊 Juste à temps (JAT)</div>
-                      <div className="text-xs text-gray-600 mt-1">Optimise en fonction de la charge actuelle. Les heures sont réparties intelligemment pour maximiser l'utilisation de la capacité disponible jusqu'à l'échéance.</div>
+                      <div className="text-xs text-gray-600 mt-1">Alloue les heures le plus TARD possible, en remontant depuis l'échéance. Optimise pour terminer juste à temps.</div>
                     </div>
                   </label>
                   
@@ -1986,8 +2145,8 @@ const PlanificationGlobale: React.FC = () => {
                       className="mt-1"
                     />
                     <div className="flex-1">
-                      <div className="font-semibold text-sm">🔄 Première entrée, première sortie (PEPS)</div>
-                      <div className="text-xs text-gray-600 mt-1">Commence dès que possible et termine à l'échéance. Les heures sont affectées dans l'ordre chronologique.</div>
+                      <div className="font-semibold text-sm">🔄 Premier Entré, Premier Sorti (PEPS)</div>
+                      <div className="text-xs text-gray-600 mt-1">Alloue les heures le plus TÔT possible, en partant d'aujourd'hui. Commence immédiatement et remplit vers l'avant jusqu'à l'échéance.</div>
                     </div>
                   </label>
                   
@@ -2033,39 +2192,32 @@ const PlanificationGlobale: React.FC = () => {
               {/* Champs spécifiques selon le mode */}
               {formTache.typeRepartition === 'PEPS' && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded">
-                  <label className="block text-sm font-medium mb-1">Date de début</label>
-                  <Input
-                    type="date"
+                  <DateTimeInput
+                    label="Date de début"
                     value={formTache.dateDebut}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateDebut: e.target.value })}
-                    min={today}
-                    className="w-full"
+                    onChange={(value) => setFormTache({ ...formTache, dateDebut: value })}
+                    includeTime={true}
+                    required
                   />
                 </div>
               )}
               
               {formTache.typeRepartition === 'EQUILIBRE' && (
                 <div className="p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date de début</label>
-                    <Input
-                      type="date"
-                      value={formTache.dateDebut}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateDebut: e.target.value })}
-                      min={today}
-                      className="w-full"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Date de fin</label>
-                    <Input
-                      type="date"
-                      value={formTache.dateFin}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, dateFin: e.target.value })}
-                      min={formTache.dateDebut || today}
-                      className="w-full"
-                    />
-                  </div>
+                  <DateTimeInput
+                    label="Date de début"
+                    value={formTache.dateDebut}
+                    onChange={(value) => setFormTache({ ...formTache, dateDebut: value })}
+                    includeTime={true}
+                    required
+                  />
+                  <DateTimeInput
+                    label="Date de fin"
+                    value={formTache.dateFin}
+                    onChange={(value) => setFormTache({ ...formTache, dateFin: value })}
+                    includeTime={true}
+                    required
+                  />
                 </div>
               )}
 
@@ -2093,20 +2245,50 @@ const PlanificationGlobale: React.FC = () => {
           {etapeCreation === 2 && (
             <div className="space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-                <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
-                <div className="text-xs space-y-1">
-                  <p><span className="font-medium">Projet:</span> {formTache.numeroProjet}</p>
-                  <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
-                  <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
-                  <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
-                  <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? formatDateAvecJour(formTache.dateEcheance) + ' à ' + formTache.heureEcheance : 'Non définie'}</p>
-                  <p><span className="font-medium">Répartition:</span> {
-                    formTache.typeRepartition === 'JUSTE_TEMPS' ? 'Juste à temps (JAT)' :
-                    formTache.typeRepartition === 'EQUILIBRE' ? 'Équilibré' :
-                    formTache.typeRepartition === 'PEPS' ? 'PEPS' : 'Manuelle'
-                  }</p>
-                  {formTache.typeRepartition === 'EQUILIBRE' && formTache.dateDebut && formTache.dateFin && (
-                    <p><span className="font-medium">Période:</span> {formatDateAvecJour(formTache.dateDebut)} → {formatDateAvecJour(formTache.dateFin)}</p>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
+                    <div className="text-xs space-y-1">
+                      <p><span className="font-medium">Projet:</span> {formTache.numeroProjet}</p>
+                      <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
+                      <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
+                      <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
+                      <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? (
+                        formTache.dateEcheance.includes('T') 
+                          ? formatDateAvecJour(formTache.dateEcheance.split('T')[0]) + ' à ' + formTache.dateEcheance.split('T')[1].substring(0, 5)
+                          : formatDateAvecJour(formTache.dateEcheance) + ' (fin de journée)'
+                      ) : 'Non définie'}</p>
+                      <p><span className="font-medium">Répartition:</span> {
+                        {
+                          'JUSTE_TEMPS': 'Juste à temps (JAT)',
+                          'EQUILIBRE': 'Équilibré',
+                          'PEPS': 'PEPS',
+                          'MANUEL': 'Manuelle'
+                        }[formTache.typeRepartition] || 'Non définie'
+                      }</p>
+                      {formTache.typeRepartition === 'EQUILIBRE' && formTache.dateDebut && formTache.dateFin && (
+                        <p><span className="font-medium">Période:</span> {
+                          formatDateAvecJour(formTache.dateDebut.split('T')[0]) + ' à ' + formTache.dateDebut.split('T')[1]?.substring(0, 5)
+                        } → {
+                          formatDateAvecJour(formTache.dateFin.split('T')[0]) + ' à ' + formTache.dateFin.split('T')[1]?.substring(0, 5)
+                        }</p>
+                      )}
+                      {formTache.typeRepartition === 'PEPS' && formTache.dateDebut && (
+                        <p><span className="font-medium">Date de début:</span> {
+                          formTache.dateDebut.includes('T')
+                            ? formatDateAvecJour(formTache.dateDebut.split('T')[0]) + ' à ' + formTache.dateDebut.split('T')[1]?.substring(0, 5)
+                            : formatDateAvecJour(formTache.dateDebut)
+                        }</p>
+                      )}
+                    </div>
+                  </div>
+                  {formTache.traducteurId && (
+                    <div className="flex-shrink-0">
+                      <BoutonPlanificationTraducteur 
+                        traducteurId={formTache.traducteurId}
+                        className="text-xs px-3 py-2 whitespace-nowrap"
+                      />
+                    </div>
                   )}
                 </div>
               </div>
@@ -2230,39 +2412,123 @@ const PlanificationGlobale: React.FC = () => {
                       ⏳ Calcul de la répartition...
                     </div>
                   ) : previewRepartition && previewRepartition.length > 0 ? (
-                    <div className="border border-border rounded overflow-hidden">
-                      <div className="bg-gray-100 px-3 py-2 flex items-center justify-between">
-                        <h3 className="text-xs font-semibold">📅 Répartition calculée</h3>
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <div className="bg-gray-100 px-4 py-3 flex items-center justify-between border-b border-gray-300">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">📅</span>
+                          <h3 className="text-sm font-semibold text-gray-800">
+                            Répartition calculée 
+                            <span className="ml-2 text-xs font-normal text-gray-600">
+                              ({
+                                {
+                                  'JUSTE_TEMPS': 'JAT',
+                                  'EQUILIBRE': 'Équilibré',
+                                  'PEPS': 'PEPS',
+                                  'MANUEL': 'Manuel'
+                                }[formTache.typeRepartition]
+                              })
+                            </span>
+                          </h3>
+                        </div>
                         <Button
                           variant="outline"
                           onClick={chargerPreviewRepartition}
-                          className="text-xs px-2 py-1"
+                          className="text-xs px-3 py-1.5 hover:bg-gray-200"
                         >
                           🔄 Recalculer
                         </Button>
                       </div>
-                      <div className="max-h-64 overflow-y-auto">
-                        <table className="w-full text-xs">
-                          <thead className="bg-gray-50 sticky top-0">
-                            <tr>
-                              <th className="text-left px-3 py-2">Date</th>
-                              <th className="text-right px-3 py-2">Heures</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {previewRepartition.map((r, idx) => (
-                              <tr key={r.date} className={`border-t border-border transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                                <td className="px-3 py-2">{formatDateAvecJour(r.date)}</td>
-                                <td className="text-right px-3 py-2 font-semibold">
-                                  {r.heures.toFixed(2)}h {r.heureDebut && r.heureFin ? `(${r.heureDebut}-${r.heureFin})` : ''}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                      <div className="max-h-96 overflow-y-auto">
+                        <div className="divide-y divide-gray-200">
+                          {previewRepartition.map((r, idx) => (
+                            <div 
+                              key={r.date} 
+                              className={`px-4 py-3 transition-colors hover:bg-gray-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-800">
+                                    {formatDateAvecJour(r.date)}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    step="0.25"
+                                    min="0"
+                                    value={r.heures}
+                                    onChange={(e) => {
+                                      const nouvellesDuree = parseFloat(e.target.value) || 0;
+                                      const newPreview = [...previewRepartition];
+                                      newPreview[idx].heures = nouvellesDuree;
+                                      
+                                      // Recalculer l'heure de fin en fonction de la nouvelle durée
+                                      const heureDebut = convertirHeureVersFomatHTML(newPreview[idx].heureDebut);
+                                      newPreview[idx].heureFin = calculerHeureFin(heureDebut, nouvellesDuree);
+                                      
+                                      setPreviewRepartition(newPreview);
+                                    }}
+                                    className="text-sm w-16 text-center font-semibold"
+                                  />
+                                  <span className="text-xs text-gray-600">h</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm pl-0">
+                                <span className="text-xs text-gray-600 w-12">Plage:</span>
+                                <Input
+                                  type="time"
+                                  value={convertirHeureVersFomatHTML(r.heureDebut)}
+                                  onChange={(e) => {
+                                    const newPreview = [...previewRepartition];
+                                    newPreview[idx].heureDebut = e.target.value;
+                                    setPreviewRepartition(newPreview);
+                                  }}
+                                  className="text-sm w-24"
+                                />
+                                <span className="text-gray-400">→</span>
+                                <Input
+                                  type="time"
+                                  value={convertirHeureVersFomatHTML(r.heureFin)}
+                                  onChange={(e) => {
+                                    const newPreview = [...previewRepartition];
+                                    newPreview[idx].heureFin = e.target.value;
+                                    setPreviewRepartition(newPreview);
+                                  }}
+                                  className="text-sm w-24"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                      <div className="bg-blue-50 px-3 py-2 border-t text-xs">
-                        <span className="font-medium">Total:</span> {previewRepartition.reduce((s, r) => s + r.heures, 0).toFixed(2)}h sur {previewRepartition.length} jours
+                      <div className="bg-gray-100 px-4 py-3 border-t border-gray-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-gray-700">Total</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-gray-600">{previewRepartition.length} jours</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-blue-600">
+                                {previewRepartition.reduce((s, r) => s + r.heures, 0).toFixed(2)}h
+                              </span>
+                              <span className="text-xs text-gray-500">/</span>
+                              <span className="text-sm text-gray-600">
+                                {parseFloat(formTache.heuresTotal as string || '0').toFixed(2)}h
+                              </span>
+                              {Math.abs(previewRepartition.reduce((s, r) => s + r.heures, 0) - parseFloat(formTache.heuresTotal as string || '0')) > 0.01 && (
+                                <span className={`text-xs font-medium ml-2 ${
+                                  previewRepartition.reduce((s, r) => s + r.heures, 0) < parseFloat(formTache.heuresTotal as string || '0')
+                                    ? 'text-orange-600'
+                                    : 'text-red-600'
+                                }`}>
+                                  {previewRepartition.reduce((s, r) => s + r.heures, 0) < parseFloat(formTache.heuresTotal as string || '0')
+                                    ? `(reste ${(parseFloat(formTache.heuresTotal as string || '0') - previewRepartition.reduce((s, r) => s + r.heures, 0)).toFixed(2)}h)`
+                                    : `(excès ${(previewRepartition.reduce((s, r) => s + r.heures, 0) - parseFloat(formTache.heuresTotal as string || '0')).toFixed(2)}h)`
+                                  }
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ) : (
@@ -2271,6 +2537,12 @@ const PlanificationGlobale: React.FC = () => {
                     </div>
                   )}
                 </>
+              )}
+
+              {erreurCreation && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  {erreurCreation}
+                </div>
               )}
 
               <div className="flex gap-2 justify-end pt-4 border-t">
@@ -2282,7 +2554,7 @@ const PlanificationGlobale: React.FC = () => {
                 </Button>
                 <Button
                   variant="primaire"
-                  onClick={handleSubmitTache}
+                  onClick={() => handleSubmitTache()}
                   disabled={
                     submitting || 
                     (formTache.typeRepartition === 'MANUEL' && formTache.repartitionManuelle.length === 0) ||
@@ -2742,6 +3014,25 @@ const PlanificationGlobale: React.FC = () => {
           {/* Étape 2 : Répartition */}
           {etapeEdition === 2 && (
             <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
+                    <div className="text-xs space-y-1">
+                      <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formEdition.traducteurId)?.nom}</p>
+                    </div>
+                  </div>
+                  {formEdition.traducteurId && (
+                    <div className="flex-shrink-0">
+                      <BoutonPlanificationTraducteur 
+                        traducteurId={formEdition.traducteurId}
+                        className="text-xs px-3 py-2 whitespace-nowrap"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {formEdition.repartitionAuto ? (
                 <div>
                   <h3 className="text-sm font-semibold mb-2">Prévisualisation JAT</h3>

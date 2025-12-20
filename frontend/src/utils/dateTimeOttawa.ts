@@ -164,6 +164,27 @@ export function isWeekendOttawa(date: Date): boolean {
 }
 
 /**
+ * Obtenir le prochain jour ouvrable (saute les weekends)
+ * @param fromDate Date de départ (par défaut aujourd'hui)
+ * @returns Prochain jour ouvrable
+ * 
+ * @example
+ * // Si aujourd'hui est vendredi
+ * const next = getNextBusinessDay(); // Retourne lundi
+ */
+export function getNextBusinessDay(fromDate?: Date): Date {
+  const start = fromDate || todayOttawa();
+  let next = addDaysOttawa(start, 1);
+  
+  // Sauter les weekends
+  while (isWeekendOttawa(next)) {
+    next = addDaysOttawa(next, 1);
+  }
+  
+  return next;
+}
+
+/**
  * Formats de date disponibles
  */
 export type DateFormat = 

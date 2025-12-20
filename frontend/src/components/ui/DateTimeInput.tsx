@@ -145,12 +145,6 @@ export const DateTimeInput: React.FC<DateTimeInputProps> = ({
       {error && (
         <p className="text-xs text-red-600">{error}</p>
       )}
-      
-      {includeTime && !timeValue && (
-        <p className="text-xs text-muted-foreground">
-          Si l'heure n'est pas spécifiée, 23:59:59 sera utilisé par défaut
-        </p>
-      )}
     </div>
   );
 };

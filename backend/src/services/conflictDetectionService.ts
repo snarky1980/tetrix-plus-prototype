@@ -23,6 +23,7 @@
 import prisma from '../config/database';
 import {
   normalizeToOttawa,
+  normalizeToOttawaWithTime,
   parseOttawaDateISO,
   parseHoraireTraducteur,
   capaciteNetteJour,
@@ -398,6 +399,7 @@ function detecterEmpietePause(allocation: any, traducteurId: string): Conflict |
 
 /**
  * Détecte si une allocation dépasse l'échéance de la tâche
+ * CRITIQUE: Doit tenir compte de la DATE **ET** de l'HEURE de l'échéance
  */
 async function detecterApresEcheance(allocation: any): Promise<Conflict | null> {
   if (!allocation.tacheId) return null;
@@ -410,10 +412,18 @@ async function detecterApresEcheance(allocation: any): Promise<Conflict | null> 
   if (!tache) return null;
 
   const dateAllocation = normalizeToOttawa(allocation.date).date;
-  const dateEcheance = normalizeToOttawa(tache.dateEcheance).date;
+  // CORRECTION: Utiliser normalizeToOttawaWithTime pour préserver l'heure de l'échéance
+  const { date: dateEcheance, hasTime: echeanceHasTime } = normalizeToOttawaWithTime(
+    tache.dateEcheance, 
+    true, 
+    'dateEcheance'
+  );
+  
+  const dateAllocISO = formatOttawaISO(dateAllocation);
+  const dateEcheanceISO = formatOttawaISO(dateEcheance);
 
-  // Si l'allocation est après la date d'échéance
-  if (dateAllocation > dateEcheance) {
+  // 1. Comparer les DATES d'abord (sans heure)
+  if (dateAllocISO > dateEcheanceISO) {
     return {
       type: TypeConflict.APRES_ECHEANCE,
       allocationId: allocation.id,
@@ -423,29 +433,38 @@ async function detecterApresEcheance(allocation: any): Promise<Conflict | null> 
       heuresAllouees: allocation.heures,
       heureDebut: allocation.heureDebut,
       heureFin: allocation.heureFin,
-      explication: `L'allocation est planifiée après l'échéance ${formatOttawaISO(dateEcheance)}`,
+      explication: `L'allocation est planifiée après l'échéance ${dateEcheanceISO}`,
       contexte: { echeance: tache.dateEcheance }
     };
   }
 
-  // Si même jour, vérifier l'heure
-  if (dateAllocation.getTime() === dateEcheance.getTime() && allocation.heureFin) {
-    const heureEcheance = tache.dateEcheance.getHours() + tache.dateEcheance.getMinutes() / 60;
-    const finAlloc = parseHeureString(allocation.heureFin);
+  // 2. Si même JOUR, comparer les HEURES (timestamp complet)
+  if (dateAllocISO === dateEcheanceISO) {
+    // Si l'échéance a une heure précise ET l'allocation a des heures précises
+    if (echeanceHasTime && allocation.heureFin) {
+      const heureEcheance = dateEcheance.getHours() + dateEcheance.getMinutes() / 60;
+      const finAlloc = parseHeureString(allocation.heureFin);
 
-    if (finAlloc > heureEcheance) {
-      return {
-        type: TypeConflict.APRES_ECHEANCE,
-        allocationId: allocation.id,
-        tacheId: allocation.tacheId,
-        traducteurId: allocation.traducteurId,
-        date: formatOttawaISO(allocation.date),
-        heuresAllouees: allocation.heures,
-        heureDebut: allocation.heureDebut,
-        heureFin: allocation.heureFin,
-        explication: `L'allocation se termine à ${allocation.heureFin}, après l'échéance ${formatHeure(heureEcheance)}`,
-        contexte: { echeance: tache.dateEcheance }
-      };
+      if (finAlloc > heureEcheance + 0.01) { // tolérance 0.01h
+        return {
+          type: TypeConflict.APRES_ECHEANCE,
+          allocationId: allocation.id,
+          tacheId: allocation.tacheId,
+          traducteurId: allocation.traducteurId,
+          date: formatOttawaISO(allocation.date),
+          heuresAllouees: allocation.heures,
+          heureDebut: allocation.heureDebut,
+          heureFin: allocation.heureFin,
+          explication: `L'allocation se termine à ${allocation.heureFin}, après l'échéance ${formatHeure(heureEcheance)}`,
+          contexte: { echeance: tache.dateEcheance }
+        };
+      }
+    }
+    // Si l'échéance a une heure précise MAIS l'allocation n'a pas d'heures
+    else if (echeanceHasTime && !allocation.heureFin) {
+      // Warning: allocation sans heures précises le jour d'une deadline avec heure
+      // On peut être plus strict ici si nécessaire
+      console.warn(`[Conflit] Allocation sans heures précises le jour de deadline ${dateEcheanceISO}`);
     }
   }
 

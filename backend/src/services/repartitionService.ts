@@ -17,8 +17,10 @@ import {
   validateDateRange,
   parseHoraireTraducteur,
   capaciteNetteJour,
-  parseOttawaDateISO
+  parseOttawaDateISO,
+  OTTAWA_TIMEZONE
 } from '../utils/dateTimeOttawa';
+import { toZonedTime } from 'date-fns-tz';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
 import { JoursFeriesService } from './joursFeriesService';
 
@@ -91,7 +93,9 @@ function calculerPlageHoraireJAT(
   let heureFin: number;
   if (estJourEcheance && deadlineDateTime) {
     // Jour J: l'heure de fin est l'heure de deadline
-    heureFin = deadlineDateTime.getHours() + deadlineDateTime.getMinutes() / 60;
+    // CRITIQUE: Utiliser toZonedTime pour extraire l'heure dans le fuseau Ottawa
+    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
+    heureFin = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
   } else {
     // Autres jours: l'heure de fin est la fin de l'horaire
     heureFin = horaire.heureFin;
@@ -120,7 +124,7 @@ function calculerPlageHoraireJAT(
 
 /**
  * Calcule les plages horaires pour une allocation ÉQUILIBRÉE
- * RÈGLE MÉTIER: Allouer le plus TÔT possible dans la journée
+ * RÈGLE MÉTIER: Allouer le plus TARD possible dans la journée (comme JAT)
  * En tenant compte des autres tâches déjà allouées, pauses, heures bloquées
  * 
  * @param heuresAllouees Nombre d'heures à allouer ce jour
@@ -130,9 +134,9 @@ function calculerPlageHoraireJAT(
  * @returns {heureDebut, heureFin} Plages horaires au format "8h30", "12h", etc.
  * 
  * @example
- * // Allouer 4h sur un jour où 2h sont déjà utilisées (9h-11h)
- * calculerPlageHoraireEquilibree(4, {heureDebut: 8, heureFin: 17}, 2, date)
- * // => {heureDebut: "11h", heureFin: "16h"} (4h après les 2h existantes, pause exclue)
+ * // Allouer 4h sur un jour où 2h sont déjà utilisées (14h-16h)
+ * calculerPlageHoraireEquilibree(4, {heureDebut: 9, heureFin: 17}, 2, date)
+ * // => {heureDebut: "13h", heureFin: "17h"} (4h le plus tard possible, après pause)
  */
 function calculerPlageHoraireEquilibree(
   heuresAllouees: number,
@@ -140,43 +144,129 @@ function calculerPlageHoraireEquilibree(
   heuresDejaUtilisees: number,
   dateJour: Date
 ): { heureDebut: string; heureFin: string } {
-  // Stratégie: Allouer le plus tôt possible, en évitant la pause midi
+  // NOUVELLE STRATÉGIE: Allouer LE PLUS TARD POSSIBLE (comme JAT)
   
-  // Commencer au début de l'horaire
-  let debut = horaire.heureDebut;
+  // Capacité totale de la journée (en heures nettes, pause exclue)
+  const capaciteTotale = capaciteNetteJour(horaire, dateJour);
   
-  // Si des heures sont déjà utilisées, avancer en conséquence
-  if (heuresDejaUtilisees > 0) {
-    debut += heuresDejaUtilisees;
+  // Capacité restante après heures déjà utilisées
+  const capaciteRestante = capaciteTotale - heuresDejaUtilisees;
+  
+  // Si on alloue toute la capacité restante, on finit à l'heure de fin
+  // Sinon, on calcule en remontant depuis la fin
+  
+  let heureFin = horaire.heureFin;
+  let heureDebut: number;
+  
+  if (Math.abs(heuresAllouees - capaciteRestante) < 0.001) {
+    // Cas 1: On utilise toute la capacité restante
+    // On calcule le début en fonction des heures déjà utilisées
+    heureDebut = horaire.heureDebut + heuresDejaUtilisees;
     
-    // Si on traverse la pause 12h-13h, sauter
-    if (horaire.heureDebut < 12 && debut > 12 && debut < 13) {
-      debut = 13; // Commencer après la pause
-    } else if (debut >= 12 && debut < 13) {
-      debut = 13; // Commencer après la pause
+    // Si on traverse la pause midi, ajuster
+    if (heureDebut < 12 && heureFin > 13) {
+      heureDebut = Math.max(heureDebut, horaire.heureDebut);
+      if (heureDebut < 12) {
+        // On doit traverser la pause
+        const heuresAvantPause = 12 - heureDebut;
+        const heuresApresPause = heuresAllouees - heuresAvantPause;
+        if (heuresApresPause > 0) {
+          heureFin = 13 + heuresApresPause;
+        }
+      }
+    }
+  } else {
+    // Cas 2: On n'utilise pas toute la capacité - allouer LE PLUS TARD POSSIBLE
+    heureDebut = heureFin - heuresAllouees;
+    
+    // Si on traverse la pause 12h-13h en remontant, ajuster
+    if (heureDebut < 13 && heureFin > 13) {
+      // On traverse la pause en descendant
+      heureDebut -= 1; // Remonter d'une heure supplémentaire pour exclure la pause
+    } else if (heureDebut < 12 && heureFin > 12 && heureFin <= 13) {
+      // Cas spécial: on finit pendant ou juste avant la pause
+      heureDebut -= 1;
+    }
+    
+    // S'assurer qu'on ne commence pas avant l'heure de début
+    heureDebut = Math.max(heureDebut, horaire.heureDebut);
+    
+    // Vérifier qu'on ne chevauche pas les heures déjà utilisées
+    if (heuresDejaUtilisees > 0) {
+      const finHeuresExistantes = horaire.heureDebut + heuresDejaUtilisees;
+      if (heureDebut < finHeuresExistantes) {
+        // Conflit détecté - on doit allouer après les heures existantes
+        heureDebut = finHeuresExistantes;
+        
+        // Si on traverse la pause après ajustement
+        if (heureDebut >= 12 && heureDebut < 13) {
+          heureDebut = 13;
+        }
+        
+        heureFin = heureDebut + heuresAllouees;
+        
+        // Réajuster si on traverse la pause
+        if (heureDebut < 12 && heureFin > 12) {
+          heureFin += 1; // Ajouter 1h pour la pause
+        }
+      }
     }
   }
   
-  // Calculer la fin en tenant compte de la pause
-  let fin = debut + heuresAllouees;
+  // S'assurer qu'on ne dépasse pas la fin de l'horaire
+  heureFin = Math.min(heureFin, horaire.heureFin);
   
-  // Si on traverse la pause 12h-13h, ajouter 1h
-  if (debut < 12 && fin > 12) {
-    // On commence avant midi et on termine après
-    // Ajouter 1h pour la pause
-    fin += 1;
-  } else if (debut < 13 && fin >= 13 && debut >= 12) {
-    // On commence pendant la pause (12h-13h) ou juste avant
-    // Ajouter 1h pour sauter la pause
-    fin += 1;
+  return {
+    heureDebut: formatHeure(heureDebut),
+    heureFin: formatHeure(heureFin)
+  };
+}
+
+/**
+ * Calcule les plages horaires pour une allocation PEPS (Premier Entré Premier Sorti)
+ * RÈGLE MÉTIER: Allouer le plus TÔT possible dans la journée (inverse de JAT)
+ * En tenant compte des autres tâches déjà allouées, pauses, heures bloquées
+ * 
+ * @param heuresAllouees Nombre d'heures à allouer ce jour
+ * @param horaire Horaire du traducteur
+ * @param heuresDejaUtilisees Heures déjà utilisées ce jour (autres tâches)
+ * @param dateJour Date du jour (pour vérifier pause midi)
+ * @returns {heureDebut, heureFin} Plages horaires au format "8h30", "12h", etc.
+ */
+function calculerPlageHorairePEPS(
+  heuresAllouees: number,
+  horaire: { heureDebut: number; heureFin: number },
+  heuresDejaUtilisees: number,
+  dateJour: Date
+): { heureDebut: string; heureFin: string } {
+  // STRATÉGIE PEPS: Allouer LE PLUS TÔT POSSIBLE (dès le début de la journée)
+  
+  // Point de départ: juste après les heures déjà utilisées, ou début de journée
+  let heureDebut = horaire.heureDebut + heuresDejaUtilisees;
+  
+  // Si on commence dans la pause midi, décaler après
+  if (heureDebut >= 12 && heureDebut < 13) {
+    heureDebut = 13;
+  }
+  
+  let heureFin = heureDebut + heuresAllouees;
+  
+  // Si on traverse la pause midi (12h-13h), ajouter 1h
+  if (heureDebut < 12 && heureFin > 12) {
+    heureFin += 1; // Ajouter 1h pour la pause
+    
+    // Si on finit dans la pause, décaler après
+    if (heureFin > 12 && heureFin <= 13) {
+      heureFin = 13 + (heureFin - 12);
+    }
   }
   
   // S'assurer qu'on ne dépasse pas la fin de l'horaire
-  fin = Math.min(fin, horaire.heureFin);
+  heureFin = Math.min(heureFin, horaire.heureFin);
   
   return {
-    heureDebut: formatHeure(debut),
-    heureFin: formatHeure(fin)
+    heureDebut: formatHeure(heureDebut),
+    heureFin: formatHeure(heureFin)
   };
 }
 
@@ -234,8 +324,13 @@ export async function repartitionJusteATemps(
     ? normalizeToOttawaWithTime(dateEcheanceInput, true, 'dateEcheance')
     : { ...normalizeToOttawa(dateEcheanceInput, 'dateEcheance'), hasTime: false };
 
+  // CORRECTION: Extraire la date seule (YYYY-MM-DD) pour comparaisons cohérentes
+  // dateEcheanceISO peut contenir "YYYY-MM-DD" ou "YYYY-MM-DDTHH:mm:ss" selon hasTime
+  const dateEcheanceJourSeul = formatOttawaISO(echeance);
+
   if (debug) {
     console.debug(`[JAT] Début: traducteurId=${traducteurId}, heuresTotal=${heuresTotal}, dateEcheance=${dateEcheanceISO}`);
+    console.debug(`[JAT] Date échéance (jour seul): ${dateEcheanceJourSeul}`);
     if (modeTimestamp && echeanceHasTime) {
       console.debug(`[JAT] Mode timestamp: échéance avec heure précise détectée`);
     }
@@ -284,7 +379,7 @@ export async function repartitionJusteATemps(
     // - Respecte l'horaire du traducteur (heureDebut-heureFin)
     // - Exclut automatiquement la pause 12h-13h
     // - Si deadline le même jour, limite à l'heure de la deadline
-    const estJourEcheance = formatOttawaISO(d) === dateEcheanceISO;
+    const estJourEcheance = formatOttawaISO(d) === dateEcheanceJourSeul;
     const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
     let capaciteNette = capaciteNetteJour(horaire, d, deadlineDateTime);
     
@@ -324,7 +419,7 @@ export async function repartitionJusteATemps(
       // - Respecte l'horaire du traducteur
       // - Exclut automatiquement la pause 12h-13h
       // - Si deadline le même jour, limite à l'heure de la deadline
-      const estJourEcheance = iso === dateEcheanceISO.split('T')[0];
+      const estJourEcheance = iso === dateEcheanceJourSeul;
       const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
       let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
       
@@ -390,6 +485,9 @@ export async function repartitionEquilibree(
   const { date: dateFin, hasTime: finHasTime } = normalizeToOttawaWithTime(dateFinInput, true, 'dateFin');
   validateDateRange(dateDebut, dateFin);
 
+  // CORRECTION: Extraire la date seule (YYYY-MM-DD) pour comparaisons cohérentes
+  const dateFinJourSeul = formatOttawaISO(dateFin);
+
   const jours = businessDaysOttawa(dateDebut, dateFin);
   if (jours.length === 0) throw new Error('Aucun jour ouvrable dans la période');
 
@@ -401,7 +499,7 @@ export async function repartitionEquilibree(
       const utilisees = heuresParJour[iso] || 0;
       
       // Déterminer si c'est le jour de la deadline avec heure précise
-      const estJourEcheance = iso === formatOttawaISO(dateFin);
+      const estJourEcheance = iso === dateFinJourSeul;
       const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
 
       // Utiliser la capacité nette réelle (horaire - pause - deadline)
@@ -537,6 +635,9 @@ export async function repartitionPEPS(
   const { date: dateFin, hasTime: finHasTime } = normalizeToOttawaWithTime(dateFinInput, true, 'dateFin');
   validateDateRange(dateDebut, dateFin);
 
+  // CORRECTION: Extraire la date seule (YYYY-MM-DD) pour comparaisons cohérentes
+  const dateFinJourSeul = formatOttawaISO(dateFin);
+
   const jours = businessDaysOttawa(dateDebut, dateFin);
   if (jours.length === 0) throw new Error('Aucun jour ouvrable dans la période');
 
@@ -552,7 +653,7 @@ export async function repartitionPEPS(
     const utilisees = heuresParJour[iso] || 0;
     
     // Déterminer si c'est le jour de la deadline avec heure précise
-    const estJourEcheance = iso === formatOttawaISO(dateFin);
+    const estJourEcheance = iso === dateFinJourSeul;
     const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
 
     // Utiliser la capacité nette réelle (horaire - pause - deadline)
@@ -561,8 +662,8 @@ export async function repartitionPEPS(
     if (libre <= 0) continue;
     const alloue = Math.min(libre, restant);
     
-    // Calculer les plages horaires (PEPS = le plus tôt possible, comme ÉQUILIBRÉ)
-    const plages = calculerPlageHoraireEquilibree(alloue, horaire, utilisees, jour);
+    // Calculer les plages horaires (PEPS = le plus TÔT possible, inverse de JAT)
+    const plages = calculerPlageHorairePEPS(alloue, horaire, utilisees, jour);
     
     resultat.push({ 
       date: iso, 
@@ -697,6 +798,42 @@ export async function validerRepartition(
   for (const r of repartition) {
     // Utiliser parseOttawaDateISO pour garantir la bonne timezone
     const dateObj = parseOttawaDateISO(r.date);
+    
+    // VALIDATION CRITIQUE: Vérifier que la date+heure n'est pas après l'échéance
+    if (deadlineDate) {
+      const dateObjISO = formatOttawaISO(dateObj);
+      const deadlineISO = formatOttawaISO(deadlineDate);
+      
+      // 1. Vérifier si la DATE dépasse l'échéance (comparaison stricte date)
+      if (dateObjISO > deadlineISO) {
+        erreurs.push(`Date ${r.date} dépasse la date d'échéance ${deadlineISO}. Distribution après l'échéance interdite.`);
+        continue;
+      }
+      
+      // 2. Si même jour: vérifier les HEURES (timestamp complet)
+      if (dateObjISO === deadlineISO) {
+        // Si l'échéance a une heure précise ET que la répartition a des heures précises
+        if (deadlineHasTime && r.heureFin) {
+          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
+          const heureFin = parseHeureString(r.heureFin);
+          if (heureFin > heureEcheance + 0.01) { // tolérance 0.01h pour floating point
+            erreurs.push(`Le ${r.date}, heure de fin ${r.heureFin} dépasse l'heure d'échéance ${formatHeure(heureEcheance)}. Distribution au-delà de l'échéance interdite.`);
+            continue;
+          }
+        }
+        // Si l'échéance a une heure précise MAIS la répartition n'a pas d'heureDebut/heureFin
+        // On doit construire un timestamp pour comparer correctement
+        else if (deadlineHasTime && !r.heureFin) {
+          // La répartition n'a pas d'heures précises, donc on assume qu'elle se termine à la fin de journée
+          // Or si l'échéance est par exemple à 14h00 le même jour, on ne peut pas travailler toute la journée
+          // Cette situation devrait être gérée par l'algorithme qui doit fournir heureDebut/heureFin
+          // Pour la validation, on va accepter mais logger un avertissement
+          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
+          console.warn(`[Validation] ${r.date}: échéance à ${formatHeure(heureEcheance)} mais répartition sans heures précises. Accepté mais risque de dépassement.`);
+        }
+      }
+    }
+    
     const ajustements = await prisma.ajustementTemps.findMany({
       where: {
         traducteurId,
