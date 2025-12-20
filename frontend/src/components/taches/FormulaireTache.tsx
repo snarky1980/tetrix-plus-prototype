@@ -53,7 +53,7 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   tacheId,
   onSuccess,
   onCancel,
-  compact = false,
+  compact: _compact = false,
 }) => {
   const [etape, setEtape] = useState(1);
   const [loading, setLoading] = useState(true);

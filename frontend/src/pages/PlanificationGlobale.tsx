@@ -4,22 +4,22 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
+import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
-import { FormulaireTache } from '../components/taches/FormulaireTache';
 import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
 import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
+import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { useAutoRefresh, formatTimeAgo } from '../hooks/useAutoRefresh';
 import { clientService } from '../services/clientService';
 import { sousDomaineService } from '../services/sousDomaineService';
-import { domaineService, Domaine } from '../services/domaineService';
 import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
 import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, subDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateTimeDisplay, getNextBusinessDay } from '../utils/dateTimeOttawa';
-import { formatDateAvecJour } from '../utils/formatters';
+import { formatNumeroProjet, formatDateAvecJour } from '../utils/formatters';
 import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -29,7 +29,42 @@ const PlanificationGlobale: React.FC = () => {
   const { utilisateur } = useAuth();
   
   // Utiliser les fonctions timezone-aware d'Ottawa
+  const dateISO = formatOttawaISO;
   const parseISODate = parseOttawaDateISO;
+  
+  // Fonction helper pour convertir "9h", "13h30" en "09:00", "13:30"
+  const convertirHeureVersFomatHTML = (heure: string | undefined): string => {
+    if (!heure) return '09:00';
+    // Si déjà au bon format (HH:MM), retourner tel quel
+    if (/^\d{2}:\d{2}$/.test(heure)) return heure;
+    
+    // Convertir "9h", "13h30", "9h00" etc. en "09:00", "13:30"
+    const match = heure.match(/^(\d{1,2})h(\d{2})?$/);
+    if (match) {
+      const heures = match[1].padStart(2, '0');
+      const minutes = match[2] || '00';
+      return `${heures}:${minutes}`;
+    }
+    return '09:00'; // Fallback
+  };
+  
+  // Fonction pour calculer l'heure de fin en fonction du début et de la durée
+  const calculerHeureFin = (heureDebut: string, heures: number): string => {
+    // Convertir l'heure de début en nombre décimal (ex: "09:30" -> 9.5)
+    const [h, m] = heureDebut.split(':').map(Number);
+    let debut = h + m / 60;
+    
+    // Calculer la fin
+    let fin = debut + heures;
+    
+    // Si on traverse la pause midi (12h-13h), ajouter 1h
+    if (debut < 12 && fin > 12) {
+      fin += 1;
+    }
+    
+    // Convertir en format HH:MM
+    const heuresFin = Math.floor(fin);
+    const minutesFin = Math.round((fin - heuresFin) * 60);
     
     return `${heuresFin.toString().padStart(2, '0')}:${minutesFin.toString().padStart(2, '0')}`;
   };
@@ -128,14 +163,20 @@ const PlanificationGlobale: React.FC = () => {
   // Recherche de traducteur pour éviter le défilement
   const [searchTraducteur, setSearchTraducteur] = useState('');
 
-  // Modal ajout de tâche
+  // Modal ajout de tâche - État complet
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
+  const [etapeCreation, setEtapeCreation] = useState(1); // 1 = infos, 2 = répartition
+  const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [sousDomaines, setSousDomaines] = useState<SousDomaine[]>([]);
+  const [pairesDisponibles, setPairesDisponibles] = useState<PaireLinguistique[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [erreurCreation, setErreurCreation] = useState('');
 
   const [formTache, setFormTache] = useState({
     numeroProjet: '',
     traducteurId: '',
     clientId: '',
-    domaine: '',
     sousDomaineId: '',
     paireLinguistiqueId: '',
     typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE',
@@ -161,6 +202,43 @@ const PlanificationGlobale: React.FC = () => {
   // Modal édition de tâche
   const [showEditTaskModal, setShowEditTaskModal] = useState(false);
   const [tacheEnEdition, setTacheEnEdition] = useState<string | null>(null);
+  const [etapeEdition, setEtapeEdition] = useState(1);
+  const [formEdition, setFormEdition] = useState({
+    numeroProjet: '',
+    traducteurId: '',
+    clientId: '',
+    sousDomaineId: '',
+    paireLinguistiqueId: '',
+    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE',
+    specialisation: '',
+    description: '',
+    heuresTotal: 0,
+    compteMots: 0,
+    dateEcheance: '',
+    heureEcheance: '17:00',
+    priorite: 'REGULIER' as 'URGENT' | 'REGULIER',
+    typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
+    dateDebut: '',
+    dateFin: '',
+    repartitionAuto: true,
+    repartitionManuelle: [] as { date: string; heures: number }[],
+  });
+  const [previewJATEdit, setPreviewJATEdit] = useState<{ date: string; heures: number }[] | null>(null);
+  const [loadingPreviewEdit, setLoadingPreviewEdit] = useState(false);
+  const [erreurEdition, setErreurEdition] = useState('');
+
+  // État pour le panneau gauche collapsible
+  const [panneauOuvert, setPanneauOuvert] = useState(true);
+
+  // État pour afficher les tâches d'une cellule sélectionnée
+  const [celluleSelectionnee, setCelluleSelectionnee] = useState<{
+    traducteurId: string;
+    traducteurNom: string;
+    date: string;
+    taches: any[];
+  } | null>(null);
+  const [loadingTaches, setLoadingTaches] = useState(false);
+  const [tacheDetaillee, setTacheDetaillee] = useState<any | null>(null);
 
   // État pour la modal de blocage de temps
   const [showBlocageModal, setShowBlocageModal] = useState(false);
@@ -1306,16 +1384,14 @@ const PlanificationGlobale: React.FC = () => {
       setLoadingOptions(true);
       setOptionsError(null);
       try {
-        const [clientsData, domainesData, sousDomainesData, traducteursData] = await Promise.all([
+        const [clientsData, sousDomainesData, traducteursData] = await Promise.all([
           clientService.obtenirClients(true),
-          domaineService.obtenirDomaines(),
           sousDomaineService.obtenirSousDomaines(true),
           traducteurService.obtenirTraducteurs({ actif: true }),
         ]);
 
         // Stocker pour le formulaire de création
         setClients(clientsData);
-        setDomaines(domainesData);
         setSousDomaines(sousDomainesData);
         setTraducteurs(traducteursData);
 
@@ -1877,7 +1953,7 @@ const PlanificationGlobale: React.FC = () => {
 
       {/* Modal Ajouter une tâche */}
       <Modal
-        titre="Formulaire de création de tâches"
+        titre={`Formulaire de création de tâches - Étape ${etapeCreation}/2`}
         ouvert={showAddTaskModal}
         onFermer={() => {
           setShowAddTaskModal(false);
@@ -1885,15 +1961,650 @@ const PlanificationGlobale: React.FC = () => {
         }}
         ariaDescription="Formulaire de création de tâches"
       >
-        <FormulaireTache
-          onSuccess={() => {
-            setShowAddTaskModal(false);
-          }}
-          onCancel={() => {
-            setShowAddTaskModal(false);
-          }}
-          compact
-        />
+        <div className="space-y-4">
+          {/* Étape 1 : Informations de base */}
+          {etapeCreation === 1 && (
+            <div className="space-y-4">
+              {/* Section Champs obligatoires */}
+              <div className="space-y-4 p-4 bg-blue-50 border-2 border-blue-300 rounded">
+                <h3 className="text-sm font-bold text-blue-900 mb-2">📝 Informations obligatoires</h3>
+                
+                {/* Numéro de projet */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Numéro de projet <span className="text-red-600">*</span></label>
+                  <Input
+                    type="text"
+                    value={formTache.numeroProjet}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const formatted = formatNumeroProjet(e.target.value);
+                      setFormTache({ ...formTache, numeroProjet: formatted });
+                    }}
+                    placeholder="123-4567-001"
+                    maxLength={12}
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Traducteur */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Traducteur <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formTache.traducteurId}
+                    onChange={(e) => setFormTache({ ...formTache, traducteurId: e.target.value })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="">Rechercher ou sélectionner un traducteur...</option>
+                    {traducteurs.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.disponiblePourTravail ? '🟢 ' : ''}
+                        {t.nom}
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                      </option>
+                    ))}
+                  </Select>
+                  {formTache.traducteurId && (
+                    <BoutonPlanificationTraducteur 
+                      traducteurId={formTache.traducteurId}
+                      className="mt-2 text-xs px-3 py-1.5 w-full hover:bg-blue-50"
+                    />
+                  )}
+                </div>
+
+                {/* Type de tâche */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Type de tâche <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formTache.typeTache}
+                    onChange={(e) => setFormTache({ ...formTache, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="TRADUCTION">Traduction</option>
+                    <option value="REVISION">Révision</option>
+                    <option value="RELECTURE">Relecture</option>
+                    <option value="ENCADREMENT">Encadrement</option>
+                    <option value="AUTRE">Autre</option>
+                  </Select>
+                </div>
+
+                {/* Heures totales */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Heures totales <span className="text-red-600">*</span></label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formTache.heuresTotal}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, heuresTotal: e.target.value })}
+                    placeholder="Ex: 4.5"
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Date d'échéance */}
+                <DateTimeInput
+                  label="Date d'échéance"
+                  value={formTache.dateEcheance}
+                  onChange={(value) => setFormTache({ ...formTache, dateEcheance: value })}
+                  includeTime={true}
+                  required
+                />
+
+                {/* Priorité */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Priorité <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formTache.priorite}
+                    onChange={(e) => setFormTache({ ...formTache, priorite: e.target.value as 'URGENT' | 'REGULIER' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="REGULIER">Régulier</option>
+                    <option value="URGENT">Urgent</option>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Section Champs optionnels */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">📎 Informations optionnelles</h3>
+                
+                {/* Paire linguistique (optionnel) */}
+                {formTache.traducteurId && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Paire linguistique <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                    <Select
+                      value={formTache.paireLinguistiqueId}
+                      onChange={(e) => setFormTache({ ...formTache, paireLinguistiqueId: e.target.value })}
+                    >
+                      <option value="">Aucune paire linguistique</option>
+                      {pairesDisponibles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.langueSource} → {p.langueCible}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+
+                {/* Compte de mots (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Compte de mots <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formTache.compteMots}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, compteMots: e.target.value })}
+                    placeholder="Ex: 5000"
+                  />
+                </div>
+
+                {/* Client (optionnel) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Client <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                <Select
+                  value={formTache.clientId}
+                  onChange={(e) => setFormTache({ ...formTache, clientId: e.target.value })}
+                >
+                  <option value="">Aucun client</option>
+                  {clients.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nom}</option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Sous-domaine (optionnel) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Sous-domaine <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                <Select
+                  value={formTache.sousDomaineId}
+                  onChange={(e) => setFormTache({ ...formTache, sousDomaineId: e.target.value })}
+                >
+                  <option value="">Aucun sous-domaine</option>
+                  {sousDomaines.map((sd) => (
+                    <option key={sd.id} value={sd.id}>{sd.nom}</option>
+                  ))}
+                </Select>
+              </div>
+
+              {/* Spécialisation (optionnel) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Spécialisation <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                <Input
+                  type="text"
+                  value={formTache.specialisation}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, specialisation: e.target.value })}
+                  placeholder="Ex: Médical, Juridique, Technique..."
+                />
+              </div>
+
+                {/* Commentaire (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Commentaire <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <textarea
+                    value={formTache.description}
+                    onChange={(e) => setFormTache({ ...formTache, description: e.target.value })}
+                    placeholder="Ajoutez un commentaire ou des détails..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Mode de répartition */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-gray-900 mb-2">⚙️ Mode de répartition <span className="text-red-600">*</span></h3>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'JUSTE_TEMPS' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="JUSTE_TEMPS"
+                      checked={formTache.typeRepartition === 'JUSTE_TEMPS'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">📊 Juste à temps (JAT)</div>
+                      <div className="text-xs text-gray-600 mt-1">Alloue les heures le plus TARD possible, en remontant depuis l'échéance. Optimise pour terminer juste à temps.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'PEPS' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="PEPS"
+                      checked={formTache.typeRepartition === 'PEPS'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">🔄 Premier Entré, Premier Sorti (PEPS)</div>
+                      <div className="text-xs text-gray-600 mt-1">Alloue les heures le plus TÔT possible, en partant d'aujourd'hui. Commence immédiatement et remplit vers l'avant jusqu'à l'échéance.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'EQUILIBRE' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="EQUILIBRE"
+                      checked={formTache.typeRepartition === 'EQUILIBRE'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">⚖️ Équilibré sur le temps</div>
+                      <div className="text-xs text-gray-600 mt-1">Répartit uniformément les heures entre une date de début et de fin. Idéal pour une charge de travail constante.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formTache.typeRepartition === 'MANUEL' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartition"
+                      value="MANUEL"
+                      checked={formTache.typeRepartition === 'MANUEL'}
+                      onChange={(e) => setFormTache({ ...formTache, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">✍️ Manuel</div>
+                      <div className="text-xs text-gray-600 mt-1">Vous définissez vous-même les heures pour chaque jour. Contrôle total de la répartition.</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Messages d'erreur - visibles après les modes */}
+              {erreurCreation && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700 sticky top-0 z-10 shadow-md">
+                  {erreurCreation}
+                </div>
+              )}
+              
+              {/* Champs spécifiques selon le mode */}
+              {formTache.typeRepartition === 'PEPS' && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded">
+                  <DateTimeInput
+                    label="Date de début"
+                    value={formTache.dateDebut}
+                    onChange={(value) => setFormTache({ ...formTache, dateDebut: value })}
+                    includeTime={true}
+                    required
+                  />
+                </div>
+              )}
+              
+              {formTache.typeRepartition === 'EQUILIBRE' && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded space-y-2">
+                  <DateTimeInput
+                    label="Date de début"
+                    value={formTache.dateDebut}
+                    onChange={(value) => setFormTache({ ...formTache, dateDebut: value })}
+                    includeTime={true}
+                    required
+                  />
+                  <DateTimeInput
+                    label="Date de fin"
+                    value={formTache.dateFin}
+                    onChange={(value) => setFormTache({ ...formTache, dateFin: value })}
+                    includeTime={true}
+                    required
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddTaskModal(false);
+                    resetFormTache();
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="primaire"
+                  onClick={handleEtape1Suivant}
+                >
+                  Suivant →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Étape 2 : Répartition */}
+          {etapeCreation === 2 && (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
+                    <div className="text-xs space-y-1">
+                      <p><span className="font-medium">Projet:</span> {formTache.numeroProjet}</p>
+                      <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
+                      <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
+                      <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
+                      <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? (
+                        formTache.dateEcheance.includes('T') 
+                          ? formatDateAvecJour(formTache.dateEcheance.split('T')[0]) + ' à ' + formTache.dateEcheance.split('T')[1].substring(0, 5)
+                          : formatDateAvecJour(formTache.dateEcheance) + ' (fin de journée)'
+                      ) : 'Non définie'}</p>
+                      <p><span className="font-medium">Répartition:</span> {
+                        {
+                          'JUSTE_TEMPS': 'Juste à temps (JAT)',
+                          'EQUILIBRE': 'Équilibré',
+                          'PEPS': 'PEPS',
+                          'MANUEL': 'Manuelle'
+                        }[formTache.typeRepartition] || 'Non définie'
+                      }</p>
+                      {formTache.typeRepartition === 'EQUILIBRE' && formTache.dateDebut && formTache.dateFin && (
+                        <p><span className="font-medium">Période:</span> {
+                          formatDateAvecJour(formTache.dateDebut.split('T')[0]) + ' à ' + formTache.dateDebut.split('T')[1]?.substring(0, 5)
+                        } → {
+                          formatDateAvecJour(formTache.dateFin.split('T')[0]) + ' à ' + formTache.dateFin.split('T')[1]?.substring(0, 5)
+                        }</p>
+                      )}
+                      {formTache.typeRepartition === 'PEPS' && formTache.dateDebut && (
+                        <p><span className="font-medium">Date de début:</span> {
+                          formTache.dateDebut.includes('T')
+                            ? formatDateAvecJour(formTache.dateDebut.split('T')[0]) + ' à ' + formTache.dateDebut.split('T')[1]?.substring(0, 5)
+                            : formatDateAvecJour(formTache.dateDebut)
+                        }</p>
+                      )}
+                    </div>
+                  </div>
+                  {formTache.traducteurId && (
+                    <div className="flex-shrink-0">
+                      <BoutonPlanificationTraducteur 
+                        traducteurId={formTache.traducteurId}
+                        className="text-xs px-3 py-2 whitespace-nowrap"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Prévisualisation de la répartition */}
+              {erreurPreview && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  {erreurPreview}
+                </div>
+              )}
+
+              {formTache.typeRepartition === 'MANUEL' ? (
+                <div className="space-y-3 p-4 bg-purple-50 border-2 border-purple-300 rounded">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-purple-900">📅 Distribution des heures par jour</h3>
+                    <Button
+                      variant="primaire"
+                      onClick={() => {
+                        const lastDate = formTache.repartitionManuelle.length > 0
+                          ? formTache.repartitionManuelle[formTache.repartitionManuelle.length - 1].date
+                          : today;
+                        const nextDate = addDaysOttawa(parseISODate(lastDate), 1);
+                        setFormTache({
+                          ...formTache,
+                          repartitionManuelle: [
+                            ...formTache.repartitionManuelle,
+                            { date: dateISO(nextDate), heures: 0 }
+                          ]
+                        });
+                      }}
+                      className="text-xs px-3 py-1.5"
+                    >
+                      ➕ Ajouter un jour
+                    </Button>
+                  </div>
+
+                  {(() => {
+                    const totalManuel = formTache.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+                    const heuresAttendu = parseFloat(formTache.heuresTotal as string) || 0;
+                    const correspondance = Math.abs(totalManuel - heuresAttendu) < 0.01;
+                    const restant = heuresAttendu - totalManuel;
+                    
+                    return (
+                      <div className={`p-3 rounded font-medium text-sm ${correspondance ? 'bg-green-100 border-2 border-green-500 text-green-900' : restant > 0 ? 'bg-yellow-100 border-2 border-yellow-500 text-yellow-900' : 'bg-red-100 border-2 border-red-500 text-red-900'}`}>
+                        <div className="flex justify-between items-center">
+                          <span>Total distribué: <strong>{totalManuel.toFixed(2)}h</strong> / {heuresAttendu.toFixed(2)}h</span>
+                          {correspondance ? (
+                            <span className="text-green-700 text-lg">✅ Complet</span>
+                          ) : restant > 0 ? (
+                            <span className="text-yellow-700">⚠️ Reste {restant.toFixed(2)}h à distribuer</span>
+                          ) : (
+                            <span className="text-red-700">❌ Dépassement de {Math.abs(restant).toFixed(2)}h</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  
+                  <div className="max-h-80 overflow-y-auto space-y-2 bg-white p-3 rounded border border-purple-200">
+                    {formTache.repartitionManuelle.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-gray-500 mb-3">Aucun jour défini</p>
+                        <p className="text-xs text-gray-400">Cliquez sur "➕ Ajouter un jour" pour commencer</p>
+                      </div>
+                    ) : (
+                      formTache.repartitionManuelle.map((item, idx) => {
+                        const dateObj = parseISODate(item.date);
+                        const jourSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][dateObj.getDay()];
+                        return (
+                          <div key={idx} className="flex gap-2 items-center p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
+                            <div className="flex-1 flex gap-2 items-center">
+                              <span className="text-xs font-semibold text-gray-600 w-8">{jourSemaine}</span>
+                              <Input
+                                type="date"
+                                value={item.date}
+                                onChange={(e) => {
+                                  const newRep = [...formTache.repartitionManuelle];
+                                  newRep[idx].date = e.target.value;
+                                  setFormTache({ ...formTache, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm flex-1"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                step="0.25"
+                                min="0"
+                                value={item.heures}
+                                onChange={(e) => {
+                                  const newRep = [...formTache.repartitionManuelle];
+                                  newRep[idx].heures = parseFloat(e.target.value) || 0;
+                                  setFormTache({ ...formTache, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm w-20 text-center font-semibold"
+                                placeholder="0.0"
+                              />
+                              <span className="text-xs text-gray-500">h</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const newRep = formTache.repartitionManuelle.filter((_, i) => i !== idx);
+                                setFormTache({ ...formTache, repartitionManuelle: newRep });
+                              }}
+                              className="text-sm px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                              title="Supprimer ce jour"
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {loadingPreview ? (
+                    <div className="text-center py-4 text-sm text-muted">
+                      ⏳ Calcul de la répartition...
+                    </div>
+                  ) : previewRepartition && previewRepartition.length > 0 ? (
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <div className="bg-gray-100 px-4 py-3 flex items-center justify-between border-b border-gray-300">
+                        <div className="flex items-center gap-2">
+                          <span className="text-base">📅</span>
+                          <h3 className="text-sm font-semibold text-gray-800">
+                            Répartition calculée 
+                            <span className="ml-2 text-xs font-normal text-gray-600">
+                              ({
+                                {
+                                  'JUSTE_TEMPS': 'JAT',
+                                  'EQUILIBRE': 'Équilibré',
+                                  'PEPS': 'PEPS',
+                                  'MANUEL': 'Manuel'
+                                }[formTache.typeRepartition]
+                              })
+                            </span>
+                          </h3>
+                        </div>
+                        <Button
+                          variant="outline"
+                          onClick={chargerPreviewRepartition}
+                          className="text-xs px-3 py-1.5 hover:bg-gray-200"
+                        >
+                          🔄 Recalculer
+                        </Button>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        <div className="divide-y divide-gray-200">
+                          {previewRepartition.map((r, idx) => (
+                            <div 
+                              key={r.date} 
+                              className={`px-4 py-3 transition-colors hover:bg-gray-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-800">
+                                    {formatDateAvecJour(r.date)}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    step="0.25"
+                                    min="0"
+                                    value={r.heures}
+                                    onChange={(e) => {
+                                      const nouvellesDuree = parseFloat(e.target.value) || 0;
+                                      const newPreview = [...previewRepartition];
+                                      newPreview[idx].heures = nouvellesDuree;
+                                      
+                                      // Recalculer l'heure de fin en fonction de la nouvelle durée
+                                      const heureDebut = convertirHeureVersFomatHTML(newPreview[idx].heureDebut);
+                                      newPreview[idx].heureFin = calculerHeureFin(heureDebut, nouvellesDuree);
+                                      
+                                      setPreviewRepartition(newPreview);
+                                    }}
+                                    className="text-sm w-16 text-center font-semibold"
+                                  />
+                                  <span className="text-xs text-gray-600">h</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm pl-0">
+                                <span className="text-xs text-gray-600 w-12">Plage:</span>
+                                <Input
+                                  type="time"
+                                  value={convertirHeureVersFomatHTML(r.heureDebut)}
+                                  onChange={(e) => {
+                                    const newPreview = [...previewRepartition];
+                                    newPreview[idx].heureDebut = e.target.value;
+                                    setPreviewRepartition(newPreview);
+                                  }}
+                                  className="text-sm w-24"
+                                />
+                                <span className="text-gray-400">→</span>
+                                <Input
+                                  type="time"
+                                  value={convertirHeureVersFomatHTML(r.heureFin)}
+                                  onChange={(e) => {
+                                    const newPreview = [...previewRepartition];
+                                    newPreview[idx].heureFin = e.target.value;
+                                    setPreviewRepartition(newPreview);
+                                  }}
+                                  className="text-sm w-24"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="bg-gray-100 px-4 py-3 border-t border-gray-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-gray-700">Total</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-gray-600">{previewRepartition.length} jours</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-blue-600">
+                                {previewRepartition.reduce((s, r) => s + r.heures, 0).toFixed(2)}h
+                              </span>
+                              <span className="text-xs text-gray-500">/</span>
+                              <span className="text-sm text-gray-600">
+                                {parseFloat(formTache.heuresTotal as string || '0').toFixed(2)}h
+                              </span>
+                              {Math.abs(previewRepartition.reduce((s, r) => s + r.heures, 0) - parseFloat(formTache.heuresTotal as string || '0')) > 0.01 && (
+                                <span className={`text-xs font-medium ml-2 ${
+                                  previewRepartition.reduce((s, r) => s + r.heures, 0) < parseFloat(formTache.heuresTotal as string || '0')
+                                    ? 'text-orange-600'
+                                    : 'text-red-600'
+                                }`}>
+                                  {previewRepartition.reduce((s, r) => s + r.heures, 0) < parseFloat(formTache.heuresTotal as string || '0')
+                                    ? `(reste ${(parseFloat(formTache.heuresTotal as string || '0') - previewRepartition.reduce((s, r) => s + r.heures, 0)).toFixed(2)}h)`
+                                    : `(excès ${(previewRepartition.reduce((s, r) => s + r.heures, 0) - parseFloat(formTache.heuresTotal as string || '0')).toFixed(2)}h)`
+                                  }
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-sm text-muted border border-dashed border-gray-300 rounded">
+                      Aucune répartition générée
+                    </div>
+                  )}
+                </>
+              )}
+
+              {erreurCreation && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                  {erreurCreation}
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => setEtapeCreation(1)}
+                >
+                  ← Retour
+                </Button>
+                <Button
+                  variant="primaire"
+                  onClick={() => handleSubmitTache()}
+                  disabled={
+                    submitting || 
+                    (formTache.typeRepartition === 'MANUEL' && formTache.repartitionManuelle.length === 0) ||
+                    (formTache.typeRepartition !== 'MANUEL' && (!previewRepartition || previewRepartition.length === 0))
+                  }
+                >
+                  {submitting ? 'Création...' : 'Créer la tâche'}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </Modal>
 
       {/* Modal Bloquer du temps */}
@@ -2027,17 +2738,508 @@ const PlanificationGlobale: React.FC = () => {
 
       {/* Modal Éditer une tâche */}
       <Modal
-        titre="Éditer la tâche"
+        titre={`Éditer la tâche - Étape ${etapeEdition}/2`}
         ouvert={showEditTaskModal}
-        onFermer={() => setShowEditTaskModal(false)}
+        onFermer={() => {
+          setShowEditTaskModal(false);
+          resetFormEdition();
+        }}
         ariaDescription="Formulaire pour éditer une tâche existante"
       >
-        <FormulaireTache
-          tacheId={tacheEnEdition || undefined}
-          onSuccess={() => setShowEditTaskModal(false)}
-          onCancel={() => setShowEditTaskModal(false)}
-          compact
-        />
+        <div className="space-y-4">
+          {erreurEdition && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+              {erreurEdition}
+            </div>
+          )}
+
+          {/* Étape 1 : Informations de base */}
+          {etapeEdition === 1 && (
+            <div className="space-y-4">
+              {/* Section Champs obligatoires */}
+              <div className="space-y-4 p-4 bg-blue-50 border-2 border-blue-300 rounded">
+                <h3 className="text-sm font-bold text-blue-900 mb-2">📝 Informations obligatoires</h3>
+                
+                {/* Numéro de projet */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Numéro de projet <span className="text-red-600">*</span></label>
+                  <Input
+                    type="text"
+                    value={formEdition.numeroProjet}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const formatted = formatNumeroProjet(e.target.value);
+                      setFormEdition({ ...formEdition, numeroProjet: formatted });
+                    }}
+                    placeholder="123-4567-001"
+                    maxLength={12}
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Traducteur */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Traducteur <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formEdition.traducteurId}
+                    onChange={(e) => setFormEdition({ ...formEdition, traducteurId: e.target.value })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="">Rechercher ou sélectionner un traducteur...</option>
+                    {traducteurs.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.disponiblePourTravail ? '🟢 ' : ''}
+                        {t.nom}
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                      </option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Type de tâche */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Type de tâche <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formEdition.typeTache}
+                    onChange={(e) => setFormEdition({ ...formEdition, typeTache: e.target.value as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="TRADUCTION">Traduction</option>
+                    <option value="REVISION">Révision</option>
+                    <option value="RELECTURE">Relecture</option>
+                    <option value="ENCADREMENT">Encadrement</option>
+                    <option value="AUTRE">Autre</option>
+                  </Select>
+                </div>
+
+                {/* Heures totales */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Heures totales <span className="text-red-600">*</span></label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={formEdition.heuresTotal || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, heuresTotal: parseFloat(e.target.value) || 0 })}
+                    placeholder="Ex: 4.5"
+                    required
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Compte de mots */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Compte de mots</label>
+                  <Input
+                    type="number"
+                    min="0"
+                    value={formEdition.compteMots || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, compteMots: parseInt(e.target.value) || 0 })}
+                    placeholder="Ex: 5000"
+                    className="border-2 border-blue-300"
+                  />
+                </div>
+
+                {/* Date d'échéance */}
+                <div>
+                  <DateTimeInput
+                    label="Date d'échéance"
+                    value={formEdition.dateEcheance}
+                    onChange={(value) => setFormEdition({ ...formEdition, dateEcheance: value })}
+                    includeTime={true}
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Section Champs optionnels */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-semibold text-gray-600 mb-2">📎 Informations optionnelles</h3>
+                
+                {/* Paire linguistique (optionnel) */}
+                {formEdition.traducteurId && (
+                  <div>
+                    <label className="block text-sm font-medium mb-1 text-gray-700">Paire linguistique <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                    <Select
+                      value={formEdition.paireLinguistiqueId}
+                      onChange={(e) => setFormEdition({ ...formEdition, paireLinguistiqueId: e.target.value })}
+                    >
+                      <option value="">Aucune paire linguistique</option>
+                      {pairesDisponibles.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.langueSource} → {p.langueCible}
+                        </option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+
+                {/* Client (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Client</label>
+                  <Select
+                    value={formEdition.clientId}
+                    onChange={(e) => setFormEdition({ ...formEdition, clientId: e.target.value })}
+                  >
+                    <option value="">Aucun client</option>
+                    {clients.map((c) => (
+                      <option key={c.id} value={c.id}>{c.nom}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Sous-domaine (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Sous-domaine</label>
+                  <Select
+                    value={formEdition.sousDomaineId}
+                    onChange={(e) => setFormEdition({ ...formEdition, sousDomaineId: e.target.value })}
+                  >
+                    <option value="">Aucun sous-domaine</option>
+                    {sousDomaines.map((sd) => (
+                      <option key={sd.id} value={sd.id}>{sd.nom}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {/* Spécialisation (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Spécialisation</label>
+                  <Input
+                    type="text"
+                    value={formEdition.specialisation}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, specialisation: e.target.value })}
+                    placeholder="Ex: Médical, Juridique, Technique..."
+                  />
+                </div>
+
+                {/* Commentaire (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-gray-700">Commentaire <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <textarea
+                    value={formEdition.description}
+                    onChange={(e) => setFormEdition({ ...formEdition, description: e.target.value })}
+                    placeholder="Ajoutez un commentaire ou des détails..."
+                    rows={3}
+                    className="w-full px-3 py-2 border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Mode de répartition */}
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-gray-900 mb-2">⚙️ Mode de répartition <span className="text-red-600">*</span></h3>
+                <div className="space-y-2">
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'JUSTE_TEMPS' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="JUSTE_TEMPS"
+                      checked={formEdition.typeRepartition === 'JUSTE_TEMPS'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">📊 Juste à temps (JAT)</div>
+                      <div className="text-xs text-gray-600 mt-1">Optimise en fonction de la charge actuelle. Les heures sont réparties intelligemment pour maximiser l'utilisation de la capacité disponible jusqu'à l'échéance.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'PEPS' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="PEPS"
+                      checked={formEdition.typeRepartition === 'PEPS'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">🔄 Première entrée, première sortie (PEPS)</div>
+                      <div className="text-xs text-gray-600 mt-1">Commence dès que possible et termine à l'échéance. Les heures sont affectées dans l'ordre chronologique.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'EQUILIBRE' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="EQUILIBRE"
+                      checked={formEdition.typeRepartition === 'EQUILIBRE'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">⚖️ Équilibré sur le temps</div>
+                      <div className="text-xs text-gray-600 mt-1">Répartit uniformément les heures entre une date de début et de fin. Idéal pour une charge de travail constante.</div>
+                    </div>
+                  </label>
+                  
+                  <label className="flex items-start gap-3 p-3 border-2 rounded cursor-pointer hover:bg-blue-50 transition-colors" style={{ borderColor: formEdition.typeRepartition === 'MANUEL' ? '#3b82f6' : '#d1d5db' }}>
+                    <input
+                      type="radio"
+                      name="typeRepartitionEdit"
+                      value="MANUEL"
+                      checked={formEdition.typeRepartition === 'MANUEL'}
+                      onChange={(e) => setFormEdition({ ...formEdition, typeRepartition: e.target.value as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' })}
+                      className="mt-1"
+                    />
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm">✍️ Manuel</div>
+                      <div className="text-xs text-gray-600 mt-1">Vous définissez vous-même les heures pour chaque jour. Contrôle total de la répartition.</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {formEdition.typeRepartition === 'PEPS' && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">Date de début</label>
+                  <Input
+                    type="date"
+                    value={formEdition.dateDebut}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateDebut: e.target.value })}
+                    required
+                  />
+                </div>
+              )}
+
+              {formEdition.typeRepartition === 'EQUILIBRE' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date de début</label>
+                    <Input
+                      type="date"
+                      value={formEdition.dateDebut}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateDebut: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Date de fin</label>
+                    <Input
+                      type="date"
+                      value={formEdition.dateFin}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, dateFin: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowEditTaskModal(false);
+                    resetFormEdition();
+                  }}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  variant="primaire"
+                  onClick={handleEtape1SuivantEdit}
+                >
+                  Suivant →
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Étape 2 : Répartition */}
+          {etapeEdition === 2 && (
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
+                    <div className="text-xs space-y-1">
+                      <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formEdition.traducteurId)?.nom}</p>
+                    </div>
+                  </div>
+                  {formEdition.traducteurId && (
+                    <div className="flex-shrink-0">
+                      <BoutonPlanificationTraducteur 
+                        traducteurId={formEdition.traducteurId}
+                        className="text-xs px-3 py-2 whitespace-nowrap"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {formEdition.repartitionAuto ? (
+                <div>
+                  <h3 className="text-sm font-semibold mb-2">Prévisualisation JAT</h3>
+                  
+                  {loadingPreviewEdit ? (
+                    <p className="text-sm text-muted">Calcul en cours...</p>
+                  ) : previewJATEdit && previewJATEdit.length > 0 ? (
+                    <div className="bg-blue-50 border border-blue-200 rounded p-3 max-h-64 overflow-y-auto">
+                      <div className="space-y-1.5">
+                        {previewJATEdit.map((r, idx) => (
+                          <div key={idx} className="flex justify-between items-center text-xs bg-white px-2 py-1 rounded">
+                            <span className="font-medium">{formatDateAvecJour(r.date)}</span>
+                            <span className="text-primary font-semibold">{r.heures}h</span>
+                          </div>
+                        ))}
+                      </div>
+                      <p className="text-xs text-muted mt-2">
+                        Total: {previewJATEdit.reduce((sum, r) => sum + r.heures, 0)}h sur {previewJATEdit.length} jours
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-600">Impossible de générer la répartition JAT</p>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-3 p-4 bg-purple-50 border-2 border-purple-300 rounded">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-purple-900">📅 Distribution des heures par jour</h3>
+                    <Button
+                      variant="primaire"
+                      onClick={() => {
+                        const lastDate = formEdition.repartitionManuelle.length > 0
+                          ? formEdition.repartitionManuelle[formEdition.repartitionManuelle.length - 1].date
+                          : today;
+                        const nextDate = addDaysOttawa(parseISODate(lastDate), 1);
+                        setFormEdition({
+                          ...formEdition,
+                          repartitionManuelle: [
+                            ...formEdition.repartitionManuelle,
+                            { date: dateISO(nextDate), heures: 0 }
+                          ]
+                        });
+                      }}
+                      className="text-xs px-3 py-1.5"
+                    >
+                      ➕ Ajouter un jour
+                    </Button>
+                  </div>
+
+                  {(() => {
+                    const totalManuel = formEdition.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+                    const heuresAttendu = Number(formEdition.heuresTotal) || 0;
+                    const correspondance = Math.abs(totalManuel - heuresAttendu) < 0.01;
+                    const restant = heuresAttendu - totalManuel;
+                    
+                    return (
+                      <div className={`p-3 rounded font-medium text-sm ${correspondance ? 'bg-green-100 border-2 border-green-500 text-green-900' : restant > 0 ? 'bg-yellow-100 border-2 border-yellow-500 text-yellow-900' : 'bg-red-100 border-2 border-red-500 text-red-900'}`}>
+                        <div className="flex justify-between items-center">
+                          <span>Total distribué: <strong>{totalManuel.toFixed(2)}h</strong> / {heuresAttendu.toFixed(2)}h</span>
+                          {correspondance ? (
+                            <span className="text-green-700 text-lg">✅ Complet</span>
+                          ) : restant > 0 ? (
+                            <span className="text-yellow-700">⚠️ Reste {restant.toFixed(2)}h à distribuer</span>
+                          ) : (
+                            <span className="text-red-700">❌ Dépassement de {Math.abs(restant).toFixed(2)}h</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  
+                  <div className="max-h-80 overflow-y-auto space-y-2 bg-white p-3 rounded border border-purple-200">
+                    {formEdition.repartitionManuelle.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-sm text-gray-500 mb-3">Aucun jour défini</p>
+                        <p className="text-xs text-gray-400">Cliquez sur "➕ Ajouter un jour" pour commencer</p>
+                      </div>
+                    ) : (
+                      formEdition.repartitionManuelle.map((item, idx) => {
+                        const dateObj = parseISODate(item.date);
+                        const jourSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][dateObj.getDay()];
+                        return (
+                          <div key={idx} className="flex gap-2 items-center p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
+                            <div className="flex-1 flex gap-2 items-center">
+                              <span className="text-xs font-semibold text-gray-600 w-8">{jourSemaine}</span>
+                              <Input
+                                type="date"
+                                value={item.date}
+                                onChange={(e) => {
+                                  const newRep = [...formEdition.repartitionManuelle];
+                                  newRep[idx].date = e.target.value;
+                                  setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm flex-1"
+                              />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Input
+                                type="number"
+                                step="0.25"
+                                min="0"
+                                value={item.heures}
+                                onChange={(e) => {
+                                  const newRep = [...formEdition.repartitionManuelle];
+                                  newRep[idx].heures = parseFloat(e.target.value) || 0;
+                                  setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm w-20 text-center font-semibold"
+                                placeholder="0.0"
+                              />
+                              <span className="text-xs text-gray-500">h</span>
+                            </div>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const newRep = formEdition.repartitionManuelle.filter((_, i) => i !== idx);
+                                setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                              }}
+                              className="text-sm px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                              title="Supprimer ce jour"
+                            >
+                              🗑️
+                            </Button>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-between pt-4 border-t">
+                <Button
+                  variant="outline"
+                  className="text-red-600 border-red-300 hover:bg-red-50"
+                  onClick={async () => {
+                    if (tacheEnEdition && confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+                      try {
+                        await tacheService.supprimerTache(tacheEnEdition);
+                        setShowEditTaskModal(false);
+                        resetFormEdition();
+                        window.location.reload();
+                      } catch (err: any) {
+                        setErreurEdition(err.message || 'Erreur lors de la suppression');
+                      }
+                    }
+                  }}
+                >
+                  🗑️ Supprimer
+                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setEtapeEdition(1)}
+                  >
+                    ← Retour
+                  </Button>
+                  <Button
+                    variant="primaire"
+                    onClick={handleUpdateTache}
+                    disabled={submitting || (formEdition.repartitionAuto && (!previewJATEdit || previewJATEdit.length === 0))}
+                  >
+                    {submitting ? 'Mise à jour...' : 'Mettre à jour la tâche'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </Modal>
 
       {/* Modal Charge de travail d'un traducteur */}
