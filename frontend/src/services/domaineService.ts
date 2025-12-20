@@ -13,7 +13,7 @@ export const domaineService = {
    */
   async obtenirDomaines(): Promise<Domaine[]> {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/domaines`, {
+    const response = await axios.get(`${API_URL}/api/domaines`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
