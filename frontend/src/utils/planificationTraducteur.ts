@@ -116,7 +116,6 @@ export function afficherPlanificationPopout(traducteur: Traducteur, planificatio
   // Calculer les statistiques globales
   const totalHeures = planification.reduce((sum, j) => sum + j.heuresUtilisees, 0);
   const totalCapacite = planification.reduce((sum, j) => sum + j.capacite, 0);
-  const chargeGlobale = totalCapacite > 0 ? (totalHeures / totalCapacite) * 100 : 0;
   
   // Dates par défaut
   const aujourdhui = new Date().toISOString().split('T')[0];
