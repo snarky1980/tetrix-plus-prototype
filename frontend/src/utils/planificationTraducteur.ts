@@ -113,10 +113,6 @@ export function afficherPlanificationPopout(traducteur: Traducteur, planificatio
     return;
   }
   
-  // Calculer les statistiques globales
-  const totalHeures = planification.reduce((sum, j) => sum + j.heuresUtilisees, 0);
-  const totalCapacite = planification.reduce((sum, j) => sum + j.capacite, 0);
-  
   // Dates par défaut
   const aujourdhui = new Date().toISOString().split('T')[0];
   const dans7jours = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
