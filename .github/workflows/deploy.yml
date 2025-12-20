@@ -29,6 +29,8 @@ jobs:
 
       - name: Build
         run: cd frontend && npm run build
+        env:
+          VITE_API_URL: https://tetrix-plus-backend.onrender.com/api
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
