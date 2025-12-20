@@ -400,60 +400,86 @@ export async function repartitionJusteATemps(
     throw new Error(`Capacité insuffisante dans la plage pour heuresTotal demandées (demandé: ${heuresTotal}h, disponible: ${capaciteDisponibleGlobale.toFixed(2)}h)`);
   }
 
-  // Allocation JAT (remplir à rebours depuis l'échéance, en excluant les weekends)
-  // RÈGLE MÉTIER: À rebours pour distribuer les jours, mais:
+  // STEP 1: Compter les jours de travail disponibles (excluant weekends et jours fériés)
+  const joursDeTravail: Date[] = [];
+  for (let i = 0; i < totalJours; i++) {
+    const d = addDaysOttawa(aujourdHui, i);
+    if (!isWeekendOttawa(d) && !JoursFeriesService.estJourFerie(d)) {
+      joursDeTravail.push(d);
+    }
+  }
+  const nombreJoursDeTravail = joursDeTravail.length;
+  
+  if (debug) {
+    console.debug(`[JAT] Nombre de jours de travail disponibles: ${nombreJoursDeTravail}`);
+  }
+  
+  // STEP 2: Calculer l'allocation équitable par jour
+  const heuresParJourEquitable = heuresTotal / nombreJoursDeTravail;
+  const heuresEntieres = Math.floor(heuresParJourEquitable);
+  const heuresRestantes = heuresTotal - (heuresEntieres * nombreJoursDeTravail);
+  
+  if (debug) {
+    console.debug(`[JAT] Répartition équitable: ${heuresEntieres}h base + ${heuresRestantes.toFixed(2)}h à répartir sur ${nombreJoursDeTravail} jours`);
+  }
+  
+  // Allocation JAT ÉQUILIBRÉE (diviser équitablement sur tous les jours de travail)
+  // RÈGLE MÉTIER MODIFIÉE: Division égale sur tous les jours disponibles
+  // - Chaque jour reçoit: floor(heuresTotal / nombreJours) heures
+  // - Les heures restantes se distribuent sur les premiers jours
   // - Jour J: premières heures disponibles (début de journée)
   // - Jours avant: dernières heures disponibles (fin de journée)
-  let restant = heuresTotal;
   const resultat: RepartitionItem[] = [];
-  let courant = echeance;
-  let iterations = 0;
-  while (restant > 0 && iterations < MAX_LOOKBACK_DAYS) {
-    if (courant < aujourdHui) break;
+  let heuresDistribuees = 0;
+  
+  for (let i = 0; i < joursDeTravail.length; i++) {
+    const courant = joursDeTravail[i];
     const iso = formatOttawaISO(courant);
-    // Ignorer les weekends ET jours fériés pour l'allocation
-    if (!isWeekendOttawa(courant) && !JoursFeriesService.estJourFerie(courant)) {
-      const utilisees = heuresParJour[iso] || 0;
+    const estJourEcheance = iso === dateEcheanceJourSeul;
+    
+    // Calculer les heures pour ce jour
+    let alloue = heuresEntieres;
+    // Distribuer les heures restantes sur les premiers jours
+    if (i < Math.round(heuresRestantes)) {
+      alloue += 1;
+    }
+    
+    // Valider que nous ne dépassons pas la capacité du jour
+    const utilisees = heuresParJour[iso] || 0;
+    const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
+    let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
+    
+    if (estJourEcheance && livraisonMatinale) {
+      capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
+    }
+    
+    const capaciteRestante = Math.max(capaciteNette - utilisees, 0);
+    const alloueEffectif = Math.min(alloue, capaciteRestante);
+    
+    if (alloueEffectif > 0) {
+      // Calculer les plages horaires exactes
+      const plages = calculerPlageHoraireJAT(alloueEffectif, horaire, estJourEcheance, deadlineDateTime);
       
-      // Calculer capacité nette pour ce jour:
-      // - Respecte l'horaire du traducteur
-      // - Exclut automatiquement la pause 12h-13h
-      // - Si deadline le même jour, limite à l'heure de la deadline
-      const estJourEcheance = iso === dateEcheanceJourSeul;
-      const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
-      let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
+      resultat.push({ 
+        date: iso, 
+        heures: alloueEffectif,
+        heureDebut: plages.heureDebut,
+        heureFin: plages.heureFin
+      });
+      heuresDistribuees += alloueEffectif;
+      heuresParJour[iso] = utilisees + alloueEffectif;
       
-      // Si livraison matinale, appliquer limite supplémentaire sur jour J
-      if (estJourEcheance && livraisonMatinale) {
-        capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
-      }
-      
-      const libre = Math.max(capaciteNette - utilisees, 0);
-      if (libre > 0) {
-        const alloue = Math.min(libre, restant);
-        
-        // Calculer les plages horaires exactes
-        const plages = calculerPlageHoraireJAT(alloue, horaire, estJourEcheance, deadlineDateTime);
-        
-        resultat.push({ 
-          date: iso, 
-          heures: alloue,
-          heureDebut: plages.heureDebut,
-          heureFin: plages.heureFin
-        });
-        restant -= alloue;
-        // Mettre à jour mémoire pour éviter double comptage si futur usage
-        heuresParJour[iso] = utilisees + alloue;
-        
-        if (debug) {
-          console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - à rebours depuis deadline]' : '[à rebours depuis fin journée]'}`);
-        }
+      if (debug) {
+        console.debug(`[JAT] ${iso}: ${alloueEffectif.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - début]' : '[fin journée]'}`);
       }
     }
-    courant = subDaysOttawa(courant, 1);
-    iterations++;
   }
-  if (restant > 0) throw new Error('Impossible de répartir toutes les heures (capacité insuffisante après allocation).');
+  
+  // Vérifier que toutes les heures ont été allouées
+  const tolerance = 1e-6;
+  if (Math.abs(heuresDistribuees - heuresTotal) > tolerance) {
+    throw new Error(`Impossible de répartir équitablement: distribué ${heuresDistribuees.toFixed(2)}h au lieu de ${heuresTotal}h (capacité insuffisante ou contraintes de plages horaires)`);
+  }
   
   // Retourner trié chronologiquement asc (pour cohérence frontend)
   const resultTrie = resultat.sort((a,b) => a.date.localeCompare(b.date));
