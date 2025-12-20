@@ -1222,20 +1222,47 @@ const PlanificationGlobale: React.FC = () => {
     }
   };
 
-  const chargerPreviewJATEdit = async () => {
+  const chargerPreviewRepartitionEdit = async () => {
     setLoadingPreviewEdit(true);
     setErreurEdition('');
     
     try {
-      const result = await repartitionService.previewJAT({
+      let result;
+      const params = {
         traducteurId: formEdition.traducteurId,
         heuresTotal: formEdition.heuresTotal,
-        dateEcheance: formEdition.dateEcheance,
-      });
+      };
+
+      switch (formEdition.typeRepartition) {
+        case 'PEPS':
+          result = await repartitionService.previewPEPS({
+            ...params,
+            dateEcheance: formEdition.dateEcheance,
+          });
+          break;
+        case 'EQUILIBRE':
+          result = await repartitionService.previewEquilibre({
+            ...params,
+            dateDebut: formEdition.dateDebut,
+            dateFin: formEdition.dateFin || formEdition.dateEcheance,
+          });
+          break;
+        case 'MANUEL':
+          // Mode manuel : afficher la répartition saisie
+          result = formEdition.repartitionManuelle;
+          break;
+        case 'JUSTE_TEMPS':
+        default:
+          result = await repartitionService.previewJAT({
+            ...params,
+            dateEcheance: formEdition.dateEcheance,
+          });
+      }
+      
       setPreviewJATEdit(result);
     } catch (err: any) {
-      console.error('Erreur preview JAT:', err);
-      setErreurEdition('Erreur lors du calcul JAT: ' + (err.response?.data?.erreur || err.message));
+      console.error('Erreur preview répartition:', err);
+      setErreurEdition('Erreur lors du calcul: ' + (err.response?.data?.erreur || err.message));
     } finally {
       setLoadingPreviewEdit(false);
     }
@@ -1265,7 +1292,7 @@ const PlanificationGlobale: React.FC = () => {
   const handleEtape1SuivantEdit = () => {
     if (validerEtape1Edit()) {
       if (formEdition.repartitionAuto) {
-        chargerPreviewJATEdit();
+        chargerPreviewRepartitionEdit();
       }
       setEtapeEdition(2);
     }
@@ -1413,6 +1440,17 @@ const PlanificationGlobale: React.FC = () => {
     setPending(prev => ({ ...prev, start: currentDate }));
     setApplied(prev => ({ ...prev, start: currentDate }));
   }, []); // Exécuté une seule fois au montage
+
+  // Recharger l'aperçu de répartition quand le mode change en édition
+  useEffect(() => {
+    if (showEditTaskModal && etapeEdition === 1 && formEdition.repartitionAuto && formEdition.typeRepartition) {
+      // Petit délai pour éviter les appels trop fréquents
+      const timer = setTimeout(() => {
+        chargerPreviewRepartitionEdit();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [formEdition.typeRepartition, formEdition.repartitionAuto, formEdition.dateEcheance, formEdition.dateDebut, formEdition.dateFin, showEditTaskModal]);
 
   return (
     <AppLayout titre="Planification globale" compact>
