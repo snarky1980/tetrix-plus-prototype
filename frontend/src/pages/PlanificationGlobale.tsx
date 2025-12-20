@@ -1241,7 +1241,7 @@ const PlanificationGlobale: React.FC = () => {
           });
           break;
         case 'EQUILIBRE':
-          result = await repartitionService.previewEquilibre({
+          result = await repartitionService.calculerRepartitionEquilibree({
             ...params,
             dateDebut: formEdition.dateDebut,
             dateFin: formEdition.dateFin || formEdition.dateEcheance,
