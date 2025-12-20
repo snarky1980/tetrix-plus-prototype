@@ -8,7 +8,7 @@ import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
 import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
 import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
-import BoutonPlanificationTraducteur from '../components/BoutonPlanificationTraducteur';
+import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { useAutoRefresh, formatTimeAgo } from '../hooks/useAutoRefresh';

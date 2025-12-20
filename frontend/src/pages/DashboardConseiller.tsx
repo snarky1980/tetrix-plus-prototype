@@ -8,7 +8,7 @@ import { Select } from '../components/ui/Select';
 import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { ConflictOverview } from '../components/ConflictOverview';
-import BoutonPlanificationTraducteur from '../components/BoutonPlanificationTraducteur';
+import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
 import { useAuth } from '../contexts/AuthContext';
 import { tacheService } from '../services/tacheService';
 import { formatDateDisplay } from '../utils/dateTimeOttawa';

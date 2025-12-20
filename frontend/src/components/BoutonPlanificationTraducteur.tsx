@@ -45,4 +45,4 @@ const BoutonPlanificationTraducteur: React.FC<BoutonPlanificationTraducteurProps
   );
 };
 
-export default BoutonPlanificationTraducteur;
+export { BoutonPlanificationTraducteur };

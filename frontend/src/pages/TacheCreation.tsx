@@ -11,9 +11,11 @@ import { Badge } from '../components/ui/Badge';
 import { traducteurService } from '../services/traducteurService';
 import { clientService } from '../services/clientService';
 import { sousDomaineService } from '../services/sousDomaineService';
+import { domaineService, Domaine } from '../services/domaineService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import { VerificationReviseurButton } from '../components/liaisons';
+import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
 import { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
 
 const TacheCreation: React.FC = () => {
@@ -23,6 +25,7 @@ const TacheCreation: React.FC = () => {
   // Données de référence
   const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
+  const [domaines, setDomaines] = useState<Domaine[]>([]);
   const [sousDomaines, setSousDomaines] = useState<SousDomaine[]>([]);
   const [pairesDisponibles, setPairesDisponibles] = useState<PaireLinguistique[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +36,7 @@ const TacheCreation: React.FC = () => {
   const [formData, setFormData] = useState({
     traducteurId: '',
     clientId: '',
+    domaine: '',
     sousDomaineId: '',
     paireLinguistiqueId: '',
     description: '',
@@ -64,13 +68,15 @@ const TacheCreation: React.FC = () => {
   const chargerDonnees = async () => {
     setLoading(true);
     try {
-      const [traducs, cls, doms] = await Promise.all([
+      const [traducs, cls, domns, doms] = await Promise.all([
         traducteurService.obtenirTraducteurs({ actif: true }),
         clientService.obtenirClients(true),
+        domaineService.obtenirDomaines(),
         sousDomaineService.obtenirSousDomaines(true),
       ]);
       setTraducteurs(traducs);
       setClients(cls);
+      setDomaines(domns);
       setSousDomaines(doms);
     } catch (err) {
       console.error('Erreur chargement:', err);
@@ -290,6 +296,15 @@ const TacheCreation: React.FC = () => {
                 </FormField>
 
                 {formData.traducteurId && (
+                  <div className="mb-3">
+                    <BoutonPlanificationTraducteur 
+                      traducteurId={formData.traducteurId}
+                      label="📅 Voir planning du traducteur"
+                    />
+                  </div>
+                )}
+
+                {formData.traducteurId && (
                   <FormField label="Paire linguistique" required>
                     <Select
                       value={formData.paireLinguistiqueId}
@@ -315,6 +330,20 @@ const TacheCreation: React.FC = () => {
                     {clients.map(c => (
                       <option key={c.id} value={c.id}>
                         {c.nom}
+                      </option>
+                    ))}
+                  </Select>
+                </FormField>
+
+                <FormField label="Domaine (optionnel)">
+                  <Select
+                    value={formData.domaine}
+                    onChange={e => setFormData({ ...formData, domaine: e.target.value })}
+                  >
+                    <option value="">Aucun domaine</option>
+                    {domaines.map(d => (
+                      <option key={d.nom} value={d.nom}>
+                        {d.nom}
                       </option>
                     ))}
                   </Select>
