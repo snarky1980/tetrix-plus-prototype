@@ -3,8 +3,8 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
-  // Base path pour GitHub Pages (uniquement en production)
-  base: process.env.NODE_ENV === 'production' ? '/tetrix-plus-prototype/' : '/',
+  // Pas de base path avec domaine personnalisé
+  base: '/',
   build: {
     // Force un nouveau hash à chaque build en incluant le timestamp
     rollupOptions: {
