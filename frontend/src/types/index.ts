@@ -197,6 +197,8 @@ export interface PlanificationGlobale {
       capacite: number;
       disponible: number;
       estWeekend?: boolean;
+      estFerie?: boolean;
+      nomFerie?: string;
     }>;
   }[];
 }

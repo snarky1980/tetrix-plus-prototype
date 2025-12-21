@@ -4,6 +4,7 @@ import prisma from '../config/database';
 import { calculerCouleurDisponibilite, estWeekend } from '../services/planificationService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
 import { parseOttawaDateISO } from '../utils/dateTimeOttawa';
+import { JoursFeriesService } from '../services/joursFeriesService';
 
 /**
  * Obtenir la planification d'un traducteur
@@ -393,7 +394,7 @@ export const obtenirPlanificationGlobale = async (
 
       // Construire structure dates avec couleur + disponibilité
       // Inclure TOUTES les dates de la période, même celles sans heures
-      const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean }> = {};
+      const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean; estFerie: boolean; nomFerie?: string }> = {};
       
       // Générer toutes les dates de la période
       const dateDebutParsed = parseOttawaDateISO(dateDebut as string);
@@ -405,6 +406,8 @@ export const obtenirPlanificationGlobale = async (
         const heures = heuresParDate[dateStr] || 0;
         const capacite = traducteur.capaciteHeuresParJour;
         const isWeekend = estWeekend(dateStr);
+        const isFerie = JoursFeriesService.estJourFerie(currentDate);
+        const nomFerie = isFerie ? JoursFeriesService.obtenirNomJourFerie(currentDate) : undefined;
         const couleur = calculerCouleurDisponibilite(heures, capacite);
         
         dates[dateStr] = {
@@ -413,6 +416,8 @@ export const obtenirPlanificationGlobale = async (
           capacite,
           disponible: Math.max(capacite - heures, 0),
           estWeekend: isWeekend,
+          estFerie: isFerie,
+          nomFerie: nomFerie ?? undefined,
         };
         
         currentDate.setDate(currentDate.getDate() + 1);

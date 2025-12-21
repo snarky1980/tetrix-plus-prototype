@@ -360,6 +360,30 @@ const PlanificationGlobale: React.FC = () => {
 
   const isToday = (iso: string) => iso === today;
 
+  // Map des jours fériés à partir des données de planification
+  const joursFeriesMap = useMemo(() => {
+    const map: Record<string, string | undefined> = {};
+    if (planificationGlobale?.planification?.[0]) {
+      const dates = planificationGlobale.planification[0].dates;
+      Object.entries(dates).forEach(([dateStr, info]) => {
+        if (info.estFerie) {
+          map[dateStr] = info.nomFerie;
+        }
+      });
+    }
+    return map;
+  }, [planificationGlobale]);
+
+  // Fonction pour vérifier si une date est fériée
+  const isFerie = (iso: string): boolean => {
+    return iso in joursFeriesMap;
+  };
+
+  // Fonction pour obtenir le nom du jour férié
+  const getNomFerie = (iso: string): string | undefined => {
+    return joursFeriesMap[iso];
+  };
+
   // Enrichir planificationGlobale pour inclure les weekends avec données vides
   const planificationEnrichie = useMemo(() => {
     if (!planificationGlobale) return null;
@@ -3853,20 +3877,24 @@ const PlanificationGlobale: React.FC = () => {
                     const month = d.getMonth() + 1;
                     const isTodayCol = isToday(iso);
                     const isWeekendCol = isWeekend(iso);
+                    const isFerieCol = isFerie(iso);
+                    const nomFerieCol = getNomFerie(iso);
+                    const isGrayed = isWeekendCol || isFerieCol;
                     return (
                       <th
                         key={iso}
                         className={`border-r border-border px-1 py-1.5 text-center font-semibold min-w-[52px] ${
-                          isTodayCol ? 'bg-blue-50' : isWeekendCol ? 'bg-gray-200' : ''
+                          isTodayCol ? 'bg-blue-50' : isGrayed ? 'bg-gray-200' : ''
                         }`}
+                        title={nomFerieCol || undefined}
                       >
                         <div className={`text-[10px] ${
-                          isTodayCol ? 'text-blue-700 font-bold' : isWeekendCol ? 'text-gray-500' : ''
+                          isTodayCol ? 'text-blue-700 font-bold' : isGrayed ? 'text-gray-500' : ''
                         }`}>
-                          {dayName.charAt(0).toUpperCase() + dayName.slice(1)}
+                          {isFerieCol ? '🎉' : dayName.charAt(0).toUpperCase() + dayName.slice(1)}
                         </div>
                         <div className={`text-[10px] ${
-                          isTodayCol ? 'text-blue-600' : isWeekendCol ? 'text-gray-400' : 'text-muted'
+                          isTodayCol ? 'text-blue-600' : isGrayed ? 'text-gray-400' : 'text-muted'
                         }`}>
                           {dayNum}/{month}
                         </div>
@@ -3930,6 +3958,9 @@ const PlanificationGlobale: React.FC = () => {
                         const info = ligne.dates[iso];
                         const isTodayCol = isToday(iso);
                         const isWeekendCol = isWeekend(iso);
+                        const isFerieCol = info?.estFerie || isFerie(iso);
+                        const nomFerieCol = info?.nomFerie || getNomFerie(iso);
+                        const isGrayed = isWeekendCol || isFerieCol;
                         let bgClass = 'bg-gray-100';
                         let textClass = 'text-gray-600';
                         
@@ -3937,7 +3968,7 @@ const PlanificationGlobale: React.FC = () => {
                         const capacite = info ? (info.capacite ?? ligne.traducteur.capaciteHeuresParJour) : ligne.traducteur.capaciteHeuresParJour;
                         const disponible = capacite - heures;
                         
-                        if (isWeekendCol) {
+                        if (isGrayed) {
                           bgClass = 'bg-gray-300';
                           textClass = 'text-gray-500';
                         } else {
@@ -3957,10 +3988,11 @@ const PlanificationGlobale: React.FC = () => {
                           <td
                             key={iso}
                             className={`border-r border-b border-border text-center px-1 py-1.5 ${bgClass} ${isTodayCol ? 'ring-2 ring-inset ring-blue-400' : ''}`}
+                            title={nomFerieCol || undefined}
                           >
-                            {isWeekendCol ? (
+                            {isGrayed ? (
                               <div className="w-full h-full flex items-center justify-center">
-                                <div className={`font-semibold text-xs ${textClass}`}>—</div>
+                                <div className={`font-semibold text-xs ${textClass}`}>{isFerieCol ? '🎉' : '—'}</div>
                               </div>
                             ) : (
                               <button

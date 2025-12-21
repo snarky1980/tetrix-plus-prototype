@@ -101,7 +101,7 @@ PlanificationRow.displayName = 'PlanificationRow';
  */
 export const PlanificationHeader = memo<{
   dates: string[];
-  formatDate: (date: string) => { dayName: string; dayNum: number; month: number; isWeekend: boolean };
+  formatDate: (date: string) => { dayName: string; dayNum: number; month: number; isWeekend: boolean; isFerie: boolean; nomFerie?: string };
 }>(({ dates, formatDate }) => (
   <thead className="sticky top-0 z-20">
     <tr>
@@ -109,13 +109,15 @@ export const PlanificationHeader = memo<{
         Traducteur
       </th>
       {dates.map((date) => {
-        const { dayName, dayNum, month, isWeekend } = formatDate(date);
+        const { dayName, dayNum, month, isWeekend, isFerie, nomFerie } = formatDate(date);
+        const isGrayed = isWeekend || isFerie;
         return (
           <th 
             key={date} 
-            className={`min-w-[60px] px-1 py-1 text-center font-medium border-r border-white/20 ${isWeekend ? 'bg-gray-400 text-gray-100' : 'bg-primary text-white'}`}
+            className={`min-w-[60px] px-1 py-1 text-center font-medium border-r border-white/20 ${isGrayed ? 'bg-gray-400 text-gray-100' : 'bg-primary text-white'}`}
+            title={nomFerie || undefined}
           >
-            <div className="text-[10px] uppercase">{dayName}</div>
+            <div className="text-[10px] uppercase">{isFerie ? '🎉' : dayName}</div>
             <div className="text-xs font-bold">
               {dayNum}/{month}
             </div>
