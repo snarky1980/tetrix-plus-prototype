@@ -10,11 +10,12 @@ import {
   supprimerBlocage,
   mettreAJourDisponibilite,
 } from '../controllers/traducteurController';
+import { obtenirPlanification } from '../controllers/planificationController';
 import {
   ajouterPaireLinguistique,
   supprimerPaireLinguistique,
 } from '../controllers/paireLinguistiqueController';
-import { authentifier, verifierRole } from '../middleware/auth';
+import { authentifier, verifierRole, verifierAccesTraducteur } from '../middleware/auth';
 import { valider } from '../middleware/validation';
 import {
   creerTraducteurSchema,
@@ -22,6 +23,7 @@ import {
   desactiverTraducteurSchema,
   ajouterPaireLinguistiqueSchema,
   supprimerPaireLinguistiqueSchema,
+  obtenirPlanificationSchema,
 } from '../validation/schemas';
 
 const router = Router();
@@ -35,6 +37,18 @@ router.use(authentifier);
  * Accessible par : Admin, Conseiller
  */
 router.get('/', verifierRole('ADMIN', 'CONSEILLER'), obtenirTraducteurs);
+
+/**
+ * GET /api/traducteurs/:traducteurId/planification
+ * Obtenir la planification d'un traducteur
+ * Accessible par : Admin, Conseiller, ou le traducteur lui-même
+ */
+router.get(
+  '/:traducteurId/planification',
+  verifierAccesTraducteur,
+  valider(obtenirPlanificationSchema),
+  obtenirPlanification
+);
 
 /**
  * GET /api/traducteurs/:id

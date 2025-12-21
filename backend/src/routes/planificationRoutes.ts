@@ -1,14 +1,12 @@
 import { Router } from 'express';
 import {
-  obtenirPlanification,
   creerBlocage,
   supprimerBlocage,
   obtenirPlanificationGlobale,
 } from '../controllers/planificationController';
-import { authentifier, verifierRole, verifierAccesTraducteur } from '../middleware/auth';
+import { authentifier, verifierRole } from '../middleware/auth';
 import { valider } from '../middleware/validation';
 import {
-  obtenirPlanificationSchema,
   obtenirPlanificationGlobaleSchema,
   creerBlocageSchema,
   supprimerBlocageSchema,
@@ -18,17 +16,7 @@ const router = Router();
 
 router.use(authentifier);
 
-/**
- * GET /api/traducteurs/:traducteurId/planification
- * Obtenir la planification d'un traducteur
- * Accessible par : Admin, Conseiller, ou le traducteur lui-même
- */
-router.get(
-  '/traducteurs/:traducteurId/planification',
-  verifierAccesTraducteur,
-  valider(obtenirPlanificationSchema),
-  obtenirPlanification
-);
+// Note: La route /traducteurs/:traducteurId/planification est dans traducteurRoutes.ts
 
 /**
  * GET /api/planification-globale
