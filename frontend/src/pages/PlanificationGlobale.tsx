@@ -1549,7 +1549,17 @@ const PlanificationGlobale: React.FC = () => {
             <Button variant="ghost" onClick={() => navigate('/liaisons')} className="text-sm py-1">
               🔗 Liaisons
             </Button>
-            <Button variant="ghost" onClick={() => navigate('/statistiques-productivite')} className="text-sm py-1">
+            <Button variant="ghost" onClick={() => {
+              // Construire l'URL avec les filtres du portrait actuel
+              const params = new URLSearchParams();
+              if (applied.divisions.length > 0) params.set('division', applied.divisions.join(','));
+              if (applied.clients.length > 0) params.set('client', applied.clients.join(','));
+              if (applied.domaines.length > 0) params.set('domaine', applied.domaines.join(','));
+              if (applied.languesSource.length > 0) params.set('langueSource', applied.languesSource.join(','));
+              if (applied.languesCible.length > 0) params.set('langueCible', applied.languesCible.join(','));
+              const queryString = params.toString();
+              navigate(queryString ? `/statistiques-productivite?${queryString}` : '/statistiques-productivite');
+            }} className="text-sm py-1">
               📊 Statistiques
             </Button>
             <Button variant="ghost" onClick={() => navigate('/conflict-resolution')} className="text-sm py-1">
@@ -2011,7 +2021,17 @@ const PlanificationGlobale: React.FC = () => {
         {/* Bouton Statistiques de productivité */}
         <Button
           variant="outline"
-          onClick={() => navigate('/statistiques-productivite')}
+          onClick={() => {
+            // Construire l'URL avec les filtres du portrait actuel
+            const params = new URLSearchParams();
+            if (applied.divisions.length > 0) params.set('division', applied.divisions.join(','));
+            if (applied.clients.length > 0) params.set('client', applied.clients.join(','));
+            if (applied.domaines.length > 0) params.set('domaine', applied.domaines.join(','));
+            if (applied.languesSource.length > 0) params.set('langueSource', applied.languesSource.join(','));
+            if (applied.languesCible.length > 0) params.set('langueCible', applied.languesCible.join(','));
+            const queryString = params.toString();
+            navigate(queryString ? `/statistiques-productivite?${queryString}` : '/statistiques-productivite');
+          }}
           className="px-4 py-2 text-sm shadow hover:shadow-lg transition-all"
           title="Voir les statistiques de productivité"
         >

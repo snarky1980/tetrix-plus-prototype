@@ -56,7 +56,6 @@ function TooltipInfo({ texte, children }: TooltipInfoProps) {
     
     // Calculer la position verticale (préférer au-dessus)
     const spaceAbove = rect.top;
-    const spaceBelow = window.innerHeight - rect.bottom;
     
     let top: number;
     let position: 'top' | 'bottom';

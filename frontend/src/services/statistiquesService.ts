@@ -42,6 +42,12 @@ export interface StatsQuery {
   dateFin: string;
   divisionId?: string;
   traducteurId?: string;
+  // Filtres du planificateur
+  division?: string;
+  client?: string;
+  domaine?: string;
+  langueSource?: string;
+  langueCible?: string;
 }
 
 const statistiquesService = {

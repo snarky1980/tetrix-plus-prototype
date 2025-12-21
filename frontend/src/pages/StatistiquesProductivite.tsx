@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -10,6 +11,19 @@ import { formatOttawaISO, todayOttawa, addDaysOttawa } from '../utils/dateTimeOt
 
 const StatistiquesProductivite: React.FC = () => {
   usePageTitle('Statistiques de Productivité', 'Analysez la productivité des traducteurs');
+
+  // Lire les filtres depuis l'URL (portrait du planificateur)
+  const [searchParams] = useSearchParams();
+  const urlFilters = {
+    division: searchParams.get('division') || undefined,
+    client: searchParams.get('client') || undefined,
+    domaine: searchParams.get('domaine') || undefined,
+    langueSource: searchParams.get('langueSource') || undefined,
+    langueCible: searchParams.get('langueCible') || undefined,
+  };
+  
+  // Vérifier si des filtres sont actifs
+  const hasActiveFilters = Object.values(urlFilters).some(v => v);
 
   const [stats, setStats] = useState<StatsProductivite | null>(null);
   const [loading, setLoading] = useState(false);
@@ -55,6 +69,8 @@ const StatistiquesProductivite: React.FC = () => {
       const data = await statistiquesService.obtenirProductivite({
         dateDebut,
         dateFin,
+        // Filtres du portrait (traducteurs affichés dans le planificateur)
+        ...urlFilters,
       });
       setStats(data);
     } catch (err) {
@@ -138,6 +154,18 @@ const StatistiquesProductivite: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold">📊 Statistiques de Productivité</h1>
             <p className="text-muted mt-1">Analysez la performance des traducteurs</p>
+            {/* Indicateur de filtres actifs (portrait) */}
+            {hasActiveFilters && (
+              <div className="mt-2 inline-flex items-center gap-2 text-xs bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full border border-blue-200">
+                <span>🎯</span>
+                <span>Portrait filtré depuis le planificateur</span>
+                {urlFilters.division && <span className="bg-blue-100 px-2 py-0.5 rounded">Divisions: {urlFilters.division.split(',').length}</span>}
+                {urlFilters.client && <span className="bg-blue-100 px-2 py-0.5 rounded">Clients: {urlFilters.client.split(',').length}</span>}
+                {urlFilters.domaine && <span className="bg-blue-100 px-2 py-0.5 rounded">Domaines: {urlFilters.domaine.split(',').length}</span>}
+                {urlFilters.langueSource && <span className="bg-blue-100 px-2 py-0.5 rounded">Langues source: {urlFilters.langueSource.split(',').length}</span>}
+                {urlFilters.langueCible && <span className="bg-blue-100 px-2 py-0.5 rounded">Langues cible: {urlFilters.langueCible.split(',').length}</span>}
+              </div>
+            )}
           </div>
           <Button onClick={() => window.print()}>
             📄 Exporter

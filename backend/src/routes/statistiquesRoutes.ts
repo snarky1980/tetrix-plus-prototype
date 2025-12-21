@@ -11,10 +11,11 @@ const prisma = new PrismaClient();
 /**
  * GET /api/statistiques/productivite
  * Récupère les statistiques de productivité des traducteurs
+ * Supporte les filtres: dateDebut, dateFin, divisionId, traducteurId, division (multi), client, domaine, langueSource, langueCible
  */
 router.get('/productivite', authentifier, async (req, res) => {
   try {
-    const { dateDebut, dateFin, divisionId, traducteurId } = req.query;
+    const { dateDebut, dateFin, divisionId, traducteurId, division, client, domaine, langueSource, langueCible } = req.query;
     const utilisateur = (req as any).utilisateur;
 
     // Validation dates
@@ -67,6 +68,16 @@ router.get('/productivite', authentifier, async (req, res) => {
           return res.status(403).json({ message: 'Vous n\'avez pas accès à cette division' });
         }
         filtreDivision = { division: divisionId as string };
+      } else if (division) {
+        // Filtres multiples depuis le planificateur
+        const divisionsRequises = (division as string).split(',');
+        const divisionsValides = divisionsRequises.filter(d => divisionsAutorisees.includes(d));
+        if (divisionsValides.length === 0) {
+          return res.status(403).json({ message: 'Vous n\'avez pas accès à ces divisions' });
+        }
+        filtreDivision = divisionsValides.length === 1
+          ? { division: divisionsValides[0] }
+          : { division: { in: divisionsValides } };
       } else {
         filtreDivision = divisionsAutorisees.length > 1 
           ? { division: { in: divisionsAutorisees } } 
@@ -75,6 +86,23 @@ router.get('/productivite', authentifier, async (req, res) => {
     } else if (divisionId) {
       // Pour ADMIN, CONSEILLER - pas de restriction
       filtreDivision = { division: divisionId as string };
+    } else if (division) {
+      // Filtres multiples depuis le planificateur (pour non-gestionnaires)
+      const divisionsRequises = (division as string).split(',');
+      filtreDivision = divisionsRequises.length === 1
+        ? { division: divisionsRequises[0] }
+        : { division: { in: divisionsRequises } };
+    }
+
+    // Préparer les filtres pour tâches (client, domaine)
+    let filtreClient: string[] | undefined;
+    let filtreDomaine: string[] | undefined;
+    
+    if (client) {
+      filtreClient = (client as string).split(',');
+    }
+    if (domaine) {
+      filtreDomaine = (domaine as string).split(',');
     }
 
     // Récupérer les tâches dans la période
@@ -94,30 +122,66 @@ router.get('/productivite', authentifier, async (req, res) => {
             division: true,
             classification: true,
             specialisations: true,
+            pairesLinguistiques: true,
           },
         },
-        client: { select: { nom: true } },
-        sousDomaine: { select: { nom: true } },
+        client: { select: { id: true, nom: true } },
+        sousDomaine: { 
+          select: { 
+            nom: true,
+            domaine: { select: { nom: true } }
+          } 
+        },
+        paireLinguistique: { select: { langueSource: true, langueCible: true } },
       },
     };
 
     const taches = await prisma.tache.findMany(tachesQuery);
 
-    // Filtrer par division si nécessaire
+    // Filtrer les tâches selon tous les critères
     let tachesFiltrees = taches;
+    
+    // Filtre par division (traducteur)
     if (utilisateur.role === 'GESTIONNAIRE') {
-      tachesFiltrees = taches.filter((t: any) => 
+      tachesFiltrees = tachesFiltrees.filter((t: any) => 
         t.traducteur && divisionsAutorisees.includes(t.traducteur.division)
       );
     } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.division) {
-      const divCible = typeof filtreDivision.division === 'string' 
-        ? filtreDivision.division 
-        : null;
-      if (divCible) {
-        tachesFiltrees = taches.filter((t: any) => 
-          t.traducteur && t.traducteur.division === divCible
+      const divCibles = typeof filtreDivision.division === 'string' 
+        ? [filtreDivision.division]
+        : filtreDivision.division.in || [];
+      if (divCibles.length > 0) {
+        tachesFiltrees = tachesFiltrees.filter((t: any) => 
+          t.traducteur && divCibles.includes(t.traducteur.division)
         );
       }
+    }
+    
+    // Filtre par client
+    if (filtreClient && filtreClient.length > 0) {
+      tachesFiltrees = tachesFiltrees.filter((t: any) => 
+        t.client && filtreClient.includes(t.client.nom)
+      );
+    }
+    
+    // Filtre par domaine
+    if (filtreDomaine && filtreDomaine.length > 0) {
+      tachesFiltrees = tachesFiltrees.filter((t: any) => 
+        t.sousDomaine?.domaine && filtreDomaine.includes(t.sousDomaine.domaine.nom)
+      );
+    }
+    
+    // Filtre par langues
+    const languesSourceFiltre = langueSource ? (langueSource as string).split(',') : [];
+    const languesCibleFiltre = langueCible ? (langueCible as string).split(',') : [];
+    
+    if (languesSourceFiltre.length > 0 || languesCibleFiltre.length > 0) {
+      tachesFiltrees = tachesFiltrees.filter((t: any) => {
+        if (!t.paireLinguistique) return false;
+        const matchSource = languesSourceFiltre.length === 0 || languesSourceFiltre.includes(t.paireLinguistique.langueSource);
+        const matchCible = languesCibleFiltre.length === 0 || languesCibleFiltre.includes(t.paireLinguistique.langueCible);
+        return matchSource && matchCible;
+      });
     }
 
     // Calculer les stats globales
@@ -175,8 +239,8 @@ router.get('/productivite', authentifier, async (req, res) => {
       ? ((productiviteMoyenne - productivitePrecedente) / productivitePrecedente) * 100 
       : 0;
 
-    // Récupérer TOUS les traducteurs actifs (même sans tâches)
-    const tousLesTraducteurs = await prisma.traducteur.findMany({
+    // Récupérer TOUS les traducteurs actifs (même sans tâches) - filtrés par division
+    let tousLesTraducteurs = await prisma.traducteur.findMany({
       where: {
         actif: true,
         ...filtreDivision,
@@ -187,9 +251,23 @@ router.get('/productivite', authentifier, async (req, res) => {
         division: true,
         classification: true,
         specialisations: true,
+        pairesLinguistiques: true,
       },
       orderBy: { nom: 'asc' },
     });
+    
+    // Filtrer par langues si spécifié
+    if (languesSourceFiltre.length > 0 || languesCibleFiltre.length > 0) {
+      tousLesTraducteurs = tousLesTraducteurs.filter((t: any) => {
+        const paires = t.pairesLinguistiques || [];
+        if (paires.length === 0) return false;
+        return paires.some((p: any) => {
+          const matchSource = languesSourceFiltre.length === 0 || languesSourceFiltre.includes(p.langueSource);
+          const matchCible = languesCibleFiltre.length === 0 || languesCibleFiltre.includes(p.langueCible);
+          return matchSource && matchCible;
+        });
+      });
+    }
 
     // Stats par traducteur - initialiser avec TOUS les traducteurs
     const parTraducteur = new Map<string, any>();
