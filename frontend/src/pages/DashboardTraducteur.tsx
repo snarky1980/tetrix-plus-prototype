@@ -3,6 +3,7 @@ import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Input } from '../components/ui/Input';
 import { FormField } from '../components/ui/FormField';
 import { StatCard } from '../components/ui/StatCard';
@@ -28,6 +29,10 @@ const DashboardTraducteur: React.FC = () => {
   const [disponibiliteActive, setDisponibiliteActive] = useState(false);
   const [commentaireDisponibilite, setCommentaireDisponibilite] = useState('');
   const [savingDisponibilite, setSavingDisponibilite] = useState(false);
+  const [confirmDeleteBlocage, setConfirmDeleteBlocage] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
   
   const { utilisateur } = useAuth();
   const aujourdHui = useMemo(() => new Date(), []);
@@ -59,14 +64,19 @@ const DashboardTraducteur: React.FC = () => {
   }, [fetchBlocages]);
 
   const handleSupprimerBlocage = async (id: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer ce blocage ?')) return;
+    setConfirmDeleteBlocage({ isOpen: true, id });
+  };
+
+  const executerSuppressionBlocage = async () => {
+    if (!confirmDeleteBlocage.id) return;
     try {
-      await traducteurService.supprimerBlocage(id);
+      await traducteurService.supprimerBlocage(confirmDeleteBlocage.id);
       fetchBlocages();
       refresh();
     } catch (err) {
       console.error('Erreur suppression blocage', err);
-      alert('Erreur lors de la suppression');
+    } finally {
+      setConfirmDeleteBlocage({ isOpen: false, id: null });
     }
   };
 
@@ -429,6 +439,18 @@ const DashboardTraducteur: React.FC = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Dialogue de confirmation suppression blocage */}
+      <ConfirmDialog
+        isOpen={confirmDeleteBlocage.isOpen}
+        onClose={() => setConfirmDeleteBlocage({ isOpen: false, id: null })}
+        onConfirm={executerSuppressionBlocage}
+        title="Supprimer le blocage"
+        message="Voulez-vous vraiment supprimer ce blocage ? Cette action est irréversible."
+        variant="danger"
+        confirmText="Supprimer"
+        cancelText="Annuler"
+      />
     </AppLayout>
   );
 };

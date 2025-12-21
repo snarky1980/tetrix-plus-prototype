@@ -8,7 +8,42 @@ import { ConflictDetectionModal } from '../components/ConflictDetection';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
 import { type Conflict, type Suggestion } from '../services/conflictService';
-import { AlertTriangle, CheckCircle, Clock, TrendingUp, Calendar, Users } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, TrendingUp, Calendar, Users, Info } from 'lucide-react';
+
+// Descriptions des types de conflits
+const CONFLICT_DESCRIPTIONS: Record<string, string> = {
+  surallocation: "Un traducteur a plus d'heures assignées que sa capacité journalière ne le permet.",
+  chevauchement: "Deux tâches ou plus se superposent sur les mêmes plages horaires pour un même traducteur.",
+  blocage: "Une période de congé, formation ou indisponibilité empêche le travail sur une tâche planifiée.",
+  horsTravail: "Du travail est planifié en dehors des heures normales de travail du traducteur.",
+  capaciteDepassee: "La charge de travail totale dépasse la capacité maximale du traducteur sur une période donnée.",
+};
+
+// Composant Tooltip info
+const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
+  const [show, setShow] = useState(false);
+  
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        className="ml-1 text-gray-400 hover:text-gray-600 focus:outline-none"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => { e.stopPropagation(); setShow(!show); }}
+        aria-label="Plus d'informations"
+      >
+        <Info className="w-3.5 h-3.5" />
+      </button>
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+          {text}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /**
  * Page de résolution des conflits
@@ -139,7 +174,10 @@ const ConflictResolution: React.FC = () => {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-red-600">{stats.surallocation}</p>
-                <p className="text-xs text-muted mt-2">Surallocation</p>
+                <p className="text-xs text-muted mt-2 flex items-center justify-center">
+                  Surallocation
+                  <InfoTooltip text={CONFLICT_DESCRIPTIONS.surallocation} />
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -148,7 +186,10 @@ const ConflictResolution: React.FC = () => {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-orange-600">{stats.chevauchement}</p>
-                <p className="text-xs text-muted mt-2">Chevauchement</p>
+                <p className="text-xs text-muted mt-2 flex items-center justify-center">
+                  Chevauchement
+                  <InfoTooltip text={CONFLICT_DESCRIPTIONS.chevauchement} />
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -157,7 +198,10 @@ const ConflictResolution: React.FC = () => {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-yellow-600">{stats.blocage}</p>
-                <p className="text-xs text-muted mt-2">Blocage</p>
+                <p className="text-xs text-muted mt-2 flex items-center justify-center">
+                  Blocage
+                  <InfoTooltip text={CONFLICT_DESCRIPTIONS.blocage} />
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -166,7 +210,10 @@ const ConflictResolution: React.FC = () => {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-purple-600">{stats.horsTravail}</p>
-                <p className="text-xs text-muted mt-2">Hors heures</p>
+                <p className="text-xs text-muted mt-2 flex items-center justify-center">
+                  Hors heures
+                  <InfoTooltip text={CONFLICT_DESCRIPTIONS.horsTravail} />
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -175,7 +222,10 @@ const ConflictResolution: React.FC = () => {
             <CardContent className="pt-6">
               <div className="text-center">
                 <p className="text-3xl font-bold text-blue-600">{stats.capaciteDepassee}</p>
-                <p className="text-xs text-muted mt-2">Capacité</p>
+                <p className="text-xs text-muted mt-2 flex items-center justify-center">
+                  Capacité
+                  <InfoTooltip text={CONFLICT_DESCRIPTIONS.capaciteDepassee} />
+                </p>
               </div>
             </CardContent>
           </Card>

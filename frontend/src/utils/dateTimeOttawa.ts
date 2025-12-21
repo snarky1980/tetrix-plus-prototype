@@ -281,6 +281,78 @@ export function formatDateWithWeekday(date: Date | null | undefined): string {
   return `${weekday}. ${dayMonth}`;
 }
 
+// =============================================
+// Fonctions utilitaires pour dateEcheance
+// =============================================
+
+/**
+ * Extraire la partie date d'une date d'échéance (format YYYY-MM-DD)
+ * Accepte: "2025-12-23T22:00:00.000Z", "2025-12-23T17:00:00", "2025-12-23"
+ */
+export function extractDatePart(dateEcheance: string | null | undefined): string {
+  if (!dateEcheance) return '';
+  return dateEcheance.includes('T') ? dateEcheance.split('T')[0] : dateEcheance;
+}
+
+/**
+ * Extraire la partie heure d'une date d'échéance (format HH:mm)
+ * Accepte: "2025-12-23T22:00:00.000Z", "2025-12-23T17:00:00", "2025-12-23"
+ * Retourne: "22:00", "17:00", ou defaultTime si pas d'heure
+ */
+export function extractTimePart(dateEcheance: string | null | undefined, defaultTime: string = '17:00'): string {
+  if (!dateEcheance || !dateEcheance.includes('T')) return defaultTime;
+  const timePart = dateEcheance.split('T')[1];
+  return timePart ? timePart.substring(0, 5) : defaultTime;
+}
+
+/**
+ * Combiner une date et une heure en format ISO complet
+ * @param date Format YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
+ * @param time Format HH:mm (optionnel, default 17:00)
+ * @returns Format YYYY-MM-DDTHH:mm:ss
+ */
+export function combineDateAndTime(date: string | null | undefined, time: string = '17:00'): string {
+  if (!date) return '';
+  const datePart = extractDatePart(date);
+  const timePart = time || '17:00';
+  return `${datePart}T${timePart}:00`;
+}
+
+/**
+ * Formater une date au format "mar. 23 déc."
+ * @param dateStr Format YYYY-MM-DD
+ * @returns "mar. 23 déc."
+ */
+function formatDateAvecJour(dateStr: string): string {
+  if (!dateStr) return 'Non définie';
+  const date = new Date(dateStr + 'T12:00:00'); // Midi pour éviter les problèmes de timezone
+  const options: Intl.DateTimeFormatOptions = { 
+    weekday: 'short', 
+    day: 'numeric', 
+    month: 'short' 
+  };
+  return date.toLocaleDateString('fr-CA', options);
+}
+
+/**
+ * Formater une date d'échéance pour l'affichage
+ * @param dateEcheance Format ISO complet ou date seule
+ * @param heureEcheance Heure optionnelle (utilisée si dateEcheance n'a pas d'heure)
+ * @returns "mar. 23 déc. à 17:00"
+ */
+export function formatDateEcheanceDisplay(
+  dateEcheance: string | null | undefined, 
+  heureEcheance?: string
+): string {
+  if (!dateEcheance) return 'Non définie';
+  
+  const datePart = extractDatePart(dateEcheance);
+  const timePart = extractTimePart(dateEcheance, heureEcheance || '17:00');
+  
+  const dateFormatted = formatDateAvecJour(datePart);
+  return `${dateFormatted} à ${timePart}`;
+}
+
 /**
  * Parser une string ISO timestamp complète (avec ou sans heure)
  * Accepte: "2025-12-11T14:30:00Z", "2025-12-11T14:30:00.000Z", "2025-12-11"

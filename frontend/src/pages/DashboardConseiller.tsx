@@ -5,13 +5,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card'
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
-import { Badge } from '../components/ui/Badge';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { ConflictOverview } from '../components/ConflictOverview';
-import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
+import { TacheCard } from '../components/taches/TacheCard';
 import { useAuth } from '../contexts/AuthContext';
 import { tacheService } from '../services/tacheService';
-import { formatDateDisplay } from '../utils/dateTimeOttawa';
 import type { Tache } from '../types';
 
 /**
@@ -71,23 +69,6 @@ const DashboardConseiller: React.FC = () => {
     setFiltreStatut('');
     setRecherche('');
     setTachesFiltered(taches);
-  };
-
-  const getStatutBadgeVariant = (statut: string) => {
-    switch (statut) {
-      case 'TERMINEE': return 'success';
-      case 'EN_COURS': return 'info';
-      default: return 'default';
-    }
-  };
-
-  const getStatutLabel = (statut: string) => {
-    switch (statut) {
-      case 'PLANIFIEE': return 'Planifiée';
-      case 'EN_COURS': return 'En cours';
-      case 'TERMINEE': return 'Terminée';
-      default: return statut;
-    }
   };
 
   const stats = {
@@ -277,84 +258,11 @@ const DashboardConseiller: React.FC = () => {
                 ) : (
                   <div className="space-y-3">
                     {tachesFiltered.map((tache) => (
-                      <div
+                      <TacheCard
                         key={tache.id}
-                        className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-primary transition-all cursor-pointer"
-                        onClick={() => navigate('/conseiller/planification-globale')}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            {/* En-tête */}
-                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <span className="font-semibold text-primary">
-                                {tache.numeroProjet}
-                              </span>
-                              <Badge variant={getStatutBadgeVariant(tache.statut)}>
-                                {getStatutLabel(tache.statut)}
-                              </Badge>
-                              <span className="text-xs text-muted">
-                                {tache.typeTache}
-                              </span>
-                            </div>
-
-                            {/* Description */}
-                            {tache.description && (
-                              <p className="text-sm mb-2 line-clamp-2">
-                                {tache.description}
-                              </p>
-                            )}
-
-                            {/* Informations */}
-                            <div className="flex items-center gap-4 text-xs text-muted flex-wrap">
-                              <span className="flex items-center gap-1">
-                                👤 {tache.traducteur?.nom || 'Non assigné'}
-                              </span>
-                              {tache.traducteurId && (
-                                <BoutonPlanificationTraducteur 
-                                  traducteurId={tache.traducteurId}
-                                  label="📅 Planning"
-                                  className="text-xs px-2 py-1 hover:bg-blue-50"
-                                />
-                              )}
-                              {tache.client && (
-                                <span className="flex items-center gap-1">
-                                  📋 {tache.client.nom}
-                                </span>
-                              )}
-                              {tache.paireLinguistique && (
-                                <span className="flex items-center gap-1">
-                                  🌐 {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}
-                                </span>
-                              )}
-                              {tache.compteMots && (
-                                <span className="flex items-center gap-1">
-                                  📝 {tache.compteMots.toLocaleString()} mots
-                                </span>
-                              )}
-                              <span className="flex items-center gap-1 font-semibold">
-                                ⏱️ {tache.heuresTotal}h
-                              </span>
-                              {tache.dateEcheance && (
-                                <span className="flex items-center gap-1 text-orange-600 font-medium">
-                                  📅 {formatDateDisplay(new Date(tache.dateEcheance))}
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Action */}
-                          <Button 
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate('/conseiller/planification-globale');
-                            }}
-                            className="text-sm px-3 py-1"
-                          >
-                            Voir détails
-                          </Button>
-                        </div>
-                      </div>
+                        tache={tache}
+                        showPlanningButton={true}
+                      />
                     ))}
                   </div>
                 )}

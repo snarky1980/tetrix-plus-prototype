@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Modal } from '../ui/Modal';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
@@ -22,6 +23,14 @@ export const ClientDomaineManagement: React.FC = () => {
   const [modalDomaine, setModalDomaine] = useState(false);
   const [clientSelectionne, setClientSelectionne] = useState<Client | undefined>();
   const [domaineSelectionne, setDomaineSelectionne] = useState<SousDomaine | undefined>();
+  const [confirmSupprClient, setConfirmSupprClient] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
+  const [confirmSupprDomaine, setConfirmSupprDomaine] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
 
   const chargerDonnees = async () => {
     setLoading(true);
@@ -54,13 +63,19 @@ export const ClientDomaineManagement: React.FC = () => {
   };
 
   const handleSupprimerClient = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce client ?')) return;
+    setConfirmSupprClient({ isOpen: true, id });
+  };
+
+  const executerSuppressionClient = async () => {
+    if (!confirmSupprClient.id) return;
     try {
-      await clientService.supprimerClient(id);
+      await clientService.supprimerClient(confirmSupprClient.id);
       await chargerDonnees();
       addToast('Client supprimé avec succès', 'success');
     } catch (err) {
       addToast('Erreur lors de la suppression du client', 'error');
+    } finally {
+      setConfirmSupprClient({ isOpen: false, id: null });
     }
   };
 
@@ -75,13 +90,19 @@ export const ClientDomaineManagement: React.FC = () => {
   };
 
   const handleSupprimerDomaine = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer ce domaine ?')) return;
+    setConfirmSupprDomaine({ isOpen: true, id });
+  };
+
+  const executerSuppressionDomaine = async () => {
+    if (!confirmSupprDomaine.id) return;
     try {
-      await sousDomaineService.supprimerSousDomaine(id);
+      await sousDomaineService.supprimerSousDomaine(confirmSupprDomaine.id);
       await chargerDonnees();
       addToast('Domaine supprimé avec succès', 'success');
     } catch (err) {
       addToast('Erreur lors de la suppression du domaine', 'error');
+    } finally {
+      setConfirmSupprDomaine({ isOpen: false, id: null });
     }
   };
 
@@ -247,6 +268,29 @@ export const ClientDomaineManagement: React.FC = () => {
         ouvert={modalDomaine}
         onFermer={() => setModalDomaine(false)}
         onSauvegarder={chargerDonnees}
+      />
+
+      {/* Dialogues de confirmation */}
+      <ConfirmDialog
+        isOpen={confirmSupprClient.isOpen}
+        onClose={() => setConfirmSupprClient({ isOpen: false, id: null })}
+        onConfirm={executerSuppressionClient}
+        title="Supprimer le client"
+        message="Êtes-vous sûr de vouloir supprimer ce client ? Cette action est irréversible."
+        variant="danger"
+        confirmText="Supprimer"
+        cancelText="Annuler"
+      />
+
+      <ConfirmDialog
+        isOpen={confirmSupprDomaine.isOpen}
+        onClose={() => setConfirmSupprDomaine({ isOpen: false, id: null })}
+        onConfirm={executerSuppressionDomaine}
+        title="Supprimer le domaine"
+        message="Êtes-vous sûr de vouloir supprimer ce domaine ? Cette action est irréversible."
+        variant="danger"
+        confirmText="Supprimer"
+        cancelText="Annuler"
       />
     </>
   );

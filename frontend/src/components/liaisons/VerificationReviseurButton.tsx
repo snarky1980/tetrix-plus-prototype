@@ -4,6 +4,7 @@ import {
   TraducteurInfo,
   VerificationDisponibiliteResult,
 } from '../../services/liaisonService';
+import { formatDateEcheanceDisplay } from '../../utils/dateTimeOttawa';
 
 interface VerificationReviseurButtonProps {
   traducteurId: string;
@@ -174,7 +175,7 @@ export const VerificationReviseurButton: React.FC<VerificationReviseurButtonProp
                         : 'Délai impossible'}
                     </h3>
                     <p className="text-sm text-gray-600">
-                      Échéance: {new Date(result.echeance).toLocaleDateString('fr-CA')}
+                      Échéance: {formatDateEcheanceDisplay(result.echeance)}
                     </p>
                   </div>
                 </div>

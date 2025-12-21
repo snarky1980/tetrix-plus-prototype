@@ -84,7 +84,9 @@ export interface SousDomaine {
 
 // Types pour les tâches
 export type StatutTache = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE';
-export type TypeTache = 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'AUTRE';
+export type TypeTache = 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE';
+export type ModeDistribution = 'JAT' | 'PEPS' | 'EQUILIBRE' | 'MANUEL';
+export type TypeRepartitionUI = 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL';
 
 export interface Tache {
   id: string;
@@ -94,8 +96,10 @@ export interface Tache {
   heuresTotal: number;
   compteMots?: number;
   dateEcheance: string;
+  priorite?: string;
   statut: StatutTache;
   typeTache: TypeTache;
+  modeDistribution: ModeDistribution;
   traducteurId: string;
   traducteur?: {
     id: string;
@@ -199,16 +203,20 @@ export interface PlanificationGlobale {
 
 // Types pour les formulaires
 export interface CreerTacheForm {
+  numeroProjet: string;
   traducteurId: string;
+  typeTache: TypeTache;
   clientId?: string;
   sousDomaineId?: string;
-  paireLinguistiqueId: string;
-  description: string;
+  paireLinguistiqueId?: string;
+  specialisation?: string;
+  description?: string;
   heuresTotal: number;
   compteMots?: number;
   dateEcheance: string;
-  repartition?: { date: string; heures: number }[];
+  repartition?: { date: string; heures: number; heureDebut?: string; heureFin?: string }[];
   repartitionAuto?: boolean;
+  modeDistribution?: ModeDistribution;
 }
 
 export interface CreerBlocageForm {

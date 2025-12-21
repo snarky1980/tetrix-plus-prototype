@@ -1,31 +1,37 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 import { Input } from '../components/ui/Input';
 import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
 import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
 import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
+import { TacheCard } from '../components/taches/TacheCard';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { useAutoRefresh, formatTimeAgo } from '../hooks/useAutoRefresh';
+import { useDebounce } from '../hooks/useDebounce';
 import { clientService } from '../services/clientService';
+import { domaineService } from '../services/domaineService';
 import { sousDomaineService } from '../services/sousDomaineService';
 import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import { repartitionService } from '../services/repartitionService';
 import optimisationService from '../services/optimisationService';
-import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, subDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateTimeDisplay, getNextBusinessDay } from '../utils/dateTimeOttawa';
+import { nowOttawa, todayOttawa, formatOttawaISO, parseOttawaDateISO, parseOttawaTimestamp, addDaysOttawa, subDaysOttawa, isWeekendOttawa, differenceInDaysOttawa, formatDateTimeDisplay, getNextBusinessDay, extractDatePart, extractTimePart, combineDateAndTime, formatDateEcheanceDisplay } from '../utils/dateTimeOttawa';
 import { formatNumeroProjet, formatDateAvecJour } from '../utils/formatters';
-import type { Traducteur, Client, SousDomaine, PaireLinguistique } from '../types';
+import { toUIMode, MODE_LABELS } from '../utils/modeDistribution';
+import type { Traducteur, Client, SousDomaine, PaireLinguistique, TypeTache, TypeRepartitionUI } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 
 const PlanificationGlobale: React.FC = () => {
   usePageTitle('Tetrix PLUS Planification', 'Consultez le planification globale des traductions');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { utilisateur } = useAuth();
   
   // Utiliser les fonctions timezone-aware d'Ottawa
@@ -46,6 +52,16 @@ const PlanificationGlobale: React.FC = () => {
       return `${heures}:${minutes}`;
     }
     return '09:00'; // Fallback
+  };
+
+  // Fonction pour convertir "09:00" ou "13:30" vers "9h" ou "13h30"
+  const convertirFormatHTMLVersHeure = (time: string): string => {
+    if (!time) return '';
+    const [h, m] = time.split(':');
+    const heures = parseInt(h, 10);
+    const minutes = parseInt(m, 10);
+    if (minutes === 0) return `${heures}h`;
+    return `${heures}h${m}`;
   };
   
   // Fonction pour calculer l'heure de fin en fonction du début et de la durée
@@ -160,8 +176,9 @@ const PlanificationGlobale: React.FC = () => {
   // Toggle pour afficher heures disponibles vs occupées
   const [showAvailable, setShowAvailable] = useState(true);
 
-  // Recherche de traducteur pour éviter le défilement
+  // Recherche de traducteur pour éviter le défilement (avec debounce)
   const [searchTraducteur, setSearchTraducteur] = useState('');
+  const debouncedSearchTraducteur = useDebounce(searchTraducteur, 200);
 
   // Modal ajout de tâche - État complet
   const [showAddTaskModal, setShowAddTaskModal] = useState(false);
@@ -177,9 +194,10 @@ const PlanificationGlobale: React.FC = () => {
     numeroProjet: '',
     traducteurId: '',
     clientId: '',
+    domaine: '',
     sousDomaineId: '',
     paireLinguistiqueId: '',
-    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE',
+    typeTache: 'TRADUCTION' as TypeTache,
     specialisation: '',
     description: '',
     heuresTotal: '',
@@ -187,7 +205,7 @@ const PlanificationGlobale: React.FC = () => {
     dateEcheance: '',
     heureEcheance: '17:00',
     priorite: 'REGULIER' as 'URGENT' | 'REGULIER',
-    typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'EQUILIBRE' | 'PEPS' | 'MANUEL',
+    typeRepartition: 'JUSTE_TEMPS' as TypeRepartitionUI,
     dateDebut: today,
     dateFin: '',
     repartitionAuto: true,
@@ -207,9 +225,10 @@ const PlanificationGlobale: React.FC = () => {
     numeroProjet: '',
     traducteurId: '',
     clientId: '',
+    domaine: '',
     sousDomaineId: '',
     paireLinguistiqueId: '',
-    typeTache: 'TRADUCTION' as 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE',
+    typeTache: 'TRADUCTION' as TypeTache,
     specialisation: '',
     description: '',
     heuresTotal: 0,
@@ -217,13 +236,13 @@ const PlanificationGlobale: React.FC = () => {
     dateEcheance: '',
     heureEcheance: '17:00',
     priorite: 'REGULIER' as 'URGENT' | 'REGULIER',
-    typeRepartition: 'JUSTE_TEMPS' as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
+    typeRepartition: 'JUSTE_TEMPS' as TypeRepartitionUI,
     dateDebut: '',
     dateFin: '',
     repartitionAuto: true,
-    repartitionManuelle: [] as { date: string; heures: number }[],
+    repartitionManuelle: [] as { date: string; heures: number; heureDebut?: string; heureFin?: string }[],
   });
-  const [previewJATEdit, setPreviewJATEdit] = useState<{ date: string; heures: number }[] | null>(null);
+  const [previewJATEdit, setPreviewJATEdit] = useState<{ date: string; heures: number; heureDebut?: string; heureFin?: string }[] | null>(null);
   const [loadingPreviewEdit, setLoadingPreviewEdit] = useState(false);
   const [erreurEdition, setErreurEdition] = useState('');
 
@@ -251,6 +270,15 @@ const PlanificationGlobale: React.FC = () => {
   });
   const [submittingBlocage, setSubmittingBlocage] = useState(false);
   const [erreurBlocage, setErreurBlocage] = useState('');
+
+  // État pour les dialogues de confirmation
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
 
   // État pour la modal des tâches du conseiller
   const [showMesTachesModal, setShowMesTachesModal] = useState(false);
@@ -301,6 +329,17 @@ const PlanificationGlobale: React.FC = () => {
   );
 
   const { planificationGlobale, loading, error, refresh } = usePlanificationGlobal(params);
+
+  // Mémoisation des traducteurs sélectionnés pour éviter les find() répétés
+  const traducteurCreation = useMemo(
+    () => traducteurs.find(t => t.id === formTache.traducteurId),
+    [traducteurs, formTache.traducteurId]
+  );
+  
+  const traducteurEdition = useMemo(
+    () => traducteurs.find(t => t.id === formEdition.traducteurId),
+    [traducteurs, formEdition.traducteurId]
+  );
 
   // Auto-refresh toutes les 2 minutes (modifiable par l'utilisateur)
   const { lastRefresh, isRefreshing, isEnabled, toggleEnabled } = useAutoRefresh({
@@ -569,6 +608,7 @@ const PlanificationGlobale: React.FC = () => {
       numeroProjet: '',
       traducteurId: '',
       clientId: '',
+      domaine: '',
       sousDomaineId: '',
       paireLinguistiqueId: '',
       typeTache: 'TRADUCTION',
@@ -604,9 +644,7 @@ const PlanificationGlobale: React.FC = () => {
   useEffect(() => {
     if (formTache.typeRepartition === 'EQUILIBRE' && formTache.dateEcheance) {
       // Extraire la date seule si timestamp
-      const dateEcheanceStr = formTache.dateEcheance.includes('T') 
-        ? formTache.dateEcheance.split('T')[0] 
-        : formTache.dateEcheance;
+      const dateEcheanceStr = extractDatePart(formTache.dateEcheance);
       
       try {
         // Date de début: Prochain jour ouvrable à 9h00
@@ -834,6 +872,7 @@ const PlanificationGlobale: React.FC = () => {
       // Gérer les différentes méthodes de répartition
       if (formTache.typeRepartition === 'JUSTE_TEMPS') {
         tache.repartitionAuto = true;
+        tache.modeDistribution = 'JAT';
       } else if (formTache.typeRepartition === 'MANUEL') {
         tache.repartition = formTache.repartitionManuelle;
         tache.repartitionAuto = false;
@@ -845,6 +884,7 @@ const PlanificationGlobale: React.FC = () => {
         // Pour EQUILIBRE et PEPS, utiliser la prévisualisation calculée
         if (previewRepartition && previewRepartition.length > 0) {
           tache.repartition = previewRepartition;
+          tache.repartitionAuto = false;
         } else {
           setErreurCreation('Aucune répartition générée. Veuillez recalculer.');
           setSubmitting(false);
@@ -867,22 +907,25 @@ const PlanificationGlobale: React.FC = () => {
       // Gestion du conflit de disponibilité en mode manuel
       if (err.response?.status === 409 && err.response?.data?.erreur === 'CONFLIT_DISPONIBILITE') {
         const data = err.response.data;
-        const confirmer = window.confirm(
-          `⚠️ AVERTISSEMENT DE DISPONIBILITÉ\n\n` +
-          `${data.message}\n` +
-          `Commentaire: ${data.details}\n\n` +
-          `Voulez-vous quand même créer cette tâche?\n` +
-          `(La tâche sera assignée même si le traducteur est actuellement indisponible)`
-        );
-        
-        if (confirmer) {
-          // Réessayer avec le flag forcer
-          await handleSubmitTache(true);
-          return;
-        } else {
-          setSubmitting(false);
-          return;
-        }
+        setConfirmDialog({
+          isOpen: true,
+          title: '⚠️ Avertissement de disponibilité',
+          message: (
+            <div className="text-left space-y-2">
+              <p>{data.message}</p>
+              <p className="text-gray-600">Commentaire: {data.details}</p>
+              <p className="font-medium mt-3">Voulez-vous quand même créer cette tâche?</p>
+              <p className="text-sm text-gray-500">(La tâche sera assignée même si le traducteur est actuellement indisponible)</p>
+            </div>
+          ) as any,
+          variant: 'warning',
+          onConfirm: async () => {
+            setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+            await handleSubmitTache(true);
+          }
+        });
+        setSubmitting(false);
+        return;
       }
       
       const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de la création de la tâche';
@@ -1134,6 +1177,7 @@ const PlanificationGlobale: React.FC = () => {
       numeroProjet: '',
       traducteurId: '',
       clientId: '',
+      domaine: '',
       sousDomaineId: '',
       paireLinguistiqueId: '',
       typeTache: 'TRADUCTION',
@@ -1177,34 +1221,34 @@ const PlanificationGlobale: React.FC = () => {
       }
       
       // Mapper le mode de distribution de l'API vers le format du formulaire
-      // API: JAT/PEPS/EQUILIBRE/MANUEL → Formulaire: JUSTE_TEMPS/PEPS/EQUILIBRE/MANUEL
       const modeDistributionAPI = tache.modeDistribution || 'JAT';
-      const typeRepartitionForm = modeDistributionAPI === 'JAT' ? 'JUSTE_TEMPS' : modeDistributionAPI;
+      const typeRepartitionForm = toUIMode(modeDistributionAPI);
       const estModeAuto = ['JAT', 'PEPS', 'EQUILIBRE'].includes(modeDistributionAPI);
       
-      // Extraire la date et l'heure d'échéance
-      const dateEcheanceParts = tache.dateEcheance?.split('T') || [];
-      const dateEcheanceStr = dateEcheanceParts[0] || '';
-      const heureEcheanceStr = dateEcheanceParts[1] 
-        ? dateEcheanceParts[1].substring(0, 5) // Format HH:MM
-        : '17:00';
+      // Extraire la date et l'heure d'échéance avec les utilitaires standardisés
+      const dateEcheanceStr = extractDatePart(tache.dateEcheance);
+      const heureEcheanceStr = extractTimePart(tache.dateEcheance, '17:00');
+      
+      // Combiner date et heure pour DateTimeInput (format YYYY-MM-DDTHH:mm:ss)
+      const dateEcheanceComplete = combineDateAndTime(dateEcheanceStr, heureEcheanceStr);
       
       // Pré-remplir le formulaire
       setFormEdition({
         numeroProjet: tache.numeroProjet || '',
         traducteurId: tache.traducteurId || '',
         clientId: tache.clientId || '',
+        domaine: tache.sousDomaine?.domaineParent || '',
         sousDomaineId: tache.sousDomaineId || '',
         paireLinguistiqueId: tache.paireLinguistiqueId || '',
-        typeTache: tache.typeTache || 'TRADUCTION',
+        typeTache: (tache.typeTache || 'TRADUCTION') as TypeTache,
         specialisation: tache.specialisation || '',
         description: tache.description || '',
         heuresTotal: tache.heuresTotal || 0,
         compteMots: tache.compteMots || 0,
-        dateEcheance: dateEcheanceStr,
+        dateEcheance: dateEcheanceComplete,
         heureEcheance: heureEcheanceStr,
         priorite: tache.priorite || 'REGULIER',
-        typeRepartition: typeRepartitionForm as 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL',
+        typeRepartition: typeRepartitionForm,
         dateDebut: today,
         dateFin: dateEcheanceStr,
         repartitionAuto: estModeAuto,
@@ -1237,6 +1281,7 @@ const PlanificationGlobale: React.FC = () => {
         case 'PEPS':
           result = await repartitionService.previewPEPS({
             ...params,
+            dateDebut: formEdition.dateDebut || new Date().toISOString().split('T')[0],
             dateEcheance: formEdition.dateEcheance,
           });
           break;
@@ -1305,6 +1350,16 @@ const PlanificationGlobale: React.FC = () => {
     setErreurEdition('');
 
     try {
+      // Validation pour répartition manuelle
+      if (formEdition.typeRepartition === 'MANUEL') {
+        const totalHeuresManuel = formEdition.repartitionManuelle.reduce((s, r) => s + r.heures, 0);
+        if (Math.abs(totalHeuresManuel - formEdition.heuresTotal) > 0.01) {
+          setErreurEdition(`Le total des heures (${totalHeuresManuel.toFixed(2)}h) ne correspond pas au total attendu (${formEdition.heuresTotal}h)`);
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const tache: any = {
         numeroProjet: formEdition.numeroProjet,
         traducteurId: formEdition.traducteurId,
@@ -1320,36 +1375,29 @@ const PlanificationGlobale: React.FC = () => {
       if (formEdition.specialisation.trim()) tache.specialisation = formEdition.specialisation;
       if (formEdition.compteMots) tache.compteMots = formEdition.compteMots;
 
-      // Gérer la répartition selon le mode choisi
-      if (formEdition.typeRepartition === 'JUSTE_TEMPS') {
-        tache.repartitionAuto = true;
-      } else if (formEdition.typeRepartition === 'EQUILIBRE') {
-        // Calculer la répartition équilibrée
-        if (!formEdition.traducteurId) {
-          throw new Error('Traducteur requis pour la répartition équilibrée');
-        }
-        const repartition = await repartitionService.calculerRepartitionEquilibree({
-          traducteurId: formEdition.traducteurId,
-          heuresTotal: formEdition.heuresTotal,
-          dateDebut: formEdition.dateDebut,
-          dateFin: formEdition.dateFin,
-        });
-        tache.repartition = repartition;
-      } else if (formEdition.typeRepartition === 'PEPS') {
-        // Calculer la répartition PEPS avec la capacité du traducteur
-        if (!formEdition.traducteurId) {
-          throw new Error('Traducteur requis pour la répartition PEPS');
-        }
-        const repartition = await repartitionService.calculerRepartitionPEPS({
-          traducteurId: formEdition.traducteurId,
-          heuresTotal: formEdition.heuresTotal,
-          dateDebut: formEdition.dateDebut,
-          dateEcheance: formEdition.dateEcheance,
-        });
-        tache.repartition = repartition;
-      } else {
+      // Gérer la répartition selon le mode choisi - UNIFORMISÉ avec FormulaireTache
+      if (formEdition.typeRepartition === 'MANUEL') {
+        // Manuel: envoyer la répartition manuelle
         tache.repartition = formEdition.repartitionManuelle;
         tache.repartitionAuto = false;
+        tache.modeDistribution = 'MANUEL';
+      } else {
+        // JAT, EQUILIBRE et PEPS: utiliser la prévisualisation (qui peut avoir été éditée)
+        if (previewJATEdit && previewJATEdit.length > 0) {
+          tache.repartition = previewJATEdit;
+          tache.repartitionAuto = false;
+          // Mapper le mode de distribution
+          const modeMapping: Record<string, string> = {
+            'JUSTE_TEMPS': 'JAT',
+            'EQUILIBRE': 'EQUILIBRE',
+            'PEPS': 'PEPS'
+          };
+          tache.modeDistribution = modeMapping[formEdition.typeRepartition] || 'JAT';
+        } else {
+          setErreurEdition('Aucune répartition générée. Veuillez recalculer.');
+          setSubmitting(false);
+          return;
+        }
       }
 
       const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -1384,8 +1432,9 @@ const PlanificationGlobale: React.FC = () => {
       setLoadingOptions(true);
       setOptionsError(null);
       try {
-        const [clientsData, sousDomainesData, traducteursData] = await Promise.all([
+        const [clientsData, domainesData, sousDomainesData, traducteursData] = await Promise.all([
           clientService.obtenirClients(true),
+          domaineService.obtenirDomaines(),
           sousDomaineService.obtenirSousDomaines(true),
           traducteurService.obtenirTraducteurs({ actif: true }),
         ]);
@@ -1396,7 +1445,8 @@ const PlanificationGlobale: React.FC = () => {
         setTraducteurs(traducteursData);
 
         const divisions = Array.from(new Set(traducteursData.map(t => t.division))).sort();
-        const domaines = Array.from(new Set([
+        const domainesNoms = Array.from(new Set([
+          ...domainesData.map(d => d.nom),
           ...traducteursData.flatMap(t => t.domaines || []),
           ...sousDomainesData.map(sd => sd.nom),
         ])).sort();
@@ -1405,7 +1455,7 @@ const PlanificationGlobale: React.FC = () => {
         const clientNoms = clientsData.map(c => c.nom).sort();
         const traducteursListe = traducteursData.map(t => ({ id: t.id, nom: t.nom })).sort((a, b) => a.nom.localeCompare(b.nom));
 
-        setOptions({ divisions, domaines, languesSource, languesCible, clients: clientNoms, traducteurs: traducteursListe });
+        setOptions({ divisions, domaines: domainesNoms, languesSource, languesCible, clients: clientNoms, traducteurs: traducteursListe });
       } catch (e: any) {
         setOptionsError(e?.message || 'Erreur chargement listes');
       } finally {
@@ -1415,6 +1465,24 @@ const PlanificationGlobale: React.FC = () => {
 
     loadOptions();
   }, []);
+
+  // Charger une tâche spécifique depuis les query params
+  useEffect(() => {
+    const tacheId = searchParams.get('tache');
+    if (tacheId && !tacheDetaillee) {
+      // Charger la tâche et l'afficher dans le modal de détails
+      tacheService.obtenirTache(tacheId)
+        .then((tache) => {
+          setTacheDetaillee(tache);
+          // Nettoyer le paramètre URL
+          searchParams.delete('tache');
+          setSearchParams(searchParams, { replace: true });
+        })
+        .catch((err) => {
+          console.error('Erreur chargement tâche:', err);
+        });
+    }
+  }, [searchParams, tacheDetaillee, setSearchParams]);
 
   // Activer le scroll horizontal avec la molette de souris
   useEffect(() => {
@@ -1879,7 +1947,7 @@ const PlanificationGlobale: React.FC = () => {
               }`}
               title={isEnabled ? 'Désactiver le rafraîchissement automatique' : 'Activer le rafraîchissement automatique'}
             >
-              {isEnabled ? '🟢' : '⚪'} Auto-refresh
+              {isEnabled ? '🟢' : '⚪'} Actualisation auto
             </button>
             <div className="flex items-center gap-1 text-gray-600">
               {isRefreshing ? (
@@ -2116,6 +2184,20 @@ const PlanificationGlobale: React.FC = () => {
                 </Select>
               </div>
 
+              {/* Domaine (optionnel) */}
+              <div>
+                <label className="block text-sm font-medium mb-1">Domaine <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                <Select
+                  value={formTache.domaine || ''}
+                  onChange={(e) => setFormTache({ ...formTache, domaine: e.target.value })}
+                >
+                  <option value="">Aucun domaine</option>
+                  {options.domaines.map((dom) => (
+                    <option key={dom} value={dom}>{dom}</option>
+                  ))}
+                </Select>
+              </div>
+
               {/* Sous-domaine (optionnel) */}
               <div>
                 <label className="block text-sm font-medium mb-1">Sous-domaine <span className="text-gray-500 text-xs">(optionnel)</span></label>
@@ -2133,12 +2215,15 @@ const PlanificationGlobale: React.FC = () => {
               {/* Spécialisation (optionnel) */}
               <div>
                 <label className="block text-sm font-medium mb-1">Spécialisation <span className="text-gray-500 text-xs">(optionnel)</span></label>
-                <Input
-                  type="text"
+                <Select
                   value={formTache.specialisation}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormTache({ ...formTache, specialisation: e.target.value })}
-                  placeholder="Ex: Médical, Juridique, Technique..."
-                />
+                  onChange={(e) => setFormTache({ ...formTache, specialisation: e.target.value })}
+                >
+                  <option value="">Aucune spécialisation</option>
+                  {options.domaines.map((dom) => (
+                    <option key={dom} value={dom}>{dom}</option>
+                  ))}
+                </Select>
               </div>
 
                 {/* Commentaire (optionnel) */}
@@ -2288,35 +2373,16 @@ const PlanificationGlobale: React.FC = () => {
                     <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
                     <div className="text-xs space-y-1">
                       <p><span className="font-medium">Projet:</span> {formTache.numeroProjet}</p>
-                      <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formTache.traducteurId)?.nom}</p>
+                      <p><span className="font-medium">Traducteur:</span> {traducteurCreation?.nom} {traducteurCreation?.horaire && <span className="text-gray-500">({traducteurCreation.horaire} | 🍽️ 12h-13h)</span>}</p>
                       <p><span className="font-medium">Type:</span> {formTache.typeTache}</p>
                       <p><span className="font-medium">Heures:</span> {formTache.heuresTotal}h</p>
-                      <p><span className="font-medium">Échéance:</span> {formTache.dateEcheance ? (
-                        formTache.dateEcheance.includes('T') 
-                          ? formatDateAvecJour(formTache.dateEcheance.split('T')[0]) + ' à ' + formTache.dateEcheance.split('T')[1].substring(0, 5)
-                          : formatDateAvecJour(formTache.dateEcheance) + ' (fin de journée)'
-                      ) : 'Non définie'}</p>
-                      <p><span className="font-medium">Répartition:</span> {
-                        {
-                          'JUSTE_TEMPS': 'Juste à temps (JAT)',
-                          'EQUILIBRE': 'Équilibré',
-                          'PEPS': 'PEPS',
-                          'MANUEL': 'Manuelle'
-                        }[formTache.typeRepartition] || 'Non définie'
-                      }</p>
+                      <p><span className="font-medium">Échéance:</span> {formatDateEcheanceDisplay(formTache.dateEcheance)}</p>
+                      <p><span className="font-medium">Répartition:</span> {MODE_LABELS[formTache.typeRepartition] || 'Non définie'}</p>
                       {formTache.typeRepartition === 'EQUILIBRE' && formTache.dateDebut && formTache.dateFin && (
-                        <p><span className="font-medium">Période:</span> {
-                          formatDateAvecJour(formTache.dateDebut.split('T')[0]) + ' à ' + formTache.dateDebut.split('T')[1]?.substring(0, 5)
-                        } → {
-                          formatDateAvecJour(formTache.dateFin.split('T')[0]) + ' à ' + formTache.dateFin.split('T')[1]?.substring(0, 5)
-                        }</p>
+                        <p><span className="font-medium">Période:</span> {formatDateEcheanceDisplay(formTache.dateDebut)} → {formatDateEcheanceDisplay(formTache.dateFin)}</p>
                       )}
                       {formTache.typeRepartition === 'PEPS' && formTache.dateDebut && (
-                        <p><span className="font-medium">Date de début:</span> {
-                          formTache.dateDebut.includes('T')
-                            ? formatDateAvecJour(formTache.dateDebut.split('T')[0]) + ' à ' + formTache.dateDebut.split('T')[1]?.substring(0, 5)
-                            : formatDateAvecJour(formTache.dateDebut)
-                        }</p>
+                        <p><span className="font-medium">Date de début:</span> {formatDateEcheanceDisplay(formTache.dateDebut)}</p>
                       )}
                     </div>
                   </div>
@@ -2829,9 +2895,23 @@ const PlanificationGlobale: React.FC = () => {
                   />
                 </div>
 
+                {/* Priorité */}
+                <div>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Priorité <span className="text-red-600">*</span></label>
+                  <Select
+                    value={formEdition.priorite}
+                    onChange={(e) => setFormEdition({ ...formEdition, priorite: e.target.value as 'URGENT' | 'REGULIER' })}
+                    required
+                    className="border-2 border-blue-300"
+                  >
+                    <option value="REGULIER">Régulier</option>
+                    <option value="URGENT">🔥 Urgent</option>
+                  </Select>
+                </div>
+
                 {/* Compte de mots */}
                 <div>
-                  <label className="block text-sm font-bold mb-1 text-gray-900">Compte de mots</label>
+                  <label className="block text-sm font-bold mb-1 text-gray-900">Compte de mots <span className="text-gray-500 text-xs">(optionnel)</span></label>
                   <Input
                     type="number"
                     min="0"
@@ -2890,16 +2970,33 @@ const PlanificationGlobale: React.FC = () => {
                   </Select>
                 </div>
 
+                {/* Domaine (optionnel) */}
+                <div>
+                  <label className="block text-sm font-medium mb-1">Domaine <span className="text-gray-500 text-xs">(optionnel)</span></label>
+                  <Select
+                    value={formEdition.domaine || ''}
+                    onChange={(e) => setFormEdition({ ...formEdition, domaine: e.target.value })}
+                  >
+                    <option value="">Aucun domaine</option>
+                    {options.domaines.map((dom) => (
+                      <option key={dom} value={dom}>{dom}</option>
+                    ))}
+                  </Select>
+                </div>
+
                 {/* Sous-domaine (optionnel) */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Sous-domaine</label>
+                  <label className="block text-sm font-medium mb-1">Sous-domaine <span className="text-gray-500 text-xs">(optionnel)</span></label>
                   <Select
                     value={formEdition.sousDomaineId}
                     onChange={(e) => setFormEdition({ ...formEdition, sousDomaineId: e.target.value })}
                   >
                     <option value="">Aucun sous-domaine</option>
                     {sousDomaines.map((sd) => (
-                      <option key={sd.id} value={sd.id}>{sd.nom}</option>
+                      <option key={sd.id} value={sd.id}>
+                        {sd.nom}
+                        {sd.domaineParent && ` (${sd.domaineParent})`}
+                      </option>
                     ))}
                   </Select>
                 </div>
@@ -2907,12 +3004,15 @@ const PlanificationGlobale: React.FC = () => {
                 {/* Spécialisation (optionnel) */}
                 <div>
                   <label className="block text-sm font-medium mb-1">Spécialisation</label>
-                  <Input
-                    type="text"
+                  <Select
                     value={formEdition.specialisation}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormEdition({ ...formEdition, specialisation: e.target.value })}
-                    placeholder="Ex: Médical, Juridique, Technique..."
-                  />
+                    onChange={(e) => setFormEdition({ ...formEdition, specialisation: e.target.value })}
+                  >
+                    <option value="">Aucune spécialisation</option>
+                    {options.domaines.map((dom) => (
+                      <option key={dom} value={dom}>{dom}</option>
+                    ))}
+                  </Select>
                 </div>
 
                 {/* Commentaire (optionnel) */}
@@ -3057,7 +3157,15 @@ const PlanificationGlobale: React.FC = () => {
                   <div className="flex-1">
                     <h3 className="font-medium mb-2 text-sm">📋 Résumé de la tâche</h3>
                     <div className="text-xs space-y-1">
-                      <p><span className="font-medium">Traducteur:</span> {traducteurs.find(t => t.id === formEdition.traducteurId)?.nom}</p>
+                      <p><span className="font-medium">Projet:</span> <span className="text-primary font-semibold">{formEdition.numeroProjet}</span></p>
+                      <p><span className="font-medium">Traducteur:</span> {traducteurEdition?.nom} {traducteurEdition?.horaire && <span className="text-gray-500">({traducteurEdition.horaire} | 🍽️ 12h-13h)</span>}</p>
+                      <p><span className="font-medium">Type:</span> {formEdition.typeTache}</p>
+                      <p><span className="font-medium">Heures:</span> <span className="font-bold text-blue-600">{formEdition.heuresTotal}h</span></p>
+                      <p><span className="font-medium">Échéance:</span> {formatDateEcheanceDisplay(formEdition.dateEcheance)}</p>
+                      <p><span className="font-medium">Mode:</span> {MODE_LABELS[formEdition.typeRepartition] || formEdition.typeRepartition}</p>
+                      {formEdition.priorite === 'URGENT' && (
+                        <p><span className="px-2 py-0.5 rounded bg-red-100 text-red-700 font-semibold">🔥 URGENT</span></p>
+                      )}
                     </div>
                   </div>
                   {formEdition.traducteurId && (
@@ -3072,27 +3180,135 @@ const PlanificationGlobale: React.FC = () => {
               </div>
 
               {formEdition.repartitionAuto ? (
-                <div>
-                  <h3 className="text-sm font-semibold mb-2">Prévisualisation JAT</h3>
+                <div className="border border-gray-300 rounded-lg overflow-hidden">
+                  {/* En-tête */}
+                  <div className="bg-gray-100 px-4 py-3 flex items-center justify-between border-b border-gray-300">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">📅</span>
+                      <h3 className="text-sm font-semibold text-gray-800">
+                        Prévisualisation {MODE_LABELS[formEdition.typeRepartition] || 'JAT'}
+                      </h3>
+                    </div>
+                    <Button
+                      variant="outline"
+                      onClick={chargerPreviewRepartitionEdit}
+                      disabled={loadingPreviewEdit}
+                      className="text-xs px-3 py-1.5 hover:bg-gray-200"
+                    >
+                      🔄 Recalculer
+                    </Button>
+                  </div>
                   
                   {loadingPreviewEdit ? (
-                    <p className="text-sm text-muted">Calcul en cours...</p>
-                  ) : previewJATEdit && previewJATEdit.length > 0 ? (
-                    <div className="bg-blue-50 border border-blue-200 rounded p-3 max-h-64 overflow-y-auto">
-                      <div className="space-y-1.5">
-                        {previewJATEdit.map((r, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs bg-white px-2 py-1 rounded">
-                            <span className="font-medium">{formatDateAvecJour(r.date)}</span>
-                            <span className="text-primary font-semibold">{r.heures}h</span>
-                          </div>
-                        ))}
-                      </div>
-                      <p className="text-xs text-muted mt-2">
-                        Total: {previewJATEdit.reduce((sum, r) => sum + r.heures, 0)}h sur {previewJATEdit.length} jours
-                      </p>
+                    <div className="text-center py-6 text-sm text-gray-500">
+                      ⏳ Calcul de la répartition...
                     </div>
+                  ) : previewJATEdit && previewJATEdit.length > 0 ? (
+                    <>
+                      {/* Liste des jours - ÉDITABLE */}
+                      <div className="max-h-80 overflow-y-auto">
+                        <div className="divide-y divide-gray-200">
+                          {previewJATEdit.map((r: any, idx: number) => (
+                            <div 
+                              key={r.date} 
+                              className={`px-4 py-3 transition-colors hover:bg-gray-50 ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <div className="flex-1">
+                                  <div className="text-sm font-medium text-gray-800">
+                                    {formatDateAvecJour(r.date)}
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Input
+                                    type="number"
+                                    step="0.25"
+                                    min="0"
+                                    value={r.heures}
+                                    onChange={(e) => {
+                                      const nouvellesDuree = parseFloat(e.target.value) || 0;
+                                      const newPreview = [...previewJATEdit];
+                                      const heureDebut = convertirHeureVersFomatHTML(newPreview[idx].heureDebut);
+                                      newPreview[idx] = {
+                                        ...newPreview[idx],
+                                        heures: nouvellesDuree,
+                                        heureFin: convertirFormatHTMLVersHeure(calculerHeureFin(heureDebut, nouvellesDuree))
+                                      };
+                                      setPreviewJATEdit(newPreview);
+                                    }}
+                                    className="text-sm w-16 text-center font-semibold"
+                                  />
+                                  <span className="text-xs text-gray-600">h</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 text-sm pl-0">
+                                <span className="text-xs text-gray-600 w-12">Plage:</span>
+                                <Input
+                                  type="time"
+                                  value={convertirHeureVersFomatHTML(r.heureDebut)}
+                                  onChange={(e) => {
+                                    const newPreview = [...previewJATEdit];
+                                    newPreview[idx] = {
+                                      ...newPreview[idx],
+                                      heureDebut: convertirFormatHTMLVersHeure(e.target.value)
+                                    };
+                                    setPreviewJATEdit(newPreview);
+                                  }}
+                                  className="text-sm w-24"
+                                />
+                                <span className="text-gray-400">→</span>
+                                <Input
+                                  type="time"
+                                  value={convertirHeureVersFomatHTML(r.heureFin)}
+                                  onChange={(e) => {
+                                    const newPreview = [...previewJATEdit];
+                                    newPreview[idx] = {
+                                      ...newPreview[idx],
+                                      heureFin: convertirFormatHTMLVersHeure(e.target.value)
+                                    };
+                                    setPreviewJATEdit(newPreview);
+                                  }}
+                                  className="text-sm w-24"
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Pied avec total */}
+                      <div className="bg-gray-100 px-4 py-3 border-t border-gray-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-gray-700">Total</span>
+                          <div className="flex items-center gap-4">
+                            <span className="text-gray-600">{previewJATEdit.length} jours</span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-blue-600">
+                                {previewJATEdit.reduce((sum: number, r: any) => sum + r.heures, 0).toFixed(2)}h
+                              </span>
+                              <span className="text-xs text-gray-500">/</span>
+                              <span className="text-sm text-gray-600">{formEdition.heuresTotal}h</span>
+                              {Math.abs(previewJATEdit.reduce((sum: number, r: any) => sum + r.heures, 0) - formEdition.heuresTotal) > 0.01 && (
+                                <span className={`text-xs font-medium ml-2 ${
+                                  previewJATEdit.reduce((sum: number, r: any) => sum + r.heures, 0) < formEdition.heuresTotal
+                                    ? 'text-orange-600'
+                                    : 'text-red-600'
+                                }`}>
+                                  {previewJATEdit.reduce((sum: number, r: any) => sum + r.heures, 0) < formEdition.heuresTotal
+                                    ? `(reste ${(formEdition.heuresTotal - previewJATEdit.reduce((sum: number, r: any) => sum + r.heures, 0)).toFixed(2)}h)`
+                                    : `(excès ${(previewJATEdit.reduce((sum: number, r: any) => sum + r.heures, 0) - formEdition.heuresTotal).toFixed(2)}h)`
+                                  }
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   ) : (
-                    <p className="text-sm text-red-600">Impossible de générer la répartition JAT</p>
+                    <div className="text-center py-6 text-sm text-red-600 border border-dashed border-gray-300 m-3 rounded">
+                      Impossible de générer la répartition. Cliquez sur "Recalculer".
+                    </div>
                   )}
                 </div>
               ) : (
@@ -3106,11 +3322,15 @@ const PlanificationGlobale: React.FC = () => {
                           ? formEdition.repartitionManuelle[formEdition.repartitionManuelle.length - 1].date
                           : today;
                         const nextDate = addDaysOttawa(parseISODate(lastDate), 1);
+                        // Récupérer l'horaire du traducteur pour les plages par défaut
+                        const trad = traducteurs.find(t => t.id === formEdition.traducteurId);
+                        const horaireMatch = trad?.horaire?.match(/^(\d{1,2})h?-(\d{1,2})h?$/);
+                        const heureDebutDefaut = horaireMatch ? `${horaireMatch[1]}h` : '9h';
                         setFormEdition({
                           ...formEdition,
                           repartitionManuelle: [
                             ...formEdition.repartitionManuelle,
-                            { date: dateISO(nextDate), heures: 0 }
+                            { date: dateISO(nextDate), heures: 0, heureDebut: heureDebutDefaut, heureFin: heureDebutDefaut }
                           ]
                         });
                       }}
@@ -3153,8 +3373,8 @@ const PlanificationGlobale: React.FC = () => {
                         const dateObj = parseISODate(item.date);
                         const jourSemaine = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][dateObj.getDay()];
                         return (
-                          <div key={idx} className="flex gap-2 items-center p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
-                            <div className="flex-1 flex gap-2 items-center">
+                          <div key={idx} className="p-3 rounded border-2 border-gray-200 hover:border-purple-300 transition-colors bg-gray-50">
+                            <div className="flex gap-2 items-center mb-2">
                               <span className="text-xs font-semibold text-gray-600 w-8">{jourSemaine}</span>
                               <Input
                                 type="date"
@@ -3166,34 +3386,61 @@ const PlanificationGlobale: React.FC = () => {
                                 }}
                                 className="text-sm flex-1"
                               />
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <Input
-                                type="number"
-                                step="0.25"
-                                min="0"
-                                value={item.heures}
-                                onChange={(e) => {
-                                  const newRep = [...formEdition.repartitionManuelle];
-                                  newRep[idx].heures = parseFloat(e.target.value) || 0;
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  step="0.25"
+                                  min="0"
+                                  value={item.heures}
+                                  onChange={(e) => {
+                                    const newRep = [...formEdition.repartitionManuelle];
+                                    const nouvellesDuree = parseFloat(e.target.value) || 0;
+                                    const heureDebut = convertirHeureVersFomatHTML(newRep[idx].heureDebut);
+                                    newRep[idx].heures = nouvellesDuree;
+                                    newRep[idx].heureFin = convertirFormatHTMLVersHeure(calculerHeureFin(heureDebut, nouvellesDuree));
+                                    setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                  }}
+                                  className="text-sm w-16 text-center font-semibold"
+                                  placeholder="0.0"
+                                />
+                                <span className="text-xs text-gray-500">h</span>
+                              </div>
+                              <Button
+                                variant="outline"
+                                onClick={() => {
+                                  const newRep = formEdition.repartitionManuelle.filter((_, i) => i !== idx);
                                   setFormEdition({ ...formEdition, repartitionManuelle: newRep });
                                 }}
-                                className="text-sm w-20 text-center font-semibold"
-                                placeholder="0.0"
-                              />
-                              <span className="text-xs text-gray-500">h</span>
+                                className="text-sm px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
+                                title="Supprimer ce jour"
+                              >
+                                🗑️
+                              </Button>
                             </div>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                const newRep = formEdition.repartitionManuelle.filter((_, i) => i !== idx);
-                                setFormEdition({ ...formEdition, repartitionManuelle: newRep });
-                              }}
-                              className="text-sm px-2 py-1 hover:bg-red-50 hover:text-red-600 hover:border-red-300"
-                              title="Supprimer ce jour"
-                            >
-                              🗑️
-                            </Button>
+                            <div className="flex items-center gap-2 text-sm pl-10">
+                              <span className="text-xs text-gray-600 w-12">Plage:</span>
+                              <Input
+                                type="time"
+                                value={convertirHeureVersFomatHTML(item.heureDebut)}
+                                onChange={(e) => {
+                                  const newRep = [...formEdition.repartitionManuelle];
+                                  newRep[idx].heureDebut = convertirFormatHTMLVersHeure(e.target.value);
+                                  setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm w-24"
+                              />
+                              <span className="text-gray-400">→</span>
+                              <Input
+                                type="time"
+                                value={convertirHeureVersFomatHTML(item.heureFin)}
+                                onChange={(e) => {
+                                  const newRep = [...formEdition.repartitionManuelle];
+                                  newRep[idx].heureFin = convertirFormatHTMLVersHeure(e.target.value);
+                                  setFormEdition({ ...formEdition, repartitionManuelle: newRep });
+                                }}
+                                className="text-sm w-24"
+                              />
+                            </div>
                           </div>
                         );
                       })
@@ -3206,16 +3453,25 @@ const PlanificationGlobale: React.FC = () => {
                 <Button
                   variant="outline"
                   className="text-red-600 border-red-300 hover:bg-red-50"
-                  onClick={async () => {
-                    if (tacheEnEdition && confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-                      try {
-                        await tacheService.supprimerTache(tacheEnEdition);
-                        setShowEditTaskModal(false);
-                        resetFormEdition();
-                        window.location.reload();
-                      } catch (err: any) {
-                        setErreurEdition(err.message || 'Erreur lors de la suppression');
-                      }
+                  onClick={() => {
+                    if (tacheEnEdition) {
+                      setConfirmDialog({
+                        isOpen: true,
+                        title: 'Supprimer la tâche',
+                        message: 'Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.',
+                        variant: 'danger',
+                        onConfirm: async () => {
+                          setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                          try {
+                            await tacheService.supprimerTache(tacheEnEdition);
+                            setShowEditTaskModal(false);
+                            resetFormEdition();
+                            window.location.reload();
+                          } catch (err: any) {
+                            setErreurEdition(err.message || 'Erreur lors de la suppression');
+                          }
+                        }
+                      });
                     }
                   }}
                 >
@@ -3309,61 +3565,16 @@ const PlanificationGlobale: React.FC = () => {
                   <p className="text-sm text-muted text-center py-4">Aucune tâche assignée</p>
                 ) : (
                   chargeTraducteur.tachesTotales.map((tache: any) => (
-                    <div
+                    <TacheCard
                       key={tache.id}
-                      className="bg-white border border-border rounded p-3 hover:shadow-md transition-shadow"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="text-xs font-semibold text-primary">
-                              {tache.numeroProjet}
-                            </span>
-                            <span className={`text-xs px-2 py-0.5 rounded ${
-                              tache.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' :
-                              tache.statut === 'EN_COURS' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-blue-100 text-blue-700'
-                            }`}>
-                              {tache.statut === 'TERMINEE' ? 'Terminée' :
-                               tache.statut === 'EN_COURS' ? 'En cours' : 'Planifiée'}
-                            </span>
-                            {tache.priorite === 'URGENT' && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">
-                                🔥 URGENT
-                              </span>
-                            )}
-                            <span className="text-xs text-muted">
-                              {tache.typeTache || 'TRADUCTION'}
-                            </span>
-                          </div>
-                          {tache.description && <p className="text-sm mb-1">{tache.description}</p>}
-                          <div className="flex items-center gap-3 text-xs text-muted flex-wrap">
-                            {tache.paireLinguistique && (
-                              <span>🌐 {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}</span>
-                            )}
-                            {tache.client && <span>👤 {tache.client.nom}</span>}
-                            <span className="font-semibold">⏱️ {tache.heuresTotal}h</span>
-                            {tache.compteMots && <span className="font-semibold">📝 {tache.compteMots} mots</span>}
-                            <span className="font-semibold">📅 {tache.dateEcheance ? formatDateAvecJour(tache.dateEcheance.split('T')[0]) : 'Non définie'} à {tache.heureEcheance || '17:00'}</span>
-                          </div>
-                          {tache.traducteur && (
-                            <div className="mt-1 text-xs text-muted">
-                              👤 {tache.traducteur.nom} • Horaire: {tache.traducteur.horaire || '9h-17h'}
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowChargeModal(false);
-                            handleEditTache(tache.id);
-                          }}
-                          className="text-xs px-2 py-1 shrink-0"
-                        >
-                          ✏️
-                        </Button>
-                      </div>
-                    </div>
+                      tache={tache}
+                      onEdit={() => {
+                        setShowChargeModal(false);
+                        handleEditTache(tache.id);
+                      }}
+                      showPlanningButton={false}
+                      compact={true}
+                    />
                   ))
                 )}
               </div>
@@ -3614,8 +3825,8 @@ const PlanificationGlobale: React.FC = () => {
               <tbody>
                 {planificationEnrichie?.planification
                   .filter(ligne => {
-                    if (!searchTraducteur) return true;
-                    return ligne.traducteur.nom.toLowerCase().includes(searchTraducteur.toLowerCase());
+                    if (!debouncedSearchTraducteur) return true;
+                    return ligne.traducteur.nom.toLowerCase().includes(debouncedSearchTraducteur.toLowerCase());
                   })
                   .map((ligne, idx) => {
                   const isSearchResult = searchResults.includes(ligne.traducteur.id);
@@ -3870,87 +4081,313 @@ const PlanificationGlobale: React.FC = () => {
                 );
               })()}
 
-              {/* Liste des tâches */}
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {celluleSelectionnee.taches.map((tache: any) => {
+              {/* Vue chronologique des tâches */}
+              {(() => {
+                // Récupérer l'horaire du traducteur pour calculer les plages
+                const traducteurPourPlages = traducteurs.find(t => t.nom === celluleSelectionnee.traducteurNom);
+                const horaireTrad = traducteurPourPlages?.horaire || '9h-17h';
+                const [debutJournee] = horaireTrad.split('-');
+                
+                // Pause dîner de 12h à 13h
+                const DEBUT_DINER = 12 * 60; // 12h en minutes
+                const FIN_DINER = 13 * 60;   // 13h en minutes
+                
+                // Parser l'heure de début de journée en minutes
+                const parseHeureEnMinutes = (h: string): number => {
+                  const match = h.match(/^(\d+)h(\d+)?$/);
+                  return match ? parseInt(match[1]) * 60 + (match[2] ? parseInt(match[2]) : 0) : 9 * 60;
+                };
+                
+                // Convertir minutes en format "Xh" ou "XhYY"
+                const minutesEnHeure = (minutes: number): string => {
+                  const heures = Math.floor(minutes / 60);
+                  const mins = minutes % 60;
+                  return mins > 0 ? `${heures}h${mins.toString().padStart(2, '0')}` : `${heures}h`;
+                };
+                
+                // Calculer la plage horaire en tenant compte du dîner
+                // Retourne { debut, fin, plages: [{debut, fin}] } pour gérer les plages fractionnées
+                const calculerPlageAvecDiner = (debutMinutes: number, dureeMinutes: number): { 
+                  finMinutes: number; 
+                  plages: { debut: string; fin: string }[] 
+                } => {
+                  const plages: { debut: string; fin: string }[] = [];
+                  let restant = dureeMinutes;
+                  let courant = debutMinutes;
+                  
+                  while (restant > 0) {
+                    // Si on est dans la période du dîner, sauter à 13h
+                    if (courant >= DEBUT_DINER && courant < FIN_DINER) {
+                      courant = FIN_DINER;
+                    }
+                    
+                    // Calculer combien on peut travailler avant le dîner (ou jusqu'à la fin)
+                    let finPlage: number;
+                    if (courant < DEBUT_DINER) {
+                      // Avant le dîner: on peut aller jusqu'à 12h max
+                      const maxAvantDiner = DEBUT_DINER - courant;
+                      const dureeAvantDiner = Math.min(restant, maxAvantDiner);
+                      finPlage = courant + dureeAvantDiner;
+                      plages.push({ debut: minutesEnHeure(courant), fin: minutesEnHeure(finPlage) });
+                      restant -= dureeAvantDiner;
+                      courant = finPlage;
+                    } else {
+                      // Après le dîner (13h+)
+                      finPlage = courant + restant;
+                      plages.push({ debut: minutesEnHeure(courant), fin: minutesEnHeure(finPlage) });
+                      restant = 0;
+                      courant = finPlage;
+                    }
+                  }
+                  
+                  return { finMinutes: courant, plages };
+                };
+                
+                // Calculer les plages horaires cumulées
+                let minutesCourantes = parseHeureEnMinutes(debutJournee);
+                
+                // Trier les tâches par heure de début
+                const tachesAvecPlages = celluleSelectionnee.taches.map((tache: any) => {
                   const ajustementCeJour = tache.ajustementsTemps?.find(
                     (aj: any) => aj.date.split('T')[0] === celluleSelectionnee.date
                   );
-                  const heuresCeJour = ajustementCeJour ? ajustementCeJour.heures : 0;
+                  const heuresCeJour = ajustementCeJour?.heures || 0;
                   
-                  return (
-                    <button
-                      key={tache.id}
-                      onClick={() => {
-                        setCelluleSelectionnee(null);
-                        setTacheDetaillee(tache);
-                      }}
-                      className="w-full bg-white border border-gray-200 rounded-lg p-4 hover:border-primary hover:shadow-md transition-all text-left"
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1 flex-wrap">
-                            <span className="text-sm font-semibold text-primary">
-                              {tache.numeroProjet}
-                            </span>
-                            <span className={`text-xs px-2 py-0.5 rounded font-semibold ${
-                              tache.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' :
-                              tache.statut === 'EN_COURS' ? 'bg-blue-100 text-blue-700' :
-                              'bg-gray-100 text-gray-700'
-                            }`}>
-                              {tache.statut || 'PLANIFIEE'}
-                            </span>
-                            {tache.priorite === 'URGENT' && (
-                              <span className="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700 font-bold">
-                                🔥 URGENT
-                              </span>
-                            )}
+                  // Si pas de plage définie explicitement, calculer basé sur l'heure courante
+                  let heureDebutCalc = ajustementCeJour?.heureDebut || null;
+                  let heureFinCalc = ajustementCeJour?.heureFin || null;
+                  let plagesCalculees: { debut: string; fin: string }[] = [];
+                  
+                  if (!heureDebutCalc && heuresCeJour > 0) {
+                    const resultat = calculerPlageAvecDiner(minutesCourantes, heuresCeJour * 60);
+                    plagesCalculees = resultat.plages;
+                    minutesCourantes = resultat.finMinutes;
+                    
+                    // Pour l'affichage simple, prendre première et dernière plage
+                    if (plagesCalculees.length > 0) {
+                      heureDebutCalc = plagesCalculees[0].debut;
+                      heureFinCalc = plagesCalculees[plagesCalculees.length - 1].fin;
+                    }
+                  }
+                  
+                  return {
+                    ...tache,
+                    heuresCeJour,
+                    heureDebut: heureDebutCalc,
+                    heureFin: heureFinCalc,
+                    plages: plagesCalculees,
+                  };
+                }).sort((a: any, b: any) => {
+                  // Trier par heure de début si disponible
+                  if (a.heureDebut && b.heureDebut) {
+                    const parseHeure = (h: string) => {
+                      const match = h.match(/^(\d+)h(\d+)?$/);
+                      return match ? parseInt(match[1]) * 60 + (match[2] ? parseInt(match[2]) : 0) : 0;
+                    };
+                    return parseHeure(a.heureDebut) - parseHeure(b.heureDebut);
+                  }
+                  return 0;
+                });
+
+                return (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                      📋 Planning de la journée
+                      <span className="text-xs font-normal text-muted">
+                        ({tachesAvecPlages.length} tâche{tachesAvecPlages.length > 1 ? 's' : ''})
+                      </span>
+                    </h4>
+
+                    {/* Timeline visuelle */}
+                    <div className="relative">
+                      {tachesAvecPlages.map((tache: any, index: number) => {
+                        const isUrgent = tache.priorite === 'URGENT';
+                        const isEnCours = tache.statut === 'EN_COURS';
+                        const isTerminee = tache.statut === 'TERMINEE';
+                        
+                        // Couleurs selon statut/priorité
+                        const borderColor = isUrgent ? 'border-red-400' : 
+                                           isTerminee ? 'border-green-400' : 
+                                           isEnCours ? 'border-blue-400' : 'border-gray-300';
+                        const bgColor = isUrgent ? 'bg-red-50' : 
+                                       isTerminee ? 'bg-green-50' : 
+                                       isEnCours ? 'bg-blue-50' : 'bg-white';
+                        const accentColor = isUrgent ? 'bg-red-500' : 
+                                           isTerminee ? 'bg-green-500' : 
+                                           isEnCours ? 'bg-blue-500' : 'bg-gray-400';
+
+                        return (
+                          <div key={tache.id} className="relative flex gap-3 mb-3">
+                            {/* Ligne de timeline */}
+                            <div className="flex flex-col items-center">
+                              <div className={`w-4 h-4 rounded-full ${accentColor} flex items-center justify-center text-white text-[10px] font-bold z-10`}>
+                                {index + 1}
+                              </div>
+                              {index < tachesAvecPlages.length - 1 && (
+                                <div className="w-0.5 flex-1 bg-gray-200 min-h-[20px]"></div>
+                              )}
+                            </div>
+
+                            {/* Carte de la tâche */}
+                            <button
+                              onClick={() => {
+                                setCelluleSelectionnee(null);
+                                setTacheDetaillee(tache);
+                              }}
+                              className={`flex-1 ${bgColor} border-2 ${borderColor} rounded-lg p-3 hover:shadow-lg transition-all text-left group`}
+                            >
+                              {/* En-tête avec plage horaire */}
+                              <div className="flex items-start justify-between gap-2 mb-2">
+                                <div className="flex-1">
+                                  {/* Plage horaire en grand */}
+                                  {tache.plages && tache.plages.length > 1 ? (
+                                    // Plages fractionnées (avec pause dîner)
+                                    <div className={`text-base font-bold ${isUrgent ? 'text-red-700' : isTerminee ? 'text-green-700' : isEnCours ? 'text-blue-700' : 'text-gray-800'} mb-1`}>
+                                      🕐 {tache.plages.map((p: {debut: string; fin: string}, i: number) => (
+                                        <span key={i}>
+                                          {i > 0 && <span className="text-gray-400 mx-1">•</span>}
+                                          {p.debut} → {p.fin}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  ) : tache.heureDebut && tache.heureFin ? (
+                                    <div className={`text-lg font-bold ${isUrgent ? 'text-red-700' : isTerminee ? 'text-green-700' : isEnCours ? 'text-blue-700' : 'text-gray-800'} mb-1`}>
+                                      🕐 {tache.heureDebut} → {tache.heureFin}
+                                    </div>
+                                  ) : tache.heuresCeJour > 0 ? (
+                                    <div className={`text-lg font-bold ${isUrgent ? 'text-red-700' : isTerminee ? 'text-green-700' : isEnCours ? 'text-blue-700' : 'text-gray-800'} mb-1`}>
+                                      🕐 {tache.heuresCeJour}h
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm font-medium text-gray-500 mb-1">
+                                      ⏱️ Pas d'heures allouées
+                                    </div>
+                                  )}
+                                  
+                                  {/* Numéro de projet et badges */}
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-semibold text-primary">
+                                      {tache.numeroProjet}
+                                    </span>
+                                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                      isTerminee ? 'bg-green-200 text-green-800' :
+                                      isEnCours ? 'bg-blue-200 text-blue-800' :
+                                      'bg-gray-200 text-gray-700'
+                                    }`}>
+                                      {tache.statut || 'PLANIFIÉE'}
+                                    </span>
+                                    {isUrgent && (
+                                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-200 text-red-800 font-bold">
+                                        🔥 URGENT
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Heures ce jour */}
+                                <div className="text-right flex-shrink-0">
+                                  <div className={`text-xl font-bold ${isUrgent ? 'text-red-600' : 'text-blue-600'}`}>
+                                    {tache.heuresCeJour.toFixed(1)}h
+                                  </div>
+                                  <div className="text-[10px] text-muted">
+                                    sur {tache.heuresTotal}h
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Détails de la tâche */}
+                              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs mt-2">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-gray-500">Type:</span>
+                                  <span className="font-medium">{tache.typeTache || 'TRADUCTION'}</span>
+                                </div>
+                                
+                                {tache.compteMots && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-gray-500">Mots:</span>
+                                    <span className="font-medium">{tache.compteMots.toLocaleString()}</span>
+                                  </div>
+                                )}
+
+                                {tache.client && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-gray-500">Client:</span>
+                                    <span className="font-medium truncate">{tache.client.nom}</span>
+                                  </div>
+                                )}
+
+                                {tache.paireLinguistique && (
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-gray-500">Langues:</span>
+                                    <span className="font-medium">
+                                      {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}
+                                    </span>
+                                  </div>
+                                )}
+
+                                {tache.sousDomaine && (
+                                  <div className="flex items-center gap-1 col-span-2">
+                                    <span className="text-gray-500">Domaine:</span>
+                                    <span className="font-medium">{tache.sousDomaine.nom}</span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Description si présente */}
+                              {tache.description && (
+                                <p className="text-xs text-gray-600 mt-2 line-clamp-1 italic">
+                                  "{tache.description}"
+                                </p>
+                              )}
+
+                              {/* Pied de carte */}
+                              <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200">
+                                <div className="flex items-center gap-3 text-[10px]">
+                                  <span className="text-gray-500">
+                                    📅 Échéance: <span className="font-medium text-gray-700">
+                                      {formatDateEcheanceDisplay(tache.dateEcheance)}
+                                    </span>
+                                  </span>
+                                  {tache.modeDistribution && (
+                                    <span className="text-gray-400">
+                                      Mode: {tache.modeDistribution}
+                                    </span>
+                                  )}
+                                </div>
+                                <span className="text-xs text-primary font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                                  Voir détails →
+                                </span>
+                              </div>
+                            </button>
                           </div>
-                          <p className="text-xs text-muted mb-1">
-                            {tache.typeTache || 'TRADUCTION'}
-                          </p>
-                          {tache.compteMots && (
-                            <p className="text-xs font-semibold text-gray-700">
-                              📝 {tache.compteMots} mots
-                            </p>
-                          )}
-                          {tache.client && (
-                            <p className="text-xs text-muted">
-                              Client: {tache.client.nom}
-                            </p>
-                          )}
-                          {tache.paireLinguistique && (
-                            <p className="text-xs text-muted">
-                              {tache.paireLinguistique.langueSource} → {tache.paireLinguistique.langueCible}
-                            </p>
-                          )}
+                        );
+                      })}
+                    </div>
+
+                    {/* Statistiques rapides */}
+                    <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-gray-200">
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="text-lg font-bold text-gray-800">
+                          {tachesAvecPlages.filter((t: any) => t.priorite === 'URGENT').length}
                         </div>
-                        <div className="text-right">
-                          <div className="text-xl font-bold text-blue-700">
-                            {heuresCeJour.toFixed(1)}h
-                          </div>
-                          <div className="text-xs text-muted">
-                            sur {tache.heuresTotal}h total
-                          </div>
+                        <div className="text-[10px] text-gray-500 uppercase">Urgentes</div>
+                      </div>
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="text-lg font-bold text-gray-800">
+                          {tachesAvecPlages.filter((t: any) => t.statut === 'EN_COURS').length}
                         </div>
+                        <div className="text-[10px] text-gray-500 uppercase">En cours</div>
                       </div>
-                      {tache.description && (
-                        <p className="text-xs text-gray-600 mt-2 line-clamp-2">
-                          {tache.description}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100">
-                        <span className="text-xs text-muted font-semibold">
-                          📅 Échéance: {tache.dateEcheance ? formatDateAvecJour(tache.dateEcheance.split('T')[0]) : 'Non définie'} à {tache.heureEcheance || '17:00'}
-                        </span>
-                        <span className="text-xs text-primary font-medium">
-                          Voir détails →
-                        </span>
+                      <div className="text-center p-2 bg-gray-50 rounded">
+                        <div className="text-lg font-bold text-gray-800">
+                          {tachesAvecPlages.reduce((sum: number, t: any) => sum + (t.compteMots || 0), 0).toLocaleString()}
+                        </div>
+                        <div className="text-[10px] text-gray-500 uppercase">Mots total</div>
                       </div>
-                    </button>
-                  );
-                })}
-              </div>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
         </Modal>
@@ -3965,94 +4402,106 @@ const PlanificationGlobale: React.FC = () => {
           ariaDescription="Détails complets de la tâche sélectionnée"
         >
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <div>
-                <span className="font-medium text-muted">Numéro de projet:</span>
-                <p className="font-semibold text-primary">{tacheDetaillee.numeroProjet}</p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Type:</span>
-                <p>{tacheDetaillee.typeTache || 'TRADUCTION'}</p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Traducteur:</span>
-                <p>
-                  {tacheDetaillee.traducteur?.nom || 'N/A'}
-                  {tacheDetaillee.traducteur?.horaire && (
-                    <span className="text-xs text-gray-500 block">
-                      {tacheDetaillee.traducteur.horaire} | 🍽️ 12h-13h
-                    </span>
-                  )}
-                </p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Heures totales:</span>
-                <p className="font-bold">{tacheDetaillee.heuresTotal}h</p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Date échéance:</span>
-                <p>{tacheDetaillee.dateEcheance ? 
-                  (tacheDetaillee.dateEcheance.includes('T') 
-                    ? formatDateTimeDisplay(parseOttawaTimestamp(tacheDetaillee.dateEcheance))
-                    : formatDateAvecJour(tacheDetaillee.dateEcheance.split('T')[0]) + ' à ' + (tacheDetaillee.heureEcheance || '17:00')
-                  ) : 'Non définie'}</p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Statut:</span>
-                <p>
-                  <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                    tacheDetaillee.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' :
-                    tacheDetaillee.statut === 'EN_COURS' ? 'bg-blue-100 text-blue-700' :
-                    'bg-gray-100 text-gray-700'
-                  }`}>
-                    {tacheDetaillee.statut || 'PLANIFIEE'}
-                  </span>
-                </p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Mode de distribution:</span>
-                <p>{
-                  tacheDetaillee.modeDistribution === 'PEPS' ? 'PEPS (Priorité échéance)' :
-                  tacheDetaillee.modeDistribution === 'EQUILIBRE' ? 'Équilibré' :
-                  tacheDetaillee.modeDistribution === 'MANUEL' ? 'Manuel' :
-                  'Juste à temps (JAT)'
-                }</p>
-              </div>
-              <div>
-                <span className="font-medium text-muted">Nombre de mots:</span>
-                <p>{tacheDetaillee.compteMots ? tacheDetaillee.compteMots.toLocaleString() : 's.o.'}</p>
-              </div>
-              {tacheDetaillee.client && (
+            {/* En-tête avec numéro de projet et badges */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-start justify-between gap-3">
                 <div>
-                  <span className="font-medium text-muted">Client:</span>
-                  <p>{tacheDetaillee.client.nom}</p>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xl font-bold text-primary">{tacheDetaillee.numeroProjet}</span>
+                    {tacheDetaillee.priorite === 'URGENT' && (
+                      <span className="px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-bold animate-pulse">
+                        🔥 URGENT
+                      </span>
+                    )}
+                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                      tacheDetaillee.statut === 'TERMINEE' ? 'bg-green-100 text-green-700' :
+                      tacheDetaillee.statut === 'EN_COURS' ? 'bg-blue-100 text-blue-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {tacheDetaillee.statut || 'PLANIFIÉE'}
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    <span className="font-medium">{tacheDetaillee.typeTache || 'TRADUCTION'}</span>
+                    {tacheDetaillee.paireLinguistique && (
+                      <span className="ml-2 text-gray-500">
+                        • {tacheDetaillee.paireLinguistique.langueSource} → {tacheDetaillee.paireLinguistique.langueCible}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-blue-600">{tacheDetaillee.heuresTotal}h</div>
+                  <div className="text-xs text-gray-500">total</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Informations principales */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <h4 className="font-semibold text-gray-700 text-xs uppercase tracking-wide">👤 Traducteur</h4>
+                <p className="font-medium text-gray-900">{tacheDetaillee.traducteur?.nom || 'N/A'}</p>
+                {tacheDetaillee.traducteur?.horaire && (
+                  <p className="text-xs text-gray-500">
+                    🕐 {tacheDetaillee.traducteur.horaire} | 🍽️ 12h-13h
+                  </p>
+                )}
+                {tacheDetaillee.traducteur?.division && (
+                  <p className="text-xs text-gray-500">📍 {tacheDetaillee.traducteur.division}</p>
+                )}
+              </div>
+              
+              <div className="bg-gray-50 rounded-lg p-3 space-y-2">
+                <h4 className="font-semibold text-gray-700 text-xs uppercase tracking-wide">📅 Échéance</h4>
+                <p className="font-medium text-gray-900">
+                  {tacheDetaillee.dateEcheance 
+                    ? formatDateTimeDisplay(parseOttawaTimestamp(tacheDetaillee.dateEcheance))
+                    : 'Non définie'}
+                </p>
+                <p className="text-xs text-gray-500">
+                  Mode: {
+                    tacheDetaillee.modeDistribution === 'PEPS' ? '🔄 PEPS' :
+                    tacheDetaillee.modeDistribution === 'EQUILIBRE' ? '⚖️ Équilibré' :
+                    tacheDetaillee.modeDistribution === 'MANUEL' ? '✍️ Manuel' :
+                    '📊 JAT'
+                  }
+                </p>
+              </div>
+            </div>
+
+            {/* Informations optionnelles */}
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              {tacheDetaillee.compteMots && tacheDetaillee.compteMots > 0 && (
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                  <span className="text-gray-500">📝</span>
+                  <span className="font-medium">{tacheDetaillee.compteMots.toLocaleString()} mots</span>
+                </div>
+              )}
+              {tacheDetaillee.client && (
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                  <span className="text-gray-500">🏢</span>
+                  <span className="font-medium">{tacheDetaillee.client.nom}</span>
                 </div>
               )}
               {tacheDetaillee.sousDomaine && (
-                <div>
-                  <span className="font-medium text-muted">Domaine:</span>
-                  <p>{tacheDetaillee.sousDomaine.nom}</p>
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                  <span className="text-gray-500">📁</span>
+                  <span className="font-medium">{tacheDetaillee.sousDomaine.nom}</span>
                 </div>
               )}
-              {tacheDetaillee.paireLinguistique && (
-                <div className="col-span-2">
-                  <span className="font-medium text-muted">Paire linguistique:</span>
-                  <p>{tacheDetaillee.paireLinguistique.langueSource} → {tacheDetaillee.paireLinguistique.langueCible}</p>
+              {tacheDetaillee.specialisation && (
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded p-2">
+                  <span className="text-gray-500">🎯</span>
+                  <span className="font-medium">{tacheDetaillee.specialisation}</span>
                 </div>
               )}
             </div>
 
             {tacheDetaillee.description && (
-              <div>
-                <span className="font-medium text-muted text-sm">Description:</span>
-                <p className="mt-1 text-sm bg-gray-50 p-3 rounded border border-gray-200">{tacheDetaillee.description}</p>
-              </div>
-            )}
-
-            {tacheDetaillee.specialisation && (
-              <div>
-                <span className="font-medium text-muted text-sm">Spécialisation:</span>
-                <p className="mt-1 text-sm">{tacheDetaillee.specialisation}</p>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                <h4 className="font-semibold text-gray-700 text-xs uppercase tracking-wide mb-2">💬 Commentaire</h4>
+                <p className="text-sm text-gray-700">{tacheDetaillee.description}</p>
               </div>
             )}
 
@@ -4111,6 +4560,16 @@ const PlanificationGlobale: React.FC = () => {
 
             <div className="flex gap-3 justify-center pt-4 border-t">
               <button
+                className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:scale-95 transition-all duration-200 font-medium text-sm border border-gray-300"
+                onClick={() => setTacheDetaillee(null)}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Retour
+              </button>
+              
+              <button
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all duration-200 font-medium text-sm"
                 onClick={() => {
                   setTacheDetaillee(null);
@@ -4125,16 +4584,23 @@ const PlanificationGlobale: React.FC = () => {
               
               <button
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 font-medium text-sm"
-                onClick={async () => {
-                  if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-                    try {
-                      await tacheService.supprimerTache(tacheDetaillee.id);
-                      setTacheDetaillee(null);
-                      window.location.reload();
-                    } catch (err: any) {
-                      alert('Erreur lors de la suppression: ' + (err.message || 'Erreur inconnue'));
+                onClick={() => {
+                  setConfirmDialog({
+                    isOpen: true,
+                    title: 'Supprimer la tâche',
+                    message: 'Êtes-vous sûr de vouloir supprimer cette tâche ? Cette action est irréversible.',
+                    variant: 'danger',
+                    onConfirm: async () => {
+                      setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                      try {
+                        await tacheService.supprimerTache(tacheDetaillee.id);
+                        setTacheDetaillee(null);
+                        window.location.reload();
+                      } catch (err: any) {
+                        setErreurEdition('Erreur lors de la suppression: ' + (err.message || 'Erreur inconnue'));
+                      }
                     }
-                  }
+                  });
                 }}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4283,7 +4749,7 @@ const PlanificationGlobale: React.FC = () => {
                           )}
                           {tache.compteMots && <span className="font-semibold">📝 {tache.compteMots.toLocaleString()} mots</span>}
                           <span className="font-semibold">⏱️ {tache.heuresTotal}h</span>
-                          <span className="font-semibold">📅 {tache.dateEcheance ? formatDateAvecJour(tache.dateEcheance.split('T')[0]) : 'Non définie'} à {tache.heureEcheance || '17:00'}</span>
+                          <span className="font-semibold">📅 {formatDateEcheanceDisplay(tache.dateEcheance)}</span>
                         </div>
                       </div>
                     </div>
@@ -4415,6 +4881,18 @@ const PlanificationGlobale: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      {/* Dialogue de confirmation global */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant={confirmDialog.variant || 'warning'}
+        confirmText="Confirmer"
+        cancelText="Annuler"
+      />
 
       {/* Bouton flottant pour voir toutes les tâches */}
       <button

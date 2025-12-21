@@ -1,21 +1,33 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
 import { ToastContainer } from './components/ui/Toast';
 
-// Pages
+// Pages chargées immédiatement (critiques pour l'auth)
 import Connexion from './pages/Connexion';
-import DashboardTraducteur from './pages/DashboardTraducteur';
-import DashboardConseiller from './pages/DashboardConseiller';
-import PlanificationGlobale from './pages/PlanificationGlobale';
-import TacheCreation from './pages/TacheCreation';
-import DashboardAdmin from './pages/DashboardAdmin';
-import { GestionProfils } from './pages/GestionProfils';
-import StatistiquesProductivite from './pages/StatistiquesProductivite';
-import ConflictResolution from './pages/ConflictResolution';
-import LiaisonsPage from './pages/LiaisonsPage';
+
+// Pages chargées en lazy loading (code splitting)
+const DashboardTraducteur = lazy(() => import('./pages/DashboardTraducteur'));
+const DashboardConseiller = lazy(() => import('./pages/DashboardConseiller'));
+const PlanificationGlobale = lazy(() => import('./pages/PlanificationGlobale'));
+const TacheCreation = lazy(() => import('./pages/TacheCreation'));
+const DashboardAdmin = lazy(() => import('./pages/DashboardAdmin'));
+const GestionProfils = lazy(() => import('./pages/GestionProfils').then(m => ({ default: m.GestionProfils })));
+const StatistiquesProductivite = lazy(() => import('./pages/StatistiquesProductivite'));
+const ConflictResolution = lazy(() => import('./pages/ConflictResolution'));
+const LiaisonsPage = lazy(() => import('./pages/LiaisonsPage'));
+
+// Composant de chargement pour Suspense
+const PageLoader: React.FC = () => (
+  <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+      <p className="text-gray-600">Chargement...</p>
+    </div>
+  </div>
+);
 
 /**
  * Route protégée - nécessite authentification
@@ -78,7 +90,8 @@ function App() {
             }}
           >
             <ToastContainer />
-            <Routes>
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
           {/* Route publique */}
           <Route path="/connexion" element={<Connexion />} />
 
@@ -181,7 +194,8 @@ function App() {
 
           {/* 404 */}
           <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </UserPreferencesProvider>
       </AuthProvider>

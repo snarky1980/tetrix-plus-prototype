@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
-import { AlertTriangle, TrendingUp, CheckCircle } from 'lucide-react';
+import { AlertTriangle, TrendingUp, CheckCircle, Info } from 'lucide-react';
 // import { conflictService } from '../services/conflictService';
 
 interface ConflictOverviewProps {
@@ -10,6 +10,41 @@ interface ConflictOverviewProps {
   divisionId?: string;
   className?: string;
 }
+
+// Descriptions des types de conflits
+const CONFLICT_DESCRIPTIONS: Record<string, string> = {
+  surallocation: "Un traducteur a plus d'heures assignées que sa capacité journalière ne le permet.",
+  chevauchement: "Deux tâches ou plus se superposent sur les mêmes plages horaires pour un même traducteur.",
+  blocage: "Une période de congé, formation ou indisponibilité empêche le travail sur une tâche planifiée.",
+  horsTravail: "Du travail est planifié en dehors des heures normales de travail du traducteur.",
+  capaciteDepassee: "La charge de travail totale dépasse la capacité maximale du traducteur sur une période donnée.",
+};
+
+// Composant Tooltip info
+const InfoTooltip: React.FC<{ text: string }> = ({ text }) => {
+  const [show, setShow] = useState(false);
+  
+  return (
+    <div className="relative inline-block">
+      <button
+        type="button"
+        className="ml-1 text-gray-400 hover:text-gray-600 focus:outline-none"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => { e.stopPropagation(); setShow(!show); }}
+        aria-label="Plus d'informations"
+      >
+        <Info className="w-3.5 h-3.5" />
+      </button>
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-56 p-2 bg-gray-900 text-white text-xs rounded-lg shadow-lg">
+          {text}
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /**
  * Vue d'ensemble des conflits (pour dashboard conseiller)
@@ -32,20 +67,20 @@ export const ConflictOverview: React.FC<ConflictOverviewProps> = ({
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: API endpoint pour récupérer stats agrégées
-    // Pour l'instant, simulation
+    // TODO: Implémenter un endpoint API pour récupérer les stats agrégées de conflits
+    // Pour l'instant, afficher 0 (cohérent avec la page de résolution)
     setLoading(true);
     setTimeout(() => {
       setStats({
-        total: 12,
-        surallocation: 5,
-        chevauchement: 3,
-        blocage: 2,
-        horsTravail: 1,
-        capaciteDepassee: 1,
+        total: 0,
+        surallocation: 0,
+        chevauchement: 0,
+        blocage: 0,
+        horsTravail: 0,
+        capaciteDepassee: 0,
       });
       setLoading(false);
-    }, 500);
+    }, 300);
   }, [traducteurId, divisionId]);
 
   if (loading) {
@@ -103,6 +138,7 @@ export const ConflictOverview: React.FC<ConflictOverviewProps> = ({
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-red-500 rounded-full"></div>
                     <span className="text-sm">Surallocation</span>
+                    <InfoTooltip text={CONFLICT_DESCRIPTIONS.surallocation} />
                   </div>
                   <span className="font-semibold text-red-600">{stats.surallocation}</span>
                 </div>
@@ -113,6 +149,7 @@ export const ConflictOverview: React.FC<ConflictOverviewProps> = ({
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
                     <span className="text-sm">Chevauchement</span>
+                    <InfoTooltip text={CONFLICT_DESCRIPTIONS.chevauchement} />
                   </div>
                   <span className="font-semibold text-orange-600">{stats.chevauchement}</span>
                 </div>
@@ -123,6 +160,7 @@ export const ConflictOverview: React.FC<ConflictOverviewProps> = ({
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                     <span className="text-sm">Blocage</span>
+                    <InfoTooltip text={CONFLICT_DESCRIPTIONS.blocage} />
                   </div>
                   <span className="font-semibold text-yellow-600">{stats.blocage}</span>
                 </div>
@@ -133,6 +171,7 @@ export const ConflictOverview: React.FC<ConflictOverviewProps> = ({
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                     <span className="text-sm">Hors heures</span>
+                    <InfoTooltip text={CONFLICT_DESCRIPTIONS.horsTravail} />
                   </div>
                   <span className="font-semibold text-purple-600">{stats.horsTravail}</span>
                 </div>
@@ -143,6 +182,7 @@ export const ConflictOverview: React.FC<ConflictOverviewProps> = ({
                   <div className="flex items-center gap-2">
                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     <span className="text-sm">Capacité dépassée</span>
+                    <InfoTooltip text={CONFLICT_DESCRIPTIONS.capaciteDepassee} />
                   </div>
                   <span className="font-semibold text-blue-600">{stats.capaciteDepassee}</span>
                 </div>

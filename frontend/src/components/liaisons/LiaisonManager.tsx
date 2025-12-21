@@ -6,6 +6,7 @@ import {
   CategorieTraducteur,
   ResumeLiaisons,
 } from '../../services/liaisonService';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 
 // Icônes SVG inline pour éviter les dépendances
 const IconLink = () => (
@@ -482,13 +483,24 @@ export const LiaisonManager: React.FC = () => {
     }
   };
 
+  const [confirmDeleteLiaison, setConfirmDeleteLiaison] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
+
   const handleRemoveLiaison = async (liaisonId: string) => {
-    if (!confirm('Voulez-vous vraiment supprimer cette liaison ?')) return;
+    setConfirmDeleteLiaison({ isOpen: true, id: liaisonId });
+  };
+
+  const executerSuppressionLiaison = async () => {
+    if (!confirmDeleteLiaison.id) return;
     try {
-      await liaisonService.supprimerLiaison(liaisonId);
+      await liaisonService.supprimerLiaison(confirmDeleteLiaison.id);
       await chargerDonnees();
     } catch (err) {
       console.error('Erreur lors de la suppression:', err);
+    } finally {
+      setConfirmDeleteLiaison({ isOpen: false, id: null });
     }
   };
 
@@ -746,6 +758,18 @@ export const LiaisonManager: React.FC = () => {
         traducteurs={traducteurs}
         reviseurs={reviseurs}
         onAdd={handleAddLiaison}
+      />
+
+      {/* Dialogue de confirmation suppression liaison */}
+      <ConfirmDialog
+        isOpen={confirmDeleteLiaison.isOpen}
+        onClose={() => setConfirmDeleteLiaison({ isOpen: false, id: null })}
+        onConfirm={executerSuppressionLiaison}
+        title="Supprimer la liaison"
+        message="Voulez-vous vraiment supprimer cette liaison traducteur-réviseur ?"
+        variant="danger"
+        confirmText="Supprimer"
+        cancelText="Annuler"
       />
     </div>
   );

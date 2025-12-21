@@ -6,6 +6,7 @@ export interface TacheJour {
   heures: number;
   heureDebut?: string;
   heureFin?: string;
+  plages?: { debut: string; fin: string }[];
 }
 
 export interface JourPlanification {
@@ -22,7 +23,91 @@ export interface Traducteur {
   division?: { nom: string };
   heuresDisponibles?: number;
   capaciteHeuresParJour?: number;
+  horaire?: string;
 }
+
+// Pause dîner de 12h à 13h
+const DEBUT_DINER = 12 * 60; // 12h en minutes
+const FIN_DINER = 13 * 60;   // 13h en minutes
+
+// Parser l'heure de début de journée en minutes
+export const parseHeureEnMinutes = (h: string): number => {
+  const match = h.match(/^(\d+)h(\d+)?$/);
+  return match ? parseInt(match[1]) * 60 + (match[2] ? parseInt(match[2]) : 0) : 9 * 60;
+};
+
+// Convertir minutes en format "Xh" ou "XhYY"
+export const minutesEnHeure = (minutes: number): string => {
+  const heures = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return mins > 0 ? `${heures}h${mins.toString().padStart(2, '0')}` : `${heures}h`;
+};
+
+// Calculer la plage horaire en tenant compte du dîner
+// Retourne { finMinutes, plages: [{debut, fin}] } pour gérer les plages fractionnées
+export const calculerPlageAvecDiner = (debutMinutes: number, dureeMinutes: number): { 
+  finMinutes: number; 
+  plages: { debut: string; fin: string }[] 
+} => {
+  const plages: { debut: string; fin: string }[] = [];
+  let restant = dureeMinutes;
+  let courant = debutMinutes;
+  
+  while (restant > 0) {
+    // Si on est dans la période du dîner, sauter à 13h
+    if (courant >= DEBUT_DINER && courant < FIN_DINER) {
+      courant = FIN_DINER;
+    }
+    
+    // Calculer combien on peut travailler avant le dîner (ou jusqu'à la fin)
+    let finPlage: number;
+    if (courant < DEBUT_DINER) {
+      // Avant le dîner: on peut aller jusqu'à 12h max
+      const maxAvantDiner = DEBUT_DINER - courant;
+      const dureeAvantDiner = Math.min(restant, maxAvantDiner);
+      finPlage = courant + dureeAvantDiner;
+      plages.push({ debut: minutesEnHeure(courant), fin: minutesEnHeure(finPlage) });
+      restant -= dureeAvantDiner;
+      courant = finPlage;
+    } else {
+      // Après le dîner (13h+)
+      finPlage = courant + restant;
+      plages.push({ debut: minutesEnHeure(courant), fin: minutesEnHeure(finPlage) });
+      restant = 0;
+      courant = finPlage;
+    }
+  }
+  
+  return { finMinutes: courant, plages };
+};
+
+// Calculer les plages horaires pour toutes les tâches d'un jour
+export const calculerPlagesJour = (taches: TacheJour[], horaireTraducteur: string = '9h-17h'): TacheJour[] => {
+  const [debutJournee] = horaireTraducteur.split('-');
+  let minutesCourantes = parseHeureEnMinutes(debutJournee);
+  
+  return taches.map((tache) => {
+    // Si plages déjà définies explicitement, les utiliser
+    if (tache.heureDebut && tache.heureFin) {
+      return tache;
+    }
+    
+    // Sinon, calculer basé sur l'heure courante
+    if (tache.heures > 0) {
+      const resultat = calculerPlageAvecDiner(minutesCourantes, tache.heures * 60);
+      minutesCourantes = resultat.finMinutes;
+      
+      return {
+        ...tache,
+        heureDebut: resultat.plages[0]?.debut,
+        heureFin: resultat.plages[resultat.plages.length - 1]?.fin,
+        plages: resultat.plages,
+      };
+    }
+    
+    return tache;
+  });
+};
 
 export async function chargerPlanificationTraducteur(traducteurId: string, nbJours: number = 7): Promise<{ traducteur: any; planification: JourPlanification[] }> {
   const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -84,21 +169,27 @@ export async function chargerPlanificationTraducteur(traducteurId: string, nbJou
       return sum + (ajustement?.heures || 0);
     }, 0);
     
+    // Créer les tâches brutes
+    const tachesBrutes: TacheJour[] = tachesJour.map((t: any) => {
+      const ajustement = t.ajustementsTemps?.find((aj: any) => formatOttawaISO(new Date(aj.date)) === dateStr);
+      return {
+        numeroProjet: t.numeroProjet,
+        typeTache: t.typeTache,
+        heures: ajustement?.heures || 0,
+        heureDebut: ajustement?.heureDebut,
+        heureFin: ajustement?.heureFin
+      };
+    });
+    
+    // Calculer les plages horaires automatiquement
+    const tachesAvecPlages = calculerPlagesJour(tachesBrutes, traducteur.horaire || '9h-17h');
+    
     return {
       date: dateStr,
       jour: jour,
       capacite: traducteur.capaciteHeuresParJour || 7,
       heuresUtilisees,
-      taches: tachesJour.map((t: any) => {
-        const ajustement = t.ajustementsTemps?.find((aj: any) => formatOttawaISO(new Date(aj.date)) === dateStr);
-        return {
-          numeroProjet: t.numeroProjet,
-          typeTache: t.typeTache,
-          heures: ajustement?.heures || 0,
-          heureDebut: ajustement?.heureDebut,
-          heureFin: ajustement?.heureFin
-        };
-      })
+      taches: tachesAvecPlages
     };
   });
   

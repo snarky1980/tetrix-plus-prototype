@@ -4,6 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Modal } from '../ui/Modal';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
@@ -22,6 +23,10 @@ export const UserManagement: React.FC = () => {
   const [modalOuvert, setModalOuvert] = useState(false);
   const [modalPermissionsOuvert, setModalPermissionsOuvert] = useState(false);
   const [utilisateurSelectionne, setUtilisateurSelectionne] = useState<Utilisateur | undefined>();
+  const [confirmDesactiver, setConfirmDesactiver] = useState<{ isOpen: boolean; id: string | null }>({
+    isOpen: false,
+    id: null
+  });
 
   const chargerDonnees = async () => {
     setLoading(true);
@@ -59,13 +64,19 @@ export const UserManagement: React.FC = () => {
   };
 
   const handleDesactiverUtilisateur = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir désactiver cet utilisateur ?')) return;
+    setConfirmDesactiver({ isOpen: true, id });
+  };
+
+  const executerDesactivation = async () => {
+    if (!confirmDesactiver.id) return;
     try {
-      await utilisateurService.mettreAJourUtilisateur(id, { actif: false });
+      await utilisateurService.mettreAJourUtilisateur(confirmDesactiver.id, { actif: false });
       await chargerDonnees();
       addToast('Utilisateur désactivé avec succès', 'success');
     } catch (err) {
       addToast('Erreur lors de la désactivation de l\'utilisateur', 'error');
+    } finally {
+      setConfirmDesactiver({ isOpen: false, id: null });
     }
   };
 
@@ -198,6 +209,18 @@ export const UserManagement: React.FC = () => {
         ouvert={modalPermissionsOuvert}
         onFermer={() => setModalPermissionsOuvert(false)}
         onSauvegarder={chargerDonnees}
+      />
+
+      {/* Dialogue de confirmation désactivation */}
+      <ConfirmDialog
+        isOpen={confirmDesactiver.isOpen}
+        onClose={() => setConfirmDesactiver({ isOpen: false, id: null })}
+        onConfirm={executerDesactivation}
+        title="Désactiver l'utilisateur"
+        message="Êtes-vous sûr de vouloir désactiver cet utilisateur ? Il ne pourra plus se connecter."
+        variant="warning"
+        confirmText="Désactiver"
+        cancelText="Annuler"
       />
     </>
   );

@@ -370,9 +370,11 @@ export const creerTache = async (
     });
 
     res.status(201).json(tacheComplete);
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur création tâche:', error);
-    res.status(500).json({ erreur: 'Erreur lors de la création de la tâche' });
+    // Renvoyer le message d'erreur détaillé pour aider l'utilisateur
+    const messageErreur = error.message || 'Erreur lors de la création de la tâche';
+    res.status(400).json({ erreur: messageErreur });
   }
 };
 

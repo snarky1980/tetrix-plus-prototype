@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 export interface Domaine {
   nom: string;
@@ -13,7 +13,7 @@ export const domaineService = {
    */
   async obtenirDomaines(): Promise<Domaine[]> {
     const token = localStorage.getItem('token');
-    const response = await axios.get(`${API_URL}/api/domaines`, {
+    const response = await axios.get(`${API_URL}/domaines`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

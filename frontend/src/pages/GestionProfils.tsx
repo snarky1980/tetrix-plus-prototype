@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   utilisateurService,
   divisionService,
@@ -11,13 +12,25 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Modal } from '../components/ui/Modal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { DivisionPermissions } from '../components/admin/DivisionPermissions';
+import { Breadcrumbs } from '../components/navigation/Breadcrumbs';
 
 type TabType = 'utilisateurs' | 'divisions';
 
 export const GestionProfils: React.FC = () => {
+  const navigate = useNavigate();
   const [tab, setTab] = useState<TabType>('utilisateurs');
   const [utilisateurs, setUtilisateurs] = useState<Utilisateur[]>([]);
+  
+  // États pour les dialogues de confirmation
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    variant?: 'danger' | 'warning' | 'info';
+  }>({ isOpen: false, title: '', message: '', onConfirm: () => {} });
   const [divisions, setDivisions] = useState<Division[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,17 +165,24 @@ export const GestionProfils: React.FC = () => {
   };
 
   const handleSupprimerUtilisateur = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) return;
-
-    setLoading(true);
-    try {
-      await utilisateurService.supprimerUtilisateur(id);
-      chargerDonnees();
-    } catch (err: any) {
-      setError(err.response?.data?.erreur || 'Erreur lors de la suppression');
-    } finally {
-      setLoading(false);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Supprimer l\'utilisateur',
+      message: 'Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action est irréversible.',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
+        try {
+          await utilisateurService.supprimerUtilisateur(id);
+          chargerDonnees();
+        } catch (err: any) {
+          setError(err.response?.data?.erreur || 'Erreur lors de la suppression');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   // Les fonctions de gestion des accès sont maintenant gérées par le composant DivisionPermissions
@@ -204,17 +224,24 @@ export const GestionProfils: React.FC = () => {
   };
 
   const handleSupprimerDivision = async (id: string) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette division ?')) return;
-
-    setLoading(true);
-    try {
-      await divisionService.supprimerDivision(id);
-      chargerDonnees();
-    } catch (err: any) {
-      setError(err.response?.data?.erreur || 'Erreur lors de la suppression');
-    } finally {
-      setLoading(false);
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Supprimer la division',
+      message: 'Êtes-vous sûr de vouloir supprimer cette division ? Cette action est irréversible.',
+      variant: 'danger',
+      onConfirm: async () => {
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+        setLoading(true);
+        try {
+          await divisionService.supprimerDivision(id);
+          chargerDonnees();
+        } catch (err: any) {
+          setError(err.response?.data?.erreur || 'Erreur lors de la suppression');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -234,12 +261,35 @@ export const GestionProfils: React.FC = () => {
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
+      {/* Breadcrumbs et retour */}
+      <div className="mb-4 flex items-center gap-4">
+        <Button variant="outline" onClick={() => navigate('/admin')} className="text-sm">
+          ← Retour Admin
+        </Button>
+        <Breadcrumbs items={[
+          { label: 'Administration', path: '/admin' },
+          { label: 'Gestion des profils' }
+        ]} />
+      </div>
+      
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Gestion des Profils</h1>
         <p className="text-gray-600 mt-2">
           Gérez les utilisateurs, leurs rôles et leurs accès aux divisions
         </p>
       </div>
+      
+      {/* Dialogue de confirmation */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant={confirmDialog.variant || 'warning'}
+        confirmText="Supprimer"
+        cancelText="Annuler"
+      />
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
