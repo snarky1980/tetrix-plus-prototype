@@ -11,6 +11,7 @@ import { TetrixMaxUnified } from '../components/tetrixmax/TetrixMaxUnified';
 import { TetrixMaxDisplay } from '../components/tetrixmax/TetrixMaxDisplay';
 import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
 import { TacheCard } from '../components/taches/TacheCard';
+import { HistoriqueTacheModal } from '../components/historique/HistoriqueTacheModal';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { useAutoRefresh, formatTimeAgo } from '../hooks/useAutoRefresh';
@@ -258,6 +259,9 @@ const PlanificationGlobale: React.FC = () => {
   } | null>(null);
   const [loadingTaches, setLoadingTaches] = useState(false);
   const [tacheDetaillee, setTacheDetaillee] = useState<any | null>(null);
+  
+  // État pour le modal d'historique
+  const [historiqueModal, setHistoriqueModal] = useState<{ tacheId: string; numeroProjet: string } | null>(null);
 
   // État pour la modal de blocage de temps
   const [showBlocageModal, setShowBlocageModal] = useState(false);
@@ -4587,6 +4591,16 @@ const PlanificationGlobale: React.FC = () => {
               </button>
               
               <button
+                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all duration-200 font-medium text-sm"
+                onClick={() => {
+                  setHistoriqueModal({ tacheId: tacheDetaillee.id, numeroProjet: tacheDetaillee.numeroProjet });
+                }}
+              >
+                <span>📜</span>
+                Historique
+              </button>
+              
+              <button
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all duration-200 font-medium text-sm"
                 onClick={() => {
                   setTacheDetaillee(null);
@@ -4910,6 +4924,16 @@ const PlanificationGlobale: React.FC = () => {
         confirmText="Confirmer"
         cancelText="Annuler"
       />
+
+      {/* Modal Historique de tâche */}
+      {historiqueModal && (
+        <HistoriqueTacheModal
+          tacheId={historiqueModal.tacheId}
+          numeroProjet={historiqueModal.numeroProjet}
+          ouvert={!!historiqueModal}
+          onFermer={() => setHistoriqueModal(null)}
+        />
+      )}
 
       {/* Bouton flottant pour voir toutes les tâches */}
       <button

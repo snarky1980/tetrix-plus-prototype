@@ -149,9 +149,11 @@ model Tache {
   paireLinguistiqueId String?
   creePar             String
   creeLe              DateTime           @default(now())
+  modifiePar          String?            // Dernier utilisateur ayant modifié
   modifieLe           DateTime           @updatedAt
   version             Int                @default(0)
   ajustementsTemps    AjustementTemps[]
+  historique          HistoriqueTache[]
   client              Client?            @relation(fields: [clientId], references: [id])
   paireLinguistique   PaireLinguistique? @relation(fields: [paireLinguistiqueId], references: [id])
   sousDomaine         SousDomaine?       @relation(fields: [sousDomaineId], references: [id])
@@ -162,6 +164,26 @@ model Tache {
   @@index([statut])
   @@index([priorite])
   @@map("taches")
+}
+
+// Historique des modifications d'une tâche
+model HistoriqueTache {
+  id            String   @id @default(uuid())
+  tacheId       String
+  action        String   // CREATION, MODIFICATION, REASSIGNATION, STATUT_CHANGE, etc.
+  champModifie  String?  // Nom du champ modifié (ex: "traducteurId", "statut", "heuresTotal")
+  ancienneValeur String? // Valeur avant modification
+  nouvelleValeur String? // Valeur après modification
+  utilisateurId String   // ID de l'utilisateur qui a fait la modification
+  utilisateur   String   // Nom de l'utilisateur (dénormalisé pour affichage)
+  details       String?  // Détails supplémentaires (JSON si besoin)
+  creeLe        DateTime @default(now())
+  
+  tache         Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+  
+  @@index([tacheId])
+  @@index([creeLe])
+  @@map("historique_taches")
 }
 
 model AjustementTemps {

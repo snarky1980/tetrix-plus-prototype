@@ -5,6 +5,7 @@ import {
   creerTache,
   mettreAJourTache,
   supprimerTache,
+  obtenirHistoriqueTache,
 } from '../controllers/tacheController';
 import { authentifier, verifierRole } from '../middleware/auth';
 import { valider } from '../middleware/validation';
@@ -27,6 +28,13 @@ router.get('/', verifierRole('ADMIN', 'CONSEILLER'), obtenirTaches);
  * Accessible par : Admin, Conseiller
  */
 router.get('/:id', verifierRole('ADMIN', 'CONSEILLER'), obtenirTache);
+
+/**
+ * GET /api/taches/:id/historique
+ * Obtenir l'historique des modifications d'une tâche
+ * Accessible par : Admin, Conseiller
+ */
+router.get('/:id/historique', verifierRole('ADMIN', 'CONSEILLER'), obtenirHistoriqueTache);
 
 /**
  * POST /api/taches

@@ -1,6 +1,32 @@
 import api from './api';
 import { Tache, CreerTacheForm } from '../types';
 
+export interface HistoriqueTacheEntry {
+  id: string;
+  tacheId: string;
+  action: 'CREATION' | 'MODIFICATION' | 'REASSIGNATION' | 'STATUT_CHANGE' | 'REPARTITION_CHANGE' | 'SUPPRESSION';
+  champModifie?: string;
+  ancienneValeur?: string;
+  nouvelleValeur?: string;
+  utilisateurId: string;
+  utilisateur: string;
+  details?: string;
+  creeLe: string;
+}
+
+export interface HistoriqueTacheResponse {
+  tacheId: string;
+  creation: {
+    par: string;
+    le: string;
+  };
+  derniereModification: {
+    par: string;
+    le: string;
+  } | null;
+  historique: HistoriqueTacheEntry[];
+}
+
 export const tacheService = {
   /**
    * Récupérer toutes les tâches avec filtres
@@ -20,6 +46,14 @@ export const tacheService = {
    */
   async obtenirTache(id: string): Promise<Tache> {
     const { data } = await api.get<Tache>(`/taches/${id}`);
+    return data;
+  },
+
+  /**
+   * Récupérer l'historique d'une tâche
+   */
+  async obtenirHistorique(id: string): Promise<HistoriqueTacheResponse> {
+    const { data } = await api.get<HistoriqueTacheResponse>(`/taches/${id}/historique`);
     return data;
   },
 

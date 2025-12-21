@@ -4,6 +4,7 @@ import prisma from '../config/database';
 import { repartitionJusteATemps, repartitionPEPS, repartitionEquilibree, validerRepartition, RepartitionItem } from '../services/repartitionService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
 import { parseOttawaDateISO, normalizeToOttawaWithTime, hasSignificantTime } from '../utils/dateTimeOttawa';
+import { enregistrerCreation, enregistrerModifications, enregistrerChangementRepartition } from '../services/historiqueService';
 
 /**
  * Obtenir les tâches avec filtres
@@ -349,6 +350,17 @@ export const creerTache = async (
       return nouvelleTache;
     });
 
+    // Enregistrer la création dans l'historique
+    const utilisateurNom = req.utilisateur?.email || 'Système';
+    await enregistrerCreation(tache.id, req.utilisateur!.id, utilisateurNom, {
+      numeroProjet,
+      traducteurId,
+      heuresTotal,
+      dateEcheance,
+      typeTache: typeTache || 'TRADUCTION',
+      modeDistribution: modeDistribution || (repartitionAuto ? 'JAT' : 'MANUEL'),
+    });
+
     // Récupérer la tâche complète
     const tacheComplete = await prisma.tache.findUnique({
       where: { id: tache.id },
@@ -477,6 +489,7 @@ export const mettreAJourTache = async (
           ...(dateEcheanceParsee && { dateEcheance: dateEcheanceParsee }),
           ...(statut && { statut }),
           ...(typeTache && { typeTache }),
+          modifiePar: req.utilisateur!.id, // Enregistrer qui a modifié
           version: { increment: 1 }, // Incrémenter la version
         },
       });
@@ -522,6 +535,45 @@ export const mettreAJourTache = async (
         },
       },
     });
+
+    // Enregistrer les modifications dans l'historique
+    const utilisateurNom = req.utilisateur?.email || 'Système';
+    await enregistrerModifications(
+      id,
+      req.utilisateur!.id,
+      utilisateurNom,
+      existante,
+      {
+        numeroProjet,
+        description,
+        specialisation,
+        heuresTotal,
+        compteMots: compteMots ? parseInt(compteMots) : compteMots,
+        dateEcheance: dateEcheanceParsee,
+        statut,
+        typeTache,
+      }
+    );
+
+    // Enregistrer le changement de répartition si applicable
+    if (repartitionEffective) {
+      // Récupérer l'ancienne répartition
+      const anciensAjustements = await prisma.ajustementTemps.findMany({
+        where: { tacheId: id, type: 'TACHE' },
+        orderBy: { date: 'asc' },
+      });
+      const ancienneRep = anciensAjustements.map(a => ({
+        date: a.date.toISOString().split('T')[0],
+        heures: a.heures,
+      }));
+      await enregistrerChangementRepartition(
+        id,
+        req.utilisateur!.id,
+        utilisateurNom,
+        ancienneRep,
+        repartitionEffective
+      );
+    }
 
     res.json(tacheComplete);
   } catch (error: any) {
@@ -569,5 +621,81 @@ export const supprimerTache = async (
   } catch (error) {
     console.error('Erreur suppression tâche:', error);
     res.status(500).json({ erreur: 'Erreur lors de la suppression de la tâche' });
+  }
+};
+
+/**
+ * Obtenir l'historique d'une tâche
+ * GET /api/taches/:id/historique
+ */
+export const obtenirHistoriqueTache = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier que la tâche existe
+    const tache = await prisma.tache.findUnique({
+      where: { id },
+      select: { 
+        id: true, 
+        creePar: true, 
+        creeLe: true,
+        modifiePar: true,
+        modifieLe: true,
+      }
+    });
+
+    if (!tache) {
+      res.status(404).json({ erreur: 'Tâche non trouvée' });
+      return;
+    }
+
+    // Récupérer l'historique
+    const historique = await prisma.historiqueTache.findMany({
+      where: { tacheId: id },
+      orderBy: { creeLe: 'desc' },
+    });
+
+    // Récupérer le nom du créateur
+    let createurNom = 'Inconnu';
+    if (tache.creePar) {
+      const createur = await prisma.utilisateur.findUnique({
+        where: { id: tache.creePar },
+        select: { nom: true, email: true }
+      });
+      if (createur) {
+        createurNom = createur.nom || createur.email;
+      }
+    }
+
+    // Récupérer le nom du dernier modificateur
+    let modificateurNom = null;
+    if (tache.modifiePar) {
+      const modificateur = await prisma.utilisateur.findUnique({
+        where: { id: tache.modifiePar },
+        select: { nom: true, email: true }
+      });
+      if (modificateur) {
+        modificateurNom = modificateur.nom || modificateur.email;
+      }
+    }
+
+    res.json({
+      tacheId: id,
+      creation: {
+        par: createurNom,
+        le: tache.creeLe,
+      },
+      derniereModification: tache.modifiePar ? {
+        par: modificateurNom,
+        le: tache.modifieLe,
+      } : null,
+      historique,
+    });
+  } catch (error) {
+    console.error('Erreur récupération historique:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la récupération de l\'historique' });
   }
 };
