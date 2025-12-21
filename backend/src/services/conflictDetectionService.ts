@@ -29,8 +29,10 @@ import {
   capaciteNetteJour,
   formatOttawaISO,
   differenceInDaysOttawa,
-  addDaysOttawa
+  addDaysOttawa,
+  OTTAWA_TIMEZONE
 } from '../utils/dateTimeOttawa';
+import { toZonedTime } from 'date-fns-tz';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -442,7 +444,9 @@ async function detecterApresEcheance(allocation: any): Promise<Conflict | null> 
   if (dateAllocISO === dateEcheanceISO) {
     // Si l'échéance a une heure précise ET l'allocation a des heures précises
     if (echeanceHasTime && allocation.heureFin) {
-      const heureEcheance = dateEcheance.getHours() + dateEcheance.getMinutes() / 60;
+      // CRITIQUE: Utiliser toZonedTime pour extraire l'heure en timezone Ottawa
+      const dateEcheanceZoned = toZonedTime(dateEcheance, OTTAWA_TIMEZONE);
+      const heureEcheance = dateEcheanceZoned.getHours() + dateEcheanceZoned.getMinutes() / 60;
       const finAlloc = parseHeureString(allocation.heureFin);
 
       if (finAlloc > heureEcheance + 0.01) { // tolérance 0.01h

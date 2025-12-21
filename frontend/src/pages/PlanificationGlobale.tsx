@@ -1321,7 +1321,13 @@ const PlanificationGlobale: React.FC = () => {
       setPreviewJATEdit(result);
     } catch (err: any) {
       console.error('Erreur preview répartition:', err);
-      setErreurEdition('Erreur lors du calcul: ' + (err.response?.data?.erreur || err.message));
+      const errMsg = err.response?.data?.erreur || err.message || '';
+      // Détecter si l'erreur est liée à une date passée
+      if (errMsg.includes('passé') || errMsg.includes('past')) {
+        setErreurEdition('📅 La date d\'échéance est dans le passé. Modifiez la date vers une date future pour recalculer la répartition JAT.');
+      } else {
+        setErreurEdition('Erreur lors du calcul: ' + errMsg);
+      }
     } finally {
       setLoadingPreviewEdit(false);
     }
@@ -3185,7 +3191,33 @@ const PlanificationGlobale: React.FC = () => {
                       <p><span className="font-medium">Traducteur:</span> {traducteurEdition?.nom} {traducteurEdition?.horaire && <span className="text-gray-500">({traducteurEdition.horaire} | 🍽️ 12h-13h)</span>}</p>
                       <p><span className="font-medium">Type:</span> {formEdition.typeTache}</p>
                       <p><span className="font-medium">Heures:</span> <span className="font-bold text-blue-600">{formEdition.heuresTotal}h</span></p>
-                      <p><span className="font-medium">Échéance:</span> {formatDateEcheanceDisplay(formEdition.dateEcheance)}</p>
+                      {/* Date d'échéance modifiable directement si erreur */}
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">Échéance:</span>
+                        {erreurEdition && erreurEdition.includes('passé') ? (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="datetime-local"
+                              value={formEdition.dateEcheance}
+                              onChange={(e) => {
+                                setFormEdition({ ...formEdition, dateEcheance: e.target.value });
+                                setErreurEdition('');
+                              }}
+                              className="text-xs py-0.5 px-1 w-48 border-orange-400"
+                            />
+                            <Button
+                              variant="outline"
+                              onClick={chargerPreviewRepartitionEdit}
+                              disabled={loadingPreviewEdit}
+                              className="text-xs px-2 py-0.5 bg-orange-100 hover:bg-orange-200 border-orange-400"
+                            >
+                              🔄 Recalculer
+                            </Button>
+                          </div>
+                        ) : (
+                          <span>{formatDateEcheanceDisplay(formEdition.dateEcheance)}</span>
+                        )}
+                      </div>
                       <p><span className="font-medium">Mode:</span> {MODE_LABELS[formEdition.typeRepartition] || formEdition.typeRepartition}</p>
                       {formEdition.priorite === 'URGENT' && (
                         <p><span className="px-2 py-0.5 rounded bg-red-100 text-red-700 font-semibold">🔥 URGENT</span></p>
@@ -4579,19 +4611,19 @@ const PlanificationGlobale: React.FC = () => {
               </div>
             )}
 
-            <div className="flex gap-3 justify-center pt-4 border-t">
+            <div className="flex gap-2 justify-center pt-3 border-t">
               <button
-                className="flex items-center gap-2 px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 active:scale-95 transition-all duration-200 font-medium text-sm border border-gray-300"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 active:scale-95 transition-all duration-200 font-medium text-xs border border-gray-300"
                 onClick={() => setTacheDetaillee(null)}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
                 Retour
               </button>
               
               <button
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all duration-200 font-medium text-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded shadow-sm hover:shadow-md hover:from-amber-600 hover:to-amber-700 active:scale-95 transition-all duration-200 font-medium text-xs"
                 onClick={() => {
                   setHistoriqueModal({ tacheId: tacheDetaillee.id, numeroProjet: tacheDetaillee.numeroProjet });
                 }}
@@ -4601,20 +4633,20 @@ const PlanificationGlobale: React.FC = () => {
               </button>
               
               <button
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all duration-200 font-medium text-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded shadow-sm hover:shadow-md hover:from-blue-700 hover:to-blue-800 active:scale-95 transition-all duration-200 font-medium text-xs"
                 onClick={() => {
                   setTacheDetaillee(null);
                   handleEditTache(tacheDetaillee.id);
                 }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Éditer
               </button>
               
               <button
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-sm hover:shadow-lg hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 font-medium text-sm"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded shadow-sm hover:shadow-md hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 font-medium text-xs"
                 onClick={() => {
                   setConfirmDialog({
                     isOpen: true,

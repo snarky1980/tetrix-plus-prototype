@@ -429,6 +429,7 @@ export const mettreAJourTache = async (
     if (repartition && Array.isArray(repartition) && repartition.length > 0) {
       const { valide, erreurs } = await validerRepartition(existante.traducteurId, repartition, heuresCible, id, echeanceCible);
       if (!valide) {
+        console.error('[PUT tache] Répartition invalide:', erreurs, '| repartition:', JSON.stringify(repartition));
         res.status(400).json({ erreur: 'Répartition invalide', details: erreurs });
         return;
       }

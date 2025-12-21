@@ -92,10 +92,12 @@ function calculerPlageHoraireJAT(
   // Déterminer l'heure de fin effective
   let heureFin: number;
   if (estJourEcheance && deadlineDateTime) {
-    // Jour J: l'heure de fin est l'heure de deadline
+    // Jour J: l'heure de fin est l'heure de deadline OU la fin de l'horaire (le minimum des deux)
     // CRITIQUE: Utiliser toZonedTime pour extraire l'heure dans le fuseau Ottawa
     const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
-    heureFin = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
+    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
+    // Ne jamais dépasser la fin de l'horaire du traducteur
+    heureFin = Math.min(heureDeadline, horaire.heureFin);
   } else {
     // Autres jours: l'heure de fin est la fin de l'horaire
     heureFin = horaire.heureFin;
@@ -142,10 +144,19 @@ function calculerPlageHoraireEquilibree(
   heuresAllouees: number,
   horaire: { heureDebut: number; heureFin: number },
   heuresDejaUtilisees: number,
-  dateJour: Date
+  dateJour: Date,
+  deadlineDateTime?: Date
 ): { heureDebut: string; heureFin: string } {
   // STRATÉGIE ÉQUILIBRÉE: Utilise comportement PEPS (le plus TÔT possible)
   // Cela permet une suggestion cohérente que l'utilisateur peut ajuster
+  
+  // Déterminer l'heure de fin maximale (min entre horaire et deadline)
+  let heureFinMax = horaire.heureFin;
+  if (deadlineDateTime) {
+    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
+    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
+    heureFinMax = Math.min(heureFinMax, heureDeadline);
+  }
   
   // Point de départ: juste après les heures déjà utilisées, ou début de journée
   let heureDebut = horaire.heureDebut + heuresDejaUtilisees;
@@ -167,8 +178,8 @@ function calculerPlageHoraireEquilibree(
     }
   }
   
-  // S'assurer qu'on ne dépasse pas la fin de l'horaire
-  heureFin = Math.min(heureFin, horaire.heureFin);
+  // S'assurer qu'on ne dépasse pas la fin de l'horaire NI la deadline
+  heureFin = Math.min(heureFin, heureFinMax);
   
   return {
     heureDebut: formatHeure(heureDebut),
@@ -191,9 +202,18 @@ function calculerPlageHorairePEPS(
   heuresAllouees: number,
   horaire: { heureDebut: number; heureFin: number },
   heuresDejaUtilisees: number,
-  dateJour: Date
+  dateJour: Date,
+  deadlineDateTime?: Date
 ): { heureDebut: string; heureFin: string } {
   // STRATÉGIE PEPS: Allouer LE PLUS TÔT POSSIBLE (dès le début de la journée)
+  
+  // Déterminer l'heure de fin maximale (min entre horaire et deadline)
+  let heureFinMax = horaire.heureFin;
+  if (deadlineDateTime) {
+    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
+    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
+    heureFinMax = Math.min(heureFinMax, heureDeadline);
+  }
   
   // Point de départ: juste après les heures déjà utilisées, ou début de journée
   let heureDebut = horaire.heureDebut + heuresDejaUtilisees;
@@ -215,8 +235,8 @@ function calculerPlageHorairePEPS(
     }
   }
   
-  // S'assurer qu'on ne dépasse pas la fin de l'horaire
-  heureFin = Math.min(heureFin, horaire.heureFin);
+  // S'assurer qu'on ne dépasse pas la fin de l'horaire NI la deadline
+  heureFin = Math.min(heureFin, heureFinMax);
   
   return {
     heureDebut: formatHeure(heureDebut),
@@ -564,12 +584,17 @@ export async function repartitionEquilibree(
     const dateJour = parseOttawaDateISO(alloc.iso);
     const utilisees = heuresParJour[alloc.iso] || 0;
     
+    // Déterminer si c'est le jour de la deadline avec heure précise
+    const estJourEcheance = alloc.iso === dateFinJourSeul;
+    const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
+    
     // Calculer les plages horaires (le plus tôt possible)
     const plages = calculerPlageHoraireEquilibree(
       alloc.heuresAllouees,
       horaire,
       utilisees,
-      dateJour
+      dateJour,
+      deadlineDateTime
     );
     
     return {
@@ -634,7 +659,7 @@ export async function repartitionPEPS(
     const alloue = Math.min(libre, restant);
     
     // Calculer les plages horaires (PEPS = le plus TÔT possible, inverse de JAT)
-    const plages = calculerPlageHorairePEPS(alloue, horaire, utilisees, jour);
+    const plages = calculerPlageHorairePEPS(alloue, horaire, utilisees, jour, deadlineDateTime);
     
     resultat.push({ 
       date: iso, 
@@ -785,7 +810,9 @@ export async function validerRepartition(
       if (dateObjISO === deadlineISO) {
         // Si l'échéance a une heure précise ET que la répartition a des heures précises
         if (deadlineHasTime && r.heureFin) {
-          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
+          // CRITIQUE: Utiliser toZonedTime pour extraire l'heure dans le fuseau Ottawa
+          const deadlineZoned = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
+          const heureEcheance = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
           const heureFin = parseHeureString(r.heureFin);
           if (heureFin > heureEcheance + 0.01) { // tolérance 0.01h pour floating point
             erreurs.push(`Le ${r.date}, heure de fin ${r.heureFin} dépasse l'heure d'échéance ${formatHeure(heureEcheance)}. Distribution au-delà de l'échéance interdite.`);
@@ -799,7 +826,8 @@ export async function validerRepartition(
           // Or si l'échéance est par exemple à 14h00 le même jour, on ne peut pas travailler toute la journée
           // Cette situation devrait être gérée par l'algorithme qui doit fournir heureDebut/heureFin
           // Pour la validation, on va accepter mais logger un avertissement
-          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
+          const deadlineZonedWarn = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
+          const heureEcheance = deadlineZonedWarn.getHours() + deadlineZonedWarn.getMinutes() / 60;
           console.warn(`[Validation] ${r.date}: échéance à ${formatHeure(heureEcheance)} mais répartition sans heures précises. Accepté mais risque de dépassement.`);
         }
       }
@@ -841,6 +869,15 @@ export async function validerRepartition(
         }
         if (fin > horaire.heureFin) {
           erreurs.push(`Heures invalides le ${r.date}: heureFin (${r.heureFin}) après l'horaire du traducteur (${formatHeure(horaire.heureFin)}).`);
+        }
+        
+        // NOUVEAU: Vérifier que l'heure de fin ne dépasse pas la deadline (même jour)
+        if (estJourEcheance && deadlineHasTime && deadlineDate) {
+          const deadlineZonedCheck = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
+          const heureDeadline = deadlineZonedCheck.getHours() + deadlineZonedCheck.getMinutes() / 60;
+          if (fin > heureDeadline + 0.01) {
+            erreurs.push(`Heures invalides le ${r.date}: heureFin (${r.heureFin}) après l'échéance (${formatHeure(heureDeadline)}).`);
+          }
         }
         
         // Calculer la durée en tenant compte de la pause

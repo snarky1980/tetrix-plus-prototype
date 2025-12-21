@@ -288,21 +288,40 @@ export function formatDateWithWeekday(date: Date | null | undefined): string {
 /**
  * Extraire la partie date d'une date d'échéance (format YYYY-MM-DD)
  * Accepte: "2025-12-23T22:00:00.000Z", "2025-12-23T17:00:00", "2025-12-23"
+ * IMPORTANT: Convertit en timezone Ottawa avant d'extraire (UTC 03:00 du 31 = 22:00 du 30 Ottawa)
  */
 export function extractDatePart(dateEcheance: string | null | undefined): string {
   if (!dateEcheance) return '';
-  return dateEcheance.includes('T') ? dateEcheance.split('T')[0] : dateEcheance;
+  
+  // Si c'est une date simple sans heure, retourner directement
+  if (!dateEcheance.includes('T')) return dateEcheance;
+  
+  // Convertir en timezone Ottawa pour obtenir la bonne date
+  const date = new Date(dateEcheance);
+  if (isNaN(date.getTime())) return dateEcheance.split('T')[0];
+  
+  const zonedDate = toZonedTime(date, OTTAWA_TIMEZONE);
+  return format(zonedDate, 'yyyy-MM-dd', { timeZone: OTTAWA_TIMEZONE });
 }
 
 /**
  * Extraire la partie heure d'une date d'échéance (format HH:mm)
  * Accepte: "2025-12-23T22:00:00.000Z", "2025-12-23T17:00:00", "2025-12-23"
  * Retourne: "22:00", "17:00", ou defaultTime si pas d'heure
+ * IMPORTANT: Convertit en timezone Ottawa avant d'extraire
  */
 export function extractTimePart(dateEcheance: string | null | undefined, defaultTime: string = '17:00'): string {
   if (!dateEcheance || !dateEcheance.includes('T')) return defaultTime;
-  const timePart = dateEcheance.split('T')[1];
-  return timePart ? timePart.substring(0, 5) : defaultTime;
+  
+  // Convertir en timezone Ottawa pour obtenir la bonne heure
+  const date = new Date(dateEcheance);
+  if (isNaN(date.getTime())) {
+    const timePart = dateEcheance.split('T')[1];
+    return timePart ? timePart.substring(0, 5) : defaultTime;
+  }
+  
+  const zonedDate = toZonedTime(date, OTTAWA_TIMEZONE);
+  return format(zonedDate, 'HH:mm', { timeZone: OTTAWA_TIMEZONE });
 }
 
 /**
