@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../ui/Button';
 import { BoutonPlanificationTraducteur } from '../BoutonPlanificationTraducteur';
 import { formatDateEcheanceDisplay } from '../../utils/dateTimeOttawa';
+import { toUIMode } from '../../utils/modeDistribution';
 import type { Tache } from '../../types';
 
 interface TacheCardProps {
@@ -63,6 +64,18 @@ export const TacheCard: React.FC<TacheCardProps> = ({
     }
   };
 
+  // Labels courts pour le mode de distribution
+  const getModeDistributionLabel = (mode: string | undefined) => {
+    const uiMode = mode ? toUIMode(mode as any) : null;
+    switch (uiMode) {
+      case 'JUSTE_TEMPS': return { label: 'JAT', icon: '📊', color: 'bg-purple-100 text-purple-700' };
+      case 'PEPS': return { label: 'PEPS', icon: '🔄', color: 'bg-green-100 text-green-700' };
+      case 'EQUILIBRE': return { label: 'Équilibré', icon: '⚖️', color: 'bg-blue-100 text-blue-700' };
+      case 'MANUEL': return { label: 'Manuel', icon: '✍️', color: 'bg-amber-100 text-amber-700' };
+      default: return null;
+    }
+  };
+
   return (
     <div
       className={`bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-primary/50 transition-all cursor-pointer ${className}`}
@@ -86,6 +99,15 @@ export const TacheCard: React.FC<TacheCardProps> = ({
             <span className="text-xs text-muted bg-gray-100 px-2 py-0.5 rounded">
               {tache.typeTache || 'TRADUCTION'}
             </span>
+            {/* Mode de distribution */}
+            {tache.modeDistribution && (() => {
+              const modeInfo = getModeDistributionLabel(tache.modeDistribution);
+              return modeInfo ? (
+                <span className={`text-xs px-2 py-0.5 rounded font-medium ${modeInfo.color}`} title={`Mode: ${modeInfo.label}`}>
+                  {modeInfo.icon} {modeInfo.label}
+                </span>
+              ) : null;
+            })()}
           </div>
 
           {/* Description (si présente) */}
