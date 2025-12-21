@@ -96,5 +96,32 @@ export const repartitionService = {
       params,
     });
     return data;
+  },
+
+  /**
+   * Suggère une répartition optimale basée sur la capacité disponible
+   */
+  async suggererRepartition(params: {
+    traducteurId: string;
+    heuresTotal: number;
+    dateDebut: string;
+    dateFin: string;
+    mode?: 'equilibre' | 'jat' | 'peps';
+  }): Promise<SuggestionRepartitionResponse> {
+    const { data } = await api.get<SuggestionRepartitionResponse>('/repartition/suggerer-repartition', {
+      params,
+    });
+    return data;
   }
 };
+
+export interface SuggestionRepartitionResponse {
+  capaciteTotale: number;
+  heuresDejaUtilisees: number;
+  capaciteDisponible: number;
+  peutAccepter: boolean;
+  heuresManquantes: number;
+  joursDisponibles: number;
+  suggestion: string;
+  repartition?: RepartitionItem[];
+}

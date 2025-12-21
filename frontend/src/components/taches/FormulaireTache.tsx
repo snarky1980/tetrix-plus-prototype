@@ -10,7 +10,7 @@ import { clientService } from '../../services/clientService';
 import { sousDomaineService } from '../../services/sousDomaineService';
 import { domaineService } from '../../services/domaineService';
 import { tacheService } from '../../services/tacheService';
-import { repartitionService } from '../../services/repartitionService';
+import { repartitionService, SuggestionRepartitionResponse } from '../../services/repartitionService';
 import { extractDatePart, extractTimePart, combineDateAndTime, formatDateEcheanceDisplay } from '../../utils/dateTimeOttawa';
 import { Traducteur, Client, SousDomaine, PaireLinguistique, TypeTache, TypeRepartitionUI } from '../../types';
 import { toUIMode, MODE_LABELS } from '../../utils/modeDistribution';
@@ -151,6 +151,10 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   const [warningDatesPassees, setWarningDatesPassees] = useState<string | null>(null);
   const [datesPassees, setDatesPassees] = useState<string[]>([]);
   const [showConfirmDatesPassees, setShowConfirmDatesPassees] = useState(false);
+  
+  // État pour la suggestion de répartition
+  const [suggestionCapacite, setSuggestionCapacite] = useState<SuggestionRepartitionResponse | null>(null);
+  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
   // Chargement des données
   useEffect(() => {
@@ -332,6 +336,61 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
       setPreviewRepartition(null);
     } finally {
       setLoadingPreview(false);
+    }
+  };
+
+  // Fonction pour demander une suggestion de répartition au système
+  const demanderSuggestion = async () => {
+    if (!formData.traducteurId || !formData.heuresTotal || !formData.dateEcheance) {
+      setErreur('Veuillez remplir traducteur, heures et échéance pour obtenir une suggestion');
+      return;
+    }
+
+    setLoadingSuggestion(true);
+    setErreur('');
+    setSuggestionCapacite(null);
+
+    try {
+      // Déterminer la période en fonction du mode
+      let dateDebut = formData.dateDebut || new Date().toISOString().split('T')[0];
+      let dateFin = formData.dateFin || formData.dateEcheance;
+      
+      // Convertir mode UI vers mode API
+      let modeApi: 'equilibre' | 'jat' | 'peps' = 'equilibre';
+      if (formData.typeRepartition === 'JUSTE_TEMPS') {
+        modeApi = 'jat';
+        dateDebut = new Date().toISOString().split('T')[0];
+        dateFin = formData.dateEcheance;
+      } else if (formData.typeRepartition === 'PEPS') {
+        modeApi = 'peps';
+        dateFin = formData.dateEcheance;
+      }
+
+      const suggestion = await repartitionService.suggererRepartition({
+        traducteurId: formData.traducteurId,
+        heuresTotal: Number(formData.heuresTotal),
+        dateDebut,
+        dateFin,
+        mode: modeApi,
+      });
+
+      setSuggestionCapacite(suggestion);
+      
+      // Si une répartition est suggérée et on peut l'accepter, on peut optionnellement l'appliquer automatiquement
+      // Pour l'instant, on affiche juste les informations
+    } catch (err: any) {
+      console.error('Erreur suggestion:', err);
+      setErreur(err.response?.data?.erreur || 'Erreur lors de la suggestion');
+    } finally {
+      setLoadingSuggestion(false);
+    }
+  };
+
+  // Appliquer la suggestion proposée
+  const appliquerSuggestion = () => {
+    if (suggestionCapacite?.repartition) {
+      setPreviewRepartition(suggestionCapacite.repartition);
+      setSuggestionCapacite(null);
     }
   };
 
@@ -851,6 +910,93 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
                 </div>
               </label>
             </div>
+
+            {/* Bouton suggestion de répartition */}
+            {formData.typeRepartition !== 'MANUEL' && (
+              <div className="mt-3">
+                <Button
+                  variant="outline"
+                  onClick={demanderSuggestion}
+                  disabled={loadingSuggestion || !formData.traducteurId || !formData.heuresTotal || !formData.dateEcheance}
+                  className="w-full text-sm border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+                >
+                  {loadingSuggestion ? '⏳ Analyse en cours...' : '💡 Suggérer une répartition optimale'}
+                </Button>
+              </div>
+            )}
+
+            {/* Affichage de la suggestion */}
+            {suggestionCapacite && (
+              <div className={`mt-3 p-4 rounded-lg border-2 ${
+                suggestionCapacite.peutAccepter 
+                  ? 'bg-green-50 border-green-300' 
+                  : 'bg-amber-50 border-amber-300'
+              }`}>
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">{suggestionCapacite.peutAccepter ? '✅' : '⚠️'}</span>
+                  <div className="flex-1">
+                    <h4 className={`font-semibold mb-2 ${
+                      suggestionCapacite.peutAccepter ? 'text-green-800' : 'text-amber-800'
+                    }`}>
+                      Analyse de capacité
+                    </h4>
+                    
+                    <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Capacité totale:</span>
+                        <span className="font-medium">{suggestionCapacite.capaciteTotale.toFixed(1)}h</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Déjà utilisée:</span>
+                        <span className="font-medium text-orange-600">{suggestionCapacite.heuresDejaUtilisees.toFixed(1)}h</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Disponible:</span>
+                        <span className={`font-medium ${suggestionCapacite.peutAccepter ? 'text-green-600' : 'text-red-600'}`}>
+                          {suggestionCapacite.capaciteDisponible.toFixed(1)}h
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Jours utilisables:</span>
+                        <span className="font-medium">{suggestionCapacite.joursDisponibles}</span>
+                      </div>
+                    </div>
+
+                    <p className={`text-sm ${
+                      suggestionCapacite.peutAccepter ? 'text-green-700' : 'text-amber-700'
+                    }`}>
+                      {suggestionCapacite.suggestion}
+                    </p>
+
+                    {!suggestionCapacite.peutAccepter && suggestionCapacite.heuresManquantes > 0 && (
+                      <p className="text-sm text-red-600 mt-1">
+                        ⛔ Il manque {suggestionCapacite.heuresManquantes.toFixed(1)}h de capacité
+                      </p>
+                    )}
+
+                    {suggestionCapacite.repartition && suggestionCapacite.repartition.length > 0 && (
+                      <div className="mt-3 pt-3 border-t border-gray-200">
+                        <div className="flex gap-2">
+                          <Button
+                            onClick={appliquerSuggestion}
+                            className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-sm"
+                          >
+                            📋 Appliquer cette répartition
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => setSuggestionCapacite(null)}
+                            className="text-sm"
+                          >
+                            ✕
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Dates spécifiques selon le mode */}
             {formData.typeRepartition === 'PEPS' && (

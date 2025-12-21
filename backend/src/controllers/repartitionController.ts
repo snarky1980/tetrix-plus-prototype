@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { repartitionJusteATemps, repartitionEquilibree, repartitionPEPS, suggererHeuresManuel, RepartitionItem } from '../services/repartitionService';
+import { repartitionJusteATemps, repartitionEquilibree, repartitionPEPS, suggererHeuresManuel, suggererRepartitionOptimale, RepartitionItem } from '../services/repartitionService';
 import { todayOttawa, formatOttawaISO, parseOttawaDateISO } from '../utils/dateTimeOttawa';
 
 /**
@@ -159,5 +159,42 @@ export const suggererHeures = async (req: AuthRequest, res: Response): Promise<v
     res.json({ repartition: suggestions });
   } catch (error: any) {
     res.status(400).json({ erreur: error.message || 'Erreur suggestion heures' });
+  }
+};
+
+/**
+ * Suggère une répartition optimale basée sur la capacité disponible
+ * GET /api/repartition/suggerer-repartition?traducteurId=...&heuresTotal=...&dateDebut=...&dateFin=...&mode=...
+ */
+export const suggererRepartition = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const { traducteurId, heuresTotal, dateDebut, dateFin, mode } = req.query;
+    
+    if (!traducteurId || !heuresTotal || !dateDebut || !dateFin) {
+      res.status(400).json({ erreur: 'traducteurId, heuresTotal, dateDebut et dateFin requis' });
+      return;
+    }
+    
+    const heures = parseFloat(heuresTotal as string);
+    if (isNaN(heures) || heures <= 0) {
+      res.status(400).json({ erreur: 'heuresTotal doit être > 0' });
+      return;
+    }
+    
+    const modeValide = ['equilibre', 'jat', 'peps'].includes(mode as string) 
+      ? (mode as 'equilibre' | 'jat' | 'peps') 
+      : 'equilibre';
+    
+    const suggestion = await suggererRepartitionOptimale(
+      traducteurId as string,
+      heures,
+      dateDebut as string,
+      dateFin as string,
+      modeValide
+    );
+    
+    res.json(suggestion);
+  } catch (error: any) {
+    res.status(400).json({ erreur: error.message || 'Erreur suggestion répartition' });
   }
 };

@@ -821,3 +821,140 @@ export async function validerRepartition(
   }
   return { valide: erreurs.length === 0, erreurs };
 }
+
+/**
+ * Suggère une répartition optimale basée sur la capacité disponible
+ * Utile quand le conseiller veut savoir quelle répartition est possible
+ * 
+ * @param traducteurId ID du traducteur
+ * @param heuresTotal Heures totales à répartir
+ * @param dateDebut Date de début de la période
+ * @param dateFin Date de fin de la période (incluse)
+ * @param mode Mode de suggestion: 'equilibre' | 'jat' | 'peps'
+ * @returns Objet avec la répartition suggérée et les infos de capacité
+ */
+export async function suggererRepartitionOptimale(
+  traducteurId: string,
+  heuresTotal: number,
+  dateDebutInput: DateInput,
+  dateFinInput: DateInput,
+  mode: 'equilibre' | 'jat' | 'peps' = 'equilibre'
+): Promise<{
+  repartition: RepartitionItem[];
+  capaciteTotale: number;
+  heuresDejaUtilisees: number;
+  capaciteDisponible: number;
+  peutAccepter: boolean;
+  heuresManquantes: number;
+  joursDisponibles: { date: string; capacite: number; utilise: number; libre: number }[];
+  suggestion: string;
+}> {
+  const traducteur = await prisma.traducteur.findUnique({ where: { id: traducteurId } });
+  if (!traducteur) throw new Error('Traducteur introuvable');
+
+  const horaire = parseHoraireTraducteur(traducteur.horaire);
+  const { date: dateDebut } = normalizeToOttawa(dateDebutInput, 'dateDebut');
+  const { date: dateFin } = normalizeToOttawa(dateFinInput, 'dateFin');
+  
+  // Collecter les infos de capacité pour chaque jour
+  const joursDisponibles: { date: string; capacite: number; utilise: number; libre: number }[] = [];
+  let capaciteTotale = 0;
+  let heuresDejaUtilisees = 0;
+  
+  let courant = dateDebut;
+  while (courant <= dateFin) {
+    const iso = formatOttawaISO(courant);
+    
+    // Ignorer weekends et jours fériés
+    if (!isWeekendOttawa(courant) && !JoursFeriesService.estJourFerie(courant)) {
+      const capaciteJour = capaciteNetteJour(horaire, courant);
+      
+      // Récupérer heures déjà utilisées
+      const ajustements = await prisma.ajustementTemps.findMany({
+        where: {
+          traducteurId,
+          date: { equals: courant }
+        }
+      });
+      const utilise = ajustements.reduce((sum, a) => sum + a.heures, 0);
+      const libre = Math.max(capaciteJour - utilise, 0);
+      
+      joursDisponibles.push({
+        date: iso,
+        capacite: capaciteJour,
+        utilise,
+        libre
+      });
+      
+      capaciteTotale += capaciteJour;
+      heuresDejaUtilisees += utilise;
+    }
+    
+    courant = addDaysOttawa(courant, 1);
+  }
+  
+  const capaciteDisponible = capaciteTotale - heuresDejaUtilisees;
+  const peutAccepter = heuresTotal <= capaciteDisponible;
+  const heuresManquantes = peutAccepter ? 0 : heuresTotal - capaciteDisponible;
+  
+  // Calculer la répartition suggérée
+  let repartition: RepartitionItem[] = [];
+  let suggestion = '';
+  
+  if (peutAccepter) {
+    // Utiliser le mode demandé pour calculer la répartition
+    try {
+      switch (mode) {
+        case 'jat':
+          repartition = await repartitionJusteATemps(traducteurId, heuresTotal, dateFin);
+          suggestion = `✅ Répartition JAT possible: ${heuresTotal}h réparties sur ${repartition.length} jour(s)`;
+          break;
+        case 'peps':
+          repartition = await repartitionPEPS(traducteurId, heuresTotal, dateDebut, dateFin);
+          suggestion = `✅ Répartition PEPS possible: ${heuresTotal}h réparties sur ${repartition.length} jour(s)`;
+          break;
+        case 'equilibre':
+        default:
+          repartition = await repartitionEquilibree(traducteurId, heuresTotal, dateDebut, dateFin);
+          suggestion = `✅ Répartition équilibrée possible: ${heuresTotal}h réparties sur ${repartition.length} jour(s)`;
+      }
+    } catch (e: any) {
+      // Fallback sur répartition manuelle si les algos échouent
+      suggestion = `⚠️ Répartition automatique impossible: ${e.message}. Voir capacités disponibles ci-dessous.`;
+    }
+  } else {
+    // Proposer ce qui est possible
+    suggestion = `⚠️ Capacité insuffisante: ${heuresTotal}h demandées mais seulement ${capaciteDisponible.toFixed(2)}h disponibles (${heuresManquantes.toFixed(2)}h manquantes). `;
+    
+    // Calculer une répartition partielle avec les heures disponibles
+    if (capaciteDisponible > 0) {
+      try {
+        switch (mode) {
+          case 'jat':
+            repartition = await repartitionJusteATemps(traducteurId, capaciteDisponible, dateFin);
+            break;
+          case 'peps':
+            repartition = await repartitionPEPS(traducteurId, capaciteDisponible, dateDebut, dateFin);
+            break;
+          case 'equilibre':
+          default:
+            repartition = await repartitionEquilibree(traducteurId, capaciteDisponible, dateDebut, dateFin);
+        }
+        suggestion += `Suggestion: répartir ${capaciteDisponible.toFixed(2)}h sur cette période, ou étendre la période pour avoir plus de capacité.`;
+      } catch {
+        suggestion += `Aucune répartition automatique possible.`;
+      }
+    }
+  }
+  
+  return {
+    repartition,
+    capaciteTotale,
+    heuresDejaUtilisees,
+    capaciteDisponible,
+    peutAccepter,
+    heuresManquantes,
+    joursDisponibles,
+    suggestion
+  };
+}
