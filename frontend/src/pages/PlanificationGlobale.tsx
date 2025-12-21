@@ -7,8 +7,8 @@ import { Input } from '../components/ui/Input';
 import { DateTimeInput } from '../components/ui/DateTimeInput';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
-import { TetrixMasterDisplay } from '../components/tetrixmaster/TetrixMasterDisplay';
-import { TetrixOrionDisplay } from '../components/orion/TetrixOrionDisplay';
+import { TetrixMaxUnified } from '../components/tetrixmax/TetrixMaxUnified';
+import { TetrixMaxDisplay } from '../components/tetrixmax/TetrixMaxDisplay';
 import { BoutonPlanificationTraducteur } from '../components/BoutonPlanificationTraducteur';
 import { TacheCard } from '../components/taches/TacheCard';
 import { usePageTitle } from '../hooks/usePageTitle';
@@ -164,11 +164,11 @@ const PlanificationGlobale: React.FC = () => {
   const [searchResults, setSearchResults] = useState<string[]>([]);
   const [searchType, setSearchType] = useState<'availability' | 'immediate' | null>(null);
 
-  // Modal statistiques Tetrix Orion
-  const [showOrionModal, setShowOrionModal] = useState(false);
-  const [rapportOrion, setRapportOrion] = useState<any>(null);
-  const [chargementOrion, setChargementOrion] = useState(false);
-  const [erreurOrion, setErreurOrion] = useState<string | null>(null);
+  // Modal Tetrix Max Unifié (combine Orion + Master)
+  const [showTetrixMaxUnified, setShowTetrixMaxUnified] = useState(false);
+  const [rapportUnifie, setRapportUnifie] = useState<any>(null);
+  const [chargementUnifie, setChargementUnifie] = useState(false);
+  const [erreurUnifie, setErreurUnifie] = useState<string | null>(null);
 
   // Référence pour le scroll horizontal
   const tableContainerRef = React.useRef<HTMLDivElement>(null);
@@ -291,8 +291,8 @@ const PlanificationGlobale: React.FC = () => {
     recherche: '',
   });
 
-  // État pour Tetrix Master (optimisation)
-  const [showTetrixMaster, setShowTetrixMaster] = useState(false);
+  // État pour Tetrix Max (optimisation)
+  const [showTetrixMax, setShowTetrixMax] = useState(false);
   const [analyseOptimisation, setAnalyseOptimisation] = useState<any | null>(null);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loadingOptimisation, setLoadingOptimisation] = useState(false);
@@ -1102,45 +1102,55 @@ const PlanificationGlobale: React.FC = () => {
     setMesTachesFiltered(filtered);
   };
 
+  // NOUVELLE FONCTION: Charger le rapport Tetrix Max Unifié
+  // Analyse uniquement les TR affichés selon les filtres du planificateur
+  const chargerRapportUnifie = async () => {
+    setChargementUnifie(true);
+    setShowTetrixMaxUnified(true);
+    setErreurUnifie(null);
+    
+    try {
+      // Passer les filtres actuels pour analyser SEULEMENT les TR affichés
+      const filtres = {
+        divisions: applied.divisions,
+        clients: applied.clients,
+        domaines: applied.domaines,
+        languesSource: applied.languesSource,
+        languesCible: applied.languesCible,
+      };
+      const rapport = await optimisationService.genererRapportUnifie(applied.start, endDate, filtres);
+      setRapportUnifie(rapport);
+      setErreurUnifie(null);
+    } catch (err: any) {
+      console.error('Erreur génération Rapport Tetrix Max:', err);
+      console.error('Response:', err.response?.data);
+      const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de la génération du rapport';
+      setErreurUnifie(messageErreur);
+      setRapportUnifie(null);
+    } finally {
+      setChargementUnifie(false);
+    }
+  };
+
+  // LEGACY: Garder pour compatibilité avec suggestions
   const chargerAnalyseOptimisation = async () => {
     setLoadingOptimisation(true);
-    setShowTetrixMaster(true);
+    setShowTetrixMax(true);
     setEtapeOptimisation('analyse');
     setErreurOptimisation('');
     
     try {
-      // Utiliser la nouvelle analyse Tetrix Master
-      const analyse = await optimisationService.analyserTetrixMaster(applied.start, endDate);
+      const analyse = await optimisationService.analyserTetrixMax(applied.start, endDate);
       setAnalyseOptimisation(analyse);
       setErreurOptimisation('');
     } catch (err: any) {
-      console.error('Erreur d\'analyse Tetrix Master:', err);
+      console.error('Erreur d\'analyse Tetrix Max:', err);
       console.error('Response:', err.response?.data);
       const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de l\'analyse';
       setErreurOptimisation(messageErreur);
       setAnalyseOptimisation(null);
     } finally {
       setLoadingOptimisation(false);
-    }
-  };
-
-  const chargerRapportOrion = async () => {
-    setChargementOrion(true);
-    setShowOrionModal(true);
-    setErreurOrion(null);
-    
-    try {
-      const rapport = await optimisationService.genererRapportOrion(applied.start, endDate);
-      setRapportOrion(rapport);
-      setErreurOrion(null);
-    } catch (err: any) {
-      console.error('Erreur génération Rapport Orion:', err);
-      console.error('Response:', err.response?.data);
-      const messageErreur = err.response?.data?.erreur || err.message || 'Erreur lors de la génération du rapport';
-      setErreurOrion(messageErreur);
-      setRapportOrion(null);
-    } finally {
-      setChargementOrion(false);
     }
   };
 
@@ -1968,24 +1978,14 @@ const PlanificationGlobale: React.FC = () => {
 
       {/* Groupe de boutons flottants - Coin inférieur droit */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-3">
-        {/* Bouton Tetrix Orion - Statistiques Avancées */}
+        {/* Bouton Tetrix Max Unifié - Analyse + Optimisation */}
         <Button
           variant="outline"
-          onClick={chargerRapportOrion}
-          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-r from-indigo-500 to-cyan-500 text-white border-none"
-          title="Analyse statistique avancée du planning"
+          onClick={chargerRapportUnifie}
+          className="px-5 py-3 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white border-none font-medium"
+          title="Tableau de bord intelligent - Analyse et optimisation de la charge"
         >
-          🔭 Tetrix Orion
-        </Button>
-
-        {/* Bouton Tetrix Master */}
-        <Button
-          variant="outline"
-          onClick={chargerAnalyseOptimisation}
-          className="px-4 py-2 text-sm shadow-lg hover:shadow-xl transition-all hover:scale-105 bg-gradient-to-r from-purple-500 to-blue-500 text-white border-none"
-          title="Optimiser la charge de travail"
-        >
-          🎯 Tetrix Master
+          🎯 Tetrix Max
         </Button>
 
         {/* Bouton Créer une tâche */}
@@ -3610,35 +3610,32 @@ const PlanificationGlobale: React.FC = () => {
         )}
       </Modal>
 
-      {/* Modal Tetrix Orion */}
+      {/* Modal Tetrix Max Unifié */}
       <Modal
-        titre="🔭 Tetrix Orion - Analyse Statistique Avancée"
-        ouvert={showOrionModal}
-        onFermer={() => setShowOrionModal(false)}
-        ariaDescription="Rapport statistique avancé du planning"
+        titre="🎯 Tetrix Max"
+        ouvert={showTetrixMaxUnified}
+        onFermer={() => setShowTetrixMaxUnified(false)}
+        ariaDescription="Tableau de bord unifié d'analyse et d'optimisation"
+        extraWide
       >
-        {chargementOrion ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-            <p className="text-sm text-muted">Génération du rapport Orion...</p>
-            <p className="text-xs text-muted mt-2">Analyse en cours</p>
-          </div>
-        ) : erreurOrion ? (
+        {erreurUnifie ? (
           <div className="p-4 bg-red-50 border border-red-200 rounded">
             <p className="text-sm text-red-800 font-medium mb-2">❌ Erreur</p>
-            <p className="text-xs text-red-700">{erreurOrion}</p>
+            <p className="text-xs text-red-700">{erreurUnifie}</p>
             <Button
               variant="outline"
-              onClick={chargerRapportOrion}
+              onClick={chargerRapportUnifie}
               className="mt-3 text-xs"
             >
               Réessayer
             </Button>
           </div>
-        ) : rapportOrion ? (
-          <TetrixOrionDisplay rapport={rapportOrion} />
         ) : (
-          <p className="text-sm text-muted text-center py-8">Aucun rapport disponible</p>
+          <TetrixMaxUnified
+            rapport={rapportUnifie}
+            onRefresh={chargerRapportUnifie}
+            isLoading={chargementUnifie}
+          />
         )}
       </Modal>
 
@@ -4761,11 +4758,11 @@ const PlanificationGlobale: React.FC = () => {
         </div>
       </Modal>
 
-      {/* Modal Tetrix Master - Optimisation */}
+      {/* Modal Tetrix Max - Optimisation */}
       <Modal
-        titre="🎯 Tetrix Master - Optimiseur de charge"
-        ouvert={showTetrixMaster}
-        onFermer={() => setShowTetrixMaster(false)}
+        titre="🎯 Tetrix Max - Optimiseur de charge"
+        ouvert={showTetrixMax}
+        onFermer={() => setShowTetrixMax(false)}
         ariaDescription="Analyseur et optimiseur de la charge de travail"
       >
         <div className="space-y-4">
@@ -4805,7 +4802,7 @@ const PlanificationGlobale: React.FC = () => {
               <p className="text-sm text-muted">Analyse en cours...</p>
             </div>
           ) : etapeOptimisation === 'analyse' && analyseOptimisation ? (
-            <TetrixMasterDisplay analyse={analyseOptimisation} />
+            <TetrixMaxDisplay analyse={analyseOptimisation} />
           ) : etapeOptimisation === 'suggestions' && suggestions.length > 0 ? (
             <div className="space-y-3">
               <p className="text-sm text-muted">{suggestions.length} suggestion(s) d'amélioration</p>

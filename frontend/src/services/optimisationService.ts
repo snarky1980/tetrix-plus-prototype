@@ -51,9 +51,9 @@ export interface AnalyseOptimisation {
 
 const optimisationService = {
   /**
-   * Analyser la planification avec Tetrix Master (version complète)
+   * Analyser la planification avec Tetrix Max (version complète)
    */
-  async analyserTetrixMaster(dateDebut: string, dateFin: string): Promise<any> {
+  async analyserTetrixMax(dateDebut: string, dateFin: string): Promise<any> {
     const response = await axios.get(`${API_URL}/optimisation/tetrix-master`, {
       params: { dateDebut, dateFin },
       headers: {
@@ -110,6 +110,39 @@ const optimisationService = {
   async genererRapportOrion(dateDebut: string, dateFin: string): Promise<any> {
     const response = await axios.get(`${API_URL}/optimisation/orion`, {
       params: { dateDebut, dateFin },
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    return response.data;
+  },
+
+  /**
+   * NOUVEAU: Générer rapport Tetrix Max Unifié
+   * Combine les analyses Orion (statistiques) et Master (optimisation)
+   * @param filtres - Filtres optionnels pour limiter l'analyse aux TR affichés
+   */
+  async genererRapportUnifie(
+    dateDebut: string, 
+    dateFin: string,
+    filtres?: {
+      divisions?: string[];
+      clients?: string[];
+      domaines?: string[];
+      languesSource?: string[];
+      languesCible?: string[];
+    }
+  ): Promise<any> {
+    const response = await axios.get(`${API_URL}/optimisation/tetrix-master-unified`, {
+      params: { 
+        dateDebut, 
+        dateFin,
+        division: filtres?.divisions?.length ? filtres.divisions.join(',') : undefined,
+        client: filtres?.clients?.length ? filtres.clients.join(',') : undefined,
+        domaine: filtres?.domaines?.length ? filtres.domaines.join(',') : undefined,
+        langueSource: filtres?.languesSource?.length ? filtres.languesSource.join(',') : undefined,
+        langueCible: filtres?.languesCible?.length ? filtres.languesCible.join(',') : undefined,
+      },
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },

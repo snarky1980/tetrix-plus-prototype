@@ -1,5 +1,5 @@
 /**
- * TETRIX MASTER OPTIMIZER
+ * TETRIX MAX OPTIMIZER
  * 
  * Module expert d'analyse et d'optimisation de la charge de travail
  * Respecte les règles métier BT, profils TR1/TR2/TR3, capacités, blocages,
@@ -131,7 +131,7 @@ export interface ExempleRedistribution {
   amelioration: string;
 }
 
-export interface TetrixMasterAnalyse {
+export interface TetrixMaxAnalyse {
   resumeExecutif: ResumeExecutif;
   diagnosticComplet: DiagnosticComplet;
   recommandations: Recommandation[];
@@ -145,10 +145,10 @@ export interface TetrixMasterAnalyse {
 // FONCTION PRINCIPALE D'ANALYSE
 // ============================================================================
 
-export async function analyserAvecTetrixMaster(
+export async function analyserAvecTetrixMax(
   dateDebut: Date,
   dateFin: Date
-): Promise<TetrixMasterAnalyse> {
+): Promise<TetrixMaxAnalyse> {
   
   // 1. Récupérer toutes les données nécessaires
   const donnees = await collecterDonnees(dateDebut, dateFin);
@@ -922,7 +922,7 @@ function genererExplicationPedagogique(
     explication += `Ces ajustements amélioreront significativement l'équilibre de la charge.\n\n`;
   }
 
-  explication += `\n**Tetrix Master** surveille en continu les règles métier BT, les profils TR1/TR2/TR3, `;
+  explication += `\n**Tetrix Max** surveille en continu les règles métier BT, les profils TR1/TR2/TR3, `;
   explication += `les capacités, les échéances et les spécialisations pour vous aider à prendre les meilleures décisions.`;
 
   return explication;

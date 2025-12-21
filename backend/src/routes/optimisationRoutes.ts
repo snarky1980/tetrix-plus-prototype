@@ -1,13 +1,14 @@
 import { Router } from 'express';
 import { authentifier, AuthRequest } from '../middleware/auth';
 import { analyserPlanification, genererSuggestions, appliquerReassignation } from '../services/optimisationService';
-import { analyserAvecTetrixMaster } from '../services/tetrixMasterService';
+import { analyserAvecTetrixMax } from '../services/tetrixMaxService';
 import { genererRapportOrion } from '../services/orionStatService';
+import { genererRapportUnifie } from '../services/tetrixMaxUnifiedService';
 
 const router = Router();
 
 /**
- * Analyser la planification avec Tetrix Master (version complète)
+ * Analyser la planification avec Tetrix Max (version complète)
  * GET /api/optimisation/tetrix-master?dateDebut=YYYY-MM-DD&dateFin=YYYY-MM-DD
  */
 router.get('/tetrix-master', authentifier, async (req, res, next) => {
@@ -22,10 +23,10 @@ router.get('/tetrix-master', authentifier, async (req, res, next) => {
     const debut = new Date(dateDebut as string);
     const fin = new Date(dateFin as string);
 
-    const analyse = await analyserAvecTetrixMaster(debut, fin);
+    const analyse = await analyserAvecTetrixMax(debut, fin);
     res.json(analyse);
   } catch (error) {
-    console.error('[Tetrix Master] Erreur:', error);
+    console.error('[Tetrix Max] Erreur:', error);
     next(error);
   }
 });
@@ -117,6 +118,40 @@ router.get('/orion', authentifier, async (req, res, next) => {
     res.json(rapport);
   } catch (error) {
     console.error('[Tetrix Orion] Erreur:', error);
+    next(error);
+  }
+});
+
+/**
+ * NOUVEAU: Rapport Tetrix Max Unifié (combine Orion + Master)
+ * GET /api/optimisation/tetrix-master-unified?dateDebut=YYYY-MM-DD&dateFin=YYYY-MM-DD
+ * Filtres optionnels: division, client, domaine, langueSource, langueCible
+ */
+router.get('/tetrix-master-unified', authentifier, async (req, res, next) => {
+  try {
+    const { dateDebut, dateFin, division, client, domaine, langueSource, langueCible } = req.query;
+
+    if (!dateDebut || !dateFin) {
+      res.status(400).json({ erreur: 'dateDebut et dateFin sont requis' });
+      return;
+    }
+
+    const debut = new Date(dateDebut as string);
+    const fin = new Date(dateFin as string);
+    
+    // Construire les filtres à partir des query params
+    const filtres = {
+      divisions: division ? (division as string).split(',') : undefined,
+      clients: client ? (client as string).split(',') : undefined,
+      domaines: domaine ? (domaine as string).split(',') : undefined,
+      languesSource: langueSource ? (langueSource as string).split(',') : undefined,
+      languesCible: langueCible ? (langueCible as string).split(',') : undefined,
+    };
+
+    const rapport = await genererRapportUnifie(debut, fin, filtres);
+    res.json(rapport);
+  } catch (error) {
+    console.error('[Tetrix Max Unified] Erreur:', error);
     next(error);
   }
 });

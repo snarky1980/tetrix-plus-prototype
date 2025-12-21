@@ -1,10 +1,10 @@
 import React from 'react';
 
-interface TetrixMasterDisplayProps {
-  analyse: any; // Type complet TetrixMasterAnalyse
+interface TetrixMaxDisplayProps {
+  analyse: any; // Type complet TetrixMaxAnalyse
 }
 
-export const TetrixMasterDisplay: React.FC<TetrixMasterDisplayProps> = ({ analyse }) => {
+export const TetrixMaxDisplay: React.FC<TetrixMaxDisplayProps> = ({ analyse }) => {
   if (!analyse) return null;
 
   const { resumeExecutif, diagnosticComplet, recommandations, explicationPedagogique } = analyse;
