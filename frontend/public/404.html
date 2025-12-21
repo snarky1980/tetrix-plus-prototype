@@ -4,11 +4,24 @@
     <meta charset="utf-8">
     <title>Tetrix PLUS</title>
     <script>
-      // Redirect all 404s to the index.html with the path and query intact
+      // Single Page Apps for GitHub Pages
+      // Store the current path for the SPA to restore after redirect
       sessionStorage.redirect = location.href;
+      
+      // Determine the base path - check if we're on GitHub Pages or custom domain
+      var basePath = '/';
+      if (location.hostname.includes('github.io')) {
+        // GitHub Pages: extract repo name from path
+        var pathSegments = location.pathname.split('/');
+        if (pathSegments.length > 1 && pathSegments[1]) {
+          basePath = '/' + pathSegments[1] + '/';
+        }
+      }
+      // Redirect to the base path (index.html)
+      location.replace(basePath);
     </script>
-    <meta http-equiv="refresh" content="0;URL='/'"></meta>
   </head>
   <body>
+    <p>Redirection en cours...</p>
   </body>
 </html>
