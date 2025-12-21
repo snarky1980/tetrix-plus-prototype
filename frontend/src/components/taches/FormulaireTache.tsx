@@ -100,6 +100,9 @@ interface RepartitionManuelle {
   heureFin?: string;
 }
 
+// Version de la tâche pour le verrouillage optimiste
+let tacheVersion: number = 0;
+
 export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   tacheId,
   onSuccess,
@@ -203,6 +206,9 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
     
     try {
       const tache = await tacheService.obtenirTache(tacheId);
+      
+      // Stocker la version pour le verrouillage optimiste
+      tacheVersion = tache.version || 0;
       
       // Remplir le formulaire avec les données de la tâche
       // Parser la date d'échéance avec les utilitaires standardisés
@@ -451,6 +457,8 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
 
       let resultat;
       if (tacheId) {
+        // Ajouter la version pour le verrouillage optimiste
+        data.version = tacheVersion;
         resultat = await tacheService.mettreAJourTache(tacheId, data);
       } else {
         resultat = await tacheService.creerTache(data);

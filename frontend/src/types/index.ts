@@ -100,6 +100,7 @@ export interface Tache {
   statut: StatutTache;
   typeTache: TypeTache;
   modeDistribution: ModeDistribution;
+  version: number;
   traducteurId: string;
   traducteur?: {
     id: string;
