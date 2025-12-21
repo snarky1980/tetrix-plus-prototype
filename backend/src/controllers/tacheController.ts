@@ -298,12 +298,44 @@ export const creerTache = async (
           }
         }
 
-        // Si des conflits sont détectés, rejeter la transaction
+        // Si des conflits sont détectés pour les modes automatiques (JAT, PEPS, EQUILIBRE),
+        // recalculer la répartition au lieu de rejeter
         if (conflits.length > 0) {
-          throw new Error(
-            `Conflit de capacité détecté pour ${traducteur.nom}:\n${conflits.join('\n')}\n\n` +
-            `Un autre conseiller a peut-être créé une tâche en même temps. Veuillez rafraîchir et réessayer.`
-          );
+          const modeEffectif = modeDistribution || 'JAT';
+          
+          // Ne recalculer que pour les modes automatiques
+          if (modeEffectif === 'JAT' || modeEffectif === 'PEPS' || modeEffectif === 'EQUILIBRE') {
+            console.log(`[Conflit détecté] Recalcul automatique de la répartition ${modeEffectif} pour ${traducteur.nom}...`);
+            console.log(`[Conflit] Conflits originaux: ${conflits.join(', ')}`);
+            
+            try {
+              // Recalculer la répartition en temps réel (utilise les données transactionnelles actuelles)
+              if (modeEffectif === 'PEPS') {
+                repartitionEffective = await repartitionPEPS(traducteurId, heuresTotal, new Date(), dateEcheanceParsee);
+              } else if (modeEffectif === 'EQUILIBRE') {
+                repartitionEffective = await repartitionEquilibree(traducteurId, heuresTotal, new Date(), dateEcheanceParsee);
+              } else {
+                // JAT par défaut
+                repartitionEffective = await repartitionJusteATemps(traducteurId, heuresTotal, dateEcheanceParsee, {
+                  modeTimestamp: echeanceAHeureSignificative
+                });
+              }
+              console.log(`[Conflit résolu] Nouvelle répartition: ${JSON.stringify(repartitionEffective.map(r => `${r.date}:${r.heures}h`))}`);
+            } catch (recalcErr: any) {
+              // Le recalcul a échoué (probablement capacité vraiment insuffisante)
+              throw new Error(
+                `Conflit de capacité détecté pour ${traducteur.nom}:\n${conflits.join('\n')}\n\n` +
+                `Le recalcul automatique a échoué: ${recalcErr.message}\n` +
+                `Un autre conseiller a peut-être créé une tâche en même temps. Veuillez rafraîchir et réessayer.`
+              );
+            }
+          } else {
+            // Mode MANUEL: rejeter car l'utilisateur doit corriger manuellement
+            throw new Error(
+              `Conflit de capacité détecté pour ${traducteur.nom}:\n${conflits.join('\n')}\n\n` +
+              `Un autre conseiller a peut-être créé une tâche en même temps. Veuillez rafraîchir et réessayer.`
+            );
+          }
         }
       }
 
