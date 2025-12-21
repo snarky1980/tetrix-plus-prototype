@@ -3960,7 +3960,9 @@ const PlanificationGlobale: React.FC = () => {
                         const isWeekendCol = isWeekend(iso);
                         const isFerieCol = info?.estFerie || isFerie(iso);
                         const nomFerieCol = info?.nomFerie || getNomFerie(iso);
-                        const isGrayed = isWeekendCol || isFerieCol;
+                        const isBloqueCol = info?.estBloque || false;
+                        const motifBlocageCol = info?.motifBlocage;
+                        const isGrayed = isWeekendCol || isFerieCol || isBloqueCol;
                         let bgClass = 'bg-gray-100';
                         let textClass = 'text-gray-600';
                         
@@ -3988,11 +3990,13 @@ const PlanificationGlobale: React.FC = () => {
                           <td
                             key={iso}
                             className={`border-r border-b border-border text-center px-1 py-1.5 ${bgClass} ${isTodayCol ? 'ring-2 ring-inset ring-blue-400' : ''}`}
-                            title={nomFerieCol || undefined}
+                            title={isBloqueCol ? motifBlocageCol : (nomFerieCol || undefined)}
                           >
                             {isGrayed ? (
                               <div className="w-full h-full flex items-center justify-center">
-                                <div className={`font-semibold text-xs ${textClass}`}>{isFerieCol ? '🎉' : '—'}</div>
+                                <div className={`font-semibold text-xs ${textClass}`}>
+                                  {isFerieCol ? '🎉' : isBloqueCol ? '🚫' : '—'}
+                                </div>
                               </div>
                             ) : (
                               <button

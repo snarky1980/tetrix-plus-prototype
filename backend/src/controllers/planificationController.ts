@@ -374,16 +374,85 @@ export const obtenirPlanificationGlobale = async (
 
     // Indexer les ajustements par traducteurId
     const ajustementsParTraducteur: Record<string, typeof tousAjustements> = {};
+    const blocagesParTraducteur: Record<string, typeof tousAjustements> = {};
     for (const ajust of tousAjustements) {
       if (!ajustementsParTraducteur[ajust.traducteurId]) {
         ajustementsParTraducteur[ajust.traducteurId] = [];
+        blocagesParTraducteur[ajust.traducteurId] = [];
+      }
+      if (ajust.type === 'BLOCAGE') {
+        blocagesParTraducteur[ajust.traducteurId].push(ajust);
       }
       ajustementsParTraducteur[ajust.traducteurId].push(ajust);
     }
 
     // Pour chaque traducteur, construire la structure de réponse
+    // Helper pour convertir "9h", "9h30" en minutes depuis minuit
+    const parseHeureEnMinutes = (heure: string): number => {
+      const match = heure.match(/^(\d{1,2})h(\d{2})?$/);
+      if (match) {
+        const h = parseInt(match[1], 10);
+        const m = match[2] ? parseInt(match[2], 10) : 0;
+        return h * 60 + m;
+      }
+      return 0;
+    };
+
+    // Helper pour vérifier si un traducteur est bloqué toute la journée
+    const estJourneeBloquee = (
+      blocages: typeof tousAjustements,
+      dateStr: string,
+      horaire: string | null
+    ): { estBloque: boolean; motifBlocage?: string } => {
+      // Filtrer les blocages pour cette date
+      const blocagesJour = blocages.filter(
+        (b) => b.date.toISOString().split('T')[0] === dateStr
+      );
+      if (blocagesJour.length === 0) return { estBloque: false };
+
+      // Parser l'horaire du traducteur (ex: "9h-17h")
+      let horaireDebut = 9 * 60; // 9h en minutes
+      let horaireFin = 17 * 60;  // 17h en minutes
+      if (horaire) {
+        const match = horaire.match(/^(\d{1,2}h\d{0,2})\s*-\s*(\d{1,2}h\d{0,2})$/);
+        if (match) {
+          horaireDebut = parseHeureEnMinutes(match[1]);
+          horaireFin = parseHeureEnMinutes(match[2]);
+        }
+      }
+      const dureeJournee = horaireFin - horaireDebut;
+
+      // Calculer le total des heures bloquées
+      let totalMinutesBloquees = 0;
+      let motif = '';
+      for (const blocage of blocagesJour) {
+        if (blocage.heureDebut && blocage.heureFin) {
+          const debutBlocage = parseHeureEnMinutes(blocage.heureDebut);
+          const finBlocage = parseHeureEnMinutes(blocage.heureFin);
+          // Calculer l'intersection avec l'horaire de travail
+          const debutEffectif = Math.max(debutBlocage, horaireDebut);
+          const finEffective = Math.min(finBlocage, horaireFin);
+          if (finEffective > debutEffectif) {
+            totalMinutesBloquees += finEffective - debutEffectif;
+          }
+        } else {
+          // Blocage sans heures spécifiques = journée complète
+          totalMinutesBloquees = dureeJournee;
+        }
+        // Récupérer le motif du premier blocage trouvé
+        if (!motif && (blocage as any).motif) {
+          motif = (blocage as any).motif;
+        }
+      }
+
+      // Si plus de 90% de la journée est bloquée, considérer comme journée complète bloquée
+      const estBloque = totalMinutesBloquees >= dureeJournee * 0.9;
+      return { estBloque, motifBlocage: estBloque ? (motif || 'Journée bloquée') : undefined };
+    };
+
     const planificationGlobale = traducteurs.map((traducteur) => {
       const ajustements = ajustementsParTraducteur[traducteur.id] || [];
+      const blocages = blocagesParTraducteur[traducteur.id] || [];
 
       // Regrouper par date
       const heuresParDate: Record<string, number> = {};
@@ -394,7 +463,7 @@ export const obtenirPlanificationGlobale = async (
 
       // Construire structure dates avec couleur + disponibilité
       // Inclure TOUTES les dates de la période, même celles sans heures
-      const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean; estFerie: boolean; nomFerie?: string }> = {};
+      const dates: Record<string, { heures: number; couleur: string; capacite: number; disponible: number; estWeekend: boolean; estFerie: boolean; nomFerie?: string; estBloque: boolean; motifBlocage?: string }> = {};
       
       // Générer toutes les dates de la période
       const dateDebutParsed = parseOttawaDateISO(dateDebut as string);
@@ -409,6 +478,7 @@ export const obtenirPlanificationGlobale = async (
         const isFerie = JoursFeriesService.estJourFerie(currentDate);
         const nomFerie = isFerie ? JoursFeriesService.obtenirNomJourFerie(currentDate) : undefined;
         const couleur = calculerCouleurDisponibilite(heures, capacite);
+        const { estBloque, motifBlocage } = estJourneeBloquee(blocages, dateStr, traducteur.horaire);
         
         dates[dateStr] = {
           heures,
@@ -418,6 +488,8 @@ export const obtenirPlanificationGlobale = async (
           estWeekend: isWeekend,
           estFerie: isFerie,
           nomFerie: nomFerie ?? undefined,
+          estBloque,
+          motifBlocage,
         };
         
         currentDate.setDate(currentDate.getDate() + 1);

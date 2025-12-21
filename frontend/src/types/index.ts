@@ -199,6 +199,8 @@ export interface PlanificationGlobale {
       estWeekend?: boolean;
       estFerie?: boolean;
       nomFerie?: string;
+      estBloque?: boolean;
+      motifBlocage?: string;
     }>;
   }[];
 }
