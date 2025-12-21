@@ -220,6 +220,12 @@ export interface RapportTetrixMaxUnifie {
   observations: ObservationsUnifiees;
   horodatage: string;
   periodeCouverture: { debut: string; fin: string };
+  portrait?: {
+    estFiltre: boolean;
+    filtresActifs: string[];
+    nombreTraducteurs: number;
+    nombreTaches: number;
+  };
 }
 
 // Données internes
@@ -457,11 +463,11 @@ async function collecterDonnees(
     whereTache.clientId = { in: clients.map(c => c.id) };
   }
   
-  // Filtre par domaine
+  // Filtre par domaine (utilise domaineParent qui est une string dans SousDomaine)
   if (filtres?.domaines && filtres.domaines.length > 0) {
     const sousDomaines = await prisma.sousDomaine.findMany({
       where: {
-        domaine: { nom: { in: filtres.domaines } },
+        domaineParent: { in: filtres.domaines },
       },
       select: { id: true },
     });

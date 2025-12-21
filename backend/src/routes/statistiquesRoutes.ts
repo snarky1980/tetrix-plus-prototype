@@ -129,7 +129,7 @@ router.get('/productivite', authentifier, async (req, res) => {
         sousDomaine: { 
           select: { 
             nom: true,
-            domaine: { select: { nom: true } }
+            domaineParent: true,
           } 
         },
         paireLinguistique: { select: { langueSource: true, langueCible: true } },
@@ -164,10 +164,10 @@ router.get('/productivite', authentifier, async (req, res) => {
       );
     }
     
-    // Filtre par domaine
+    // Filtre par domaine (utilise domaineParent du sousDomaine)
     if (filtreDomaine && filtreDomaine.length > 0) {
       tachesFiltrees = tachesFiltrees.filter((t: any) => 
-        t.sousDomaine?.domaine && filtreDomaine.includes(t.sousDomaine.domaine.nom)
+        t.sousDomaine?.domaineParent && filtreDomaine.includes(t.sousDomaine.domaineParent)
       );
     }
     
