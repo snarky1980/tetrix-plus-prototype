@@ -199,34 +199,47 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
       return;
     }
 
+    // Validation supplémentaire pour PEPS et EQUILIBRE
+    if ((formData.typeRepartition === 'PEPS' || formData.typeRepartition === 'EQUILIBRE') && !formData.dateDebut) {
+      setErreur('La date de début est requise pour ce mode de répartition');
+      return;
+    }
+    if (formData.typeRepartition === 'EQUILIBRE' && !formData.dateFin) {
+      setErreur('La date de fin est requise pour le mode équilibré');
+      return;
+    }
+
     setLoadingPreview(true);
     setErreur('');
     
     try {
       const dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance}:00`;
-      const params = {
-        traducteurId: formData.traducteurId,
-        heuresTotal: Number(formData.heuresTotal),
-        dateEcheance: dateEcheanceComplete,
-        dateDebut: formData.typeRepartition === 'PEPS' || formData.typeRepartition === 'EQUILIBRE' 
-          ? `${formData.dateDebut}T09:00:00` 
-          : undefined,
-        dateFin: formData.typeRepartition === 'EQUILIBRE' 
-          ? `${formData.dateFin}T17:00:00` 
-          : undefined,
-      };
-
+      
       let preview;
       switch (formData.typeRepartition) {
         case 'PEPS':
-          preview = await repartitionService.previewPEPS(params);
+          preview = await repartitionService.previewPEPS({
+            traducteurId: formData.traducteurId,
+            heuresTotal: Number(formData.heuresTotal),
+            dateDebut: `${formData.dateDebut}T09:00:00`,
+            dateEcheance: dateEcheanceComplete,
+          });
           break;
         case 'EQUILIBRE':
-          preview = await repartitionService.previewEquilibre(params);
+          preview = await repartitionService.previewEquilibre({
+            traducteurId: formData.traducteurId,
+            heuresTotal: Number(formData.heuresTotal),
+            dateDebut: `${formData.dateDebut}T09:00:00`,
+            dateFin: `${formData.dateFin}T17:00:00`,
+          });
           break;
         case 'JUSTE_TEMPS':
         default:
-          preview = await repartitionService.previewJAT(params);
+          preview = await repartitionService.previewJAT({
+            traducteurId: formData.traducteurId,
+            heuresTotal: Number(formData.heuresTotal),
+            dateEcheance: dateEcheanceComplete,
+          });
           break;
       }
       

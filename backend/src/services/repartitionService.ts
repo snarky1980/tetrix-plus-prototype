@@ -124,8 +124,8 @@ function calculerPlageHoraireJAT(
 
 /**
  * Calcule les plages horaires pour une allocation ÉQUILIBRÉE
- * RÈGLE MÉTIER: Allouer le plus TARD possible dans la journée (comme JAT)
- * En tenant compte des autres tâches déjà allouées, pauses, heures bloquées
+ * RÈGLE MÉTIER: Utilise comportement PEPS (le plus TÔT possible dans la journée)
+ * L'utilisateur pourra modifier ensuite si nécessaire
  * 
  * @param heuresAllouees Nombre d'heures à allouer ce jour
  * @param horaire Horaire du traducteur
@@ -134,9 +134,9 @@ function calculerPlageHoraireJAT(
  * @returns {heureDebut, heureFin} Plages horaires au format "8h30", "12h", etc.
  * 
  * @example
- * // Allouer 4h sur un jour où 2h sont déjà utilisées (14h-16h)
+ * // Allouer 4h sur un jour où 2h sont déjà utilisées
  * calculerPlageHoraireEquilibree(4, {heureDebut: 9, heureFin: 17}, 2, date)
- * // => {heureDebut: "13h", heureFin: "17h"} (4h le plus tard possible, après pause)
+ * // => {heureDebut: "11h", heureFin: "16h"} (4h le plus tôt possible après les heures existantes)
  */
 function calculerPlageHoraireEquilibree(
   heuresAllouees: number,
@@ -144,72 +144,26 @@ function calculerPlageHoraireEquilibree(
   heuresDejaUtilisees: number,
   dateJour: Date
 ): { heureDebut: string; heureFin: string } {
-  // NOUVELLE STRATÉGIE: Allouer LE PLUS TARD POSSIBLE (comme JAT)
+  // STRATÉGIE ÉQUILIBRÉE: Utilise comportement PEPS (le plus TÔT possible)
+  // Cela permet une suggestion cohérente que l'utilisateur peut ajuster
   
-  // Capacité totale de la journée (en heures nettes, pause exclue)
-  const capaciteTotale = capaciteNetteJour(horaire, dateJour);
+  // Point de départ: juste après les heures déjà utilisées, ou début de journée
+  let heureDebut = horaire.heureDebut + heuresDejaUtilisees;
   
-  // Capacité restante après heures déjà utilisées
-  const capaciteRestante = capaciteTotale - heuresDejaUtilisees;
+  // Si on commence dans la pause midi, décaler après
+  if (heureDebut >= 12 && heureDebut < 13) {
+    heureDebut = 13;
+  }
   
-  // Si on alloue toute la capacité restante, on finit à l'heure de fin
-  // Sinon, on calcule en remontant depuis la fin
+  let heureFin = heureDebut + heuresAllouees;
   
-  let heureFin = horaire.heureFin;
-  let heureDebut: number;
-  
-  if (Math.abs(heuresAllouees - capaciteRestante) < 0.001) {
-    // Cas 1: On utilise toute la capacité restante
-    // On calcule le début en fonction des heures déjà utilisées
-    heureDebut = horaire.heureDebut + heuresDejaUtilisees;
+  // Si on traverse la pause midi (12h-13h), ajouter 1h
+  if (heureDebut < 12 && heureFin > 12) {
+    heureFin += 1; // Ajouter 1h pour la pause
     
-    // Si on traverse la pause midi, ajuster
-    if (heureDebut < 12 && heureFin > 13) {
-      heureDebut = Math.max(heureDebut, horaire.heureDebut);
-      if (heureDebut < 12) {
-        // On doit traverser la pause
-        const heuresAvantPause = 12 - heureDebut;
-        const heuresApresPause = heuresAllouees - heuresAvantPause;
-        if (heuresApresPause > 0) {
-          heureFin = 13 + heuresApresPause;
-        }
-      }
-    }
-  } else {
-    // Cas 2: On n'utilise pas toute la capacité - allouer LE PLUS TARD POSSIBLE
-    heureDebut = heureFin - heuresAllouees;
-    
-    // Si on traverse la pause 12h-13h en remontant, ajuster
-    if (heureDebut < 13 && heureFin > 13) {
-      // On traverse la pause en descendant
-      heureDebut -= 1; // Remonter d'une heure supplémentaire pour exclure la pause
-    } else if (heureDebut < 12 && heureFin > 12 && heureFin <= 13) {
-      // Cas spécial: on finit pendant ou juste avant la pause
-      heureDebut -= 1;
-    }
-    
-    // S'assurer qu'on ne commence pas avant l'heure de début
-    heureDebut = Math.max(heureDebut, horaire.heureDebut);
-    
-    // Vérifier qu'on ne chevauche pas les heures déjà utilisées
-    if (heuresDejaUtilisees > 0) {
-      const finHeuresExistantes = horaire.heureDebut + heuresDejaUtilisees;
-      if (heureDebut < finHeuresExistantes) {
-        // Conflit détecté - on doit allouer après les heures existantes
-        heureDebut = finHeuresExistantes;
-        
-        // Si on traverse la pause après ajustement
-        if (heureDebut >= 12 && heureDebut < 13) {
-          heureDebut = 13;
-        }
-        
-        heureFin = heureDebut + heuresAllouees;
-        
-        // Réajuster si on traverse la pause
-        if (heureDebut < 12 && heureFin > 12) {
-          heureFin += 1; // Ajouter 1h pour la pause
-        }
-      }
+    // Si on finit dans la pause, décaler après
+    if (heureFin > 12 && heureFin <= 13) {
+      heureFin = 13 + (heureFin - 12);
     }
   }
   
@@ -400,7 +354,7 @@ export async function repartitionJusteATemps(
     throw new Error(`Capacité insuffisante dans la plage pour heuresTotal demandées (demandé: ${heuresTotal}h, disponible: ${capaciteDisponibleGlobale.toFixed(2)}h)`);
   }
 
-  // STEP 1: Compter les jours de travail disponibles (excluant weekends et jours fériés)
+  // STEP 1: Collecter les jours de travail disponibles (excluant weekends et jours fériés)
   const joursDeTravail: Date[] = [];
   for (let i = 0; i < totalJours; i++) {
     const d = addDaysOttawa(aujourdHui, i);
@@ -408,80 +362,71 @@ export async function repartitionJusteATemps(
       joursDeTravail.push(d);
     }
   }
-  const nombreJoursDeTravail = joursDeTravail.length;
   
   if (debug) {
-    console.debug(`[JAT] Nombre de jours de travail disponibles: ${nombreJoursDeTravail}`);
+    console.debug(`[JAT] Nombre de jours de travail disponibles: ${joursDeTravail.length}`);
   }
   
-  // STEP 2: Calculer l'allocation équitable par jour
-  const heuresParJourEquitable = heuresTotal / nombreJoursDeTravail;
-  const heuresEntieres = Math.floor(heuresParJourEquitable);
-  const heuresRestantes = heuresTotal - (heuresEntieres * nombreJoursDeTravail);
+  // ===== LOGIQUE JAT CORRECTE =====
+  // JAT = Juste-à-Temps: Remplir COMPLÈTEMENT les journées EN PARTANT DE L'ÉCHÉANCE vers le passé
+  // 
+  // RÈGLE MÉTIER:
+  // 1. On commence par l'échéance et on remonte dans le temps
+  // 2. On remplit COMPLÈTEMENT chaque journée (capacité max) avant de passer au jour précédent
+  // 3. Les plages horaires: le plus TARD possible dans la journée
+  // 4. On respecte les congés, blocages, horaire du traducteur
   
-  if (debug) {
-    console.debug(`[JAT] Répartition équitable: ${heuresEntieres}h base + ${heuresRestantes.toFixed(2)}h à répartir sur ${nombreJoursDeTravail} jours`);
-  }
-  
-  // Allocation JAT ÉQUILIBRÉE (diviser équitablement sur tous les jours de travail)
-  // RÈGLE MÉTIER MODIFIÉE: Division égale sur tous les jours disponibles
-  // - Chaque jour reçoit: floor(heuresTotal / nombreJours) heures
-  // - Les heures restantes se distribuent sur les premiers jours
-  // - Jour J: premières heures disponibles (début de journée)
-  // - Jours avant: dernières heures disponibles (fin de journée)
   const resultat: RepartitionItem[] = [];
-  let heuresDistribuees = 0;
+  let heuresRestantes = heuresTotal;
   
-  for (let i = 0; i < joursDeTravail.length; i++) {
+  // Parcourir les jours EN ORDRE INVERSE (échéance → aujourd'hui)
+  for (let i = joursDeTravail.length - 1; i >= 0 && heuresRestantes > 0; i--) {
     const courant = joursDeTravail[i];
     const iso = formatOttawaISO(courant);
     const estJourEcheance = iso === dateEcheanceJourSeul;
     
-    // Calculer les heures pour ce jour
-    let alloue = heuresEntieres;
-    // Distribuer les heures restantes sur les premiers jours
-    if (i < Math.round(heuresRestantes)) {
-      alloue += 1;
-    }
-    
-    // Valider que nous ne dépassons pas la capacité du jour
+    // Calculer la capacité disponible pour ce jour
     const utilisees = heuresParJour[iso] || 0;
     const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
     let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
     
+    // Appliquer limite livraison matinale sur jour J si activé
     if (estJourEcheance && livraisonMatinale) {
       capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
     }
     
     const capaciteRestante = Math.max(capaciteNette - utilisees, 0);
-    const alloueEffectif = Math.min(alloue, capaciteRestante);
+    if (capaciteRestante <= 0) continue;
     
-    if (alloueEffectif > 0) {
-      // Calculer les plages horaires exactes
-      const plages = calculerPlageHoraireJAT(alloueEffectif, horaire, estJourEcheance, deadlineDateTime);
+    // Allouer autant que possible ce jour (remplir complètement)
+    const alloue = Math.min(capaciteRestante, heuresRestantes);
+    
+    if (alloue > 0) {
+      // Calculer les plages horaires (le plus TARD possible pour JAT)
+      const plages = calculerPlageHoraireJAT(alloue, horaire, estJourEcheance, deadlineDateTime);
       
       resultat.push({ 
         date: iso, 
-        heures: alloueEffectif,
+        heures: parseFloat(alloue.toFixed(4)),
         heureDebut: plages.heureDebut,
         heureFin: plages.heureFin
       });
-      heuresDistribuees += alloueEffectif;
-      heuresParJour[iso] = utilisees + alloueEffectif;
+      
+      heuresRestantes = parseFloat((heuresRestantes - alloue).toFixed(4));
+      heuresParJour[iso] = utilisees + alloue;
       
       if (debug) {
-        console.debug(`[JAT] ${iso}: ${alloueEffectif.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - début]' : '[fin journée]'}`);
+        console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J]' : ''} - restant: ${heuresRestantes.toFixed(2)}h`);
       }
     }
   }
   
   // Vérifier que toutes les heures ont été allouées
-  const tolerance = 1e-6;
-  if (Math.abs(heuresDistribuees - heuresTotal) > tolerance) {
-    throw new Error(`Impossible de répartir équitablement: distribué ${heuresDistribuees.toFixed(2)}h au lieu de ${heuresTotal}h (capacité insuffisante ou contraintes de plages horaires)`);
+  if (heuresRestantes > 0.01) {
+    throw new Error(`Impossible de répartir toutes les heures: ${heuresRestantes.toFixed(2)}h non distribuées (capacité insuffisante)`);
   }
   
-  // Retourner trié chronologiquement asc (pour cohérence frontend)
+  // Retourner trié chronologiquement (pour cohérence frontend)
   const resultTrie = resultat.sort((a,b) => a.date.localeCompare(b.date));
   
   if (debug) {

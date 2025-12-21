@@ -3,10 +3,24 @@ import api from './api';
 export interface JATPreviewParams {
   traducteurId: string;
   heuresTotal: number;
-  dateEcheance: string; // YYYY-MM-DD
+  dateEcheance: string; // YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
 }
 
-export interface RepartitionItem { date: string; heures: number }
+export interface PEPSPreviewParams {
+  traducteurId: string;
+  heuresTotal: number;
+  dateDebut: string;    // YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss - requis pour PEPS
+  dateEcheance: string; // YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
+}
+
+export interface EquilibrePreviewParams {
+  traducteurId: string;
+  heuresTotal: number;
+  dateDebut: string;    // YYYY-MM-DD - requis pour équilibre
+  dateFin: string;      // YYYY-MM-DD - requis pour équilibre
+}
+
+export interface RepartitionItem { date: string; heures: number; heureDebut?: string; heureFin?: string }
 
 export const repartitionService = {
   async previewJAT(params: JATPreviewParams): Promise<RepartitionItem[]> {
@@ -17,7 +31,7 @@ export const repartitionService = {
     return data.repartition;
   },
 
-  async previewPEPS(params: JATPreviewParams): Promise<RepartitionItem[]> {
+  async previewPEPS(params: PEPSPreviewParams): Promise<RepartitionItem[]> {
     const { data } = await api.get<{ repartition: RepartitionItem[] }>(
       '/repartition/peps-preview',
       { params }
@@ -25,7 +39,7 @@ export const repartitionService = {
     return data.repartition;
   },
 
-  async previewEquilibre(params: JATPreviewParams): Promise<RepartitionItem[]> {
+  async previewEquilibre(params: EquilibrePreviewParams): Promise<RepartitionItem[]> {
     const { data } = await api.get<{ repartition: RepartitionItem[] }>(
       '/repartition/equilibre-preview',
       { params }
