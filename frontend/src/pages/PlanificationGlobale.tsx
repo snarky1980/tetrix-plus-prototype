@@ -3628,6 +3628,11 @@ const PlanificationGlobale: React.FC = () => {
                 <div>
                   <p className="text-muted text-xs">Total heures planifiées</p>
                   <p className="font-bold text-lg text-primary">{chargeTraducteur.heuresTotal.toFixed(1)}h</p>
+                  {/* Bouton vers le mini calendrier */}
+                  <BoutonPlanificationTraducteur 
+                    traducteurId={chargeTraducteur.traducteur.id}
+                    className="mt-2 text-xs"
+                  />
                 </div>
                 <div>
                   <p className="text-muted text-xs">Nombre de tâches</p>
