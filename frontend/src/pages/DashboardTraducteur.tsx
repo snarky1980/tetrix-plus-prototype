@@ -67,6 +67,13 @@ const DashboardTraducteur: React.FC = () => {
     id: null
   });
   
+  // ============ États pour la terminaison de tâche ============
+  const [confirmTerminerTache, setConfirmTerminerTache] = useState<{ isOpen: boolean; tacheId: string | null }>({
+    isOpen: false,
+    tacheId: null
+  });
+  const [terminerLoading, setTerminerLoading] = useState(false);
+  
   // ============ États pour les paramètres ============
   const [parametresForm, setParametresForm] = useState({
     horaireDebut: '09:00',
@@ -177,6 +184,37 @@ const DashboardTraducteur: React.FC = () => {
   useEffect(() => {
     chargerBlocages();
   }, [chargerBlocages]);
+
+  // ============ Fonction pour terminer une tâche ============
+  const handleTerminerTache = useCallback(async (tacheId: string) => {
+    setConfirmTerminerTache({ isOpen: true, tacheId });
+  }, []);
+
+  const confirmerTerminerTache = useCallback(async () => {
+    if (!confirmTerminerTache.tacheId) return;
+    
+    setTerminerLoading(true);
+    try {
+      const result = await tacheService.terminerTache(confirmTerminerTache.tacheId);
+      // Recharger les tâches
+      await chargerMesTaches();
+      // Rafraîchir la planification
+      refresh();
+      // Fermer le dialog
+      setConfirmTerminerTache({ isOpen: false, tacheId: null });
+      // Afficher un message
+      if (result.heuresLiberees > 0) {
+        alert(`✅ Tâche terminée ! ${result.heuresLiberees.toFixed(1)}h libérées sur ${result.joursLiberes} jour(s).`);
+      } else {
+        alert('✅ Tâche terminée !');
+      }
+    } catch (err: any) {
+      console.error('Erreur terminaison tâche:', err);
+      alert('Erreur lors de la terminaison: ' + (err.response?.data?.erreur || err.message || 'Erreur inconnue'));
+    } finally {
+      setTerminerLoading(false);
+    }
+  }, [confirmTerminerTache.tacheId, chargerMesTaches, refresh]);
 
   // ============ Statistiques ============
   const stats = useMemo(() => {
@@ -619,7 +657,12 @@ const DashboardTraducteur: React.FC = () => {
           ) : (
             <div className="space-y-2">
               {mesTaches.slice(0, 3).map(tache => (
-                <TacheCard key={tache.id} tache={tache} compact />
+                <TacheCard 
+                  key={tache.id} 
+                  tache={tache} 
+                  compact 
+                  onTerminer={handleTerminerTache}
+                />
               ))}
               {mesTaches.length > 3 && (
                 <p className="text-center text-sm text-muted pt-2">
@@ -667,7 +710,11 @@ const DashboardTraducteur: React.FC = () => {
           ) : (
             <div className="space-y-3">
               {mesTaches.map(tache => (
-                <TacheCard key={tache.id} tache={tache} />
+                <TacheCard 
+                  key={tache.id} 
+                  tache={tache} 
+                  onTerminer={handleTerminerTache}
+                />
               ))}
             </div>
           )}
@@ -1085,6 +1132,18 @@ const DashboardTraducteur: React.FC = () => {
         message="Voulez-vous vraiment supprimer ce blocage ? Cette action est irréversible."
         variant="danger"
         confirmText="Supprimer"
+        cancelText="Annuler"
+      />
+
+      {/* Dialogue de confirmation terminaison de tâche */}
+      <ConfirmDialog
+        isOpen={confirmTerminerTache.isOpen}
+        onClose={() => setConfirmTerminerTache({ isOpen: false, tacheId: null })}
+        onConfirm={confirmerTerminerTache}
+        title="Terminer la tâche"
+        message="Voulez-vous marquer cette tâche comme terminée ? Les heures futures seront libérées de votre calendrier."
+        variant="warning"
+        confirmText={terminerLoading ? 'Terminaison...' : 'Terminer'}
         cancelText="Annuler"
       />
     </AppLayout>

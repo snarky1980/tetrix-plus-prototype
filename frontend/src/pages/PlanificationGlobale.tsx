@@ -4801,6 +4801,42 @@ const PlanificationGlobale: React.FC = () => {
                 Éditer
               </button>
               
+              {/* Bouton Terminer - visible uniquement si la tâche n'est pas terminée */}
+              {tacheDetaillee.statut !== 'TERMINEE' && (
+                <button
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded shadow-sm hover:shadow-md hover:from-green-600 hover:to-green-700 active:scale-95 transition-all duration-200 font-medium text-xs"
+                  onClick={() => {
+                    setConfirmDialog({
+                      isOpen: true,
+                      title: 'Terminer la tâche',
+                      message: 'Voulez-vous marquer cette tâche comme terminée ? Les heures futures seront libérées du calendrier.',
+                      variant: 'warning',
+                      onConfirm: async () => {
+                        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+                        try {
+                          const result = await tacheService.terminerTache(tacheDetaillee.id);
+                          setTacheDetaillee(result.tache);
+                          // Afficher un message de succès temporaire
+                          if (result.heuresLiberees > 0) {
+                            alert(`✅ Tâche terminée ! ${result.heuresLiberees.toFixed(1)}h libérées sur ${result.joursLiberes} jour(s).`);
+                          } else {
+                            alert('✅ Tâche terminée !');
+                          }
+                          window.location.reload();
+                        } catch (err: any) {
+                          setErreurEdition('Erreur lors de la terminaison: ' + (err.response?.data?.erreur || err.message || 'Erreur inconnue'));
+                        }
+                      }
+                    });
+                  }}
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  Terminer
+                </button>
+              )}
+              
               <button
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-red-500 to-red-600 text-white rounded shadow-sm hover:shadow-md hover:from-red-600 hover:to-red-700 active:scale-95 transition-all duration-200 font-medium text-xs"
                 onClick={() => {

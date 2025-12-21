@@ -636,6 +636,116 @@ export const mettreAJourTache = async (
 };
 
 /**
+ * Terminer une tâche manuellement
+ * POST /api/taches/:id/terminer
+ * 
+ * Cette action:
+ * - Change le statut à TERMINEE
+ * - Supprime les ajustements de temps FUTURS (libère le calendrier)
+ * - Conserve les ajustements passés pour l'historique
+ * - La tâche reste dans le système
+ */
+export const terminerTache = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const utilisateurId = req.utilisateur?.id || 'system';
+    const utilisateurEmail = req.utilisateur?.email || 'system';
+
+    // Vérifier que la tâche existe
+    const tache = await prisma.tache.findUnique({
+      where: { id },
+      include: {
+        ajustementsTemps: true,
+        traducteur: { select: { nom: true } },
+      },
+    });
+
+    if (!tache) {
+      res.status(404).json({ erreur: 'Tâche non trouvée' });
+      return;
+    }
+
+    // Vérifier que la tâche n'est pas déjà terminée
+    if (tache.statut === 'TERMINEE') {
+      res.status(400).json({ erreur: 'Cette tâche est déjà terminée' });
+      return;
+    }
+
+    // Date d'aujourd'hui à minuit (Ottawa)
+    const aujourdhui = new Date();
+    aujourdhui.setHours(0, 0, 0, 0);
+
+    // Identifier les ajustements futurs à supprimer
+    const ajustementsFuturs = tache.ajustementsTemps.filter(
+      (aj) => aj.type === 'TACHE' && new Date(aj.date) > aujourdhui
+    );
+
+    const heuresLiberees = ajustementsFuturs.reduce((sum, aj) => sum + aj.heures, 0);
+
+    // Transaction pour mettre à jour le statut et supprimer les ajustements futurs
+    const tacheTerminee = await prisma.$transaction(async (tx) => {
+      // Supprimer les ajustements futurs
+      if (ajustementsFuturs.length > 0) {
+        await tx.ajustementTemps.deleteMany({
+          where: {
+            id: { in: ajustementsFuturs.map((aj) => aj.id) },
+          },
+        });
+      }
+
+      // Mettre à jour le statut
+      const updated = await tx.tache.update({
+        where: { id },
+        data: {
+          statut: 'TERMINEE',
+          modifiePar: utilisateurId,
+          modifieLe: new Date(),
+          version: { increment: 1 },
+        },
+        include: {
+          traducteur: { select: { id: true, nom: true } },
+          client: true,
+          paireLinguistique: true,
+          ajustementsTemps: {
+            where: { type: 'TACHE' },
+            orderBy: { date: 'asc' },
+          },
+        },
+      });
+
+      // Enregistrer dans l'historique
+      await tx.historiqueTache.create({
+        data: {
+          tacheId: id,
+          action: 'STATUT_CHANGE',
+          champModifie: 'statut',
+          ancienneValeur: tache.statut,
+          nouvelleValeur: 'TERMINEE',
+          utilisateurId: utilisateurId,
+          utilisateur: utilisateurEmail,
+          details: `Tâche terminée manuellement. ${heuresLiberees > 0 ? `${heuresLiberees.toFixed(1)}h libérées du calendrier.` : ''}`,
+        },
+      });
+
+      return updated;
+    });
+
+    res.json({
+      tache: tacheTerminee,
+      message: 'Tâche terminée avec succès',
+      heuresLiberees,
+      joursLiberes: ajustementsFuturs.length,
+    });
+  } catch (error) {
+    console.error('Erreur terminaison tâche:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la terminaison de la tâche' });
+  }
+};
+
+/**
  * Supprimer une tâche
  * DELETE /api/taches/:id
  */

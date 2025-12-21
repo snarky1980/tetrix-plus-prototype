@@ -5,6 +5,7 @@ import {
   creerTache,
   mettreAJourTache,
   supprimerTache,
+  terminerTache,
   obtenirHistoriqueTache,
 } from '../controllers/tacheController';
 import { authentifier, verifierRole } from '../middleware/auth';
@@ -49,6 +50,13 @@ router.post('/', verifierRole('ADMIN', 'CONSEILLER'), valider(creerTacheSchema),
  * Accessible par : Admin, Conseiller
  */
 router.put('/:id', verifierRole('ADMIN', 'CONSEILLER'), valider(mettreAJourTacheSchema), mettreAJourTache);
+
+/**
+ * POST /api/taches/:id/terminer
+ * Terminer une tâche manuellement (libère le calendrier mais garde la tâche)
+ * Accessible par : Admin, Conseiller, Traducteur (propriétaire)
+ */
+router.post('/:id/terminer', verifierRole('ADMIN', 'CONSEILLER', 'TRADUCTEUR'), terminerTache);
 
 /**
  * DELETE /api/taches/:id

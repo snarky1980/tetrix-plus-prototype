@@ -85,4 +85,23 @@ export const tacheService = {
   async supprimerTache(id: string): Promise<void> {
     await api.delete(`/taches/${id}`);
   },
+
+  /**
+   * Terminer une tâche manuellement
+   * Libère les heures futures du calendrier mais garde la tâche dans le système
+   */
+  async terminerTache(id: string): Promise<{
+    tache: Tache;
+    message: string;
+    heuresLiberees: number;
+    joursLiberes: number;
+  }> {
+    const { data } = await api.post<{
+      tache: Tache;
+      message: string;
+      heuresLiberees: number;
+      joursLiberes: number;
+    }>(`/taches/${id}/terminer`);
+    return data;
+  },
 };

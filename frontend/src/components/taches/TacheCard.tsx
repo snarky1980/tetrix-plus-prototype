@@ -11,6 +11,8 @@ interface TacheCardProps {
   onViewDetails?: () => void;
   /** Callback pour éditer */
   onEdit?: () => void;
+  /** Callback après terminaison de la tâche */
+  onTerminer?: (tacheId: string) => void;
   /** Afficher le bouton planning traducteur */
   showPlanningButton?: boolean;
   /** Mode compact (moins d'infos) */
@@ -27,6 +29,7 @@ export const TacheCard: React.FC<TacheCardProps> = ({
   tache,
   onViewDetails,
   onEdit,
+  onTerminer,
   showPlanningButton = true,
   compact = false,
   className = '',
@@ -151,6 +154,21 @@ export const TacheCard: React.FC<TacheCardProps> = ({
 
         {/* Actions */}
         <div className="flex flex-col gap-1 shrink-0">
+          {/* Bouton Terminer - visible uniquement si la tâche n'est pas terminée */}
+          {onTerminer && tache.statut !== 'TERMINEE' && (
+            <Button
+              variant="outline"
+              onClick={(e) => {
+                e.stopPropagation();
+                onTerminer(tache.id);
+              }}
+              className="text-xs px-2 py-1 text-green-600 border-green-300 hover:bg-green-50"
+              aria-label="Terminer la tâche"
+              title="Terminer la tâche (libère le calendrier)"
+            >
+              ✅
+            </Button>
+          )}
           {onEdit && (
             <Button
               variant="outline"
