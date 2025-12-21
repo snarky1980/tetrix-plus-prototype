@@ -3841,31 +3841,128 @@ const PlanificationGlobale: React.FC = () => {
 
         {/* Zone de tableau avec défilement */}
         <div className="relative flex-1 overflow-hidden">
-          {/* Barre de recherche de traducteur */}
-          <div className="bg-gray-50 border-b border-border p-2">
+          {/* Barre de recherche + navigation horizontale */}
+          <div className="bg-gray-50 border-b border-border p-2 flex items-center gap-2">
             <input
               type="text"
-              placeholder="🔍 Rechercher un traducteur par nom..."
+              placeholder="🔍 Rechercher un traducteur..."
               value={searchTraducteur}
               onChange={(e) => setSearchTraducteur(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
+              className="flex-1 px-3 py-2 text-xs border border-border rounded focus:outline-none focus:ring-2 focus:ring-primary"
             />
             {searchTraducteur && (
               <button
                 onClick={() => setSearchTraducteur('')}
-                className="absolute right-4 top-4 text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600"
                 title="Effacer la recherche"
               >
                 ✕
               </button>
             )}
+            {/* Boutons de navigation horizontale */}
+            <div className="flex items-center gap-1 border-l border-gray-300 pl-2">
+              <button
+                onClick={() => {
+                  if (tableContainerRef.current) {
+                    tableContainerRef.current.scrollLeft = 0;
+                  }
+                }}
+                className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-100"
+                title="Aller au début"
+              >
+                ⏮
+              </button>
+              <button
+                onClick={() => {
+                  if (tableContainerRef.current) {
+                    tableContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+                  }
+                }}
+                className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-100"
+                title="Défiler vers la gauche"
+              >
+                ◀
+              </button>
+              <button
+                onClick={() => {
+                  if (tableContainerRef.current) {
+                    tableContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+                  }
+                }}
+                className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-100"
+                title="Défiler vers la droite"
+              >
+                ▶
+              </button>
+              <button
+                onClick={() => {
+                  if (tableContainerRef.current) {
+                    tableContainerRef.current.scrollLeft = tableContainerRef.current.scrollWidth;
+                  }
+                }}
+                className="px-2 py-1 text-xs bg-white border border-gray-300 rounded hover:bg-gray-100"
+                title="Aller à la fin"
+              >
+                ⏭
+              </button>
+              <button
+                onClick={() => {
+                  // Aller à aujourd'hui
+                  const todayCell = tableContainerRef.current?.querySelector(`[data-date="${today}"]`);
+                  if (todayCell) {
+                    todayCell.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                  }
+                }}
+                className="px-2 py-1 text-xs bg-primary text-white rounded hover:bg-primary/90"
+                title="Aller à aujourd'hui"
+              >
+                📅 Aujourd'hui
+              </button>
+            </div>
           </div>
-          <div ref={tableContainerRef} className="overflow-auto h-full w-full">
+          {/* Container du tableau */}
+          <div 
+            ref={tableContainerRef} 
+            className="overflow-auto h-full w-full"
+          >
             {loading && <p className="text-xs text-muted text-center py-2">Chargement...</p>}
             {error && <p className="text-xs text-red-600 text-center py-2">{error}</p>}
             {!loading && !error && (
             <table className="w-full border-collapse text-xs">
               <thead className="bg-gray-50 sticky top-0 z-10">
+                {/* Ligne des mois et années */}
+                <tr>
+                  <th className="border-r border-border px-2 py-1 text-left font-semibold sticky left-0 bg-gray-100 z-20 min-w-[200px]" rowSpan={1}>
+                  </th>
+                  {(() => {
+                    // Regrouper les jours par mois/année
+                    const monthGroups: { key: string; label: string; count: number }[] = [];
+                    days.forEach((iso) => {
+                      const d = parseISODate(iso);
+                      const monthYear = `${d.getFullYear()}-${d.getMonth()}`;
+                      const monthName = new Intl.DateTimeFormat('fr-FR', { month: 'long' }).format(d);
+                      const year = d.getFullYear();
+                      const label = `${monthName.charAt(0).toUpperCase() + monthName.slice(1)} ${year}`;
+                      
+                      if (monthGroups.length === 0 || monthGroups[monthGroups.length - 1].key !== monthYear) {
+                        monthGroups.push({ key: monthYear, label, count: 1 });
+                      } else {
+                        monthGroups[monthGroups.length - 1].count++;
+                      }
+                    });
+                    
+                    return monthGroups.map((group) => (
+                      <th
+                        key={group.key}
+                        colSpan={group.count}
+                        className="border-r border-border px-1 py-1 text-center font-bold bg-indigo-100 text-indigo-800 text-[11px]"
+                      >
+                        📅 {group.label}
+                      </th>
+                    ));
+                  })()}
+                </tr>
+                {/* Ligne des jours */}
                 <tr>
                   <th className="border-r border-border px-2 py-1.5 text-left font-semibold sticky left-0 bg-gray-50 z-20 min-w-[200px]">
                     Traducteur
@@ -3874,7 +3971,6 @@ const PlanificationGlobale: React.FC = () => {
                     const d = parseISODate(iso);
                     const dayName = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' }).format(d);
                     const dayNum = d.getDate();
-                    const month = d.getMonth() + 1;
                     const isTodayCol = isToday(iso);
                     const isWeekendCol = isWeekend(iso);
                     const isFerieCol = isFerie(iso);
@@ -3883,6 +3979,7 @@ const PlanificationGlobale: React.FC = () => {
                     return (
                       <th
                         key={iso}
+                        data-date={iso}
                         className={`border-r border-border px-1 py-1.5 text-center font-semibold min-w-[52px] ${
                           isTodayCol ? 'bg-blue-50' : isGrayed ? 'bg-gray-200' : ''
                         }`}
@@ -3891,12 +3988,12 @@ const PlanificationGlobale: React.FC = () => {
                         <div className={`text-[10px] ${
                           isTodayCol ? 'text-blue-700 font-bold' : isGrayed ? 'text-gray-500' : ''
                         }`}>
-                          {isFerieCol ? '🎉' : dayName.charAt(0).toUpperCase() + dayName.slice(1)}
+                          {dayName.charAt(0).toUpperCase() + dayName.slice(1)}
                         </div>
-                        <div className={`text-[10px] ${
-                          isTodayCol ? 'text-blue-600' : isGrayed ? 'text-gray-400' : 'text-muted'
+                        <div className={`text-[11px] font-bold ${
+                          isTodayCol ? 'text-blue-600' : isGrayed ? 'text-gray-400' : 'text-gray-700'
                         }`}>
-                          {dayNum}/{month}
+                          {dayNum}
                         </div>
                       </th>
                     );
