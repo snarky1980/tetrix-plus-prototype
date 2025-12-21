@@ -278,6 +278,62 @@ const StatistiquesProductivite: React.FC = () => {
               </Card>
             </div>
 
+            {/* Statistiques par statut de tâche */}
+            {stats.vueEnsemble.tachesTotal !== undefined && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>📋 Répartition des tâches</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <p className="text-2xl font-bold text-gray-700">{stats.vueEnsemble.tachesTotal}</p>
+                      <p className="text-sm text-muted">Total</p>
+                    </div>
+                    <div className="text-center p-4 bg-green-50 rounded-lg border border-green-200">
+                      <p className="text-2xl font-bold text-green-600">{stats.vueEnsemble.tachesTerminees || 0}</p>
+                      <p className="text-sm text-green-700">✅ Terminées</p>
+                    </div>
+                    <div className="text-center p-4 bg-blue-50 rounded-lg border border-blue-200">
+                      <p className="text-2xl font-bold text-blue-600">{stats.vueEnsemble.tachesEnCours || 0}</p>
+                      <p className="text-sm text-blue-700">🔄 En cours</p>
+                    </div>
+                    <div className="text-center p-4 bg-amber-50 rounded-lg border border-amber-200">
+                      <p className="text-2xl font-bold text-amber-600">{stats.vueEnsemble.tachesPlanifiees || 0}</p>
+                      <p className="text-sm text-amber-700">📅 Planifiées</p>
+                    </div>
+                  </div>
+                  {/* Barre de progression */}
+                  {stats.vueEnsemble.tachesTotal > 0 && (
+                    <div className="mt-4">
+                      <div className="flex h-4 rounded-full overflow-hidden">
+                        <div 
+                          className="bg-green-500" 
+                          style={{ width: `${((stats.vueEnsemble.tachesTerminees || 0) / stats.vueEnsemble.tachesTotal) * 100}%` }}
+                          title={`${stats.vueEnsemble.tachesTerminees} terminées`}
+                        />
+                        <div 
+                          className="bg-blue-500" 
+                          style={{ width: `${((stats.vueEnsemble.tachesEnCours || 0) / stats.vueEnsemble.tachesTotal) * 100}%` }}
+                          title={`${stats.vueEnsemble.tachesEnCours} en cours`}
+                        />
+                        <div 
+                          className="bg-amber-400" 
+                          style={{ width: `${((stats.vueEnsemble.tachesPlanifiees || 0) / stats.vueEnsemble.tachesTotal) * 100}%` }}
+                          title={`${stats.vueEnsemble.tachesPlanifiees} planifiées`}
+                        />
+                      </div>
+                      <div className="flex justify-between text-xs text-muted mt-1">
+                        <span>
+                          Taux de complétion: {Math.round(((stats.vueEnsemble.tachesTerminees || 0) / stats.vueEnsemble.tachesTotal) * 100)}%
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Alertes & Recommandations */}
             {stats.alertes.length > 0 && (
               <Card>
@@ -316,6 +372,7 @@ const StatistiquesProductivite: React.FC = () => {
                         <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Heures</th>
                         <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Mots/h</th>
                         <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Tâches</th>
+                        <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Terminées</th>
                         <th className="px-4 py-2 text-right text-sm font-medium text-gray-700">Tendance</th>
                       </tr>
                     </thead>
@@ -340,6 +397,13 @@ const StatistiquesProductivite: React.FC = () => {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-sm text-right">{trad.taches}</td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            {trad.tachesTerminees !== undefined ? (
+                              <span className={trad.tachesTerminees > 0 ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                                ✅ {trad.tachesTerminees}
+                              </span>
+                            ) : '-'}
+                          </td>
                           <td className={`px-4 py-3 text-sm text-right font-medium ${getTendanceColor(trad.tendance)}`}>
                             {getTendanceIcon(trad.tendance)} {trad.tendance > 0 ? '+' : ''}{trad.tendance.toFixed(1)}%
                           </td>

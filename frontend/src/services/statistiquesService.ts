@@ -9,6 +9,11 @@ export interface StatsProductivite {
     tendanceMots: number;
     tendanceHeures: number;
     tendanceProductivite: number;
+    // Statistiques par statut
+    tachesTotal?: number;
+    tachesTerminees?: number;
+    tachesEnCours?: number;
+    tachesPlanifiees?: number;
   };
   parTraducteur: Array<{
     id: string;
@@ -19,6 +24,7 @@ export interface StatsProductivite {
     mots: number;
     heures: number;
     taches: number;
+    tachesTerminees?: number;
     productivite: number;
     tendance: number;
   }>;

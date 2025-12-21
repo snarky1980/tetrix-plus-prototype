@@ -106,6 +106,7 @@ router.get('/productivite', authentifier, async (req, res) => {
     }
 
     // Récupérer les tâches dans la période
+    // On inclut TOUTES les tâches (PLANIFIEE, EN_COURS, TERMINEE) pour un calcul complet
     const tachesQuery: any = {
       where: {
         dateEcheance: {
@@ -133,6 +134,10 @@ router.get('/productivite', authentifier, async (req, res) => {
           } 
         },
         paireLinguistique: { select: { langueSource: true, langueCible: true } },
+        ajustementsTemps: {
+          where: { type: 'TACHE' },
+          select: { heures: true, date: true },
+        },
       },
     };
 
@@ -185,9 +190,26 @@ router.get('/productivite', authentifier, async (req, res) => {
     }
 
     // Calculer les stats globales
+    // Pour les heures, on utilise les ajustements de temps (heures réellement planifiées/travaillées)
+    // Cela reflète mieux le travail effectué, surtout pour les tâches terminées avant l'heure
     const motsTotaux = tachesFiltrees.reduce((sum, t) => sum + (t.compteMots || 0), 0);
-    const heuresTotales = tachesFiltrees.reduce((sum, t) => sum + t.heuresTotal, 0);
+    
+    // Calcul des heures basé sur ajustements (si disponibles) ou heuresTotal (fallback)
+    const heuresTotales = tachesFiltrees.reduce((sum, t: any) => {
+      // Si la tâche a des ajustements, utiliser la somme des ajustements
+      if (t.ajustementsTemps && t.ajustementsTemps.length > 0) {
+        return sum + t.ajustementsTemps.reduce((s: number, aj: any) => s + aj.heures, 0);
+      }
+      // Sinon utiliser heuresTotal
+      return sum + t.heuresTotal;
+    }, 0);
+    
     const productiviteMoyenne = heuresTotales > 0 ? Math.round(motsTotaux / heuresTotales) : 0;
+    
+    // Compteur de tâches par statut
+    const tachesTerminees = tachesFiltrees.filter((t: any) => t.statut === 'TERMINEE').length;
+    const tachesEnCours = tachesFiltrees.filter((t: any) => t.statut === 'EN_COURS').length;
+    const tachesPlanifiees = tachesFiltrees.filter((t: any) => t.statut === 'PLANIFIEE').length;
 
     // Calculer période précédente pour tendance
     const nbJours = differenceInDays(fin, debut);
@@ -283,6 +305,7 @@ router.get('/productivite', authentifier, async (req, res) => {
         mots: 0,
         heures: 0,
         taches: 0,
+        tachesTerminees: 0,
       });
     }
     
@@ -295,8 +318,16 @@ router.get('/productivite', authentifier, async (req, res) => {
       const stats = parTraducteur.get(tradId);
       if (stats) {
         stats.mots += (tache as any).compteMots || 0;
-        stats.heures += (tache as any).heuresTotal;
+        // Utiliser ajustements si disponibles
+        if (tacheTyped.ajustementsTemps && tacheTyped.ajustementsTemps.length > 0) {
+          stats.heures += tacheTyped.ajustementsTemps.reduce((s: number, aj: any) => s + aj.heures, 0);
+        } else {
+          stats.heures += (tache as any).heuresTotal;
+        }
         stats.taches += 1;
+        if (tacheTyped.statut === 'TERMINEE') {
+          stats.tachesTerminees += 1;
+        }
       }
     }
 
@@ -403,6 +434,11 @@ router.get('/productivite', authentifier, async (req, res) => {
         tendanceMots: Math.round(tendanceMots * 10) / 10,
         tendanceHeures: Math.round(tendanceHeures * 10) / 10,
         tendanceProductivite: Math.round(tendanceProductivite * 10) / 10,
+        // Statistiques par statut
+        tachesTotal: tachesFiltrees.length,
+        tachesTerminees,
+        tachesEnCours,
+        tachesPlanifiees,
       },
       parTraducteur: statsParTraducteur,
       parDivision: statsParDivision,
