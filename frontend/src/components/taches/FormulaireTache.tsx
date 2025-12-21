@@ -148,6 +148,9 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   const [repartitionManuelle, setRepartitionManuelle] = useState<RepartitionManuelle[]>([]);
   const [previewRepartition, setPreviewRepartition] = useState<any[] | null>(null);
   const [loadingPreview, setLoadingPreview] = useState(false);
+  const [warningDatesPassees, setWarningDatesPassees] = useState<string | null>(null);
+  const [datesPassees, setDatesPassees] = useState<string[]>([]);
+  const [showConfirmDatesPassees, setShowConfirmDatesPassees] = useState(false);
 
   // Chargement des données
   useEffect(() => {
@@ -282,14 +285,16 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
 
     setLoadingPreview(true);
     setErreur('');
+    setWarningDatesPassees(null);
+    setDatesPassees([]);
     
     try {
       const dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance}:00`;
       
-      let preview;
+      let result;
       switch (formData.typeRepartition) {
         case 'PEPS':
-          preview = await repartitionService.previewPEPS({
+          result = await repartitionService.previewPEPS({
             traducteurId: formData.traducteurId,
             heuresTotal: Number(formData.heuresTotal),
             dateDebut: `${formData.dateDebut}T09:00:00`,
@@ -297,7 +302,7 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
           });
           break;
         case 'EQUILIBRE':
-          preview = await repartitionService.previewEquilibre({
+          result = await repartitionService.previewEquilibre({
             traducteurId: formData.traducteurId,
             heuresTotal: Number(formData.heuresTotal),
             dateDebut: `${formData.dateDebut}T09:00:00`,
@@ -306,7 +311,7 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
           break;
         case 'JUSTE_TEMPS':
         default:
-          preview = await repartitionService.previewJAT({
+          result = await repartitionService.previewJAT({
             traducteurId: formData.traducteurId,
             heuresTotal: Number(formData.heuresTotal),
             dateEcheance: dateEcheanceComplete,
@@ -314,7 +319,13 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
           break;
       }
       
-      setPreviewRepartition(preview);
+      setPreviewRepartition(result.repartition);
+      
+      // Gérer le warning pour les dates passées
+      if (result.warning && result.datesPassees && result.datesPassees.length > 0) {
+        setWarningDatesPassees(result.warning);
+        setDatesPassees(result.datesPassees);
+      }
     } catch (err: any) {
       console.error('Erreur preview:', err);
       setErreur(err.response?.data?.erreur || 'Erreur lors du calcul de la répartition');
@@ -383,7 +394,14 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
     setRepartitionManuelle(nouvelles);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (confirmeDatesPassees: boolean = false) => {
+    // Si des dates passées et pas encore confirmé, demander confirmation
+    if (datesPassees.length > 0 && !confirmeDatesPassees && !showConfirmDatesPassees) {
+      setShowConfirmDatesPassees(true);
+      return;
+    }
+    
+    setShowConfirmDatesPassees(false);
     setSubmitting(true);
     setErreur('');
 
@@ -943,6 +961,71 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
             </div>
           </div>
 
+          {/* Avertissement dates passées */}
+          {warningDatesPassees && datesPassees.length > 0 && (
+            <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">⚠️</span>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-amber-800 mb-1">Dates dans le passé détectées</h4>
+                  <p className="text-sm text-amber-700 mb-2">
+                    {datesPassees.length} jour(s) de la répartition sont antérieurs à aujourd'hui:
+                  </p>
+                  <ul className="text-sm text-amber-700 mb-2 list-disc list-inside">
+                    {datesPassees.map(d => (
+                      <li key={d}>{formatDateAvecJour(d)}</li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-amber-600">
+                    La confirmation sera demandée lors de l'enregistrement.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Modal de confirmation dates passées */}
+          {showConfirmDatesPassees && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-lg shadow-xl max-w-md mx-4 p-6">
+                <div className="flex items-start gap-3 mb-4">
+                  <span className="text-3xl">⚠️</span>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Confirmer les dates passées</h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Cette répartition contient {datesPassees.length} jour(s) dans le passé.
+                    </p>
+                  </div>
+                </div>
+                <div className="bg-amber-50 border border-amber-200 rounded p-3 mb-4">
+                  <p className="text-sm font-medium text-amber-800 mb-2">Jours concernés:</p>
+                  <ul className="text-sm text-amber-700 list-disc list-inside">
+                    {datesPassees.map(d => (
+                      <li key={d}>{formatDateAvecJour(d)}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">
+                  Voulez-vous vraiment enregistrer cette tâche avec des heures dans le passé?
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowConfirmDatesPassees(false)}
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={() => handleSubmit(true)}
+                    className="bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    Confirmer et enregistrer
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           <h3 className="text-sm font-bold text-gray-900 mb-2">
             📅 Répartition des heures
           </h3>
@@ -1211,7 +1294,7 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
               </Button>
               <Button
                 variant="primaire"
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={submitting || (formData.typeRepartition === 'MANUEL' && totalManuel !== totalFormulaire)}
               >
                 {submitting ? 'En cours...' : (tacheId ? 'Modifier la tâche' : 'Créer la tâche')}

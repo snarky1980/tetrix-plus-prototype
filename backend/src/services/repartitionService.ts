@@ -17,10 +17,8 @@ import {
   validateDateRange,
   parseHoraireTraducteur,
   capaciteNetteJour,
-  parseOttawaDateISO,
-  OTTAWA_TIMEZONE
+  parseOttawaDateISO
 } from '../utils/dateTimeOttawa';
-import { toZonedTime } from 'date-fns-tz';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
 import { JoursFeriesService } from './joursFeriesService';
 
@@ -92,12 +90,8 @@ function calculerPlageHoraireJAT(
   // Déterminer l'heure de fin effective
   let heureFin: number;
   if (estJourEcheance && deadlineDateTime) {
-    // Jour J: l'heure de fin est l'heure de deadline OU la fin de l'horaire (le minimum des deux)
-    // CRITIQUE: Utiliser toZonedTime pour extraire l'heure dans le fuseau Ottawa
-    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
-    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
-    // Ne jamais dépasser la fin de l'horaire du traducteur
-    heureFin = Math.min(heureDeadline, horaire.heureFin);
+    // Jour J: l'heure de fin est l'heure de deadline
+    heureFin = deadlineDateTime.getHours() + deadlineDateTime.getMinutes() / 60;
   } else {
     // Autres jours: l'heure de fin est la fin de l'horaire
     heureFin = horaire.heureFin;
@@ -126,8 +120,8 @@ function calculerPlageHoraireJAT(
 
 /**
  * Calcule les plages horaires pour une allocation ÉQUILIBRÉE
- * RÈGLE MÉTIER: Utilise comportement PEPS (le plus TÔT possible dans la journée)
- * L'utilisateur pourra modifier ensuite si nécessaire
+ * RÈGLE MÉTIER: Allouer le plus TÔT possible dans la journée
+ * En tenant compte des autres tâches déjà allouées, pauses, heures bloquées
  * 
  * @param heuresAllouees Nombre d'heures à allouer ce jour
  * @param horaire Horaire du traducteur
@@ -136,111 +130,53 @@ function calculerPlageHoraireJAT(
  * @returns {heureDebut, heureFin} Plages horaires au format "8h30", "12h", etc.
  * 
  * @example
- * // Allouer 4h sur un jour où 2h sont déjà utilisées
- * calculerPlageHoraireEquilibree(4, {heureDebut: 9, heureFin: 17}, 2, date)
- * // => {heureDebut: "11h", heureFin: "16h"} (4h le plus tôt possible après les heures existantes)
+ * // Allouer 4h sur un jour où 2h sont déjà utilisées (9h-11h)
+ * calculerPlageHoraireEquilibree(4, {heureDebut: 8, heureFin: 17}, 2, date)
+ * // => {heureDebut: "11h", heureFin: "16h"} (4h après les 2h existantes, pause exclue)
  */
 function calculerPlageHoraireEquilibree(
   heuresAllouees: number,
   horaire: { heureDebut: number; heureFin: number },
   heuresDejaUtilisees: number,
-  dateJour: Date,
-  deadlineDateTime?: Date
+  dateJour: Date
 ): { heureDebut: string; heureFin: string } {
-  // STRATÉGIE ÉQUILIBRÉE: Utilise comportement PEPS (le plus TÔT possible)
-  // Cela permet une suggestion cohérente que l'utilisateur peut ajuster
+  // Stratégie: Allouer le plus tôt possible, en évitant la pause midi
   
-  // Déterminer l'heure de fin maximale (min entre horaire et deadline)
-  let heureFinMax = horaire.heureFin;
-  if (deadlineDateTime) {
-    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
-    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
-    heureFinMax = Math.min(heureFinMax, heureDeadline);
-  }
+  // Commencer au début de l'horaire
+  let debut = horaire.heureDebut;
   
-  // Point de départ: juste après les heures déjà utilisées, ou début de journée
-  let heureDebut = horaire.heureDebut + heuresDejaUtilisees;
-  
-  // Si on commence dans la pause midi, décaler après
-  if (heureDebut >= 12 && heureDebut < 13) {
-    heureDebut = 13;
-  }
-  
-  let heureFin = heureDebut + heuresAllouees;
-  
-  // Si on traverse la pause midi (12h-13h), ajouter 1h
-  if (heureDebut < 12 && heureFin > 12) {
-    heureFin += 1; // Ajouter 1h pour la pause
+  // Si des heures sont déjà utilisées, avancer en conséquence
+  if (heuresDejaUtilisees > 0) {
+    debut += heuresDejaUtilisees;
     
-    // Si on finit dans la pause, décaler après
-    if (heureFin > 12 && heureFin <= 13) {
-      heureFin = 13 + (heureFin - 12);
+    // Si on traverse la pause 12h-13h, sauter
+    if (horaire.heureDebut < 12 && debut > 12 && debut < 13) {
+      debut = 13; // Commencer après la pause
+    } else if (debut >= 12 && debut < 13) {
+      debut = 13; // Commencer après la pause
     }
   }
   
-  // S'assurer qu'on ne dépasse pas la fin de l'horaire NI la deadline
-  heureFin = Math.min(heureFin, heureFinMax);
+  // Calculer la fin en tenant compte de la pause
+  let fin = debut + heuresAllouees;
+  
+  // Si on traverse la pause 12h-13h, ajouter 1h
+  if (debut < 12 && fin > 12) {
+    // On commence avant midi et on termine après
+    // Ajouter 1h pour la pause
+    fin += 1;
+  } else if (debut < 13 && fin >= 13 && debut >= 12) {
+    // On commence pendant la pause (12h-13h) ou juste avant
+    // Ajouter 1h pour sauter la pause
+    fin += 1;
+  }
+  
+  // S'assurer qu'on ne dépasse pas la fin de l'horaire
+  fin = Math.min(fin, horaire.heureFin);
   
   return {
-    heureDebut: formatHeure(heureDebut),
-    heureFin: formatHeure(heureFin)
-  };
-}
-
-/**
- * Calcule les plages horaires pour une allocation PEPS (Premier Entré Premier Sorti)
- * RÈGLE MÉTIER: Allouer le plus TÔT possible dans la journée (inverse de JAT)
- * En tenant compte des autres tâches déjà allouées, pauses, heures bloquées
- * 
- * @param heuresAllouees Nombre d'heures à allouer ce jour
- * @param horaire Horaire du traducteur
- * @param heuresDejaUtilisees Heures déjà utilisées ce jour (autres tâches)
- * @param dateJour Date du jour (pour vérifier pause midi)
- * @returns {heureDebut, heureFin} Plages horaires au format "8h30", "12h", etc.
- */
-function calculerPlageHorairePEPS(
-  heuresAllouees: number,
-  horaire: { heureDebut: number; heureFin: number },
-  heuresDejaUtilisees: number,
-  dateJour: Date,
-  deadlineDateTime?: Date
-): { heureDebut: string; heureFin: string } {
-  // STRATÉGIE PEPS: Allouer LE PLUS TÔT POSSIBLE (dès le début de la journée)
-  
-  // Déterminer l'heure de fin maximale (min entre horaire et deadline)
-  let heureFinMax = horaire.heureFin;
-  if (deadlineDateTime) {
-    const deadlineZoned = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
-    const heureDeadline = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
-    heureFinMax = Math.min(heureFinMax, heureDeadline);
-  }
-  
-  // Point de départ: juste après les heures déjà utilisées, ou début de journée
-  let heureDebut = horaire.heureDebut + heuresDejaUtilisees;
-  
-  // Si on commence dans la pause midi, décaler après
-  if (heureDebut >= 12 && heureDebut < 13) {
-    heureDebut = 13;
-  }
-  
-  let heureFin = heureDebut + heuresAllouees;
-  
-  // Si on traverse la pause midi (12h-13h), ajouter 1h
-  if (heureDebut < 12 && heureFin > 12) {
-    heureFin += 1; // Ajouter 1h pour la pause
-    
-    // Si on finit dans la pause, décaler après
-    if (heureFin > 12 && heureFin <= 13) {
-      heureFin = 13 + (heureFin - 12);
-    }
-  }
-  
-  // S'assurer qu'on ne dépasse pas la fin de l'horaire NI la deadline
-  heureFin = Math.min(heureFin, heureFinMax);
-  
-  return {
-    heureDebut: formatHeure(heureDebut),
-    heureFin: formatHeure(heureFin)
+    heureDebut: formatHeure(debut),
+    heureFin: formatHeure(fin)
   };
 }
 
@@ -274,6 +210,17 @@ export interface RepartitionJATOptions {
    * et utilise hasSignificantTime() pour détecter si échéance a heure précise
    */
   modeTimestamp?: boolean;
+  /**
+   * Permettre les dates dans le passé (défaut: true pour autoriser)
+   * Si false, une erreur est levée pour les dates passées
+   */
+  allowPastDates?: boolean;
+}
+
+export interface RepartitionResult {
+  repartition: RepartitionItem[];
+  warning?: string;
+  datesPassees?: string[];
 }
 
 // Répartition "Juste-à-temps" (JAT)
@@ -324,10 +271,16 @@ export async function repartitionJusteATemps(
   }
 
   const aujourdHui = todayOttawa();
+  const allowPastDates = options.allowPastDates !== false; // Par défaut: autorisé
   
   if (debug) console.debug(`[JAT] Échéance reçue: ${dateEcheanceISO}, normalisée: ${formatOttawaISO(echeance)}`);
   
-  validateNotPast(echeance, 'dateEcheance');
+  // Ne plus bloquer les dates passées, juste avertir
+  // La validation sera faite côté appelant si nécessaire
+  const echeanceDansLePasse = echeance < aujourdHui;
+  if (echeanceDansLePasse && !allowPastDates) {
+    validateNotPast(echeance, 'dateEcheance');
+  }
 
   const heuresParJour = await heuresUtiliseesParJour(traducteurId, aujourdHui, echeance);
   
@@ -339,11 +292,13 @@ export async function repartitionJusteATemps(
   }
 
   // Calculer capacité totale disponible sur la fenêtre (excluant les weekends ET jours fériés)
-  const totalJours = differenceInDaysOttawa(aujourdHui, echeance) + 1;
+  // Si échéance dans le passé, partir de l'échéance elle-même
+  const dateDepart = echeance < aujourdHui ? echeance : aujourdHui;
+  const totalJours = Math.abs(differenceInDaysOttawa(dateDepart, echeance)) + 1;
   let capaciteDisponibleGlobale = 0;
   
   for (let i = 0; i < totalJours; i++) {
-    const d = addDaysOttawa(aujourdHui, i);
+    const d = addDaysOttawa(dateDepart, i);
     const iso = formatOttawaISO(d);
     // Ignorer les weekends ET jours fériés dans le calcul de capacité
     if (isWeekendOttawa(d) || JoursFeriesService.estJourFerie(d)) continue;
@@ -374,79 +329,66 @@ export async function repartitionJusteATemps(
     throw new Error(`Capacité insuffisante dans la plage pour heuresTotal demandées (demandé: ${heuresTotal}h, disponible: ${capaciteDisponibleGlobale.toFixed(2)}h)`);
   }
 
-  // STEP 1: Collecter les jours de travail disponibles (excluant weekends et jours fériés)
-  const joursDeTravail: Date[] = [];
-  for (let i = 0; i < totalJours; i++) {
-    const d = addDaysOttawa(aujourdHui, i);
-    if (!isWeekendOttawa(d) && !JoursFeriesService.estJourFerie(d)) {
-      joursDeTravail.push(d);
-    }
-  }
-  
-  if (debug) {
-    console.debug(`[JAT] Nombre de jours de travail disponibles: ${joursDeTravail.length}`);
-  }
-  
-  // ===== LOGIQUE JAT CORRECTE =====
-  // JAT = Juste-à-Temps: Remplir COMPLÈTEMENT les journées EN PARTANT DE L'ÉCHÉANCE vers le passé
-  // 
-  // RÈGLE MÉTIER:
-  // 1. On commence par l'échéance et on remonte dans le temps
-  // 2. On remplit COMPLÈTEMENT chaque journée (capacité max) avant de passer au jour précédent
-  // 3. Les plages horaires: le plus TARD possible dans la journée
-  // 4. On respecte les congés, blocages, horaire du traducteur
-  
+  // Allocation JAT (remplir à rebours depuis l'échéance, en excluant les weekends)
+  // RÈGLE MÉTIER: À rebours pour distribuer les jours, mais:
+  // - Jour J: premières heures disponibles (début de journée)
+  // - Jours avant: dernières heures disponibles (fin de journée)
+  let restant = heuresTotal;
   const resultat: RepartitionItem[] = [];
-  let heuresRestantes = heuresTotal;
-  
-  // Parcourir les jours EN ORDRE INVERSE (échéance → aujourd'hui)
-  for (let i = joursDeTravail.length - 1; i >= 0 && heuresRestantes > 0; i--) {
-    const courant = joursDeTravail[i];
+  let courant = echeance;
+  let iterations = 0;
+  // Déterminer la limite de remontée: soit aujourd'hui, soit 90 jours avant l'échéance
+  const limiteRemontee = echeance < aujourdHui 
+    ? subDaysOttawa(echeance, MAX_LOOKBACK_DAYS) 
+    : subDaysOttawa(aujourdHui, MAX_LOOKBACK_DAYS);
+  while (restant > 0 && iterations < MAX_LOOKBACK_DAYS) {
+    if (courant < limiteRemontee) break;
     const iso = formatOttawaISO(courant);
-    const estJourEcheance = iso === dateEcheanceJourSeul;
-    
-    // Calculer la capacité disponible pour ce jour
-    const utilisees = heuresParJour[iso] || 0;
-    const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
-    let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
-    
-    // Appliquer limite livraison matinale sur jour J si activé
-    if (estJourEcheance && livraisonMatinale) {
-      capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
-    }
-    
-    const capaciteRestante = Math.max(capaciteNette - utilisees, 0);
-    if (capaciteRestante <= 0) continue;
-    
-    // Allouer autant que possible ce jour (remplir complètement)
-    const alloue = Math.min(capaciteRestante, heuresRestantes);
-    
-    if (alloue > 0) {
-      // Calculer les plages horaires (le plus TARD possible pour JAT)
-      const plages = calculerPlageHoraireJAT(alloue, horaire, estJourEcheance, deadlineDateTime);
+    // Ignorer les weekends ET jours fériés pour l'allocation
+    if (!isWeekendOttawa(courant) && !JoursFeriesService.estJourFerie(courant)) {
+      const utilisees = heuresParJour[iso] || 0;
       
-      resultat.push({ 
-        date: iso, 
-        heures: parseFloat(alloue.toFixed(4)),
-        heureDebut: plages.heureDebut,
-        heureFin: plages.heureFin
-      });
+      // Calculer capacité nette pour ce jour:
+      // - Respecte l'horaire du traducteur
+      // - Exclut automatiquement la pause 12h-13h
+      // - Si deadline le même jour, limite à l'heure de la deadline
+      const estJourEcheance = iso === dateEcheanceJourSeul;
+      const deadlineDateTime = estJourEcheance && modeTimestamp && echeanceHasTime ? echeance : undefined;
+      let capaciteNette = capaciteNetteJour(horaire, courant, deadlineDateTime);
       
-      heuresRestantes = parseFloat((heuresRestantes - alloue).toFixed(4));
-      heuresParJour[iso] = utilisees + alloue;
+      // Si livraison matinale, appliquer limite supplémentaire sur jour J
+      if (estJourEcheance && livraisonMatinale) {
+        capaciteNette = Math.min(capaciteNette, heuresMaxJourJ);
+      }
       
-      if (debug) {
-        console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J]' : ''} - restant: ${heuresRestantes.toFixed(2)}h`);
+      const libre = Math.max(capaciteNette - utilisees, 0);
+      if (libre > 0) {
+        const alloue = Math.min(libre, restant);
+        
+        // Calculer les plages horaires exactes
+        const plages = calculerPlageHoraireJAT(alloue, horaire, estJourEcheance, deadlineDateTime);
+        
+        resultat.push({ 
+          date: iso, 
+          heures: alloue,
+          heureDebut: plages.heureDebut,
+          heureFin: plages.heureFin
+        });
+        restant -= alloue;
+        // Mettre à jour mémoire pour éviter double comptage si futur usage
+        heuresParJour[iso] = utilisees + alloue;
+        
+        if (debug) {
+          console.debug(`[JAT] ${iso}: ${alloue.toFixed(2)}h allouées (${plages.heureDebut}-${plages.heureFin}) ${estJourEcheance ? '[JOUR J - à rebours depuis deadline]' : '[à rebours depuis fin journée]'}`);
+        }
       }
     }
+    courant = subDaysOttawa(courant, 1);
+    iterations++;
   }
+  if (restant > 0) throw new Error('Impossible de répartir toutes les heures (capacité insuffisante après allocation).');
   
-  // Vérifier que toutes les heures ont été allouées
-  if (heuresRestantes > 0.01) {
-    throw new Error(`Impossible de répartir toutes les heures: ${heuresRestantes.toFixed(2)}h non distribuées (capacité insuffisante)`);
-  }
-  
-  // Retourner trié chronologiquement (pour cohérence frontend)
+  // Retourner trié chronologiquement asc (pour cohérence frontend)
   const resultTrie = resultat.sort((a,b) => a.date.localeCompare(b.date));
   
   if (debug) {
@@ -584,17 +526,12 @@ export async function repartitionEquilibree(
     const dateJour = parseOttawaDateISO(alloc.iso);
     const utilisees = heuresParJour[alloc.iso] || 0;
     
-    // Déterminer si c'est le jour de la deadline avec heure précise
-    const estJourEcheance = alloc.iso === dateFinJourSeul;
-    const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
-    
     // Calculer les plages horaires (le plus tôt possible)
     const plages = calculerPlageHoraireEquilibree(
       alloc.heuresAllouees,
       horaire,
       utilisees,
-      dateJour,
-      deadlineDateTime
+      dateJour
     );
     
     return {
@@ -658,8 +595,8 @@ export async function repartitionPEPS(
     if (libre <= 0) continue;
     const alloue = Math.min(libre, restant);
     
-    // Calculer les plages horaires (PEPS = le plus TÔT possible, inverse de JAT)
-    const plages = calculerPlageHorairePEPS(alloue, horaire, utilisees, jour, deadlineDateTime);
+    // Calculer les plages horaires (PEPS = le plus tôt possible, comme ÉQUILIBRÉ)
+    const plages = calculerPlageHoraireEquilibree(alloue, horaire, utilisees, jour);
     
     resultat.push({ 
       date: iso, 
@@ -810,9 +747,7 @@ export async function validerRepartition(
       if (dateObjISO === deadlineISO) {
         // Si l'échéance a une heure précise ET que la répartition a des heures précises
         if (deadlineHasTime && r.heureFin) {
-          // CRITIQUE: Utiliser toZonedTime pour extraire l'heure dans le fuseau Ottawa
-          const deadlineZoned = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
-          const heureEcheance = deadlineZoned.getHours() + deadlineZoned.getMinutes() / 60;
+          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
           const heureFin = parseHeureString(r.heureFin);
           if (heureFin > heureEcheance + 0.01) { // tolérance 0.01h pour floating point
             erreurs.push(`Le ${r.date}, heure de fin ${r.heureFin} dépasse l'heure d'échéance ${formatHeure(heureEcheance)}. Distribution au-delà de l'échéance interdite.`);
@@ -826,8 +761,7 @@ export async function validerRepartition(
           // Or si l'échéance est par exemple à 14h00 le même jour, on ne peut pas travailler toute la journée
           // Cette situation devrait être gérée par l'algorithme qui doit fournir heureDebut/heureFin
           // Pour la validation, on va accepter mais logger un avertissement
-          const deadlineZonedWarn = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
-          const heureEcheance = deadlineZonedWarn.getHours() + deadlineZonedWarn.getMinutes() / 60;
+          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
           console.warn(`[Validation] ${r.date}: échéance à ${formatHeure(heureEcheance)} mais répartition sans heures précises. Accepté mais risque de dépassement.`);
         }
       }
@@ -869,15 +803,6 @@ export async function validerRepartition(
         }
         if (fin > horaire.heureFin) {
           erreurs.push(`Heures invalides le ${r.date}: heureFin (${r.heureFin}) après l'horaire du traducteur (${formatHeure(horaire.heureFin)}).`);
-        }
-        
-        // NOUVEAU: Vérifier que l'heure de fin ne dépasse pas la deadline (même jour)
-        if (estJourEcheance && deadlineHasTime && deadlineDate) {
-          const deadlineZonedCheck = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
-          const heureDeadline = deadlineZonedCheck.getHours() + deadlineZonedCheck.getMinutes() / 60;
-          if (fin > heureDeadline + 0.01) {
-            erreurs.push(`Heures invalides le ${r.date}: heureFin (${r.heureFin}) après l'échéance (${formatHeure(heureDeadline)}).`);
-          }
         }
         
         // Calculer la durée en tenant compte de la pause

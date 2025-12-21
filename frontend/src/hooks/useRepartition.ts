@@ -28,9 +28,9 @@ export function useRepartition(options: UseRepartitionOptions) {
   const previewJAT = useCallback(async () => {
     setLoadingJAT(true); setErreurs([]);
     try {
-      const rep = await repartitionService.previewJAT({ traducteurId, heuresTotal, dateEcheance });
-      const v = repartitionService.validerRepartitionLocale(rep, heuresTotal);
-      setJatPreview(rep);
+      const result = await repartitionService.previewJAT({ traducteurId, heuresTotal, dateEcheance });
+      const v = repartitionService.validerRepartitionLocale(result.repartition, heuresTotal);
+      setJatPreview(result.repartition);
       setErreurs(v.erreurs);
     } catch (e: any) {
       setErreurs([e.message || 'Erreur preview JAT']);

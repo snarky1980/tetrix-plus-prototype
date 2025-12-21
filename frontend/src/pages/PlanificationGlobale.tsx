@@ -746,11 +746,15 @@ const PlanificationGlobale: React.FC = () => {
       
       if (formTache.typeRepartition === 'JUSTE_TEMPS') {
         if (!formTache.traducteurId || !formTache.dateEcheance) return;
-        result = await repartitionService.previewJAT({
+        const response = await repartitionService.previewJAT({
           traducteurId: formTache.traducteurId,
           heuresTotal: heures,
           dateEcheance: formTache.dateEcheance,
         });
+        result = response.repartition;
+        if (response.warning) {
+          setErreurPreview(response.warning);
+        }
       } else if (formTache.typeRepartition === 'EQUILIBRE') {
         if (!formTache.dateDebut || !formTache.dateFin) {
           setErreurPreview('Veuillez sélectionner une date de début et de fin');
@@ -760,12 +764,16 @@ const PlanificationGlobale: React.FC = () => {
           setErreurPreview('Veuillez sélectionner un traducteur');
           return;
         }
-        result = await repartitionService.calculerRepartitionEquilibree({
+        const response = await repartitionService.calculerRepartitionEquilibree({
           traducteurId: formTache.traducteurId,
           heuresTotal: heures,
           dateDebut: formTache.dateDebut,
           dateFin: formTache.dateFin,
         });
+        result = response.repartition;
+        if (response.warning) {
+          setErreurPreview(response.warning);
+        }
       } else if (formTache.typeRepartition === 'PEPS') {
         if (!formTache.dateDebut || !formTache.dateEcheance) {
           setErreurPreview('Veuillez sélectionner une date de début');
@@ -775,12 +783,16 @@ const PlanificationGlobale: React.FC = () => {
           setErreurPreview('Veuillez sélectionner un traducteur');
           return;
         }
-        result = await repartitionService.calculerRepartitionPEPS({
+        const response = await repartitionService.calculerRepartitionPEPS({
           traducteurId: formTache.traducteurId,
           heuresTotal: heures,
           dateDebut: formTache.dateDebut,
           dateEcheance: formTache.dateEcheance,
         });
+        result = response.repartition;
+        if (response.warning) {
+          setErreurPreview(response.warning);
+        }
       } else if (formTache.typeRepartition === 'MANUEL') {
         // Mode manuel : utiliser la répartition saisie par l'utilisateur
         result = formTache.repartitionManuelle as any;
@@ -1317,18 +1329,22 @@ const PlanificationGlobale: React.FC = () => {
 
       switch (formEdition.typeRepartition) {
         case 'PEPS':
-          result = await repartitionService.previewPEPS({
+          const pepsResponse = await repartitionService.previewPEPS({
             ...params,
             dateDebut: formEdition.dateDebut || new Date().toISOString().split('T')[0],
             dateEcheance: formEdition.dateEcheance,
           });
+          result = pepsResponse.repartition;
+          if (pepsResponse.warning) setErreurEdition(pepsResponse.warning);
           break;
         case 'EQUILIBRE':
-          result = await repartitionService.calculerRepartitionEquilibree({
+          const eqResponse = await repartitionService.calculerRepartitionEquilibree({
             ...params,
             dateDebut: formEdition.dateDebut,
             dateFin: formEdition.dateFin || formEdition.dateEcheance,
           });
+          result = eqResponse.repartition;
+          if (eqResponse.warning) setErreurEdition(eqResponse.warning);
           break;
         case 'MANUEL':
           // Mode manuel : afficher la répartition saisie
@@ -1336,10 +1352,12 @@ const PlanificationGlobale: React.FC = () => {
           break;
         case 'JUSTE_TEMPS':
         default:
-          result = await repartitionService.previewJAT({
+          const jatResponse = await repartitionService.previewJAT({
             ...params,
             dateEcheance: formEdition.dateEcheance,
           });
+          result = jatResponse.repartition;
+          if (jatResponse.warning) setErreurEdition(jatResponse.warning);
       }
       
       setPreviewJATEdit(result);

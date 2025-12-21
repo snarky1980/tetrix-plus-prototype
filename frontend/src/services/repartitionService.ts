@@ -22,29 +22,35 @@ export interface EquilibrePreviewParams {
 
 export interface RepartitionItem { date: string; heures: number; heureDebut?: string; heureFin?: string }
 
+export interface RepartitionPreviewResponse {
+  repartition: RepartitionItem[];
+  warning?: string;
+  datesPassees?: string[];
+}
+
 export const repartitionService = {
-  async previewJAT(params: JATPreviewParams): Promise<RepartitionItem[]> {
-    const { data } = await api.get<{ repartition: RepartitionItem[] }>(
+  async previewJAT(params: JATPreviewParams): Promise<RepartitionPreviewResponse> {
+    const { data } = await api.get<RepartitionPreviewResponse>(
       '/repartition/jat-preview',
       { params }
     );
-    return data.repartition;
+    return data;
   },
 
-  async previewPEPS(params: PEPSPreviewParams): Promise<RepartitionItem[]> {
-    const { data } = await api.get<{ repartition: RepartitionItem[] }>(
+  async previewPEPS(params: PEPSPreviewParams): Promise<RepartitionPreviewResponse> {
+    const { data } = await api.get<RepartitionPreviewResponse>(
       '/repartition/peps-preview',
       { params }
     );
-    return data.repartition;
+    return data;
   },
 
-  async previewEquilibre(params: EquilibrePreviewParams): Promise<RepartitionItem[]> {
-    const { data } = await api.get<{ repartition: RepartitionItem[] }>(
+  async previewEquilibre(params: EquilibrePreviewParams): Promise<RepartitionPreviewResponse> {
+    const { data } = await api.get<RepartitionPreviewResponse>(
       '/repartition/equilibre-preview',
       { params }
     );
-    return data.repartition;
+    return data;
   },
 
   repartitionUniforme(heuresTotal: number, dateDebut: string, dateFin: string): RepartitionItem[] {
@@ -78,17 +84,17 @@ export const repartitionService = {
     return { valide: erreurs.length === 0, erreurs };
   },
   
-  async calculerRepartitionEquilibree(params: { traducteurId: string; heuresTotal: number; dateDebut: string; dateFin: string }): Promise<RepartitionItem[]> {
-    const { data } = await api.get<{ repartition: RepartitionItem[] }>('/repartition/equilibre-preview', {
+  async calculerRepartitionEquilibree(params: { traducteurId: string; heuresTotal: number; dateDebut: string; dateFin: string }): Promise<RepartitionPreviewResponse> {
+    const { data } = await api.get<RepartitionPreviewResponse>('/repartition/equilibre-preview', {
       params,
     });
-    return data.repartition;
+    return data;
   },
 
-  async calculerRepartitionPEPS(params: { traducteurId: string; heuresTotal: number; dateDebut: string; dateEcheance: string }): Promise<RepartitionItem[]> {
-    const { data } = await api.get<{ repartition: RepartitionItem[] }>('/repartition/peps-preview', {
+  async calculerRepartitionPEPS(params: { traducteurId: string; heuresTotal: number; dateDebut: string; dateEcheance: string }): Promise<RepartitionPreviewResponse> {
+    const { data } = await api.get<RepartitionPreviewResponse>('/repartition/peps-preview', {
       params,
     });
-    return data.repartition;
+    return data;
   }
 };

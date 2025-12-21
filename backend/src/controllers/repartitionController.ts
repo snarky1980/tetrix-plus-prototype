@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
-import { repartitionJusteATemps, repartitionEquilibree, repartitionPEPS, suggererHeuresManuel } from '../services/repartitionService';
+import { repartitionJusteATemps, repartitionEquilibree, repartitionPEPS, suggererHeuresManuel, RepartitionItem } from '../services/repartitionService';
+import { todayOttawa, formatOttawaISO, parseOttawaDateISO } from '../utils/dateTimeOttawa';
 
 /**
  * Preview répartition Juste-à-Temps sans persistance
@@ -23,7 +24,21 @@ export const previewJAT = async (req: AuthRequest, res: Response): Promise<void>
       heures,
       dateEcheance as string
     );
-    res.json({ repartition });
+    
+    // Vérifier s'il y a des dates dans le passé
+    const aujourdHui = formatOttawaISO(todayOttawa());
+    const datesPassees = repartition
+      .filter(r => r.date < aujourdHui)
+      .map(r => r.date);
+    
+    const response: { repartition: RepartitionItem[]; warning?: string; datesPassees?: string[] } = { repartition };
+    
+    if (datesPassees.length > 0) {
+      response.warning = `Attention: ${datesPassees.length} jour(s) de la répartition sont dans le passé (${datesPassees.join(', ')}). Voulez-vous continuer?`;
+      response.datesPassees = datesPassees;
+    }
+    
+    res.json(response);
   } catch (error: any) {
     res.status(400).json({ erreur: error.message || 'Erreur preview JAT' });
   }
@@ -51,7 +66,21 @@ export const previewEquilibre = async (req: AuthRequest, res: Response): Promise
       dateDebut as string,
       dateFin as string
     );
-    res.json({ repartition });
+    
+    // Vérifier s'il y a des dates dans le passé
+    const aujourdHui = formatOttawaISO(todayOttawa());
+    const datesPassees = repartition
+      .filter(r => r.date < aujourdHui)
+      .map(r => r.date);
+    
+    const response: { repartition: RepartitionItem[]; warning?: string; datesPassees?: string[] } = { repartition };
+    
+    if (datesPassees.length > 0) {
+      response.warning = `Attention: ${datesPassees.length} jour(s) de la répartition sont dans le passé (${datesPassees.join(', ')}). Voulez-vous continuer?`;
+      response.datesPassees = datesPassees;
+    }
+    
+    res.json(response);
   } catch (error: any) {
     res.status(400).json({ erreur: error.message || 'Erreur preview Équilibrée' });
   }
@@ -79,7 +108,21 @@ export const previewPEPS = async (req: AuthRequest, res: Response): Promise<void
       dateDebut as string,
       dateEcheance as string
     );
-    res.json({ repartition });
+    
+    // Vérifier s'il y a des dates dans le passé
+    const aujourdHui = formatOttawaISO(todayOttawa());
+    const datesPassees = repartition
+      .filter(r => r.date < aujourdHui)
+      .map(r => r.date);
+    
+    const response: { repartition: RepartitionItem[]; warning?: string; datesPassees?: string[] } = { repartition };
+    
+    if (datesPassees.length > 0) {
+      response.warning = `Attention: ${datesPassees.length} jour(s) de la répartition sont dans le passé (${datesPassees.join(', ')}). Voulez-vous continuer?`;
+      response.datesPassees = datesPassees;
+    }
+    
+    res.json(response);
   } catch (error: any) {
     res.status(400).json({ erreur: error.message || 'Erreur preview PEPS' });
   }
