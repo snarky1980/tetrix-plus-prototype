@@ -1,6 +1,6 @@
 /**
  * Service de gestion des jours fériés canadiens
- * Gère les congés statutaires pour 2026-2027 selon le calendrier PSAC/AFPC
+ * Gère les congés statutaires pour 2025-2027 selon le calendrier PSAC/AFPC
  */
 
 export interface JourFerie {
@@ -10,9 +10,14 @@ export interface JourFerie {
 }
 
 /**
- * Liste complète des jours fériés pour 2026 et 2027
+ * Liste complète des jours fériés pour 2025, 2026 et 2027
  * Basé sur le calendrier officiel PSAC/AFPC
  */
+const JOURS_FERIES_2025: JourFerie[] = [
+  { date: new Date('2025-12-25'), nom: 'Noël' },
+  { date: new Date('2025-12-26'), nom: 'Lendemain de Noël' },
+];
+
 const JOURS_FERIES_2026: JourFerie[] = [
   { date: new Date('2026-01-01'), nom: "Jour de l'An" },
   { date: new Date('2026-01-02'), nom: "Congé du Jour de l'An (observé)" },
@@ -41,7 +46,7 @@ const JOURS_FERIES_2027: JourFerie[] = [
   { date: new Date('2027-12-28'), nom: 'Lendemain de Noël (observé)' },
 ];
 
-const TOUS_JOURS_FERIES = [...JOURS_FERIES_2026, ...JOURS_FERIES_2027];
+const TOUS_JOURS_FERIES = [...JOURS_FERIES_2025, ...JOURS_FERIES_2026, ...JOURS_FERIES_2027];
 
 export class JoursFeriesService {
   /**
@@ -69,6 +74,7 @@ export class JoursFeriesService {
    * Retourne tous les jours fériés pour une année donnée
    */
   static obtenirJoursFeries(annee: number): JourFerie[] {
+    if (annee === 2025) return JOURS_FERIES_2025;
     if (annee === 2026) return JOURS_FERIES_2026;
     if (annee === 2027) return JOURS_FERIES_2027;
     return [];
