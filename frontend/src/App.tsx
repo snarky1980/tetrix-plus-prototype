@@ -11,6 +11,7 @@ import Connexion from './pages/Connexion';
 // Pages chargées en lazy loading (code splitting)
 const DashboardTraducteur = lazy(() => import('./pages/DashboardTraducteur'));
 const DashboardConseiller = lazy(() => import('./pages/DashboardConseiller'));
+const DashboardGestionnaire = lazy(() => import('./pages/DashboardGestionnaire'));
 const PlanificationGlobale = lazy(() => import('./pages/PlanificationGlobale'));
 const TacheCreation = lazy(() => import('./pages/TacheCreation'));
 const DashboardAdmin = lazy(() => import('./pages/DashboardAdmin'));
@@ -70,7 +71,7 @@ const RedirectionDashboard: React.FC = () => {
     case 'CONSEILLER':
       return <Navigate to="/conseiller" replace />;
     case 'GESTIONNAIRE':
-      return <Navigate to="/planification-globale" replace />;
+      return <Navigate to="/gestionnaire" replace />;
     case 'TRADUCTEUR':
       return <Navigate to="/traducteur" replace />;
     default:
@@ -131,7 +132,7 @@ function App() {
             path="/gestionnaire"
             element={
               <RouteProtegee rolesAutorises={['GESTIONNAIRE', 'ADMIN']}>
-                <PlanificationGlobale />
+                <DashboardGestionnaire />
               </RouteProtegee>
             }
           />

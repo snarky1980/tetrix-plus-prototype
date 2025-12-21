@@ -6,6 +6,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 export interface Division {
   id: string;
   nom: string;
+  code?: string;
   description?: string;
   createdAt: string;
   updatedAt: string;
