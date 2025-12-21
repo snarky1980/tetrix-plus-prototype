@@ -8,6 +8,10 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'changez-moi-en-production',
   databaseUrl: process.env.DATABASE_URL,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  // Support multiple CORS origins (comma-separated)
+  corsOrigins: process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+    : [process.env.FRONTEND_URL || 'http://localhost:5173'],
 };
 
 // Validation des variables d'environnement critiques
