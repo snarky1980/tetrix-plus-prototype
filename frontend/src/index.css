@@ -105,6 +105,77 @@
   --input-placeholder: #94a3b8;
 }
 
+/* ===========================================
+   MODES DALTONIENS - Palettes optimisées
+   Utilise bleu/orange au lieu de rouge/vert
+   =========================================== */
+
+/* Protanopie (difficulté rouge) & Deutéranopie (difficulté vert) 
+   Même palette : évite rouge/vert, utilise bleu/jaune/orange */
+:root.cv-protanopia,
+:root.cv-deuteranopia {
+  /* États disponibilité - Bleu/Jaune/Orange au lieu de Vert/Orange/Rouge */
+  --etat-libre-bg: #2563eb;     /* blue-600 - disponible */
+  --etat-presque-bg: #d97706;   /* amber-600 - presque plein */
+  --etat-plein-bg: #7c2d12;     /* orange-900 - plein (plus foncé) */
+  
+  /* Status Colors - Palette accessible */
+  --success-bg: #dbeafe;        /* blue-100 */
+  --success-border: #3b82f6;    /* blue-500 */
+  --warning-bg: #fef3c7;        /* amber-100 */
+  --warning-border: #f59e0b;    /* amber-500 */
+  --danger-bg: #ffedd5;         /* orange-100 */
+  --danger-border: #c2410c;     /* orange-700 */
+}
+
+:root.dark.cv-protanopia,
+:root.dark.cv-deuteranopia {
+  /* États disponibilité dark - Palette accessible */
+  --etat-libre-bg: #3b82f6;     /* blue-500 */
+  --etat-presque-bg: #f59e0b;   /* amber-500 */
+  --etat-plein-bg: #9a3412;     /* orange-800 */
+  
+  /* Status Colors dark - Palette accessible */
+  --success-bg: #1e3a5f;
+  --success-border: #60a5fa;    /* blue-400 */
+  --warning-bg: #451a03;
+  --warning-border: #fbbf24;    /* amber-400 */
+  --danger-bg: #431407;
+  --danger-border: #fb923c;     /* orange-400 */
+}
+
+/* Tritanopie (difficulté bleu/jaune)
+   Utilise rouge/cyan/magenta */
+:root.cv-tritanopia {
+  /* États disponibilité - Rouge/Cyan/Magenta */
+  --etat-libre-bg: #0891b2;     /* cyan-600 - disponible */
+  --etat-presque-bg: #be185d;   /* pink-700 - presque plein */
+  --etat-plein-bg: #991b1b;     /* red-800 - plein */
+  
+  /* Status Colors - Palette pour tritanopie */
+  --success-bg: #cffafe;        /* cyan-100 */
+  --success-border: #06b6d4;    /* cyan-500 */
+  --warning-bg: #fce7f3;        /* pink-100 */
+  --warning-border: #ec4899;    /* pink-500 */
+  --danger-bg: #fee2e2;         /* red-100 */
+  --danger-border: #dc2626;     /* red-600 */
+}
+
+:root.dark.cv-tritanopia {
+  /* États disponibilité dark - Tritanopie */
+  --etat-libre-bg: #06b6d4;     /* cyan-500 */
+  --etat-presque-bg: #ec4899;   /* pink-500 */
+  --etat-plein-bg: #b91c1c;     /* red-700 */
+  
+  /* Status Colors dark - Tritanopie */
+  --success-bg: #164e63;        /* cyan-900 */
+  --success-border: #22d3ee;    /* cyan-400 */
+  --warning-bg: #500724;        /* pink-950 */
+  --warning-border: #f472b6;    /* pink-400 */
+  --danger-bg: #450a0a;
+  --danger-border: #f87171;     /* red-400 */
+}
+
 body {
   @apply bg-background text-foreground antialiased;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;

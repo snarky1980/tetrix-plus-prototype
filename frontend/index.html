@@ -19,13 +19,19 @@
         history.replaceState(null, null, redirect);
       }
       
-      // Apply theme immediately to prevent flash
+      // Apply theme and color vision mode immediately to prevent flash
       (function() {
         var theme = localStorage.getItem('tetrix-theme') || 'light';
         var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         if (isDark) {
           document.documentElement.classList.add('dark');
           document.documentElement.style.colorScheme = 'dark';
+        }
+        
+        // Apply color vision mode for color blindness
+        var colorVision = localStorage.getItem('tetrix-color-vision') || 'normal';
+        if (colorVision !== 'normal') {
+          document.documentElement.classList.add('cv-' + colorVision);
         }
       })();
     </script>

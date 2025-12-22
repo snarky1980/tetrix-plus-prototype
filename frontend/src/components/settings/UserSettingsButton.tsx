@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Settings, Calendar, Globe, ChevronDown, Sun, Moon, Monitor } from 'lucide-react';
+import { Settings, Calendar, Globe, ChevronDown, Sun, Moon, Monitor, Eye } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { DateFormatSettings } from './DateFormatSettings';
 import { cn } from '../../lib/cn';
-import { useTheme, Theme } from '../../hooks/useTheme';
+import { useTheme, Theme, ColorVisionMode } from '../../hooks/useTheme';
 
 interface UserSettingsButtonProps {
   className?: string;
@@ -13,7 +13,7 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDateFormatModalOpen, setIsDateFormatModalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { theme, setTheme, isDark } = useTheme();
+  const { theme, setTheme, isDark, colorVision, setColorVision } = useTheme();
 
   // Fermer le menu si on clique à l'extérieur
   useEffect(() => {
@@ -47,6 +47,13 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
     { value: 'light', label: 'Clair', icon: <Sun className="h-4 w-4" />, description: 'Thème lumineux' },
     { value: 'dark', label: 'Sombre', icon: <Moon className="h-4 w-4" />, description: 'Thème foncé' },
     { value: 'system', label: 'Système', icon: <Monitor className="h-4 w-4" />, description: 'Selon votre appareil' },
+  ];
+
+  const colorVisionOptions: { value: ColorVisionMode; label: string; description: string }[] = [
+    { value: 'normal', label: 'Standard', description: 'Couleurs par défaut' },
+    { value: 'protanopia', label: 'Protanopie', description: 'Difficulté rouge' },
+    { value: 'deuteranopia', label: 'Deutéranopie', description: 'Difficulté vert' },
+    { value: 'tritanopia', label: 'Tritanopie', description: 'Difficulté bleu' },
   ];
 
   return (
@@ -127,6 +134,59 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
                 <p className="text-xs text-muted-foreground mt-1.5">
                   {theme === 'system' ? 'S\'adapte à votre système' : theme === 'dark' ? 'Mode sombre activé' : 'Mode clair activé'}
                 </p>
+              </div>
+
+              {/* Séparateur */}
+              <div className="border-t border-border my-1"></div>
+
+              {/* Section Accessibilité - Daltonisme */}
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground border-b border-border">
+                Accessibilité
+              </div>
+
+              <div className="px-4 py-2">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium text-foreground">Vision des couleurs</span>
+                </div>
+                <select
+                  value={colorVision}
+                  onChange={(e) => setColorVision(e.target.value as ColorVisionMode)}
+                  className="w-full px-3 py-2 text-sm bg-card border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                >
+                  {colorVisionOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label} {option.value !== 'normal' ? `(${option.description})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-muted-foreground mt-1.5">
+                  {colorVision === 'normal' 
+                    ? 'Palette de couleurs standard' 
+                    : 'Palette optimisée pour votre vision'}
+                </p>
+                
+                {/* Aperçu des couleurs */}
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Aperçu :</span>
+                  <div className="flex gap-1">
+                    <span 
+                      className="w-5 h-5 rounded-full" 
+                      style={{ backgroundColor: 'var(--etat-libre-bg)' }}
+                      title="Disponible"
+                    />
+                    <span 
+                      className="w-5 h-5 rounded-full" 
+                      style={{ backgroundColor: 'var(--etat-presque-bg)' }}
+                      title="Presque plein"
+                    />
+                    <span 
+                      className="w-5 h-5 rounded-full" 
+                      style={{ backgroundColor: 'var(--etat-plein-bg)' }}
+                      title="Plein"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Séparateur */}

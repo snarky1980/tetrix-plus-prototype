@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
+export type ColorVisionMode = 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia';
 
 const THEME_KEY = 'tetrix-theme';
+const COLOR_VISION_KEY = 'tetrix-color-vision';
 
 /**
  * Récupère le thème préféré du système
@@ -25,6 +27,18 @@ function getSavedTheme(): Theme {
 }
 
 /**
+ * Récupère le mode de vision des couleurs sauvegardé
+ */
+function getSavedColorVision(): ColorVisionMode {
+  if (typeof window === 'undefined') return 'normal';
+  const saved = localStorage.getItem(COLOR_VISION_KEY);
+  if (saved === 'normal' || saved === 'protanopia' || saved === 'deuteranopia' || saved === 'tritanopia') {
+    return saved;
+  }
+  return 'normal';
+}
+
+/**
  * Applique le thème au document
  */
 function applyTheme(theme: Theme): void {
@@ -41,8 +55,23 @@ function applyTheme(theme: Theme): void {
 }
 
 /**
+ * Applique le mode de vision des couleurs au document
+ */
+function applyColorVision(mode: ColorVisionMode): void {
+  const root = document.documentElement;
+  // Retirer tous les modes existants
+  root.classList.remove('cv-protanopia', 'cv-deuteranopia', 'cv-tritanopia');
+  
+  // Appliquer le nouveau mode si ce n'est pas normal
+  if (mode !== 'normal') {
+    root.classList.add(`cv-${mode}`);
+  }
+}
+
+/**
  * Hook pour gérer le thème de l'application
  * Supporte: light, dark, system (auto)
+ * Supporte aussi les modes daltoniens: protanopia, deuteranopia, tritanopia
  */
 export function useTheme() {
   const [theme, setThemeState] = useState<Theme>(getSavedTheme);
@@ -50,6 +79,7 @@ export function useTheme() {
     const saved = getSavedTheme();
     return saved === 'system' ? getSystemTheme() : saved;
   });
+  const [colorVision, setColorVisionState] = useState<ColorVisionMode>(getSavedColorVision);
 
   // Appliquer le thème au changement
   const setTheme = useCallback((newTheme: Theme) => {
@@ -59,10 +89,18 @@ export function useTheme() {
     setResolvedTheme(newTheme === 'system' ? getSystemTheme() : newTheme);
   }, []);
 
+  // Appliquer le mode de vision des couleurs
+  const setColorVision = useCallback((mode: ColorVisionMode) => {
+    localStorage.setItem(COLOR_VISION_KEY, mode);
+    setColorVisionState(mode);
+    applyColorVision(mode);
+  }, []);
+
   // Initialiser et écouter les changements système
   useEffect(() => {
     // Appliquer le thème au montage
     applyTheme(theme);
+    applyColorVision(colorVision);
 
     // Écouter les changements de préférence système
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -76,7 +114,7 @@ export function useTheme() {
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, colorVision]);
 
   // Toggle rapide entre light et dark
   const toggleTheme = useCallback(() => {
@@ -90,6 +128,8 @@ export function useTheme() {
     setTheme,
     toggleTheme,
     isDark: resolvedTheme === 'dark',
+    colorVision,     // 'normal' | 'protanopia' | 'deuteranopia' | 'tritanopia'
+    setColorVision,
   };
 }
 
