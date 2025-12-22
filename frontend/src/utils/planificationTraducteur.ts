@@ -204,6 +204,11 @@ export function afficherPlanificationPopout(traducteur: Traducteur, planificatio
     return;
   }
   
+  // Récupérer le token et l'API URL avant d'ouvrir la popup
+  const currentToken = localStorage.getItem('token') || '';
+  const currentApiUrl = import.meta.env.VITE_API_URL || 
+    (import.meta.env.PROD ? 'https://tetrix-plus-backend.onrender.com/api' : '/api');
+  
   // Dates par défaut
   const aujourdhui = new Date().toISOString().split('T')[0];
   const dans7jours = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -513,8 +518,8 @@ export function afficherPlanificationPopout(traducteur: Traducteur, planificatio
   
   <script>
     const traducteurId = '${traducteur.id}';
-    const apiUrl = window.opener ? (window.opener.import?.meta?.env?.VITE_API_URL || '/api') : '/api';
-    const token = window.opener ? window.opener.localStorage.getItem('token') : null;
+    const apiUrl = '${currentApiUrl}';
+    const token = '${currentToken}';
     
     function setPeriode(jours) {
       const debut = new Date();
