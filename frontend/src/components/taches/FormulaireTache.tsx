@@ -264,11 +264,11 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   };
 
   const formatNumeroProjet = (value: string): string => {
-    // Format: 123-4567-001
+    // Format: 123-123456-001
     const cleaned = value.replace(/[^0-9]/g, '');
     if (cleaned.length <= 3) return cleaned;
-    if (cleaned.length <= 7) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
-    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 7)}-${cleaned.slice(7, 10)}`;
+    if (cleaned.length <= 9) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
+    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 9)}-${cleaned.slice(9, 12)}`;
   };
 
   const chargerPreview = async () => {
@@ -611,8 +611,8 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
                   const formatted = formatNumeroProjet(e.target.value);
                   setFormData({ ...formData, numeroProjet: formatted });
                 }}
-                placeholder="123-4567-001"
-                maxLength={12}
+                placeholder="123-123456-001"
+                maxLength={14}
                 required
                 className="border-2 border-blue-300"
               />

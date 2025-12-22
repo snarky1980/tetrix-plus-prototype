@@ -2119,8 +2119,8 @@ const PlanificationGlobale: React.FC = () => {
                       const formatted = formatNumeroProjet(e.target.value);
                       setFormTache({ ...formTache, numeroProjet: formatted });
                     }}
-                    placeholder="123-4567-001"
-                    maxLength={12}
+                    placeholder="123-123456-001"
+                    maxLength={14}
                     required
                     className="border-2 border-blue-300"
                   />
@@ -2908,8 +2908,8 @@ const PlanificationGlobale: React.FC = () => {
                       const formatted = formatNumeroProjet(e.target.value);
                       setFormEdition({ ...formEdition, numeroProjet: formatted });
                     }}
-                    placeholder="123-4567-001"
-                    maxLength={12}
+                    placeholder="123-123456-001"
+                    maxLength={14}
                     required
                     className="border-2 border-blue-300"
                   />

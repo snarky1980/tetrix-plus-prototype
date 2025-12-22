@@ -3,40 +3,40 @@
  */
 
 /**
- * Formate un numéro de projet au format 123-4567-001
+ * Formate un numéro de projet au format 123-123456-001
  * Accepte seulement les chiffres et ajoute automatiquement les tirets
  * 
  * @param value - Valeur saisie par l'utilisateur
- * @returns Valeur formatée avec tirets (max 12 caractères: 3-4-3 + 2 tirets)
+ * @returns Valeur formatée avec tirets (max 14 caractères: 3-6-3 + 2 tirets)
  */
 export function formatNumeroProjet(value: string): string {
   // Enlever tout sauf les chiffres
   const digits = value.replace(/\D/g, '');
   
-  // Limiter à 10 chiffres (3 + 4 + 3)
-  const limited = digits.slice(0, 10);
+  // Limiter à 12 chiffres (3 + 6 + 3)
+  const limited = digits.slice(0, 12);
   
-  // Appliquer le format 123-4567-001
+  // Appliquer le format 123-123456-001
   if (limited.length <= 3) {
     return limited;
-  } else if (limited.length <= 7) {
-    // Format: 123-4567
+  } else if (limited.length <= 9) {
+    // Format: 123-123456
     return `${limited.slice(0, 3)}-${limited.slice(3)}`;
   } else {
-    // Format: 123-4567-001
-    return `${limited.slice(0, 3)}-${limited.slice(3, 7)}-${limited.slice(7)}`;
+    // Format: 123-123456-001
+    return `${limited.slice(0, 3)}-${limited.slice(3, 9)}-${limited.slice(9)}`;
   }
 }
 
 /**
- * Valide qu'un numéro de projet est complet (format 123-4567-001)
+ * Valide qu'un numéro de projet est complet (format 123-123456-001)
  * 
  * @param value - Numéro de projet à valider
  * @returns true si le format est valide et complet
  */
 export function isValidNumeroProjet(value: string): boolean {
-  // Format attendu: exactement 3 chiffres - 4 chiffres - 3 chiffres
-  const regex = /^\d{3}-\d{4}-\d{3}$/;
+  // Format attendu: exactement 3 chiffres - 6 chiffres - 3 chiffres
+  const regex = /^\d{3}-\d{6}-\d{3}$/;
   return regex.test(value);
 }
 
