@@ -177,7 +177,7 @@ const DashboardAdmin: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{tr.nom}</div>
-                    <div className="text-xs text-muted">{tr.division || 'N/A'}</div>
+                    <div className="text-xs text-muted">{tr.divisions?.join(', ') || 'N/A'}</div>
                   </div>
                 </div>
               ))}

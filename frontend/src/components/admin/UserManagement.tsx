@@ -373,7 +373,7 @@ const UserForm: React.FC<{
                 .filter(t => t.actif)
                 .map(t => (
                   <option key={t.id} value={t.id}>
-                    {t.nom} ({t.division})
+                    {t.nom} ({t.divisions?.join(', ') || 'N/A'})
                   </option>
                 ))}
             </Select>

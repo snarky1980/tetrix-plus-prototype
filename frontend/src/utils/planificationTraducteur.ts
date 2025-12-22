@@ -470,8 +470,8 @@ export function afficherPlanificationPopout(traducteur: Traducteur, planificatio
       <h1>📅 Planification - ${traducteur.nom}</h1>
       <div class="info-card">
         <div class="info-item">
-          <div class="info-label">Division</div>
-          <div class="info-value">${traducteur.division?.nom || 'N/A'}</div>
+          <div class="info-label">Division(s)</div>
+          <div class="info-value">${(traducteur as any).divisions?.join(', ') || 'N/A'}</div>
         </div>
         <div class="info-item">
           <div class="info-label">Heures disponibles</div>

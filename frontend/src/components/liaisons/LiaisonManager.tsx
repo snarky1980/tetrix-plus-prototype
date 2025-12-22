@@ -151,7 +151,7 @@ const LiaisonCard: React.FC<LiaisonCardProps> = ({ liaison, mode, onRemove }) =>
           </div>
           <div className="flex items-center gap-2 mt-1">
             <CategorieBadge categorie={person.categorie} size="sm" />
-            <span className="text-xs text-gray-500">{person.division}</span>
+            <span className="text-xs text-gray-500">{person.divisions?.join(', ')}</span>
           </div>
         </div>
       </div>
@@ -224,7 +224,7 @@ const AddLiaisonModal: React.FC<AddLiaisonModalProps> = ({
               <option value="">Sélectionner un traducteur</option>
               {traducteurs.map((t) => (
                 <option key={t.id} value={t.id}>
-                  {t.nom} ({t.categorie}) - {t.division}
+                  {t.nom} ({t.categorie}) - {t.divisions?.join(', ')}
                 </option>
               ))}
             </select>
@@ -243,7 +243,7 @@ const AddLiaisonModal: React.FC<AddLiaisonModalProps> = ({
               <option value="">Sélectionner un réviseur</option>
               {reviseurs.map((r) => (
                 <option key={r.id} value={r.id}>
-                  {r.nom} - {r.division}
+                  {r.nom} - {r.divisions?.join(', ')}
                 </option>
               ))}
             </select>
@@ -331,7 +331,7 @@ const TraducteurRow: React.FC<TraducteurRowProps> = ({
               <h3 className="font-semibold text-gray-900">{traducteur.nom}</h3>
               <div className="flex items-center gap-2 mt-1">
                 <CategorieBadge categorie={traducteur.categorie} size="sm" />
-                <span className="text-xs text-gray-500">{traducteur.division}</span>
+                <span className="text-xs text-gray-500">{traducteur.divisions?.join(', ')}</span>
                 {traducteur.necessiteRevision && (
                   <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 rounded-full">
                     Révision requise
@@ -519,7 +519,7 @@ export const LiaisonManager: React.FC = () => {
       const matchSearch =
         searchTerm === '' ||
         t.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        t.division.toLowerCase().includes(searchTerm.toLowerCase());
+        t.divisions?.some(d => d.toLowerCase().includes(searchTerm.toLowerCase()));
       return matchCategorie && matchSearch;
     });
   }, [traducteurs, filterCategorie, searchTerm]);

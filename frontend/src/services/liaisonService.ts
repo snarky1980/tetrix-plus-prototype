@@ -10,7 +10,7 @@ export interface TraducteurInfo {
   id: string;
   nom: string;
   categorie: CategorieTraducteur;
-  division: string;
+  divisions: string[];
   capaciteHeuresParJour: number;
   necessiteRevision: boolean;
   actif: boolean;

@@ -634,7 +634,7 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
                   <option key={t.id} value={t.id}>
                     {t.disponiblePourTravail ? '🟢 ' : ''}
                     {t.nom}
-                    {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                    {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.divisions?.join(', ') || 'N/A'} ({t.capaciteHeuresParJour}h/jour)
                   </option>
                 ))}
               </Select>

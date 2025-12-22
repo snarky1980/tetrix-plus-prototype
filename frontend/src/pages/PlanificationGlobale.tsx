@@ -1506,7 +1506,8 @@ const PlanificationGlobale: React.FC = () => {
         setSousDomaines(sousDomainesData);
         setTraducteurs(traducteursData);
 
-        const divisions = Array.from(new Set(traducteursData.map(t => t.division))).sort();
+        // Extraire les divisions uniques (divisions est maintenant un array par traducteur)
+        const divisions = Array.from(new Set(traducteursData.flatMap(t => t.divisions || []))).filter(Boolean).sort();
         const domainesNoms = Array.from(new Set([
           ...domainesData.map(d => d.nom),
           ...traducteursData.flatMap(t => t.domaines || []),
@@ -2140,7 +2141,7 @@ const PlanificationGlobale: React.FC = () => {
                       <option key={t.id} value={t.id}>
                         {t.disponiblePourTravail ? '🟢 ' : ''}
                         {t.nom}
-                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.divisions?.join(', ')} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
@@ -2784,7 +2785,7 @@ const PlanificationGlobale: React.FC = () => {
                 <option value="">Sélectionner un traducteur...</option>
                 {traducteurs.map((t) => (
                   <option key={t.id} value={t.id}>
-                    {t.nom} - {t.division} ({t.horaire || '9h-17h'})
+                    {t.nom} - {t.divisions?.join(', ')} ({t.horaire || '9h-17h'})
                   </option>
                 ))}
               </Select>
@@ -2929,7 +2930,7 @@ const PlanificationGlobale: React.FC = () => {
                       <option key={t.id} value={t.id}>
                         {t.disponiblePourTravail ? '🟢 ' : ''}
                         {t.nom}
-                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.division} ({t.capaciteHeuresParJour}h/jour)
+                        {t.horaire ? ` (${t.horaire} | 🍽️ 12h-13h)` : ''} - {t.divisions?.join(', ')} ({t.capaciteHeuresParJour}h/jour)
                       </option>
                     ))}
                   </Select>
@@ -3614,8 +3615,8 @@ const PlanificationGlobale: React.FC = () => {
             <div className="bg-blue-50 border border-blue-200 rounded p-4">
               <div className="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <p className="text-muted text-xs">Division</p>
-                  <p className="font-semibold">{chargeTraducteur.traducteur.division}</p>
+                  <p className="text-muted text-xs">Division(s)</p>
+                  <p className="font-semibold">{chargeTraducteur.traducteur.divisions?.join(', ') || 'N/A'}</p>
                 </div>
                 <div>
                   <p className="text-muted text-xs">Horaire</p>
@@ -4045,7 +4046,7 @@ const PlanificationGlobale: React.FC = () => {
                               <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-1" title="Cherche du travail"></span>
                             )}
                             {ligne.traducteur.nom} • <span className="font-normal text-[9px]">
-                              {ligne.traducteur.division} • {ligne.traducteur.classification}
+                              {ligne.traducteur.divisions?.join(', ')} • {ligne.traducteur.classification}
                               {' • 🕐 '}
                               {(ligne.traducteur as any).horaire || <span className="text-gray-400 italic">non défini</span>}
                             </span>
@@ -4656,8 +4657,8 @@ const PlanificationGlobale: React.FC = () => {
                     🕐 {tacheDetaillee.traducteur.horaire} | 🍽️ 12h-13h
                   </p>
                 )}
-                {tacheDetaillee.traducteur?.division && (
-                  <p className="text-xs text-gray-500">📍 {tacheDetaillee.traducteur.division}</p>
+                {tacheDetaillee.traducteur?.divisions && tacheDetaillee.traducteur.divisions.length > 0 && (
+                  <p className="text-xs text-gray-500">📍 {tacheDetaillee.traducteur.divisions.join(', ')}</p>
                 )}
               </div>
               

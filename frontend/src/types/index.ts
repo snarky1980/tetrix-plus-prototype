@@ -185,7 +185,7 @@ export interface PlanificationGlobale {
     traducteur: {
       id: string;
       nom: string;
-      division: string;
+      divisions: string[];
       classification: string;
       capaciteHeuresParJour: number;
       clientsHabituels?: string[];

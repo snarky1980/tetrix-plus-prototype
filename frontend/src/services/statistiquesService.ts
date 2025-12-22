@@ -18,7 +18,7 @@ export interface StatsProductivite {
   parTraducteur: Array<{
     id: string;
     nom: string;
-    division: string;
+    divisions: string[];
     classification: string;
     specialisations: string[];
     mots: number;

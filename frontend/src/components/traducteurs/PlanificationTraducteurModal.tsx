@@ -87,7 +87,7 @@ export const PlanificationTraducteurModal: React.FC<PlanificationTraducteurModal
               <div>
                 <h3 className="font-semibold text-lg">{traducteur?.nom}</h3>
                 <p className="text-sm text-muted">
-                  {traducteur?.division?.nom || traducteur?.division || 'Division non spécifiée'}
+                  {traducteur?.divisions?.join(', ') || 'Division non spécifiée'}
                   {traducteur?.horaire && ` • Horaire: ${traducteur.horaire}`}
                 </p>
               </div>

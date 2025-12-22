@@ -380,7 +380,7 @@ const StatistiquesProductivite: React.FC = () => {
                       {stats.parTraducteur.map((trad, idx) => (
                         <tr key={trad.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                           <td className="px-4 py-3 text-sm font-medium">{trad.nom}</td>
-                          <td className="px-4 py-3 text-sm text-gray-600">{trad.division}</td>
+                          <td className="px-4 py-3 text-sm text-gray-600">{trad.divisions?.join(', ') || 'N/A'}</td>
                           <td className="px-4 py-3 text-sm text-right">{trad.mots.toLocaleString()}</td>
                           <td className="px-4 py-3 text-sm text-right">{trad.heures.toFixed(1)}h</td>
                           <td className="px-4 py-3 text-sm text-right font-bold">

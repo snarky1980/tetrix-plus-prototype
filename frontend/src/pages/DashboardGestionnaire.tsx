@@ -138,7 +138,7 @@ const DashboardGestionnaire: React.FC = () => {
         // Filtrer côté client par la division sélectionnée si nécessaire
         const divisionObj = divisions.find(d => d.id === divisionSelectionnee);
         const filtres = divisionObj 
-          ? data.filter(t => t.division === divisionObj.nom || t.division === divisionObj.code) 
+          ? data.filter(t => t.divisions?.includes(divisionObj.nom) || (divisionObj.code && t.divisions?.includes(divisionObj.code))) 
           : data;
         setTraducteurs(filtres);
       } catch (err) {

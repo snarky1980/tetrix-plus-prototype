@@ -5,7 +5,7 @@ interface PlanificationRowProps {
     traducteur: {
       id: string;
       nom: string;
-      division?: string;
+      divisions?: string[];
       disponiblePourTravail?: boolean;
     };
     jours: {
@@ -64,9 +64,9 @@ export const PlanificationRow = memo<PlanificationRowProps>(({
             )}
             {ligne.traducteur.nom}
           </div>
-          {ligne.traducteur.division && (
+          {ligne.traducteur.divisions && ligne.traducteur.divisions.length > 0 && (
             <div className="text-[10px] text-gray-500 truncate">
-              {ligne.traducteur.division}
+              {ligne.traducteur.divisions.join(', ')}
             </div>
           )}
         </button>
