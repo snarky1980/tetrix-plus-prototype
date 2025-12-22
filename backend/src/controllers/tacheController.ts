@@ -228,7 +228,7 @@ export const creerTache = async (
         select: { 
           id: true, 
           nom: true, 
-          division: true,
+          divisions: true,
           capaciteHeuresParJour: true,
           actif: true
         }

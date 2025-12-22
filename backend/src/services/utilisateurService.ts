@@ -69,7 +69,7 @@ export class UtilisateurService {
           select: {
             id: true,
             nom: true,
-            division: true,
+            divisions: true,
           },
         },
       },
@@ -98,7 +98,7 @@ export class UtilisateurService {
           select: {
             id: true,
             nom: true,
-            division: true,
+            divisions: true,
           },
         },
       },

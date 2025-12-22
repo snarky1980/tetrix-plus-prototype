@@ -65,7 +65,7 @@ export const obtenirTraducteursDisponibles = async (
       select: {
         id: true,
         nom: true,
-        division: true,
+        divisions: true,
         classification: true,
         categorie: true,
         capaciteHeuresParJour: true,

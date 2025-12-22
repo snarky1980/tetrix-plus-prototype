@@ -9,9 +9,19 @@ export const config = {
   databaseUrl: process.env.DATABASE_URL,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   // Support multiple CORS origins (comma-separated)
-  corsOrigins: process.env.CORS_ORIGIN 
-    ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
-    : [process.env.FRONTEND_URL || 'http://localhost:5173'],
+  // En développement, inclure localhost automatiquement
+  corsOrigins: (() => {
+    const origins = process.env.CORS_ORIGIN 
+      ? process.env.CORS_ORIGIN.split(',').map(o => o.trim())
+      : [process.env.FRONTEND_URL || 'http://localhost:5173'];
+    // Toujours inclure localhost en développement
+    if (process.env.NODE_ENV !== 'production') {
+      if (!origins.includes('http://localhost:5173')) {
+        origins.push('http://localhost:5173');
+      }
+    }
+    return origins;
+  })(),
 };
 
 // Validation des variables d'environnement critiques

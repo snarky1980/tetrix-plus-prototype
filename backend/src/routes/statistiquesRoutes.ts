@@ -114,7 +114,7 @@ router.get('/productivite', authentifier, async (req, res) => {
           select: {
             id: true,
             nom: true,
-            division: true,
+            divisions: true,
             classification: true,
             specialisations: true,
             pairesLinguistiques: true,
@@ -223,7 +223,7 @@ router.get('/productivite', authentifier, async (req, res) => {
         traducteur: {
           select: {
             id: true,
-            division: true,
+            divisions: true,
           },
         },
       },
@@ -291,7 +291,7 @@ router.get('/productivite', authentifier, async (req, res) => {
       parTraducteur.set(trad.id, {
         id: trad.id,
         nom: trad.nom,
-        division: trad.division,
+        divisions: trad.divisions,
         classification: trad.classification,
         specialisations: trad.specialisations,
         mots: 0,

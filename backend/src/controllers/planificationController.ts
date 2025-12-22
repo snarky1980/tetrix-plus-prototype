@@ -337,7 +337,7 @@ export const obtenirPlanificationGlobale = async (
       select: {
         id: true,
         nom: true,
-        division: true,
+        divisions: true,
         classification: true,
         capaciteHeuresParJour: true,
         clientsHabituels: true,
