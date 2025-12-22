@@ -3,7 +3,7 @@ import { AuthRequest } from '../middleware/auth';
 import prisma from '../config/database';
 import { repartitionJusteATemps, repartitionPEPS, repartitionEquilibree, validerRepartition, RepartitionItem } from '../services/repartitionService';
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
-import { parseOttawaDateISO, normalizeToOttawaWithTime, hasSignificantTime } from '../utils/dateTimeOttawa';
+import { parseOttawaDateISO, normalizeToOttawaWithTime, hasSignificantTime, parseHoraireTraducteur, capaciteNetteJour } from '../utils/dateTimeOttawa';
 import { enregistrerCreation, enregistrerModifications, enregistrerChangementRepartition } from '../services/historiqueService';
 
 /**
@@ -274,6 +274,13 @@ export const creerTache = async (
           throw new Error('Traducteur introuvable');
         }
 
+        // Parser l'horaire du traducteur pour calculer la capacité nette réelle
+        const traducteurComplet = await tx.traducteur.findUnique({
+          where: { id: traducteurId },
+          select: { horaire: true }
+        });
+        const horaire = parseHoraireTraducteur(traducteurComplet?.horaire);
+
         // Vérifier chaque jour de la répartition
         const conflits: string[] = [];
         for (const ajust of repartitionEffective) {
@@ -288,12 +295,20 @@ export const creerTache = async (
           });
           
           const heuresDejaUtilisees = ajustementsExistants.reduce((sum, a) => sum + a.heures, 0);
-          const heuresDisponibles = traducteur.capaciteHeuresParJour - heuresDejaUtilisees;
+          
+          // CORRECTION: Utiliser capaciteNetteJour() au lieu de capaciteHeuresParJour brute
+          // Cela prend en compte: horaire du traducteur, pause midi 12h-13h, deadline si applicable
+          const dateEcheanceJour = dateEcheanceParsee.toISOString().split('T')[0];
+          const estJourEcheance = ajust.date === dateEcheanceJour;
+          const deadlineDateTime = estJourEcheance && echeanceAHeureSignificative ? dateEcheanceParsee : undefined;
+          const capaciteNette = capaciteNetteJour(horaire, dateJour, deadlineDateTime);
+          
+          const heuresDisponibles = Math.max(capaciteNette - heuresDejaUtilisees, 0);
           
           // Vérifier si l'ajout dépasserait la capacité
           if (ajust.heures > heuresDisponibles + 0.001) { // Tolérance pour erreurs d'arrondi
             conflits.push(
-              `${ajust.date}: ${ajust.heures}h demandées, seulement ${heuresDisponibles.toFixed(2)}h disponibles (${heuresDejaUtilisees.toFixed(2)}h/${traducteur.capaciteHeuresParJour}h utilisées)`
+              `${ajust.date}: ${ajust.heures}h demandées, seulement ${heuresDisponibles.toFixed(2)}h disponibles (${heuresDejaUtilisees.toFixed(2)}h/${capaciteNette.toFixed(2)}h capacité nette)`
             );
           }
         }
