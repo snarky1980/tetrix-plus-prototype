@@ -30,6 +30,6 @@ services:
         value: https://snarky1980.github.io,https://tetrix-plus-prototype.bt-tb.ca
 
 databases:
-  - name: tetrix-plus-db
-    databaseName: tetrix_plus
+  - name: tetrix-plus-db-copy
+    databaseName: tetrix_plus_3olg
     plan: free
