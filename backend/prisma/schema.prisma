@@ -273,3 +273,32 @@ enum ModeLiaison {
   ATTITRE
   PONCTUEL
 }
+
+// Demandes de ressources par les conseillers (cherche un traducteur)
+model DemandeRessource {
+  id              String   @id @default(uuid())
+  conseillerId    String   // ID de l'utilisateur conseiller
+  titre           String   // Ex: "Besoin urgent traducteur EN→FR"
+  description     String?  // Détails supplémentaires
+  heuresEstimees  Float?   // Heures de travail estimées
+  langueSource    String?  // Langue source recherchée
+  langueCible     String?  // Langue cible recherchée
+  division        String?  // Division préférée
+  urgence         Urgence  @default(NORMALE)
+  actif           Boolean  @default(true) // false quand la demande est satisfaite
+  creeLe          DateTime @default(now())
+  modifieLe       DateTime @updatedAt
+  expireLe        DateTime? // Date d'expiration optionnelle
+
+  @@index([conseillerId])
+  @@index([actif])
+  @@index([urgence])
+  @@map("demandes_ressources")
+}
+
+enum Urgence {
+  FAIBLE
+  NORMALE
+  HAUTE
+  CRITIQUE
+}

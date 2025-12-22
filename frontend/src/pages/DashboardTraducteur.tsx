@@ -12,6 +12,7 @@ import { SkeletonCard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { TacheCard } from '../components/taches/TacheCard';
+import { DemandesRessourcesTraducteur } from '../components/notifications/DemandesRessourcesTraducteur';
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanification } from '../hooks/usePlanification';
@@ -525,6 +526,9 @@ const DashboardTraducteur: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Demandes de ressources actives des conseillers */}
+      <DemandesRessourcesTraducteur />
 
       {/* Statistiques principales */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

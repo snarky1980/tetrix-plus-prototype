@@ -1,0 +1,526 @@
+[
+  {
+    "id": "88587850-9af0-4b1a-bb10-7de47fd93ba3",
+    "nom": "Traducteur TR01",
+    "division": "TEST",
+    "domaines": [],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "cf6f0964-f074-458d-97df-5852631ebfba",
+    "creeLe": "2025-12-22T01:45:39.471Z",
+    "modifieLe": "2025-12-22T01:45:39.471Z",
+    "classification": "TT4",
+    "horaire": "08:00-16:00",
+    "notes": null,
+    "specialisations": [
+      "juridique"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "cf6f0964-f074-458d-97df-5852631ebfba",
+      "email": "tr01-1766367939155@example.com",
+      "motDePasse": "test",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T01:45:39.156Z",
+      "modifieLe": "2025-12-22T01:45:39.156Z"
+    }
+  },
+  {
+    "id": "419f17bb-7e27-4583-8724-4226a4127a59",
+    "nom": "Traducteur TR02",
+    "division": "TEST",
+    "domaines": [],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "7bcf25c7-db51-4961-af1b-1a6147f4e1fe",
+    "creeLe": "2025-12-22T01:45:39.549Z",
+    "modifieLe": "2025-12-22T01:45:39.549Z",
+    "classification": "TT5",
+    "horaire": "09:00-17:00",
+    "notes": null,
+    "specialisations": [
+      "technique"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "categorie": "TR02",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "7bcf25c7-db51-4961-af1b-1a6147f4e1fe",
+      "email": "tr02-1766367939236@example.com",
+      "motDePasse": "test",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T01:45:39.237Z",
+      "modifieLe": "2025-12-22T01:45:39.237Z"
+    }
+  },
+  {
+    "id": "8da754ed-7fc4-4ebe-81bd-887a3a06b2fa",
+    "nom": "Réviseur TR03",
+    "division": "TEST",
+    "domaines": [],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "33b99530-2d45-4c74-81a7-d468bf665297",
+    "creeLe": "2025-12-22T01:45:39.627Z",
+    "modifieLe": "2025-12-22T01:45:39.627Z",
+    "classification": "TT6",
+    "horaire": "08:00-18:00",
+    "notes": null,
+    "specialisations": [
+      "juridique",
+      "technique"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "categorie": "TR03",
+    "necessiteRevision": false,
+    "utilisateur": {
+      "id": "33b99530-2d45-4c74-81a7-d468bf665297",
+      "email": "tr03-1766367939314@example.com",
+      "motDePasse": "test",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T01:45:39.314Z",
+      "modifieLe": "2025-12-22T01:45:39.314Z"
+    }
+  },
+  {
+    "id": "7a04f593-6152-4323-b62e-9a6846dab5c7",
+    "nom": "Réviseur TR03 Bis",
+    "division": "TEST",
+    "domaines": [],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 5,
+    "actif": true,
+    "utilisateurId": "bb6e15a3-ff03-4dce-be1d-0377b3d049b5",
+    "creeLe": "2025-12-22T01:45:39.707Z",
+    "modifieLe": "2025-12-22T01:45:39.707Z",
+    "classification": "TT6",
+    "horaire": "10:00-18:00",
+    "notes": null,
+    "specialisations": [
+      "juridique"
+    ],
+    "disponiblePourTravail": false,
+    "commentaireDisponibilite": null,
+    "categorie": "TR03",
+    "necessiteRevision": false,
+    "utilisateur": {
+      "id": "bb6e15a3-ff03-4dce-be1d-0377b3d049b5",
+      "email": "tr03bis-1766367939393@example.com",
+      "motDePasse": "test",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T01:45:39.393Z",
+      "modifieLe": "2025-12-22T01:45:39.393Z"
+    }
+  },
+  {
+    "id": "06cd1851-8762-42ee-a4dd-7d7d02018347",
+    "nom": "Parent, Geneviève",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "323d456c-3459-471e-9534-15f8d7cf028e",
+    "creeLe": "2025-12-22T02:39:41.198Z",
+    "modifieLe": "2025-12-22T02:39:41.198Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "323d456c-3459-471e-9534-15f8d7cf028e",
+      "email": "genevieve.parent@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:40.886Z",
+      "modifieLe": "2025-12-22T02:39:40.886Z"
+    }
+  },
+  {
+    "id": "579b9b8d-7c2d-441f-b6cc-cbc494295b91",
+    "nom": "Ahlgren, Anna",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "3d9f5fd1-3e2f-46a2-a4fd-e1e963e0a81b",
+    "creeLe": "2025-12-22T02:39:42.053Z",
+    "modifieLe": "2025-12-22T02:39:42.053Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "3d9f5fd1-3e2f-46a2-a4fd-e1e963e0a81b",
+      "email": "anna.ahlgren@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:41.897Z",
+      "modifieLe": "2025-12-22T02:39:41.897Z"
+    }
+  },
+  {
+    "id": "3e994466-4881-49ff-aa35-911fc4375f9a",
+    "nom": "Baillargeon, Véronique",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "fde2f759-a957-4d90-9918-5c1beb5c0111",
+    "creeLe": "2025-12-22T02:39:43.121Z",
+    "modifieLe": "2025-12-22T02:39:43.121Z",
+    "classification": "TR-03",
+    "horaire": "8h30-16h30",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "fde2f759-a957-4d90-9918-5c1beb5c0111",
+      "email": "veronique.baillargeon@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:42.851Z",
+      "modifieLe": "2025-12-22T02:39:42.851Z"
+    }
+  },
+  {
+    "id": "eca4bd6a-3dab-4ddc-ac76-4ee993e3c731",
+    "nom": "Bayer, Annie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "ef52d6d4-23b3-445a-9397-9de03b8aed92",
+    "creeLe": "2025-12-22T02:39:43.739Z",
+    "modifieLe": "2025-12-22T02:39:43.739Z",
+    "classification": "TR-03",
+    "horaire": "8h-16h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "ef52d6d4-23b3-445a-9397-9de03b8aed92",
+      "email": "annie.bayer@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:43.584Z",
+      "modifieLe": "2025-12-22T02:39:43.584Z"
+    }
+  },
+  {
+    "id": "b088d9f4-07bd-4df8-a7df-d18c943342ec",
+    "nom": "Bel Hassan, Meriem",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "bffb295f-9ad8-4f36-af87-674e926c6270",
+    "creeLe": "2025-12-22T02:39:44.367Z",
+    "modifieLe": "2025-12-22T02:39:44.367Z",
+    "classification": "TR-03",
+    "horaire": "11h-19h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "bffb295f-9ad8-4f36-af87-674e926c6270",
+      "email": "meriem.belhossan@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:44.210Z",
+      "modifieLe": "2025-12-22T02:39:44.210Z"
+    }
+  },
+  {
+    "id": "ae94339b-3059-4e38-831c-aae2a17638e4",
+    "nom": "Bergeron, Julie",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "52c62bc7-a222-4e7c-ab6b-59d67b0b4915",
+    "creeLe": "2025-12-22T02:39:44.988Z",
+    "modifieLe": "2025-12-22T02:39:44.988Z",
+    "classification": "TR-03",
+    "horaire": "8h30-16h30",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "52c62bc7-a222-4e7c-ab6b-59d67b0b4915",
+      "email": "julie.bergeron@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:44.830Z",
+      "modifieLe": "2025-12-22T02:39:44.830Z"
+    }
+  },
+  {
+    "id": "c148fb4e-d098-4d8c-8bca-73533d5d3372",
+    "nom": "Bissonnette, Julie-Marie",
+    "division": "Droit 2",
+    "domaines": [
+      "LEGAL"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "4b436cf6-d067-44f1-b2f6-94d8be9baa44",
+    "creeLe": "2025-12-22T02:39:45.606Z",
+    "modifieLe": "2025-12-22T02:39:45.606Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "Droit"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "4b436cf6-d067-44f1-b2f6-94d8be9baa44",
+      "email": "julie-marie.bissonnette@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:45.451Z",
+      "modifieLe": "2025-12-22T02:39:45.451Z"
+    }
+  },
+  {
+    "id": "38691f1c-608e-4f39-8027-6418955d26ec",
+    "nom": "Blais, Marie-France",
+    "division": "Droit 2",
+    "domaines": [
+      "LEGAL"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "c0c986dd-2839-4095-a5aa-581416af8db2",
+    "creeLe": "2025-12-22T02:39:46.223Z",
+    "modifieLe": "2025-12-22T02:39:46.223Z",
+    "classification": "TR-03",
+    "horaire": "8h-16h",
+    "notes": null,
+    "specialisations": [
+      "Droit"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "c0c986dd-2839-4095-a5aa-581416af8db2",
+      "email": "marie-france.blais@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:46.066Z",
+      "modifieLe": "2025-12-22T02:39:46.066Z"
+    }
+  },
+  {
+    "id": "3d76a74a-fb49-4e10-9229-42774bd1e294",
+    "nom": "Charette, Léanne",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "94ee1bca-c3e8-4267-bddb-76cb9fcf7b4a",
+    "creeLe": "2025-12-22T02:39:46.844Z",
+    "modifieLe": "2025-12-22T02:39:46.844Z",
+    "classification": "TR-03",
+    "horaire": "7h-15h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "94ee1bca-c3e8-4267-bddb-76cb9fcf7b4a",
+      "email": "leanne.charette@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:46.684Z",
+      "modifieLe": "2025-12-22T02:39:46.684Z"
+    }
+  },
+  {
+    "id": "ccf5c1e1-e9a7-49e0-b94e-f78b51e3905d",
+    "nom": "Gagnon, Hugo",
+    "division": "CISR",
+    "domaines": [
+      "TAG",
+      "IMM"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "1cc5387c-cc8b-42b2-ba15-648d94fb1ac9",
+    "creeLe": "2025-12-22T02:39:47.465Z",
+    "modifieLe": "2025-12-22T02:39:47.465Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [
+      "CISR"
+    ],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "1cc5387c-cc8b-42b2-ba15-648d94fb1ac9",
+      "email": "hugo.gagnon@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:47.310Z",
+      "modifieLe": "2025-12-22T02:39:47.310Z"
+    }
+  },
+  {
+    "id": "962622a5-ad48-453e-8362-06950865bdb7",
+    "nom": "Kadnikov, Patrick",
+    "division": "Trad. anglaise 1",
+    "domaines": [
+      "GENERAL"
+    ],
+    "clientsHabituels": [],
+    "capaciteHeuresParJour": 7,
+    "actif": true,
+    "utilisateurId": "b8f0627b-4761-4575-a37e-fbccbb409972",
+    "creeLe": "2025-12-22T02:39:48.088Z",
+    "modifieLe": "2025-12-22T02:39:48.088Z",
+    "classification": "TR-03",
+    "horaire": "9h-17h",
+    "notes": null,
+    "specialisations": [],
+    "disponiblePourTravail": true,
+    "commentaireDisponibilite": null,
+    "categorie": "TR01",
+    "necessiteRevision": true,
+    "utilisateur": {
+      "id": "b8f0627b-4761-4575-a37e-fbccbb409972",
+      "email": "patrick.kadnikov@tetrix.com",
+      "motDePasse": "$2b$10$TbnVFIXsGW/TMk85L8ExleC1M9zjx.aElx5wXT0NzD1Dkmoq3di4q",
+      "nom": null,
+      "prenom": null,
+      "role": "TRADUCTEUR",
+      "actif": true,
+      "creeLe": "2025-12-22T02:39:47.930Z",
+      "modifieLe": "2025-12-22T02:39:47.930Z"
+    }
+  }
+]

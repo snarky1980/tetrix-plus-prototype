@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { UserPreferencesProvider } from './contexts/UserPreferencesContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import { ToastContainer } from './components/ui/Toast';
 
 // Pages chargées immédiatement (critiques pour l'auth)
@@ -83,16 +84,17 @@ function App() {
   return (
     <ToastProvider>
       <AuthProvider>
-        <UserPreferencesProvider>
-          <BrowserRouter 
-            future={{
-              v7_startTransition: true,
-              v7_relativeSplatPath: true,
-            }}
-          >
-            <ToastContainer />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
+        <NotificationProvider>
+          <UserPreferencesProvider>
+            <BrowserRouter 
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true,
+              }}
+            >
+              <ToastContainer />
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
           {/* Route publique */}
           <Route path="/connexion" element={<Connexion />} />
 
@@ -199,6 +201,7 @@ function App() {
             </Suspense>
           </BrowserRouter>
         </UserPreferencesProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ToastProvider>
   );

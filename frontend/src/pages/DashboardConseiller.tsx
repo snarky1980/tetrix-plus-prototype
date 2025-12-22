@@ -8,6 +8,7 @@ import { Select } from '../components/ui/Select';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { ConflictOverview } from '../components/ConflictOverview';
 import { TacheCard } from '../components/taches/TacheCard';
+import { DemandesRessources } from '../components/notifications/DemandesRessources';
 import { useAuth } from '../contexts/AuthContext';
 import { tacheService } from '../services/tacheService';
 import type { Tache } from '../types';
@@ -270,6 +271,9 @@ const DashboardConseiller: React.FC = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Demandes de ressources et traducteurs disponibles */}
+        <DemandesRessources />
       </div>
     </AppLayout>
   );
