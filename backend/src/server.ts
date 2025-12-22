@@ -109,15 +109,81 @@ app.post('/api/init', async (req, res) => {
       console.log('✓ Traducteur créé');
     }
 
+    // Gestionnaire
+    const gestionnaireEmail = 'gestionnaire@tetrix.com';
+    let gestionnaire = await prisma.utilisateur.findUnique({ where: { email: gestionnaireEmail } });
+    if (!gestionnaire) {
+      const hash = await bcrypt.hash('password123', 10);
+      gestionnaire = await prisma.utilisateur.create({
+        data: { email: gestionnaireEmail, motDePasse: hash, role: Role.GESTIONNAIRE, actif: true },
+      });
+      console.log('✓ Gestionnaire créé');
+    }
+
+    // ====== CORRECTION DES DIVISIONS ======
+    console.log('🔧 Correction des accès aux divisions...');
+
+    // 1. Créer les divisions manquantes basées sur les traducteurs
+    const traducteurs = await prisma.traducteur.findMany();
+    const divisionsFromTraducteurs = [...new Set(traducteurs.flatMap((t) => t.divisions).filter(Boolean))];
+    
+    for (const nom of divisionsFromTraducteurs) {
+      const existing = await prisma.division.findFirst({ where: { nom } });
+      if (!existing) {
+        const code = nom.replace(/[^a-zA-Z0-9]/g, '').substring(0, 10).toUpperCase();
+        await prisma.division.create({
+          data: { nom, code, description: `Division ${nom}` }
+        });
+        console.log('✓ Division créée:', nom);
+      }
+    }
+
+    // 2. Donner accès à toutes les divisions aux comptes génériques
+    const allDivisions = await prisma.division.findMany();
+    const comptes = [
+      { email: 'admin@tetrix.com', isAdmin: true },
+      { email: 'gestionnaire@tetrix.com', isAdmin: false },
+      { email: 'conseiller@tetrix.com', isAdmin: false }
+    ];
+
+    for (const compte of comptes) {
+      const user = await prisma.utilisateur.findUnique({ where: { email: compte.email } });
+      if (user) {
+        for (const division of allDivisions) {
+          await prisma.divisionAccess.upsert({
+            where: {
+              utilisateurId_divisionId: {
+                utilisateurId: user.id,
+                divisionId: division.id
+              }
+            },
+            update: { peutEcrire: true, peutGerer: compte.isAdmin },
+            create: {
+              utilisateurId: user.id,
+              divisionId: division.id,
+              peutLire: true,
+              peutEcrire: true,
+              peutGerer: compte.isAdmin
+            }
+          });
+        }
+        console.log('✓ Accès divisions corrigé pour:', compte.email);
+      }
+    }
+
+    console.log('✅ Correction des divisions terminée!');
+
     res.json({ 
       success: true, 
-      message: 'Base de données initialisée',
+      message: 'Base de données initialisée avec corrections des divisions',
       users: {
         admin: adminEmail,
+        gestionnaire: gestionnaireEmail,
         conseiller: conseillerEmail,
         traducteur: tradEmail,
         password: 'password123'
-      }
+      },
+      divisions: allDivisions.length
     });
   } catch (error: any) {
     console.error('Erreur init:', error);
