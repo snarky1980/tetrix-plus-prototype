@@ -251,17 +251,18 @@ export const creerTache = async (
 
       // Vérifier l'accès à la division (sauf pour ADMIN)
       if (req.utilisateur!.role !== 'ADMIN') {
+        // Vérifier l'accès à au moins une des divisions du traducteur
         const acces = await tx.divisionAccess.findFirst({
           where: {
             utilisateurId: req.utilisateur!.id,
-            division: { nom: traducteur.division },
+            division: { nom: { in: traducteur.divisions } },
             peutEcrire: true
           }
         });
 
         if (!acces) {
           throw new Error(
-            `Vous n'avez pas accès en écriture à la division ${traducteur.division}. ` +
+            `Vous n'avez pas accès en écriture aux divisions ${traducteur.divisions.join(', ')}. ` +
             `Vos permissions ont peut-être changé. Veuillez rafraîchir et réessayer.`
           );
         }

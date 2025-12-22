@@ -127,8 +127,18 @@ export class DivisionService {
    */
   static async supprimerDivision(id: string) {
     // Vérifier s'il y a des traducteurs dans cette division
+    // Récupérer d'abord le nom de la division
+    const division = await prisma.division.findUnique({
+      where: { id },
+      select: { nom: true },
+    });
+
+    if (!division) {
+      throw new Error('Division non trouvée');
+    }
+
     const traducteurs = await prisma.traducteur.findMany({
-      where: { division: id },
+      where: { divisions: { has: division.nom } },
     });
 
     if (traducteurs.length > 0) {

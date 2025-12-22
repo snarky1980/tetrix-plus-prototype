@@ -123,7 +123,7 @@ export const importerCISR = async (req: Request, res: Response): Promise<void> =
           await prisma.traducteur.create({
             data: {
               nom: t.nom,
-              division: 'CISR',
+              divisions: ['CISR'],
               classification,
               horaire: t.horaire || null,
               notes: t.notes || null,
@@ -143,7 +143,7 @@ export const importerCISR = async (req: Request, res: Response): Promise<void> =
             where: { utilisateurId: utilisateur.id },
             data: {
               nom: t.nom,
-              division: 'CISR',
+              divisions: ['CISR'],
               classification,
               horaire: t.horaire || null,
               notes: t.notes || null,
@@ -218,7 +218,7 @@ export const importerDroit = async (req: Request, res: Response): Promise<void> 
           await prisma.traducteur.create({
             data: {
               nom: t.nom,
-              division: t.division,
+              divisions: [t.division],
               classification,
               horaire: t.horaire || null,
               notes: t.notes || null,
@@ -238,7 +238,7 @@ export const importerDroit = async (req: Request, res: Response): Promise<void> 
             where: { utilisateurId: utilisateur.id },
             data: {
               nom: t.nom,
-              division: t.division,
+              divisions: [t.division],
               classification,
               horaire: t.horaire || null,
               notes: t.notes || null,
@@ -385,7 +385,7 @@ export const importerEM = async (req: Request, res: Response): Promise<void> => 
           await prisma.traducteur.create({
             data: {
               nom: t.nom,
-              division: t.division,
+              divisions: [t.division],
               classification,
               horaire: '',
               notes: null,
@@ -405,7 +405,7 @@ export const importerEM = async (req: Request, res: Response): Promise<void> => 
             where: { utilisateurId: utilisateur.id },
             data: {
               nom: t.nom,
-              division: t.division,
+              divisions: [t.division],
               classification,
               horaire: '',
               notes: null,

@@ -33,7 +33,7 @@ export interface TraducteurInfo {
   id: string;
   nom: string;
   categorie: CategorieTraducteur;
-  division: string;
+  divisions: string[];
   capaciteHeuresParJour: number;
   necessiteRevision: boolean;
   actif: boolean;
@@ -179,7 +179,7 @@ export async function creerLiaison(params: CreerLiaisonParams): Promise<LiaisonR
     },
   });
 
-  return liaison;
+  return liaison as unknown as LiaisonReviseur;
 }
 
 /**
@@ -200,7 +200,7 @@ export async function obtenirLiaisonsTraducteur(traducteurId: string): Promise<L
     ],
   });
 
-  return liaisons;
+  return liaisons as unknown as LiaisonReviseur[];
 }
 
 /**
@@ -221,7 +221,7 @@ export async function obtenirTraducteursRevises(reviseurId: string): Promise<Lia
     ],
   });
 
-  return liaisons;
+  return liaisons as unknown as LiaisonReviseur[];
 }
 
 /**
@@ -239,7 +239,7 @@ export async function obtenirReviseurPrincipal(traducteurId: string): Promise<Tr
     },
   });
 
-  return liaison?.reviseur || null;
+  return (liaison?.reviseur as unknown as TraducteurInfo) || null;
 }
 
 /**
@@ -260,13 +260,13 @@ export async function obtenirReviseursPotentiels(division?: string, domaine?: st
     where: {
       categorie: 'TR03',
       actif: true,
-      ...(division ? { division } : {}),
+      ...(division ? { divisions: { has: division } } : {}),
       ...(domaine ? { specialisations: { has: domaine } } : {}),
     },
     orderBy: { nom: 'asc' },
   });
 
-  return reviseurs;
+  return reviseurs as unknown as TraducteurInfo[];
 }
 
 /**
@@ -287,7 +287,7 @@ export async function obtenirTraducteursNecessitantRevision(): Promise<Traducteu
     ],
   });
 
-  return traducteurs;
+  return traducteurs as unknown as TraducteurInfo[];
 }
 
 // =====================================================
@@ -463,8 +463,8 @@ export async function verifierDisponibiliteCombinee(
       recommandations.push('Assignez un réviseur TR03 à ce traducteur');
       reviseurDisponible = false;
 
-      // Proposer des réviseurs potentiels
-      reviseurAlternatifs = await obtenirReviseursPotentiels(traducteur.division, options.domaine);
+      // Proposer des réviseurs potentiels (utilise la première division du traducteur)
+      reviseurAlternatifs = await obtenirReviseursPotentiels(traducteur.divisions?.[0], options.domaine);
     } else {
       // Date de début de révision = fin de traduction + 1 jour
       const dateDebutRevision = dateFinTraduction 
@@ -516,7 +516,7 @@ export async function verifierDisponibiliteCombinee(
             categorie: 'TR03',
             actif: true,
             id: { not: reviseur.id },
-            division: traducteur.division,
+            divisions: { hasSome: traducteur.divisions || [] },
           },
         });
 
@@ -610,14 +610,14 @@ export async function mettreAJourCategorie(
     });
   }
 
-  return traducteur;
+  return traducteur as unknown as TraducteurInfo;
 }
 
 /**
  * Récupère le résumé des liaisons pour le dashboard
  */
 export async function obtenirResumeLiaisons(division?: string) {
-  const whereClause = division ? { division } : {};
+  const whereClause = division ? { divisions: { has: division } } : {};
 
   const [tr01, tr02NecessiteRevision, tr02Autonome, tr03, liaisonsAttitres, liaisonsPonctuelles] = await Promise.all([
     prisma.traducteur.count({
