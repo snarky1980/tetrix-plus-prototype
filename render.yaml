@@ -32,4 +32,4 @@ services:
 databases:
   - name: tetrix-plus-db
     databaseName: tetrix_plus
-    plan: free
+    plan: basic-1gb
