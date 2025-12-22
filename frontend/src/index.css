@@ -222,6 +222,79 @@ body {
 .heading-xl { @apply text-2xl font-semibold tracking-tight; }
 .heading-lg { @apply text-xl font-semibold; }
 .text-muted { @apply text-slate-600; }
+:root.dark .text-muted { @apply text-slate-300; }
+
+/* ===========================================
+   DARK MODE OVERRIDES - Fix contrast issues
+   =========================================== */
+
+/* Fix: text-gray-XXX classes for dark mode */
+:root.dark .text-gray-500 { color: #94a3b8 !important; } /* slate-400 */
+:root.dark .text-gray-600 { color: #cbd5e1 !important; } /* slate-300 */
+:root.dark .text-gray-700 { color: #e2e8f0 !important; } /* slate-200 */
+:root.dark .text-gray-800 { color: #f1f5f9 !important; } /* slate-100 */
+:root.dark .text-gray-900 { color: #f8fafc !important; } /* slate-50 */
+
+/* Fix: bg-white and bg-gray-XX classes for dark mode */
+:root.dark .bg-white { background-color: #1e293b !important; } /* slate-800 */
+:root.dark .bg-gray-50 { background-color: #334155 !important; } /* slate-700 */
+:root.dark .bg-gray-100 { background-color: #334155 !important; } /* slate-700 */
+:root.dark .bg-gray-200 { background-color: #475569 !important; } /* slate-600 */
+
+/* Fix: border-gray-XXX for dark mode */
+:root.dark .border-gray-100 { border-color: #475569 !important; }
+:root.dark .border-gray-200 { border-color: #475569 !important; }
+:root.dark .border-gray-300 { border-color: #64748b !important; }
+
+/* Fix: hover states for dark mode */
+:root.dark .hover\:bg-gray-50:hover { background-color: #334155 !important; }
+:root.dark .hover\:bg-gray-100:hover { background-color: #475569 !important; }
+
+/* Fix: blue backgrounds in dark mode */
+:root.dark .bg-blue-50 { background-color: #1e3a5f !important; }
+:root.dark .bg-blue-100 { background-color: #1e40af33 !important; }
+:root.dark .border-blue-200 { border-color: #3b82f6 !important; }
+:root.dark .border-blue-300 { border-color: #60a5fa !important; }
+:root.dark .text-blue-900 { color: #93c5fd !important; }
+:root.dark .text-blue-700 { color: #93c5fd !important; }
+:root.dark .text-blue-600 { color: #60a5fa !important; }
+
+/* Fix: green/success backgrounds in dark mode */
+:root.dark .bg-green-50 { background-color: #064e3b !important; }
+:root.dark .bg-green-100 { background-color: #065f4666 !important; }
+:root.dark .border-green-200 { border-color: #22c55e !important; }
+:root.dark .text-green-700 { color: #4ade80 !important; }
+:root.dark .text-green-600 { color: #22c55e !important; }
+
+/* Fix: red/danger backgrounds in dark mode */
+:root.dark .bg-red-50 { background-color: #450a0a !important; }
+:root.dark .bg-red-100 { background-color: #7f1d1d66 !important; }
+:root.dark .border-red-200 { border-color: #ef4444 !important; }
+:root.dark .text-red-700 { color: #f87171 !important; }
+:root.dark .text-red-600 { color: #ef4444 !important; }
+
+/* Fix: yellow/warning backgrounds in dark mode */
+:root.dark .bg-yellow-50 { background-color: #451a03 !important; }
+:root.dark .bg-yellow-100 { background-color: #78350f66 !important; }
+:root.dark .border-yellow-200 { border-color: #fbbf24 !important; }
+:root.dark .text-yellow-700 { color: #fcd34d !important; }
+:root.dark .text-yellow-600 { color: #fbbf24 !important; }
+
+/* Fix: amber/orange backgrounds in dark mode */
+:root.dark .bg-amber-50 { background-color: #451a03 !important; }
+:root.dark .bg-amber-100 { background-color: #78350f66 !important; }
+:root.dark .bg-orange-50 { background-color: #431407 !important; }
+
+/* Fix: purple backgrounds in dark mode */
+:root.dark .bg-purple-50 { background-color: #3b0764 !important; }
+:root.dark .bg-purple-100 { background-color: #581c8766 !important; }
+:root.dark .text-purple-700 { color: #c084fc !important; }
+
+/* Fix: slate backgrounds in dark mode */
+:root.dark .bg-slate-50 { background-color: #334155 !important; }
+:root.dark .bg-slate-100 { background-color: #475569 !important; }
+:root.dark .text-slate-600 { color: #cbd5e1 !important; }
+:root.dark .text-slate-700 { color: #e2e8f0 !important; }
 
 /* Animations légères */
 .fade-in { animation: fade-in .25s ease-in forwards; }
