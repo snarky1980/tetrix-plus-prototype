@@ -18,6 +18,16 @@
         delete sessionStorage.redirect;
         history.replaceState(null, null, redirect);
       }
+      
+      // Apply theme immediately to prevent flash
+      (function() {
+        var theme = localStorage.getItem('tetrix-theme') || 'light';
+        var isDark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (isDark) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      })();
     </script>
   </head>
   <body>

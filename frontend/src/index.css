@@ -45,6 +45,64 @@
   --etat-libre-bg: #16a34a;
   --etat-presque-bg: #ea580c; /* orange contrasté */
   --etat-plein-bg: #dc2626;
+  
+  /* Input fields */
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-text: #1f2937;
+  --input-placeholder: #9ca3af;
+}
+
+/* ===========================================
+   DARK MODE - WCAG AA Compliant (4.5:1 ratio)
+   =========================================== */
+:root.dark {
+  /* Primary Colors - Lighter for dark bg (contrast 7:1+) */
+  --primary: #7dd3fc; /* sky-300 - excellent contrast on dark */
+  --primary-foreground: #0c1929;
+  
+  /* Secondary Colors - Adjusted for visibility */
+  --secondary: #d4d08c; /* lighter sage */
+  --secondary-foreground: #1a1a1a;
+  --tb-sage: #d4d08c;
+  
+  /* Accent - Brighter for dark mode */
+  --accent: #93c5fd; /* blue-300 */
+  --accent-foreground: #1e293b;
+  --tb-teal: #34d399; /* emerald-400 */
+  
+  /* Backgrounds - Deep navy, not pure black (easier on eyes) */
+  --background: #0f172a; /* slate-900 */
+  --card: #1e293b; /* slate-800 */
+  --card-foreground: #f1f5f9; /* slate-100 */
+  --popover: #1e293b;
+  --popover-foreground: #f1f5f9;
+  
+  /* Text - High contrast (WCAG AAA on dark bg) */
+  --foreground: #f1f5f9; /* slate-100 - 15.4:1 contrast */
+  --muted: #94a3b8; /* slate-400 */
+  --muted-foreground: #cbd5e1; /* slate-300 - 7.5:1 contrast */
+  --border: #334155; /* slate-700 */
+  --ring: #7dd3fc;
+  
+  /* Status Colors - Adjusted for dark mode visibility */
+  --success-bg: #064e3b; /* emerald-900 */
+  --success-border: #34d399; /* emerald-400 */
+  --warning-bg: #451a03; /* amber-950 */
+  --warning-border: #fbbf24; /* amber-400 */
+  --danger-bg: #450a0a; /* red-950 */
+  --danger-border: #f87171; /* red-400 */
+  
+  /* États disponibilité - Plus lumineux en dark */
+  --etat-libre-bg: #22c55e; /* green-500 */
+  --etat-presque-bg: #f97316; /* orange-500 */
+  --etat-plein-bg: #ef4444; /* red-500 */
+  
+  /* Input fields - Dark mode */
+  --input-bg: #1e293b;
+  --input-border: #475569;
+  --input-text: #f1f5f9;
+  --input-placeholder: #94a3b8;
 }
 
 body {
@@ -53,12 +111,18 @@ body {
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   letter-spacing: 0.01em;
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Layout utilitaire */
 .app-wrapper {
   @apply min-h-screen flex flex-col;
   background: linear-gradient(to bottom right,#f8fafc,#fefbe8,#e0f2fe);
+}
+
+/* Dark mode app wrapper */
+:root.dark .app-wrapper {
+  background: linear-gradient(to bottom right, #0f172a, #1e1b4b, #0c1929);
 }
 
 .page-wrapper { @apply max-w-7xl mx-auto w-full px-4 py-6; }
@@ -76,6 +140,11 @@ body {
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+/* Dark mode scrollbar */
+:root.dark ::-webkit-scrollbar-track { background: #1e293b; }
+:root.dark ::-webkit-scrollbar-thumb { background: #475569; }
+:root.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
 /* Utilitaires supplémentaires */
 .card-base { @apply bg-card border border-border shadow-sm; border-radius: 12px; }
@@ -188,14 +257,30 @@ button, input, select, .card { transition: all 0.2s ease; }
 button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(44, 61, 80, 0.1); }
 button:active:not(:disabled) { transform: translateY(0); }
 
+:root.dark button:hover:not(:disabled) { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+
 input:focus, select:focus { box-shadow: 0 0 0 3px rgba(44, 61, 80, 0.1); }
+:root.dark input:focus, :root.dark select:focus { box-shadow: 0 0 0 3px rgba(125, 211, 252, 0.2); }
+
+/* Input styling for dark mode */
+input, select, textarea {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--input-text);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--input-placeholder);
+}
 
 .card { cursor: default; }
 .card:hover { border-color: #2c3d50; box-shadow: 0 2px 8px rgba(44, 61, 80, 0.08); }
+:root.dark .card:hover { border-color: #7dd3fc; box-shadow: 0 2px 8px rgba(125, 211, 252, 0.15); }
 
 /* Animations pour tables */
 tbody tr { transition: background-color 0.15s ease; }
 tbody tr:hover { background-color: rgba(172, 168, 104, 0.05); }
+:root.dark tbody tr:hover { background-color: rgba(148, 163, 184, 0.1); }
 
 /* Animations pour badges */
 .badge { animation: scale-in .2s ease forwards; }
