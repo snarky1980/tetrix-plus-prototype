@@ -103,6 +103,60 @@ export const inscription = async (req: Request, res: Response): Promise<void> =>
 };
 
 /**
+ * Setup initial - Créer un compte conseiller si aucun utilisateur n'existe
+ * POST /api/auth/setup
+ * Sécurisé: ne fonctionne que si la base est vide ou si un secret est fourni
+ */
+export const setupInitial = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { secret } = req.body;
+    const SETUP_SECRET = process.env.SETUP_SECRET || 'tetrix-setup-2024';
+
+    // Vérifier le secret
+    if (secret !== SETUP_SECRET) {
+      res.status(403).json({ erreur: 'Secret invalide' });
+      return;
+    }
+
+    // Vérifier si le compte conseiller existe déjà
+    const conseillerExistant = await prisma.utilisateur.findUnique({
+      where: { email: 'conseiller@tetrix.com' },
+    });
+
+    if (conseillerExistant) {
+      // Réinitialiser le mot de passe
+      const motDePasseHash = await bcrypt.hash('password123', 10);
+      await prisma.utilisateur.update({
+        where: { email: 'conseiller@tetrix.com' },
+        data: { motDePasse: motDePasseHash, actif: true },
+      });
+      res.json({ message: 'Compte conseiller réinitialisé', email: 'conseiller@tetrix.com', motDePasse: 'password123' });
+      return;
+    }
+
+    // Créer le compte conseiller
+    const motDePasseHash = await bcrypt.hash('password123', 10);
+    const conseiller = await prisma.utilisateur.create({
+      data: {
+        email: 'conseiller@tetrix.com',
+        motDePasse: motDePasseHash,
+        role: 'CONSEILLER',
+        actif: true,
+      },
+    });
+
+    res.status(201).json({
+      message: 'Compte conseiller créé',
+      email: conseiller.email,
+      motDePasse: 'password123',
+    });
+  } catch (error) {
+    console.error('Erreur setup:', error);
+    res.status(500).json({ erreur: 'Erreur lors du setup' });
+  }
+};
+
+/**
  * Réinitialiser le mot de passe d'un utilisateur
  * PUT /api/auth/reinitialiser-mot-de-passe/:id
  */

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { connexion, inscription, reinitialiserMotDePasse } from '../controllers/authController';
+import { connexion, inscription, reinitialiserMotDePasse, setupInitial } from '../controllers/authController';
 import { valider } from '../middleware/validation';
 import { authentifier } from '../middleware/auth';
 import { z } from 'zod';
@@ -45,5 +45,11 @@ router.post('/inscription', valider(inscriptionSchema), inscription);
  * Réinitialiser le mot de passe d'un utilisateur (Admin uniquement)
  */
 router.put('/reinitialiser-mot-de-passe/:id', authentifier, valider(reinitialiserMotDePasseSchema), reinitialiserMotDePasse);
+
+/**
+ * POST /api/auth/setup
+ * Setup initial - créer ou réinitialiser le compte conseiller (protégé par secret)
+ */
+router.post('/setup', setupInitial);
 
 export default router;
