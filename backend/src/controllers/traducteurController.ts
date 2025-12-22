@@ -37,12 +37,9 @@ export const obtenirTraducteurs = async (
     }
 
     if (division) {
-      const divisions = (division as string).split(',').map(d => d.trim());
-      if (divisions.length > 1) {
-        where.division = { in: divisions };
-      } else {
-        where.division = division as string;
-      }
+      const divisionsList = (division as string).split(',').map(d => d.trim());
+      // Chercher les traducteurs qui ont au moins une des divisions demandées
+      where.divisions = { hasSome: divisionsList };
     }
 
     if (classification) {
@@ -164,7 +161,7 @@ export const creerTraducteur = async (
       nom,
       email,
       motDePasse,
-      division,
+      divisions,
       classification,
       horaire,
       domaines,
@@ -204,7 +201,7 @@ export const creerTraducteur = async (
       const traducteur = await tx.traducteur.create({
         data: {
           nom,
-          division,
+          divisions: divisions || [],
           classification,
           horaire: horaire || null,
           domaines: domaines || [],
@@ -247,7 +244,7 @@ export const mettreAJourTraducteur = async (
     const { id } = req.params;
     const {
       nom,
-      division,
+      divisions,
       classification,
       horaire,
       domaines,
@@ -267,7 +264,7 @@ export const mettreAJourTraducteur = async (
       where: { id },
       data: {
         ...(nom && { nom }),
-        ...(division && { division }),
+        ...(divisions && { divisions }),
         ...(classification && { classification }),
         ...(horaire !== undefined && { horaire }),
         ...(domaines && { domaines }),

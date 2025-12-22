@@ -361,9 +361,9 @@ async function collecterDonnees(
   // Construire les conditions de filtre pour traducteurs
   const whereTraducteur: any = { actif: true };
   
-  // Filtre par division
+  // Filtre par division - divisions est maintenant un tableau
   if (filtres?.divisions && filtres.divisions.length > 0) {
-    whereTraducteur.division = { in: filtres.divisions };
+    whereTraducteur.divisions = { hasSome: filtres.divisions };
   }
   
   // Traducteurs actifs avec leurs données

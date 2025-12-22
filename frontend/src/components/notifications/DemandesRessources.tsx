@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -25,6 +25,10 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Filtres pour les traducteurs disponibles
+  const [filtreDivision, setFiltreDivision] = useState('');
+  const [filtreClassification, setFiltreClassification] = useState('');
   
   const [formData, setFormData] = useState({
     titre: '',
@@ -116,6 +120,26 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
     return urgenceOptions.find(u => u.value === urgence)?.color || '';
   };
 
+  // Extraire les divisions et classifications uniques des traducteurs disponibles
+  const divisionsDisponibles = useMemo(() => 
+    Array.from(new Set(traducteursDispo.flatMap(t => t.divisions))).sort(),
+    [traducteursDispo]
+  );
+  
+  const classificationsDisponibles = useMemo(() => 
+    Array.from(new Set(traducteursDispo.map(t => t.classification))).sort(),
+    [traducteursDispo]
+  );
+
+  // Filtrer les traducteurs
+  const traducteursFiltres = useMemo(() => {
+    return traducteursDispo.filter(tr => {
+      if (filtreDivision && !tr.divisions.includes(filtreDivision)) return false;
+      if (filtreClassification && tr.classification !== filtreClassification) return false;
+      return true;
+    });
+  }, [traducteursDispo, filtreDivision, filtreClassification]);
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -128,37 +152,84 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <span className="text-2xl">✋</span>
-              Traducteurs cherchant du travail ({traducteursDispo.length})
+              Traducteurs cherchant du travail ({traducteursFiltres.length}/{traducteursDispo.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {traducteursDispo.map(tr => (
-                <div key={tr.id} className="p-4 bg-white rounded-lg border border-green-200 shadow-sm">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
-                      {tr.nom.charAt(0)}
-                    </div>
-                    <div>
-                      <div className="font-medium">{tr.nom}</div>
-                      <div className="text-xs text-muted">{tr.classification} • {tr.division}</div>
-                    </div>
-                  </div>
-                  <div className="text-xs text-gray-600 mb-2">
-                    <span className="font-medium">Paires:</span>{' '}
-                    {tr.pairesLinguistiques.map(p => `${p.langueSource}→${p.langueCible}`).join(', ')}
-                  </div>
-                  <div className="text-xs text-gray-600">
-                    <span className="font-medium">Capacité:</span> {tr.capaciteHeuresParJour}h/jour
-                  </div>
-                  {tr.commentaireDisponibilite && (
-                    <div className="mt-2 text-sm text-green-700 bg-green-100 p-2 rounded">
-                      💬 {tr.commentaireDisponibilite}
-                    </div>
-                  )}
+            {/* Filtres */}
+            <div className="bg-white border border-green-200 rounded-lg p-3 mb-4">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="flex-1 min-w-[150px]">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Division</label>
+                  <Select
+                    value={filtreDivision}
+                    onChange={(e) => setFiltreDivision(e.target.value)}
+                    className="w-full text-sm"
+                  >
+                    <option value="">Toutes les divisions</option>
+                    {divisionsDisponibles.map(d => (
+                      <option key={d} value={d}>{d}</option>
+                    ))}
+                  </Select>
                 </div>
-              ))}
+                <div className="flex-1 min-w-[150px]">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Classification</label>
+                  <Select
+                    value={filtreClassification}
+                    onChange={(e) => setFiltreClassification(e.target.value)}
+                    className="w-full text-sm"
+                  >
+                    <option value="">Toutes (TR01, TR02, TR03)</option>
+                    {classificationsDisponibles.map(c => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </Select>
+                </div>
+                {(filtreDivision || filtreClassification) && (
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { setFiltreDivision(''); setFiltreClassification(''); }}
+                    className="text-xs"
+                  >
+                    Réinitialiser
+                  </Button>
+                )}
+              </div>
             </div>
+            
+            {traducteursFiltres.length === 0 ? (
+              <div className="text-center py-6 text-gray-500">
+                <p>Aucun traducteur ne correspond aux filtres sélectionnés</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {traducteursFiltres.map(tr => (
+                  <div key={tr.id} className="p-4 bg-white rounded-lg border border-green-200 shadow-sm">
+                    <div className="flex items-center gap-3 mb-2">
+                      <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                        {tr.nom.charAt(0)}
+                      </div>
+                      <div>
+                        <div className="font-medium">{tr.nom}</div>
+                        <div className="text-xs text-muted">{tr.classification} • {tr.divisions.join(', ')}</div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-gray-600 mb-2">
+                      <span className="font-medium">Paires:</span>{' '}
+                      {tr.pairesLinguistiques.map(p => `${p.langueSource}→${p.langueCible}`).join(', ')}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      <span className="font-medium">Capacité:</span> {tr.capaciteHeuresParJour}h/jour
+                    </div>
+                    {tr.commentaireDisponibilite && (
+                      <div className="mt-2 text-sm text-green-700 bg-green-100 p-2 rounded">
+                        💬 {tr.commentaireDisponibilite}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

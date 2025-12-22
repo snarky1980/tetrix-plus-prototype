@@ -11,7 +11,7 @@ export interface Utilisateur {
   traducteur?: {
     id: string;
     nom: string;
-    division: string;
+    divisions: string[];
   };
 }
 
@@ -52,7 +52,7 @@ export interface PaireLinguistique {
 export interface Traducteur {
   id: string;
   nom: string;
-  division: string; // Droit, Science et technologie, CISR, etc.
+  divisions: string[]; // Droit, Science et technologie, CISR, etc. - Un traducteur peut appartenir à plusieurs divisions
   classification: string; // TR1, TR2, TR3
   horaire?: string; // Optionnel: "9h-17h", "8h30-16h30"
   domaines: string[];

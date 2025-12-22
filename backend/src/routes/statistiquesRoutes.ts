@@ -67,7 +67,7 @@ router.get('/productivite', authentifier, async (req, res) => {
         if (!divisionsAutorisees.includes(divisionId as string)) {
           return res.status(403).json({ message: 'Vous n\'avez pas accès à cette division' });
         }
-        filtreDivision = { division: divisionId as string };
+        filtreDivision = { divisions: { hasSome: [divisionId as string] } };
       } else if (division) {
         // Filtres multiples depuis le planificateur
         const divisionsRequises = (division as string).split(',');
@@ -75,23 +75,17 @@ router.get('/productivite', authentifier, async (req, res) => {
         if (divisionsValides.length === 0) {
           return res.status(403).json({ message: 'Vous n\'avez pas accès à ces divisions' });
         }
-        filtreDivision = divisionsValides.length === 1
-          ? { division: divisionsValides[0] }
-          : { division: { in: divisionsValides } };
+        filtreDivision = { divisions: { hasSome: divisionsValides } };
       } else {
-        filtreDivision = divisionsAutorisees.length > 1 
-          ? { division: { in: divisionsAutorisees } } 
-          : { division: divisionsAutorisees[0] };
+        filtreDivision = { divisions: { hasSome: divisionsAutorisees } };
       }
     } else if (divisionId) {
       // Pour ADMIN, CONSEILLER - pas de restriction
-      filtreDivision = { division: divisionId as string };
+      filtreDivision = { divisions: { hasSome: [divisionId as string] } };
     } else if (division) {
       // Filtres multiples depuis le planificateur (pour non-gestionnaires)
       const divisionsRequises = (division as string).split(',');
-      filtreDivision = divisionsRequises.length === 1
-        ? { division: divisionsRequises[0] }
-        : { division: { in: divisionsRequises } };
+      filtreDivision = { divisions: { hasSome: divisionsRequises } };
     }
 
     // Préparer les filtres pour tâches (client, domaine)
@@ -146,18 +140,18 @@ router.get('/productivite', authentifier, async (req, res) => {
     // Filtrer les tâches selon tous les critères
     let tachesFiltrees = taches;
     
-    // Filtre par division (traducteur)
+    // Filtre par division (traducteur) - divisions est maintenant un tableau
     if (utilisateur.role === 'GESTIONNAIRE') {
       tachesFiltrees = tachesFiltrees.filter((t: any) => 
-        t.traducteur && divisionsAutorisees.includes(t.traducteur.division)
+        t.traducteur && t.traducteur.divisions?.some((d: string) => divisionsAutorisees.includes(d))
       );
-    } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.division) {
-      const divCibles = typeof filtreDivision.division === 'string' 
-        ? [filtreDivision.division]
-        : filtreDivision.division.in || [];
+    } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.divisions) {
+      const divCibles = Array.isArray(filtreDivision.divisions.hasSome) 
+        ? filtreDivision.divisions.hasSome
+        : [];
       if (divCibles.length > 0) {
         tachesFiltrees = tachesFiltrees.filter((t: any) => 
-          t.traducteur && divCibles.includes(t.traducteur.division)
+          t.traducteur && t.traducteur.divisions?.some((d: string) => divCibles.includes(d))
         );
       }
     }
@@ -238,15 +232,13 @@ router.get('/productivite', authentifier, async (req, res) => {
     let tachesPrecedentesFiltrees = tachesPrecedentes;
     if (utilisateur.role === 'GESTIONNAIRE') {
       tachesPrecedentesFiltrees = tachesPrecedentes.filter((t: any) => 
-        t.traducteur && divisionsAutorisees.includes(t.traducteur.division)
+        t.traducteur && t.traducteur.divisions?.some((d: string) => divisionsAutorisees.includes(d))
       );
-    } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.division) {
-      const divCible = typeof filtreDivision.division === 'string' 
-        ? filtreDivision.division 
-        : null;
-      if (divCible) {
+    } else if (Object.keys(filtreDivision).length > 0 && filtreDivision.divisions) {
+      const divCibles = filtreDivision.divisions.hasSome || [];
+      if (divCibles.length > 0) {
         tachesPrecedentesFiltrees = tachesPrecedentes.filter((t: any) => 
-          t.traducteur && t.traducteur.division === divCible
+          t.traducteur && t.traducteur.divisions?.some((d: string) => divCibles.includes(d))
         );
       }
     }
@@ -270,7 +262,7 @@ router.get('/productivite', authentifier, async (req, res) => {
       select: {
         id: true,
         nom: true,
-        division: true,
+        divisions: true,
         classification: true,
         specialisations: true,
         pairesLinguistiques: true,
@@ -359,13 +351,16 @@ router.get('/productivite', authentifier, async (req, res) => {
     for (const tache of tachesFiltrees) {
       const tacheTyped = tache as any;
       if (!tacheTyped.traducteur) continue;
-      const div = tacheTyped.traducteur.division;
-      if (!parDivision.has(div)) {
-        parDivision.set(div, { mots: 0, heures: 0 });
+      // Un traducteur peut avoir plusieurs divisions - on comptabilise pour chacune
+      const divisions = tacheTyped.traducteur.divisions || [];
+      for (const div of divisions) {
+        if (!parDivision.has(div)) {
+          parDivision.set(div, { mots: 0, heures: 0 });
+        }
+        const stats = parDivision.get(div)!;
+        stats.mots += (tache as any).compteMots || 0;
+        stats.heures += (tache as any).heuresTotal;
       }
-      const stats = parDivision.get(div)!;
-      stats.mots += (tache as any).compteMots || 0;
-      stats.heures += (tache as any).heuresTotal;
     }
 
     const statsParDivision = Array.from(parDivision.entries()).map(([division, stats]) => ({

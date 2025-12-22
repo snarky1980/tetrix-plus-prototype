@@ -57,7 +57,7 @@ model DivisionAccess {
 model Traducteur {
   id                       String              @id @default(uuid())
   nom                      String
-  division                 String
+  divisions                String[]            @default([])
   domaines                 String[]
   clientsHabituels         String[]
   capaciteHeuresParJour    Float               @default(7.5)
@@ -86,7 +86,6 @@ model Traducteur {
   reviseursDe              LiaisonReviseur[]   @relation("TraducteurReviseur")
   revisePar                LiaisonReviseur[]   @relation("TraducteurRevise")
 
-  @@index([division])
   @@index([actif])
   @@index([disponiblePourTravail])
   @@index([categorie])

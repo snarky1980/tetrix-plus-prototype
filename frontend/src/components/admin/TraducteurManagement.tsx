@@ -57,8 +57,8 @@ export const TraducteurManagement: React.FC = () => {
       if (t.actif !== actif) return false;
     }
     
-    // Filtre par divisions (OR logic - au moins une division cochée)
-    if (filtres.divisions.length > 0 && !filtres.divisions.includes(t.division)) {
+    // Filtre par divisions (OR logic - au moins une division en commun)
+    if (filtres.divisions.length > 0 && !t.divisions?.some(d => filtres.divisions.includes(d))) {
       return false;
     }
     
@@ -85,7 +85,7 @@ export const TraducteurManagement: React.FC = () => {
       const recherche = filtres.recherche.toLowerCase();
       return (
         t.nom.toLowerCase().includes(recherche) ||
-        t.division.toLowerCase().includes(recherche) ||
+        t.divisions?.some(d => d.toLowerCase().includes(recherche)) ||
         t.domaines.some(d => d.toLowerCase().includes(recherche))
       );
     }
@@ -93,7 +93,7 @@ export const TraducteurManagement: React.FC = () => {
     return true;
   });
 
-  const divisions = Array.from(new Set(traducteurs.map(t => t.division))).sort();
+  const divisions = Array.from(new Set(traducteurs.flatMap(t => t.divisions || []))).sort();
   const classifications = Array.from(new Set(traducteurs.map(t => t.classification).filter(Boolean))).sort();
   const domaines = Array.from(new Set(traducteurs.flatMap(t => t.domaines))).sort();
 
@@ -123,10 +123,17 @@ export const TraducteurManagement: React.FC = () => {
       ),
     },
     {
-      header: 'Division',
-      accessor: 'division',
-      render: (val: string) => (
-        <Badge variant="info">{val}</Badge>
+      header: 'Divisions',
+      accessor: 'divisions',
+      render: (val: string[]) => (
+        <div className="flex flex-wrap gap-1">
+          {val?.slice(0, 2).map((d, i) => (
+            <Badge key={i} variant="info" className="text-xs">{d}</Badge>
+          ))}
+          {val?.length > 2 && (
+            <Badge variant="default" className="text-xs">+{val.length - 2}</Badge>
+          )}
+        </div>
       ),
     },
     {

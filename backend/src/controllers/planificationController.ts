@@ -275,21 +275,15 @@ export const obtenirPlanificationGlobale = async (
           return;
         }
         
-        whereTraducteur.division = divisionsValides.length > 1 
-          ? { in: divisionsValides } 
-          : divisionsValides[0];
+        whereTraducteur.divisions = { hasSome: divisionsValides };
       } else {
         // Limiter à toutes les divisions autorisées
-        whereTraducteur.division = nomsDiv.length > 1 ? { in: nomsDiv } : nomsDiv[0];
+        whereTraducteur.divisions = { hasSome: nomsDiv };
       }
     } else if (division) {
       // Pour ADMIN, CONSEILLER - pas de restriction
       const divisions = (division as string).split(',').map(d => d.trim());
-      if (divisions.length > 1) {
-        whereTraducteur.division = { in: divisions };
-      } else {
-        whereTraducteur.division = division as string;
-      }
+      whereTraducteur.divisions = { hasSome: divisions };
     }
     if (client) {
       const clients = (client as string).split(',').map(c => c.trim());

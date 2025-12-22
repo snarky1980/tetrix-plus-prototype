@@ -8,7 +8,7 @@ export interface CompteursNotifications {
 export interface TraducteurDisponible {
   id: string;
   nom: string;
-  division: string;
+  divisions: string[];
   classification: string;
   categorie: string;
   capaciteHeuresParJour: number;

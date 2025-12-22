@@ -22,11 +22,11 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
   onSauvegarder,
 }) => {
   const { addToast } = useToast();
-  const DIVISION_OPTIONS = ['CISR', 'Droit 1', 'Droit 2', 'Science et technologie', 'Autre'];
+  const DIVISION_OPTIONS = ['CISR', 'Droit 1', 'Droit 2', 'Traduction anglaise 1', 'Traduction anglaise 2', 'Multilingue', 'FINANCE', 'SATJ backlog', 'TEST', 'Autre'];
   const CLASSIFICATION_OPTIONS = ['TR-01', 'TR-02', 'TR-03'];
   const [formData, setFormData] = useState({
     nom: '',
-    division: DIVISION_OPTIONS[0],
+    divisions: [DIVISION_OPTIONS[0]] as string[],
     classification: 'TR-02' as string,
     horaire: '' as string,
     email: '',
@@ -51,7 +51,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     if (traducteur) {
       setFormData({
         nom: traducteur.nom,
-        division: traducteur.division || DIVISION_OPTIONS[0],
+        divisions: traducteur.divisions?.length > 0 ? [...traducteur.divisions] : [DIVISION_OPTIONS[0]],
         classification: traducteur.classification || 'TR-02',
         horaire: traducteur.horaire || '',
         email: '',
@@ -72,7 +72,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
     } else {
       setFormData({
         nom: '',
-        division: DIVISION_OPTIONS[0],
+        divisions: [DIVISION_OPTIONS[0]],
         classification: 'TR-02',
         horaire: '',
         email: '',
@@ -190,7 +190,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         // Mise à jour
         await traducteurService.mettreAJourTraducteur(traducteur.id, {
           nom: formData.nom,
-          division: formData.division,
+          divisions: formData.divisions,
           classification: formData.classification,
           horaire: formData.horaire,
           notes: formData.notes,
@@ -264,19 +264,32 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           />
         </FormField>
 
-        <FormField label="Division" required helper="Domaine de travail (Droit, Science et technologie, CISR, etc.)">
-          <select
-            value={formData.division}
-            onChange={e => setFormData({ ...formData, division: e.target.value })}
-            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
-            required
-          >
+        <FormField label="Divisions" required helper="Domaines de travail (peut appartenir à plusieurs divisions)">
+          <div className="space-y-2 max-h-48 overflow-y-auto border border-border rounded-lg p-3 bg-card">
             {DIVISION_OPTIONS.map(option => (
-              <option key={option} value={option}>
-                {option}
-              </option>
+              <label key={option} className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 p-1 rounded">
+                <input
+                  type="checkbox"
+                  checked={formData.divisions.includes(option)}
+                  onChange={e => {
+                    if (e.target.checked) {
+                      setFormData({ ...formData, divisions: [...formData.divisions, option] });
+                    } else {
+                      // Ne pas permettre de tout désélectionner
+                      if (formData.divisions.length > 1) {
+                        setFormData({ ...formData, divisions: formData.divisions.filter(d => d !== option) });
+                      }
+                    }
+                  }}
+                  className="rounded"
+                />
+                <span className="text-sm">{option}</span>
+              </label>
             ))}
-          </select>
+          </div>
+          <div className="text-xs text-muted mt-1">
+            Sélectionné(s): {formData.divisions.join(', ')}
+          </div>
         </FormField>
 
         <FormField label="Classification" required helper="Niveau de compétence du traducteur">
