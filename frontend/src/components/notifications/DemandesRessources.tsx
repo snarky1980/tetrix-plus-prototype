@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -13,6 +13,96 @@ const urgenceOptions = [
   { value: 'HAUTE', label: '🟠 Haute', color: 'bg-orange-100 text-orange-800' },
   { value: 'CRITIQUE', label: '🔴 Critique', color: 'bg-red-100 text-red-800' },
 ];
+
+// Composant dropdown multi-sélection
+interface MultiSelectDropdownProps {
+  label: string;
+  options: string[];
+  selected: string[];
+  onChange: (selected: string[]) => void;
+  placeholder?: string;
+}
+
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ 
+  label, options, selected, onChange, placeholder = "Tous" 
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fermer le dropdown quand on clique ailleurs
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleOption = (option: string) => {
+    if (selected.includes(option)) {
+      onChange(selected.filter(s => s !== option));
+    } else {
+      onChange([...selected, option]);
+    }
+  };
+
+  const displayText = selected.length === 0 
+    ? placeholder 
+    : selected.length === 1 
+      ? selected[0] 
+      : `${selected.length} sélectionnés`;
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full text-left px-2 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-1"
+      >
+        <span className={selected.length === 0 ? 'text-gray-400' : 'text-gray-900 truncate'}>
+          {displayText}
+        </span>
+        <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
+      </button>
+      {isOpen && (
+        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {options.length === 0 ? (
+            <div className="px-2 py-1 text-xs text-gray-400">Aucune option</div>
+          ) : (
+            options.map(option => (
+              <label
+                key={option}
+                className="flex items-center gap-2 px-2 py-1.5 text-xs cursor-pointer hover:bg-gray-50"
+              >
+                <input
+                  type="checkbox"
+                  checked={selected.includes(option)}
+                  onChange={() => toggleOption(option)}
+                  className="rounded text-primary"
+                />
+                <span>{option}</span>
+              </label>
+            ))
+          )}
+          {selected.length > 0 && (
+            <div className="border-t px-2 py-1">
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="text-xs text-primary hover:underline"
+              >
+                Tout effacer
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface DemandesRessourcesProps {
   divisions?: string[];
@@ -147,107 +237,67 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Traducteurs disponibles */}
       {traducteursDispo.length > 0 && (
         <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">✋</span>
-              Traducteurs cherchant du travail ({traducteursFiltres.length}/{traducteursDispo.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Filtres multi-sélection */}
-            <div className="bg-white border border-green-200 rounded-lg p-3 mb-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Filtre Divisions */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Divisions ({filtresDivisions.length > 0 ? filtresDivisions.length : 'toutes'})</label>
-                  <div className="space-y-1 max-h-32 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
-                    {divisionsDisponibles.map(d => (
-                      <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white p-1 rounded">
-                        <input
-                          type="checkbox"
-                          checked={filtresDivisions.includes(d)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFiltresDivisions([...filtresDivisions, d]);
-                            } else {
-                              setFiltresDivisions(filtresDivisions.filter(x => x !== d));
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span>{d}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-                {/* Filtre Classifications */}
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-2">Classifications ({filtresClassifications.length > 0 ? filtresClassifications.length : 'toutes'})</label>
-                  <div className="space-y-1 border border-gray-200 rounded p-2 bg-gray-50">
-                    {classificationsDisponibles.map(c => (
-                      <label key={c} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white p-1 rounded">
-                        <input
-                          type="checkbox"
-                          checked={filtresClassifications.includes(c)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFiltresClassifications([...filtresClassifications, c]);
-                            } else {
-                              setFiltresClassifications(filtresClassifications.filter(x => x !== c));
-                            }
-                          }}
-                          className="rounded"
-                        />
-                        <span>{c}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {/* Bouton réinitialiser */}
-              {(filtresDivisions.length > 0 || filtresClassifications.length > 0) && (
-                <div className="mt-3">
+          <CardHeader className="py-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <span>✋</span>
+                Traducteurs cherchant du travail ({traducteursFiltres.length}/{traducteursDispo.length})
+              </CardTitle>
+              {/* Filtres dropdown inline */}
+              <div className="flex items-center gap-2">
+                <MultiSelectDropdown
+                  label=""
+                  options={divisionsDisponibles}
+                  selected={filtresDivisions}
+                  onChange={setFiltresDivisions}
+                  placeholder="Divisions"
+                />
+                <MultiSelectDropdown
+                  label=""
+                  options={classificationsDisponibles}
+                  selected={filtresClassifications}
+                  onChange={setFiltresClassifications}
+                  placeholder="Classifications"
+                />
+                {(filtresDivisions.length > 0 || filtresClassifications.length > 0) && (
                   <Button 
-                    variant="outline" 
+                    variant="ghost" 
+                    size="sm"
                     onClick={() => { setFiltresDivisions([]); setFiltresClassifications([]); }}
-                    className="text-xs"
                   >
-                    Réinitialiser les filtres
+                    ✕
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
-            
+          </CardHeader>
+          <CardContent className="pt-2">
             {traducteursFiltres.length === 0 ? (
-              <div className="text-center py-6 text-gray-500">
-                <p>Aucun traducteur ne correspond aux filtres sélectionnés</p>
+              <div className="text-center py-3 text-gray-500 text-sm">
+                Aucun traducteur ne correspond aux filtres
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
                 {traducteursFiltres.map(tr => (
-                  <div key={tr.id} className="p-4 bg-white rounded-lg border border-green-200 shadow-sm">
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center font-bold">
+                  <div key={tr.id} className="p-2 bg-white rounded border border-green-200 text-xs">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-7 h-7 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
                         {tr.nom.charAt(0)}
                       </div>
-                      <div>
-                        <div className="font-medium">{tr.nom}</div>
-                        <div className="text-xs text-muted">{tr.classification} • {tr.divisions.join(', ')}</div>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{tr.nom}</div>
+                        <div className="text-gray-500 truncate">{tr.classification} • {tr.divisions.join(', ')}</div>
                       </div>
                     </div>
-                    <div className="text-xs text-gray-600 mb-2">
-                      <span className="font-medium">Paires:</span>{' '}
-                      {tr.pairesLinguistiques.map(p => `${p.langueSource}→${p.langueCible}`).join(', ')}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      <span className="font-medium">Capacité:</span> {tr.capaciteHeuresParJour}h/jour
+                    <div className="text-gray-500">
+                      {tr.pairesLinguistiques.map(p => `${p.langueSource}→${p.langueCible}`).join(', ')} • {tr.capaciteHeuresParJour}h/j
                     </div>
                     {tr.commentaireDisponibilite && (
-                      <div className="mt-2 text-sm text-green-700 bg-green-100 p-2 rounded">
+                      <div className="mt-1 text-green-700 bg-green-100 p-1 rounded text-xs truncate" title={tr.commentaireDisponibilite}>
                         💬 {tr.commentaireDisponibilite}
                       </div>
                     )}
@@ -261,18 +311,18 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
 
       {/* Demandes de ressources */}
       <Card>
-        <CardHeader>
+        <CardHeader className="py-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <span className="text-2xl">📢</span>
-              Demandes de ressources
+            <CardTitle className="text-sm flex items-center gap-2">
+              <span>📢</span>
+              Demandes de ressources ({demandes.length})
             </CardTitle>
-            <Button onClick={() => setShowForm(!showForm)}>
-              {showForm ? '✕ Annuler' : '➕ Nouvelle demande'}
+            <Button size="sm" onClick={() => setShowForm(!showForm)}>
+              {showForm ? '✕' : '➕ Nouvelle'}
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-2">
           {/* Formulaire de création */}
           {showForm && (
             <form onSubmit={handleSubmit} className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
