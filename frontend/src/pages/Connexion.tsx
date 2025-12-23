@@ -188,7 +188,7 @@ const Connexion: React.FC = () => {
         {/* Pied de page */}
         <div className="mt-8 pt-6 border-t border-gray-100 text-center">
           <p className="text-xs text-muted-foreground">
-            Bureau de la traduction · Gouvernement du Canada
+            Tetrix PLUS · Prototype
           </p>
         </div>
       </Card>
