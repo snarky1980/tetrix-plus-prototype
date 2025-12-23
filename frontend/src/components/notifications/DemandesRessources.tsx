@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -29,8 +29,6 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   // Filtres pour les traducteurs disponibles (multi-sélection)
   const [filtresDivisions, setFiltresDivisions] = useState<string[]>([]);
   const [filtresClassifications, setFiltresClassifications] = useState<string[]>([]);
-  const [dropdownDivisionsOuvert, setDropdownDivisionsOuvert] = useState(false);
-  const [dropdownClassificationsOuvert, setDropdownClassificationsOuvert] = useState(false);
   
   const [formData, setFormData] = useState({
     titre: '',
@@ -42,23 +40,8 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
     urgence: 'NORMALE',
   });
 
-  // Ref pour fermer les dropdowns en cliquant ailleurs
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     chargerDonnees();
-  }, []);
-
-  // Fermer les dropdowns quand on clique ailleurs
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownDivisionsOuvert(false);
-        setDropdownClassificationsOuvert(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const chargerDonnees = async () => {
@@ -175,156 +158,69 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {/* Filtres compacts avec menus déroulants */}
-            <div ref={dropdownRef} className="flex flex-wrap items-center gap-3 mb-4">
-              {/* Dropdown Divisions */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => { setDropdownDivisionsOuvert(!dropdownDivisionsOuvert); setDropdownClassificationsOuvert(false); }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <span>📂 Divisions</span>
-                  {filtresDivisions.length > 0 && (
-                    <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">{filtresDivisions.length}</span>
-                  )}
-                  <svg className={`w-4 h-4 transition-transform ${dropdownDivisionsOuvert ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {dropdownDivisionsOuvert && (
-                  <div className="absolute z-20 mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg">
-                    <div className="p-2 border-b border-gray-100">
-                      <button
-                        type="button"
-                        onClick={() => setFiltresDivisions([])}
-                        className="text-xs text-gray-500 hover:text-green-600"
-                      >
-                        Tout désélectionner
-                      </button>
-                    </div>
-                    <div className="max-h-48 overflow-y-auto p-1">
-                      {divisionsDisponibles.map(d => (
-                        <label
-                          key={d}
-                          className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer rounded hover:bg-green-50 ${filtresDivisions.includes(d) ? 'bg-green-100' : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={filtresDivisions.includes(d)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFiltresDivisions([...filtresDivisions, d]);
-                              } else {
-                                setFiltresDivisions(filtresDivisions.filter(x => x !== d));
-                              }
-                            }}
-                            className="rounded text-green-600 focus:ring-green-500"
-                          />
-                          <span>{d}</span>
-                        </label>
-                      ))}
-                    </div>
+            {/* Filtres multi-sélection */}
+            <div className="bg-white border border-green-200 rounded-lg p-3 mb-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Filtre Divisions */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Divisions ({filtresDivisions.length > 0 ? filtresDivisions.length : 'toutes'})</label>
+                  <div className="space-y-1 max-h-32 overflow-y-auto border border-gray-200 rounded p-2 bg-gray-50">
+                    {divisionsDisponibles.map(d => (
+                      <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filtresDivisions.includes(d)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFiltresDivisions([...filtresDivisions, d]);
+                            } else {
+                              setFiltresDivisions(filtresDivisions.filter(x => x !== d));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span>{d}</span>
+                      </label>
+                    ))}
                   </div>
-                )}
-              </div>
-
-              {/* Dropdown Classifications */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => { setDropdownClassificationsOuvert(!dropdownClassificationsOuvert); setDropdownDivisionsOuvert(false); }}
-                  className="flex items-center gap-2 px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <span>🏷️ Classifications</span>
-                  {filtresClassifications.length > 0 && (
-                    <span className="bg-green-500 text-white text-xs px-1.5 py-0.5 rounded-full">{filtresClassifications.length}</span>
-                  )}
-                  <svg className={`w-4 h-4 transition-transform ${dropdownClassificationsOuvert ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {dropdownClassificationsOuvert && (
-                  <div className="absolute z-20 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg">
-                    <div className="p-2 border-b border-gray-100">
-                      <button
-                        type="button"
-                        onClick={() => setFiltresClassifications([])}
-                        className="text-xs text-gray-500 hover:text-green-600"
-                      >
-                        Tout désélectionner
-                      </button>
-                    </div>
-                    <div className="p-1">
-                      {classificationsDisponibles.map(c => (
-                        <label
-                          key={c}
-                          className={`flex items-center gap-2 px-3 py-2 text-sm cursor-pointer rounded hover:bg-green-50 ${filtresClassifications.includes(c) ? 'bg-green-100' : ''}`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={filtresClassifications.includes(c)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFiltresClassifications([...filtresClassifications, c]);
-                              } else {
-                                setFiltresClassifications(filtresClassifications.filter(x => x !== c));
-                              }
-                            }}
-                            className="rounded text-green-600 focus:ring-green-500"
-                          />
-                          <span>{c}</span>
-                        </label>
-                      ))}
-                    </div>
+                </div>
+                {/* Filtre Classifications */}
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-2">Classifications ({filtresClassifications.length > 0 ? filtresClassifications.length : 'toutes'})</label>
+                  <div className="space-y-1 border border-gray-200 rounded p-2 bg-gray-50">
+                    {classificationsDisponibles.map(c => (
+                      <label key={c} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-white p-1 rounded">
+                        <input
+                          type="checkbox"
+                          checked={filtresClassifications.includes(c)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFiltresClassifications([...filtresClassifications, c]);
+                            } else {
+                              setFiltresClassifications(filtresClassifications.filter(x => x !== c));
+                            }
+                          }}
+                          className="rounded"
+                        />
+                        <span>{c}</span>
+                      </label>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
-
               {/* Bouton réinitialiser */}
               {(filtresDivisions.length > 0 || filtresClassifications.length > 0) && (
-                <button
-                  type="button"
-                  onClick={() => { setFiltresDivisions([]); setFiltresClassifications([]); }}
-                  className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Réinitialiser
-                </button>
+                <div className="mt-3">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => { setFiltresDivisions([]); setFiltresClassifications([]); }}
+                    className="text-xs"
+                  >
+                    Réinitialiser les filtres
+                  </Button>
+                </div>
               )}
             </div>
-
-            {/* Badges des filtres actifs */}
-            {(filtresDivisions.length > 0 || filtresClassifications.length > 0) && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {filtresDivisions.map(d => (
-                  <span key={d} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
-                    📂 {d}
-                    <button
-                      type="button"
-                      onClick={() => setFiltresDivisions(filtresDivisions.filter(x => x !== d))}
-                      className="hover:text-red-600"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-                {filtresClassifications.map(c => (
-                  <span key={c} className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                    🏷️ {c}
-                    <button
-                      type="button"
-                      onClick={() => setFiltresClassifications(filtresClassifications.filter(x => x !== c))}
-                      className="hover:text-red-600"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
             
             {traducteursFiltres.length === 0 ? (
               <div className="text-center py-6 text-gray-500">
