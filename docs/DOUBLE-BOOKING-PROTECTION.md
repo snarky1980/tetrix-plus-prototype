@@ -38,7 +38,7 @@ Avant de créer une tâche, le système :
 En cas de conflit, l'utilisateur reçoit un message détaillé :
 
 ```
-Conflit de capacité détecté pour Parent, Geneviève:
+Conflit de capacité détecté pour Parant, Génévyève:
 2025-12-20: 5h demandées, seulement 2h disponibles (5h/7h utilisées)
 2025-12-21: 3h demandées, seulement 0h disponibles (7h/7h utilisées)
 
