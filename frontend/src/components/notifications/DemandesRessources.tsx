@@ -21,10 +21,11 @@ interface MultiSelectDropdownProps {
   selected: string[];
   onChange: (selected: string[]) => void;
   placeholder?: string;
+  minWidth?: string;
 }
 
 const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ 
-  label, options, selected, onChange, placeholder = "Tous" 
+  label, options, selected, onChange, placeholder = "Tous", minWidth = "120px"
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -55,12 +56,12 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
       : `${selected.length} sélectionnés`;
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative" ref={dropdownRef} style={{ minWidth }}>
       <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-left px-2 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-1"
+        className="w-full text-left px-2 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-2"
       >
         <span className={selected.length === 0 ? 'text-gray-400' : 'text-gray-900 truncate'}>
           {displayText}
@@ -255,6 +256,7 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
                   selected={filtresDivisions}
                   onChange={setFiltresDivisions}
                   placeholder="Divisions"
+                  minWidth="140px"
                 />
                 <MultiSelectDropdown
                   label=""
@@ -262,6 +264,7 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
                   selected={filtresClassifications}
                   onChange={setFiltresClassifications}
                   placeholder="Classifications"
+                  minWidth="140px"
                 />
                 {(filtresDivisions.length > 0 || filtresClassifications.length > 0) && (
                   <Button 
