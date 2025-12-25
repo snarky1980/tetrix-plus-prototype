@@ -1,6 +1,6 @@
 import { TraducteurForm } from './TraducteurForm';
 import { Traducteur } from '../../types';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -8,7 +8,85 @@ import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import { InfoTooltip } from '../ui/Tooltip';
 import { traducteurService } from '../../services/traducteurService';
+
+// Composant FilterDropdown réutilisable
+interface FilterDropdownProps {
+  label: string;
+  options: string[];
+  selected: string[];
+  onToggle: (value: string) => void;
+}
+
+const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, selected, onToggle }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fermer le dropdown si on clique en dehors
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors
+          ${selected.length > 0 
+            ? 'bg-primaire text-white border-primaire' 
+            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+          }
+        `}
+      >
+        <span>{label}</span>
+        {selected.length > 0 && (
+          <span className="bg-white/20 text-xs px-1.5 rounded">{selected.length}</span>
+        )}
+        <svg 
+          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+      
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-48 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
+          {options.length === 0 ? (
+            <div className="p-3 text-sm text-gray-500 text-center">Aucune option</div>
+          ) : (
+            <div className="p-2">
+              {options.map(option => (
+                <label 
+                  key={option} 
+                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(option)}
+                    onChange={() => onToggle(option)}
+                    className="rounded border-gray-300 text-primaire focus:ring-primaire"
+                  />
+                  <span className="truncate">{option}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const TraducteurManagement: React.FC = () => {
   const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
@@ -184,7 +262,13 @@ export const TraducteurManagement: React.FC = () => {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Gestion des traducteurs</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>Gestion des traducteurs</CardTitle>
+              <InfoTooltip 
+                content="Gérez les profils des traducteurs : compétences linguistiques, domaines d'expertise, divisions assignées et disponibilités."
+                size="md"
+              />
+            </div>
             <Button variant="primaire" onClick={handleNouveauTraducteur}>
               + Nouveau traducteur
             </Button>
@@ -199,119 +283,83 @@ export const TraducteurManagement: React.FC = () => {
               className="mb-3"
             />
             
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Filtre Classifications */}
-              <div className="border rounded-lg p-3">
-                <h4 className="font-semibold mb-2 text-sm">Classification</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {classifications.map(c => (
-                    <label key={c} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={filtres.classifications.includes(c)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setFiltres({ ...filtres, classifications: [...filtres.classifications, c] });
-                          } else {
-                            setFiltres({ ...filtres, classifications: filtres.classifications.filter(v => v !== c) });
-                          }
-                        }}
-                      />
-                      <span>{c}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Filtre Divisions */}
-              <div className="border rounded-lg p-3">
-                <h4 className="font-semibold mb-2 text-sm">Division</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {divisions.map(d => (
-                    <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={filtres.divisions.includes(d)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setFiltres({ ...filtres, divisions: [...filtres.divisions, d] });
-                          } else {
-                            setFiltres({ ...filtres, divisions: filtres.divisions.filter(v => v !== d) });
-                          }
-                        }}
-                      />
-                      <span>{d}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Filtre Domaines */}
-              <div className="border rounded-lg p-3">
-                <h4 className="font-semibold mb-2 text-sm">Domaines</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {domaines.map(d => (
-                    <label key={d} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={filtres.domaines.includes(d)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setFiltres({ ...filtres, domaines: [...filtres.domaines, d] });
-                          } else {
-                            setFiltres({ ...filtres, domaines: filtres.domaines.filter(v => v !== d) });
-                          }
-                        }}
-                      />
-                      <span>{d}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Filtre Paires linguistiques */}
-              <div className="border rounded-lg p-3">
-                <h4 className="font-semibold mb-2 text-sm">Paires linguistiques</h4>
-                <div className="space-y-1 max-h-32 overflow-y-auto">
-                  {paires.map(paire => (
-                    <label key={paire} className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1 rounded">
-                      <input
-                        type="checkbox"
-                        checked={filtres.paires.includes(paire)}
-                        onChange={e => {
-                          if (e.target.checked) {
-                            setFiltres({ ...filtres, paires: [...filtres.paires, paire] });
-                          } else {
-                            setFiltres({ ...filtres, paires: filtres.paires.filter(v => v !== paire) });
-                          }
-                        }}
-                      />
-                      <span>{paire}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Bouton réinitialiser */}
-            {(filtres.classifications.length > 0 || filtres.divisions.length > 0 || filtres.domaines.length > 0 || filtres.paires.length > 0 || filtres.recherche) && (
-              <div className="mt-3">
-                <Button
-                  variant="outline"
+            {/* Filtres compacts en ligne */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs text-gray-500 flex items-center gap-1">
+                Filtres
+                <InfoTooltip 
+                  content="Utilisez ces filtres pour trouver rapidement un traducteur. Sélectionnez plusieurs valeurs pour un filtre combiné (OU logique)."
+                  size="sm"
+                />
+              </span>
+              <FilterDropdown
+                label="Classification"
+                options={classifications}
+                selected={filtres.classifications}
+                onToggle={(c) => {
+                  if (filtres.classifications.includes(c)) {
+                    setFiltres({ ...filtres, classifications: filtres.classifications.filter(v => v !== c) });
+                  } else {
+                    setFiltres({ ...filtres, classifications: [...filtres.classifications, c] });
+                  }
+                }}
+              />
+              
+              <FilterDropdown
+                label="Division"
+                options={divisions}
+                selected={filtres.divisions}
+                onToggle={(d) => {
+                  if (filtres.divisions.includes(d)) {
+                    setFiltres({ ...filtres, divisions: filtres.divisions.filter(v => v !== d) });
+                  } else {
+                    setFiltres({ ...filtres, divisions: [...filtres.divisions, d] });
+                  }
+                }}
+              />
+              
+              <FilterDropdown
+                label="Domaines"
+                options={domaines}
+                selected={filtres.domaines}
+                onToggle={(d) => {
+                  if (filtres.domaines.includes(d)) {
+                    setFiltres({ ...filtres, domaines: filtres.domaines.filter(v => v !== d) });
+                  } else {
+                    setFiltres({ ...filtres, domaines: [...filtres.domaines, d] });
+                  }
+                }}
+              />
+              
+              <FilterDropdown
+                label="Paires linguistiques"
+                options={paires}
+                selected={filtres.paires}
+                onToggle={(p) => {
+                  if (filtres.paires.includes(p)) {
+                    setFiltres({ ...filtres, paires: filtres.paires.filter(v => v !== p) });
+                  } else {
+                    setFiltres({ ...filtres, paires: [...filtres.paires, p] });
+                  }
+                }}
+              />
+              
+              {/* Bouton réinitialiser inline */}
+              {(filtres.classifications.length > 0 || filtres.divisions.length > 0 || filtres.domaines.length > 0 || filtres.paires.length > 0) && (
+                <button
                   onClick={() => setFiltres({
-                    recherche: '',
+                    ...filtres,
                     divisions: [],
                     classifications: [],
                     domaines: [],
                     paires: [],
-                    actif: 'tous',
                   })}
-                  className="text-sm"
+                  className="text-sm text-gray-500 hover:text-red-600 underline"
                 >
-                  Réinitialiser les filtres
-                </Button>
-              </div>
-            )}
+                  Effacer filtres
+                </button>
+              )}
+            </div>
           </div>
 
           {loading ? (

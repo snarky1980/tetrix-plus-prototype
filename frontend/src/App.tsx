@@ -8,6 +8,7 @@ import { ToastContainer } from './components/ui/Toast';
 
 // Pages chargées immédiatement (critiques pour l'auth)
 import Connexion from './pages/Connexion';
+import { PortalSelector } from './components/navigation/PortalSwitcher';
 
 // Pages chargées en lazy loading (code splitting)
 const DashboardTraducteur = lazy(() => import('./pages/DashboardTraducteur'));
@@ -65,10 +66,13 @@ const RedirectionDashboard: React.FC = () => {
     return <Navigate to="/connexion" replace />;
   }
 
+  // Les ADMIN ont accès à plusieurs portails - afficher le sélecteur
+  if (utilisateur.role === 'ADMIN') {
+    return <PortalSelector />;
+  }
+
   // Redirection selon le rôle
   switch (utilisateur.role) {
-    case 'ADMIN':
-      return <Navigate to="/admin" replace />;
     case 'CONSEILLER':
       return <Navigate to="/conseiller" replace />;
     case 'GESTIONNAIRE':
@@ -115,7 +119,7 @@ function App() {
           <Route
             path="/traducteur"
             element={
-              <RouteProtegee rolesAutorises={['TRADUCTEUR']}>
+              <RouteProtegee rolesAutorises={['TRADUCTEUR', 'ADMIN']}>
                 <DashboardTraducteur />
               </RouteProtegee>
             }

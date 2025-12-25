@@ -8,6 +8,9 @@ export interface CreateUtilisateurData {
   prenom?: string;
   role: 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR';
   divisions?: string[];
+  actif?: boolean;
+  isPlayground?: boolean;
+  playgroundNote?: string;
 }
 
 export interface UpdateUtilisateurData {
@@ -17,6 +20,8 @@ export interface UpdateUtilisateurData {
   role?: 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR';
   actif?: boolean;
   motDePasse?: string;
+  isPlayground?: boolean;
+  playgroundNote?: string;
 }
 
 export interface DivisionAccessData {

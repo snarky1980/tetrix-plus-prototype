@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { NotificationBadge } from '../ui/NotificationBadge';
 import { cn } from '../../lib/cn';
 import { UserSettingsButton } from '../settings/UserSettingsButton';
+import { PortalSwitcherCompact } from '../navigation/PortalSwitcher';
 
 interface AppLayoutProps {
   titre: string;
@@ -28,6 +29,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
         <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-sm font-semibold tracking-wide" aria-label={titre}>{titre}</h1>
+            {/* Sélecteur de portail pour les utilisateurs multi-portails */}
+            <PortalSwitcherCompact />
             {actionsGauche}
           </div>
           <div className="flex items-center gap-3">

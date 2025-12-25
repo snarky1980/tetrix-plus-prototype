@@ -15,6 +15,8 @@ model Utilisateur {
   prenom             String?
   role               Role                @default(TRADUCTEUR)
   actif              Boolean             @default(true)
+  isPlayground       Boolean             @default(false) // Compte de démonstration/test
+  playgroundNote     String?             // Note descriptive pour le compte playground
   creeLe             DateTime            @default(now())
   modifieLe          DateTime            @updatedAt
   traducteur         Traducteur?
@@ -85,6 +87,9 @@ model Traducteur {
   // Liaisons réviseur-traducteur
   reviseursDe              LiaisonReviseur[]   @relation("TraducteurReviseur")
   revisePar                LiaisonReviseur[]   @relation("TraducteurRevise")
+  
+  // Équipes-projet
+  equipesProjet            EquipeProjetMembre[]
 
   @@index([actif])
   @@index([disponiblePourTravail])
@@ -300,4 +305,80 @@ enum Urgence {
   NORMALE
   HAUTE
   CRITIQUE
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ÉQUIPES-PROJET - Regroupement flexible de traducteurs
+// ═══════════════════════════════════════════════════════════════════════════
+
+model EquipeProjet {
+  id              String   @id @default(uuid())
+  nom             String   @unique
+  code            String   @unique        // Code court (ex: "SATG-BL", "PROJ-2025")
+  description     String?
+  couleur         String   @default("#3B82F6") // Couleur pour l'affichage (hex)
+  
+  // Liaison optionnelle à un client
+  clientId        String?
+  clientNom       String?                 // Dénormalisé pour affichage rapide
+  
+  // Objectif/contexte
+  objectif        String?                 // Ex: "Rattrapage backlog Q4", "Projet spécial immigration"
+  
+  // Dates
+  dateDebut       DateTime?               // Date de début prévue
+  dateFin         DateTime?               // Date de fin prévue (null = indéterminé)
+  
+  // Statut
+  actif           Boolean  @default(true) // Équipe activable/désactivable
+  archive         Boolean  @default(false) // Archivé = historique, plus modifiable
+  
+  // Métadonnées
+  creePar         String                  // ID utilisateur créateur
+  creeLe          DateTime @default(now())
+  modifiePar      String?
+  modifieLe       DateTime @updatedAt
+  
+  // Relations
+  membres         EquipeProjetMembre[]
+
+  @@index([actif])
+  @@index([archive])
+  @@index([clientId])
+  @@map("equipes_projet")
+}
+
+model EquipeProjetMembre {
+  id              String       @id @default(uuid())
+  equipeProjetId  String
+  traducteurId    String
+  
+  // Rôle dans l'équipe
+  role            RoleEquipe   @default(MEMBRE)
+  
+  // Dates d'appartenance
+  dateAjout       DateTime     @default(now())
+  dateRetrait     DateTime?    // null = toujours membre
+  
+  // Statut
+  actif           Boolean      @default(true)
+  
+  // Métadonnées
+  ajoutePar       String       // ID utilisateur qui a ajouté
+  notes           String?
+  
+  equipeProjet    EquipeProjet @relation(fields: [equipeProjetId], references: [id], onDelete: Cascade)
+  traducteur      Traducteur   @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([equipeProjetId, traducteurId])
+  @@index([equipeProjetId])
+  @@index([traducteurId])
+  @@index([actif])
+  @@map("equipes_projet_membres")
+}
+
+enum RoleEquipe {
+  RESPONSABLE  // Chef d'équipe / coordinateur
+  MEMBRE       // Membre régulier
+  REVISEUR     // Réviseur attitré de l'équipe
 }

@@ -10,10 +10,12 @@ import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
+import { InfoTooltip } from '../ui/Tooltip';
 import { useToast } from '../../contexts/ToastContext';
 import { Utilisateur, Traducteur } from '../../types';
 import { utilisateurService } from '../../services/utilisateurService';
 import { traducteurService } from '../../services/traducteurService';
+import { QuickUserCreation, QuickCreateInline } from './QuickUserCreation';
 
 export const UserManagement: React.FC = () => {
   const { addToast } = useToast();
@@ -27,6 +29,16 @@ export const UserManagement: React.FC = () => {
     isOpen: false,
     id: null
   });
+  const [confirmSupprimer, setConfirmSupprimer] = useState<{ isOpen: boolean; id: string | null; email: string }>({
+    isOpen: false,
+    id: null,
+    email: ''
+  });
+  const [quickCreateOuvert, setQuickCreateOuvert] = useState(false);
+  const [utilisateurACopier, setUtilisateurACopier] = useState<Utilisateur | undefined>();
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
+  const [showPlayground, setShowPlayground] = useState(false);
+  const [playgroundModal, setPlaygroundModal] = useState(false);
 
   const chargerDonnees = async () => {
     setLoading(true);
@@ -49,8 +61,13 @@ export const UserManagement: React.FC = () => {
   }, []);
 
   const handleNouvelUtilisateur = () => {
-    setUtilisateurSelectionne(undefined);
-    setModalOuvert(true);
+    setUtilisateurACopier(undefined);
+    setQuickCreateOuvert(true);
+  };
+
+  const handleCopierUtilisateur = (utilisateur: Utilisateur) => {
+    setUtilisateurACopier(utilisateur);
+    setQuickCreateOuvert(true);
   };
 
   const handleEditerUtilisateur = (utilisateur: Utilisateur) => {
@@ -67,6 +84,10 @@ export const UserManagement: React.FC = () => {
     setConfirmDesactiver({ isOpen: true, id });
   };
 
+  const handleSupprimerUtilisateur = (id: string, email: string) => {
+    setConfirmSupprimer({ isOpen: true, id, email });
+  };
+
   const executerDesactivation = async () => {
     if (!confirmDesactiver.id) return;
     try {
@@ -80,14 +101,33 @@ export const UserManagement: React.FC = () => {
     }
   };
 
+  const executerSuppression = async () => {
+    if (!confirmSupprimer.id) return;
+    try {
+      await utilisateurService.supprimerUtilisateur(confirmSupprimer.id);
+      await chargerDonnees();
+      addToast('Utilisateur supprimé définitivement', 'success');
+    } catch (err) {
+      addToast('Erreur lors de la suppression de l\'utilisateur', 'error');
+    } finally {
+      setConfirmSupprimer({ isOpen: false, id: null, email: '' });
+    }
+  };
+
+  // Séparer les utilisateurs normaux et playground
+  const utilisateursNormaux = utilisateurs.filter(u => !u.isPlayground);
+  const utilisateursPlayground = utilisateurs.filter(u => u.isPlayground);
+
   const roleLabels: Record<string, string> = {
     ADMIN: 'Administrateur',
+    GESTIONNAIRE: 'Gestionnaire',
     CONSEILLER: 'Conseiller',
     TRADUCTEUR: 'Traducteur',
   };
 
-  const roleVariants: Record<string, 'danger' | 'warning' | 'info'> = {
+  const roleVariants: Record<string, 'danger' | 'warning' | 'info' | 'default'> = {
     ADMIN: 'danger',
+    GESTIONNAIRE: 'default',
     CONSEILLER: 'warning',
     TRADUCTEUR: 'info',
   };
@@ -119,7 +159,18 @@ export const UserManagement: React.FC = () => {
       header: 'Actions',
       accessor: 'id',
       render: (_: string, row: Utilisateur) => (
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCopierUtilisateur(row);
+            }}
+            className="py-1 px-2 text-xs"
+            title="Créer un utilisateur similaire"
+          >
+            📋 Copier
+          </Button>
           <Button
             variant="outline"
             onClick={(e) => {
@@ -152,6 +203,17 @@ export const UserManagement: React.FC = () => {
           >
             Désactiver
           </Button>
+          <Button
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleSupprimerUtilisateur(row.id, row.email);
+            }}
+            className="py-1 px-2 text-xs text-red-600 border-red-300 hover:bg-red-50"
+            title="Supprimer définitivement"
+          >
+            🗑️ Supprimer
+          </Button>
         </div>
       ),
     },
@@ -163,15 +225,31 @@ export const UserManagement: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>Gestion des utilisateurs</CardTitle>
-            <Button variant="primaire" onClick={handleNouvelUtilisateur}>
-              + Nouvel utilisateur
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowQuickCreate(!showQuickCreate)}
+                className="text-sm"
+              >
+                ⚡ Création rapide
+              </Button>
+              <Button variant="primaire" onClick={handleNouvelUtilisateur}>
+                + Nouvel utilisateur
+              </Button>
+            </div>
           </div>
+          
+          {/* Barre de création rapide */}
+          {showQuickCreate && (
+            <div className="mt-4">
+              <QuickCreateInline onCreated={chargerDonnees} />
+            </div>
+          )}
         </CardHeader>
         <CardContent>
           {loading ? (
             <SkeletonTable />
-          ) : utilisateurs.length === 0 ? (
+          ) : utilisateursNormaux.length === 0 ? (
             <EmptyState 
               icon="👤"
               title="Aucun utilisateur"
@@ -184,16 +262,107 @@ export const UserManagement: React.FC = () => {
           ) : (
             <>
               <div className="mb-2 text-sm text-muted">
-                {utilisateurs.length} utilisateur(s)
+                {utilisateursNormaux.length} utilisateur(s)
               </div>
               <DataTable
-                data={utilisateurs}
+                data={utilisateursNormaux}
                 columns={columns}
                 emptyMessage="Aucun utilisateur"
               />
             </>
           )}
         </CardContent>
+      </Card>
+
+      {/* Section Comptes Playground */}
+      <Card className="mt-4">
+        <CardHeader>
+          <div 
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setShowPlayground(!showPlayground)}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🎮</span>
+              <CardTitle className="text-base">Comptes Playground</CardTitle>
+              <InfoTooltip 
+                content="Comptes de démonstration pour présenter le système aux évaluateurs ou tester sans affecter les données réelles. Ces comptes utilisent des pseudonymes."
+                size="md"
+              />
+              <Badge variant="info">{utilisateursPlayground.length}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setPlaygroundModal(true);
+                }}
+                className="text-sm"
+              >
+                + Nouveau compte Playground
+              </Button>
+              <span className="text-gray-400 transition-transform duration-200" style={{ transform: showPlayground ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                ▼
+              </span>
+            </div>
+          </div>
+        </CardHeader>
+        {showPlayground && (
+          <CardContent>
+            <p className="text-sm text-muted mb-4">
+              Les comptes Playground permettent de démontrer le système, tester les fonctionnalités 
+              et permettre aux évaluateurs de naviguer sans modifier les données de production.
+            </p>
+            {utilisateursPlayground.length === 0 ? (
+              <div className="text-center py-4 text-muted">Aucun compte Playground</div>
+            ) : (
+              <div className="space-y-2">
+                {utilisateursPlayground.map(user => (
+                  <div 
+                    key={user.id} 
+                    className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-purple-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                        {user.prenom?.[0] || user.email[0].toUpperCase()}
+                        {user.nom?.[0] || ''}
+                      </div>
+                      <div>
+                        <div className="font-medium">
+                          {user.prenom && user.nom 
+                            ? `${user.prenom} ${user.nom}` 
+                            : user.email.split('@')[0]}
+                        </div>
+                        <div className="text-sm text-gray-600">{user.email}</div>
+                        {user.playgroundNote && (
+                          <div className="text-xs text-purple-600 mt-0.5">{user.playgroundNote}</div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant={roleVariants[user.role] || 'default'}>
+                        {roleLabels[user.role] || user.role}
+                      </Badge>
+                      <Badge variant={user.actif ? 'success' : 'default'}>
+                        {user.actif ? 'Actif' : 'Inactif'}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleEditerUtilisateur(user)}
+                        className="py-1 px-2 text-xs"
+                      >
+                        Modifier
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg text-sm">
+              <strong>🔑 Mot de passe par défaut:</strong> <code className="bg-gray-200 px-1 rounded">playground123</code>
+            </div>
+          </CardContent>
+        )}
       </Card>
 
       <UserForm
@@ -221,6 +390,36 @@ export const UserManagement: React.FC = () => {
         variant="warning"
         confirmText="Désactiver"
         cancelText="Annuler"
+      />
+
+      {/* Dialogue de confirmation suppression */}
+      <ConfirmDialog
+        isOpen={confirmSupprimer.isOpen}
+        onClose={() => setConfirmSupprimer({ isOpen: false, id: null, email: '' })}
+        onConfirm={executerSuppression}
+        title="🗑️ Supprimer définitivement"
+        message={`Êtes-vous sûr de vouloir supprimer définitivement l'utilisateur "${confirmSupprimer.email}" ? Cette action est IRRÉVERSIBLE et supprimera toutes les données associées.`}
+        variant="danger"
+        confirmText="Supprimer définitivement"
+        cancelText="Annuler"
+      />
+
+      {/* Modal de création rapide avec assistant */}
+      <QuickUserCreation
+        ouvert={quickCreateOuvert}
+        onFermer={() => {
+          setQuickCreateOuvert(false);
+          setUtilisateurACopier(undefined);
+        }}
+        onSuccess={chargerDonnees}
+        utilisateurACopier={utilisateurACopier}
+      />
+
+      {/* Modal création compte Playground */}
+      <PlaygroundCreationModal
+        ouvert={playgroundModal}
+        onFermer={() => setPlaygroundModal(false)}
+        onSuccess={chargerDonnees}
       />
     </>
   );
@@ -308,13 +507,12 @@ const UserForm: React.FC<{
           </div>
         )}
 
-        <FormField label="Email" required helper="Adresse email unique pour la connexion">
+        <FormField label="Email" required helper={utilisateur ? "Vous pouvez modifier l'adresse email" : "Adresse email unique pour la connexion"}>
           <Input
             type="email"
             value={formData.email}
             onChange={e => setFormData({ ...formData, email: e.target.value })}
             required
-            disabled={!!utilisateur}
             placeholder="utilisateur@tetrix.com"
             error={!formData.email && formData !== undefined}
           />
@@ -579,6 +777,162 @@ const DivisionPermissionsModal: React.FC<{
           </Button>
           <Button onClick={handleSauvegarder} loading={loading}>
             Sauvegarder
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
+// Modal de création de compte Playground
+const PlaygroundCreationModal: React.FC<{
+  ouvert: boolean;
+  onFermer: () => void;
+  onSuccess: () => void;
+}> = ({ ouvert, onFermer, onSuccess }) => {
+  const { addToast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    prenom: '',
+    nom: '',
+    email: '',
+    role: 'CONSEILLER' as 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR',
+    note: '',
+  });
+
+  const roleOptions = [
+    { value: 'CONSEILLER', label: '📋 Conseiller (accès complet - recommandé)' },
+    { value: 'ADMIN', label: '👑 Administrateur (accès total)' },
+    { value: 'GESTIONNAIRE', label: '👔 Gestionnaire (accès limité)' },
+    { value: 'TRADUCTEUR', label: '🔤 Traducteur (accès minimal)' },
+  ];
+
+  const genererEmail = () => {
+    if (formData.prenom && formData.nom) {
+      const email = `${formData.prenom.toLowerCase()}.${formData.nom.toLowerCase()}@playground.tetrix.com`
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // Supprimer accents
+      setFormData({ ...formData, email });
+    }
+  };
+
+  const handleCreer = async () => {
+    if (!formData.prenom || !formData.nom || !formData.email) {
+      addToast('Veuillez remplir tous les champs obligatoires', 'error');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await utilisateurService.creerUtilisateur({
+        email: formData.email,
+        motDePasse: 'playground123',
+        nom: formData.nom,
+        prenom: formData.prenom,
+        role: formData.role,
+        actif: true,
+        isPlayground: true,
+        playgroundNote: formData.note || `Compte démo ${formData.role}`,
+      });
+      
+      addToast(`Compte Playground créé pour ${formData.prenom} ${formData.nom}`, 'success');
+      setFormData({ prenom: '', nom: '', email: '', role: 'CONSEILLER', note: '' });
+      onFermer();
+      onSuccess();
+    } catch (error: any) {
+      addToast(error.response?.data?.erreur || 'Erreur lors de la création', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Modal
+      titre="🎮 Nouveau compte Playground"
+      ouvert={ouvert}
+      onFermer={onFermer}
+    >
+      <div className="space-y-4">
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg text-sm">
+          <p className="text-purple-800">
+            <strong>Les comptes Playground permettent de :</strong>
+          </p>
+          <ul className="list-disc list-inside mt-1 text-purple-700 space-y-0.5">
+            <li>Démontrer toutes les fonctionnalités du système</li>
+            <li>Tester et explorer sans risque</li>
+            <li>Permettre aux évaluateurs de faire des recommandations</li>
+          </ul>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label="Prénom *">
+            <Input
+              value={formData.prenom}
+              onChange={e => setFormData({ ...formData, prenom: e.target.value })}
+              placeholder="Prénom"
+              onBlur={genererEmail}
+            />
+          </FormField>
+          <FormField label="Nom *">
+            <Input
+              value={formData.nom}
+              onChange={e => setFormData({ ...formData, nom: e.target.value })}
+              placeholder="Nom"
+              onBlur={genererEmail}
+            />
+          </FormField>
+        </div>
+
+        <FormField label="Email *">
+          <div className="flex gap-2">
+            <Input
+              value={formData.email}
+              onChange={e => setFormData({ ...formData, email: e.target.value })}
+              placeholder="prenom.nom@playground.tetrix.com"
+              className="flex-1"
+            />
+            <Button variant="outline" onClick={genererEmail} type="button">
+              Générer
+            </Button>
+          </div>
+        </FormField>
+
+        <FormField label="Rôle">
+          <Select
+            value={formData.role}
+            onChange={e => setFormData({ ...formData, role: e.target.value as any })}
+          >
+            {roleOptions.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </Select>
+          <p className="text-xs text-muted mt-1">
+            💡 Le rôle <strong>Conseiller</strong> donne accès aux 4 portails (Admin, Conseiller, Gestionnaire, Traducteur)
+          </p>
+        </FormField>
+
+        <FormField label="Note / Description">
+          <Input
+            value={formData.note}
+            onChange={e => setFormData({ ...formData, note: e.target.value })}
+            placeholder="Ex: Gestionnaire - Évaluation Q1 2025"
+          />
+        </FormField>
+
+        <div className="p-3 bg-gray-50 rounded-lg text-sm">
+          <strong>🔑 Mot de passe:</strong> <code className="bg-gray-200 px-1 rounded">playground123</code>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-4 border-t">
+          <Button variant="outline" onClick={onFermer} disabled={loading}>
+            Annuler
+          </Button>
+          <Button 
+            variant="primaire" 
+            onClick={handleCreer} 
+            loading={loading}
+            disabled={!formData.prenom || !formData.nom || !formData.email}
+          >
+            🎮 Créer le compte Playground
           </Button>
         </div>
       </div>

@@ -6,6 +6,8 @@ export interface Utilisateur {
   prenom?: string;
   role: 'ADMIN' | 'CONSEILLER' | 'GESTIONNAIRE' | 'TRADUCTEUR';
   actif: boolean;
+  isPlayground?: boolean;
+  playgroundNote?: string;
   traducteurId?: string;
   divisionAccess?: DivisionAccess[];
   traducteur?: {

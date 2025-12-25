@@ -5,18 +5,20 @@ import { Button } from '../components/ui/Button';
 import { StatCard } from '../components/ui/StatCard';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/Spinner';
+import { InfoTooltip } from '../components/ui/Tooltip';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { TraducteurManagement } from '../components/admin/TraducteurManagement';
-import { ClientDomaineManagement } from '../components/admin/ClientDomaineManagement';
+import { ClientDomaineManagement } from '../components/admin/ClientDomaineManagementV2';
 import { UserManagement } from '../components/admin/UserManagement';
+import { EquipeProjetManagement } from '../components/admin/EquipeProjetManagement';
 import { traducteurService } from '../services/traducteurService';
 import { utilisateurService } from '../services/utilisateurService';
 import { divisionService } from '../services/divisionService';
 import { tacheService } from '../services/tacheService';
 import type { Traducteur, Utilisateur } from '../types';
 
-type Section = 'overview' | 'traducteurs' | 'clients-domaines' | 'utilisateurs' | 'systeme';
+type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'systeme';
 
 interface SystemStats {
   traducteurs: { total: number; actifs: number; inactifs: number };
@@ -116,143 +118,91 @@ const DashboardAdmin: React.FC = () => {
   }, []);
 
   const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Stats principales du système */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        <StatCard
-          title="Traducteurs"
-          value={systemStats.traducteurs.total}
-          icon="👥"
-          variant="info"
-          subtitle={`${systemStats.traducteurs.actifs} actifs`}
-        />
-        <StatCard
-          title="Utilisateurs"
-          value={systemStats.utilisateurs.total}
-          icon="🔐"
-          variant="default"
-          subtitle={`${Object.keys(systemStats.utilisateurs.parRole).length} rôles`}
-        />
-        <StatCard
-          title="Divisions"
-          value={systemStats.divisions}
-          icon="🏢"
-          variant="default"
-        />
-        <StatCard
-          title="Tâches totales"
-          value={systemStats.taches.total}
-          icon="📋"
-          variant="warning"
-          subtitle={`${systemStats.taches.enCours} en cours`}
-        />
-        <StatCard
-          title="Capacité libre"
-          value={capaciteStats.libre}
-          icon="✅"
-          variant="success"
-          subtitle="7 prochains jours"
-        />
-        <StatCard
-          title="Capacité pleine"
-          value={capaciteStats.plein}
-          icon="🔴"
-          variant="danger"
-          subtitle="slots saturés"
-        />
+    <div className="space-y-4">
+      {/* Stats compactes en ligne */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+        {[
+          { label: 'Traducteurs', value: systemStats.traducteurs.total, sub: `${systemStats.traducteurs.actifs} actifs`, color: 'blue', tooltip: 'Nombre total de profils traducteurs dans le système. Les traducteurs actifs peuvent recevoir des tâches.' },
+          { label: 'Utilisateurs', value: systemStats.utilisateurs.total, sub: `${Object.keys(systemStats.utilisateurs.parRole).length} rôles`, color: 'gray', tooltip: 'Comptes utilisateurs (Admin, Conseiller, Gestionnaire, Traducteur) pouvant se connecter au système.' },
+          { label: 'Divisions', value: systemStats.divisions, color: 'gray', tooltip: 'Unités organisationnelles (ex: CISR, Droit, Finance). Les traducteurs sont assignés à une ou plusieurs divisions.' },
+          { label: 'Tâches', value: systemStats.taches.total, sub: `${systemStats.taches.enCours} en cours`, color: 'amber', tooltip: 'Travaux de traduction planifiés. Inclut les tâches en attente, en cours et terminées.' },
+          { label: 'Dispo.', value: capaciteStats.libre, sub: '7 jours', color: 'green', tooltip: 'Créneaux de disponibilité sur les 7 prochains jours. Indique la capacité restante pour nouvelles tâches.' },
+          { label: 'Saturé', value: capaciteStats.plein, color: 'red', tooltip: 'Créneaux complètement occupés. Ces traducteurs ne peuvent pas accepter de travail supplémentaire.' },
+        ].map((stat, i) => (
+          <div key={i} className={`p-2 rounded border bg-${stat.color}-50 border-${stat.color}-200`}>
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              {stat.label}
+              {stat.tooltip && <InfoTooltip content={stat.tooltip} size="sm" />}
+            </div>
+            <div className="text-lg font-bold">{stat.value}</div>
+            {stat.sub && <div className="text-xs text-gray-400">{stat.sub}</div>}
+          </div>
+        ))}
       </div>
 
-      {/* Alertes et notifications */}
+      {/* Alertes compactes */}
       {traducteursDispo.length > 0 && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader>
-            <CardTitle>✋ {traducteursDispo.length} traducteur(s) cherche(nt) du travail</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {traducteursDispo.slice(0, 8).map(tr => (
-                <div key={tr.id} className="p-3 bg-white rounded-lg border border-green-200 flex items-center gap-3">
-                  <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
-                    {tr.nom.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{tr.nom}</div>
-                    <div className="text-xs text-muted">{tr.divisions?.join(', ') || 'N/A'}</div>
-                  </div>
+        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-sm font-medium text-green-700">✋ {traducteursDispo.length} traducteur(s) disponible(s)</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {traducteursDispo.slice(0, 8).map(tr => (
+              <div key={tr.id} className="inline-flex items-center gap-1.5 px-2 py-1.5 bg-white rounded border border-green-200 text-xs">
+                <span className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0">
+                  {tr.nom.charAt(0)}
+                </span>
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{tr.nom}</div>
+                  {tr.divisions && tr.divisions.length > 0 && (
+                    <div className="flex flex-wrap gap-0.5 mt-0.5">
+                      {tr.divisions.slice(0, 2).map((d, i) => (
+                        <span key={i} className="px-1 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">{d}</span>
+                      ))}
+                      {tr.divisions.length > 2 && (
+                        <span className="text-[10px] text-green-500">+{tr.divisions.length - 2}</span>
+                      )}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
             {traducteursDispo.length > 8 && (
-              <p className="text-center text-sm text-muted mt-3">
-                + {traducteursDispo.length - 8} autres traducteurs disponibles
-              </p>
+              <span className="text-xs text-green-600 self-center">+{traducteursDispo.length - 8}</span>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
-      {/* Distribution des rôles */}
-      <Card>
-        <CardHeader>
-          <CardTitle>📊 Distribution des utilisateurs par rôle</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {Object.entries(systemStats.utilisateurs.parRole).map(([role, count]) => {
-              const icons: Record<string, string> = {
-                ADMIN: '🛡️',
-                CONSEILLER: '📝',
-                GESTIONNAIRE: '👔',
-                TRADUCTEUR: '🌐'
-              };
-              const colors: Record<string, string> = {
-                ADMIN: 'bg-red-100 border-red-200 text-red-700',
-                CONSEILLER: 'bg-blue-100 border-blue-200 text-blue-700',
-                GESTIONNAIRE: 'bg-purple-100 border-purple-200 text-purple-700',
-                TRADUCTEUR: 'bg-green-100 border-green-200 text-green-700'
-              };
-              return (
-                <div 
-                  key={role} 
-                  className={`p-4 rounded-lg border-2 ${colors[role] || 'bg-gray-100 border-gray-200'}`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-2xl">{icons[role] || '👤'}</span>
-                    <span className="font-medium">{role}</span>
-                  </div>
-                  <div className="text-3xl font-bold">{count}</div>
-                </div>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Distribution des rôles - compact */}
+      <div className="bg-white border rounded-lg p-3">
+        <div className="text-xs font-medium text-gray-500 mb-2">Utilisateurs par rôle</div>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(systemStats.utilisateurs.parRole).map(([role, count]) => {
+            const colors: Record<string, string> = {
+              ADMIN: 'bg-red-100 text-red-700',
+              CONSEILLER: 'bg-blue-100 text-blue-700',
+              GESTIONNAIRE: 'bg-purple-100 text-purple-700',
+              TRADUCTEUR: 'bg-green-100 text-green-700'
+            };
+            return (
+              <span key={role} className={`px-2 py-1 rounded text-xs font-medium ${colors[role] || 'bg-gray-100'}`}>
+                {role}: <strong>{count}</strong>
+              </span>
+            );
+          })}
+        </div>
+      </div>
 
-      {/* Carte d'état du système */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🖥️ État du système</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                <span className="font-medium text-green-700">Système opérationnel</span>
-              </div>
-              <p className="text-sm text-green-600 mt-1">Tous les services fonctionnent normalement</p>
-            </div>
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="font-medium text-blue-700">Base de données</div>
-              <p className="text-sm text-blue-600 mt-1">Connectée • PostgreSQL</p>
-            </div>
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-              <div className="font-medium text-gray-700">Version</div>
-              <p className="text-sm text-gray-600 mt-1">Tetrix PLUS v2.0</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* État système compact */}
+      <div className="flex items-center gap-4 text-xs text-gray-500 border-t pt-3">
+        <span className="flex items-center gap-1">
+          <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          Système OK
+        </span>
+        <span>PostgreSQL ✓</span>
+        <span>v2.0</span>
+      </div>
     </div>
   );
 
@@ -260,6 +210,8 @@ const DashboardAdmin: React.FC = () => {
     switch (section) {
       case 'traducteurs':
         return <TraducteurManagement />;
+      case 'equipes-projet':
+        return <EquipeProjetManagement />;
       case 'clients-domaines':
         return <ClientDomaineManagement />;
       case 'utilisateurs':
@@ -295,117 +247,64 @@ const DashboardAdmin: React.FC = () => {
 
   return (
     <AppLayout titre="">
-      <div className="space-y-6">
-        {/* En-tête avec navigation */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h1 className="text-3xl font-bold">Administration 🛡️</h1>
-              <p className="text-muted mt-1">
-                Gestion complète du système Tetrix PLUS
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm font-medium">
-                ● Système en ligne
+      <div className="space-y-4">
+        {/* En-tête compact avec navigation */}
+        <div className="bg-white border-b border-gray-200 -mx-4 -mt-4 px-4 pt-3 pb-2">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <h1 className="text-xl font-semibold">Administration</h1>
+              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
+                ● En ligne
               </span>
             </div>
           </div>
           
-          {/* Menu de navigation */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-            <Button 
-              variant={section === 'overview' ? 'primaire' : 'outline'}
-              onClick={() => setSection('overview')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">🏠</span>
-              <span className="text-sm">Vue d'ensemble</span>
-            </Button>
-            <Button 
-              variant={section === 'traducteurs' ? 'primaire' : 'outline'}
-              onClick={() => setSection('traducteurs')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">👥</span>
-              <span className="text-sm">Traducteurs</span>
-            </Button>
-            <Button 
-              variant={section === 'utilisateurs' ? 'primaire' : 'outline'}
-              onClick={() => setSection('utilisateurs')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">🔐</span>
-              <span className="text-sm">Utilisateurs</span>
-            </Button>
-            <Button 
-              variant={section === 'clients-domaines' ? 'primaire' : 'outline'}
-              onClick={() => setSection('clients-domaines')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">🏢</span>
-              <span className="text-sm">Clients & Domaines</span>
-            </Button>
-            <Button 
-              variant={section === 'systeme' ? 'primaire' : 'outline'}
-              onClick={() => setSection('systeme')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">⚙️</span>
-              <span className="text-sm">Système</span>
-            </Button>
+          {/* Menu de navigation horizontal compact */}
+          <div className="flex gap-1 overflow-x-auto pb-1">
+            {[
+              { id: 'overview' as const, icon: '🏠', label: 'Vue d\'ensemble', tooltip: 'Aperçu général du système avec statistiques et état en temps réel' },
+              { id: 'traducteurs' as const, icon: '👥', label: 'Traducteurs', tooltip: 'Gérer les profils traducteurs : compétences, divisions, disponibilités' },
+              { id: 'equipes-projet' as const, icon: '🎯', label: 'Équipes-projet', tooltip: 'Groupes temporaires pour projets spéciaux (ex: backlog SATG)' },
+              { id: 'utilisateurs' as const, icon: '🔐', label: 'Utilisateurs', tooltip: 'Comptes de connexion et gestion des accès (Admin, Conseiller, etc.)' },
+              { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel', tooltip: 'Clients, domaines, divisions et données de référence' },
+              { id: 'systeme' as const, icon: '⚙️', label: 'Système', tooltip: 'Configuration avancée et paramètres système' },
+            ].map(item => (
+            <button
+                key={item.id}
+                onClick={() => setSection(item.id)}
+                className={`px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                  section === item.id
+                    ? 'bg-blue-600 text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+                title={item.tooltip}
+              >
+                <span className="mr-1">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Lien rapide vers Profils & Accès */}
+        {/* Liens rapides compacts */}
         {section === 'overview' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-gradient-to-r from-purple-50 to-indigo-50 border-purple-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">🔑</span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold">Profils & Accès divisions</h3>
-                      <p className="text-sm text-muted">
-                        Gérer les accès des conseillers et gestionnaires aux divisions
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    onClick={() => window.location.href = '/tetrix-plus-prototype/admin/gestion-profils'}
-                  >
-                    Gérer →
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-r from-orange-50 to-yellow-50 border-orange-200">
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
-                      <span className="text-2xl">📊</span>
-                    </div>
-                    <div>
-                      <h3 className="font-bold">Statistiques globales</h3>
-                      <p className="text-sm text-muted">
-                        Consultez les statistiques de productivité de toutes les équipes
-                      </p>
-                    </div>
-                  </div>
-                  <Button 
-                    variant="secondaire"
-                    onClick={() => window.location.href = '/tetrix-plus-prototype/statistiques-productivite'}
-                  >
-                    Consulter →
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="flex gap-3 flex-wrap">
+            <button
+              onClick={() => window.location.href = '/tetrix-plus-prototype/admin/gestion-profils'}
+              className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            >
+              <span>🔑</span>
+              <span className="text-sm font-medium text-purple-700">Profils & Accès</span>
+              <span className="text-purple-400">→</span>
+            </button>
+            <button
+              onClick={() => window.location.href = '/tetrix-plus-prototype/statistiques-productivite'}
+              className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
+            >
+              <span>📊</span>
+              <span className="text-sm font-medium text-orange-700">Statistiques</span>
+              <span className="text-orange-400">→</span>
+            </button>
           </div>
         )}
 

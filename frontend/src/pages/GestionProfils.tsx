@@ -15,6 +15,7 @@ import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { DivisionPermissions } from '../components/admin/DivisionPermissions';
 import { Breadcrumbs } from '../components/navigation/Breadcrumbs';
+import { QuickUserCreation, QuickCreateInline } from '../components/admin/QuickUserCreation';
 
 type TabType = 'utilisateurs' | 'divisions';
 
@@ -39,6 +40,9 @@ export const GestionProfils: React.FC = () => {
   const [showModalUtilisateur, setShowModalUtilisateur] = useState(false);
   const [showModalDivision, setShowModalDivision] = useState(false);
   const [showModalAcces, setShowModalAcces] = useState(false);
+  const [showQuickCreate, setShowQuickCreate] = useState(false);
+  const [quickCreateOuvert, setQuickCreateOuvert] = useState(false);
+  const [utilisateurACopier, setUtilisateurACopier] = useState<Utilisateur | null>(null);
   const [utilisateurEnCours, setUtilisateurEnCours] = useState<Utilisateur | null>(null);
   const [divisionEnCours, setDivisionEnCours] = useState<Division | null>(null);
 
@@ -96,18 +100,13 @@ export const GestionProfils: React.FC = () => {
   };
 
   const handleCreerUtilisateur = () => {
-    setUtilisateurEnCours(null);
-    // Par défaut, donner accès à toutes les divisions actives
-    const toutesLesDivisions = divisions.filter(d => d.actif !== false).map(d => d.id);
-    setFormUtilisateur({
-      email: '',
-      motDePasse: '',
-      nom: '',
-      prenom: '',
-      role: 'CONSEILLER',
-      divisions: toutesLesDivisions,
-    });
-    setShowModalUtilisateur(true);
+    setUtilisateurACopier(null);
+    setQuickCreateOuvert(true);
+  };
+
+  const handleCopierUtilisateur = (utilisateur: Utilisateur) => {
+    setUtilisateurACopier(utilisateur);
+    setQuickCreateOuvert(true);
   };
 
   const handleModifierUtilisateur = (utilisateur: Utilisateur) => {
@@ -327,8 +326,8 @@ export const GestionProfils: React.FC = () => {
       {tab === 'utilisateurs' && (
         <div>
           {/* Filtres et actions */}
-          <div className="mb-4 flex gap-4 items-end">
-            <div className="flex-1">
+          <div className="mb-4 flex gap-4 items-end flex-wrap">
+            <div className="flex-1 min-w-[150px]">
               <label className="block text-sm font-medium text-gray-700 mb-1">Rôle</label>
               <Select
                 value={filtreRole}
@@ -343,7 +342,7 @@ export const GestionProfils: React.FC = () => {
               </Select>
             </div>
 
-            <div className="flex-1">
+            <div className="flex-1 min-w-[150px]">
               <label className="block text-sm font-medium text-gray-700 mb-1">Statut</label>
               <Select
                 value={filtreActif}
@@ -356,10 +355,26 @@ export const GestionProfils: React.FC = () => {
               </Select>
             </div>
 
-            <Button onClick={handleCreerUtilisateur} className="shrink-0">
-              + Nouvel Utilisateur
-            </Button>
+            <div className="flex gap-2 shrink-0">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowQuickCreate(!showQuickCreate)}
+                className={showQuickCreate ? 'bg-blue-50 border-blue-300' : ''}
+              >
+                ⚡ Rapide
+              </Button>
+              <Button onClick={handleCreerUtilisateur}>
+                + Nouvel Utilisateur
+              </Button>
+            </div>
           </div>
+
+          {/* Barre de création rapide */}
+          {showQuickCreate && (
+            <div className="mb-4">
+              <QuickCreateInline onCreated={chargerDonnees} />
+            </div>
+          )}
 
           {/* Liste des utilisateurs */}
           <Card>
@@ -412,8 +427,19 @@ export const GestionProfils: React.FC = () => {
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {user.divisionAccess && user.divisionAccess.length > 0
-                            ? `${user.divisionAccess.length} division(s)`
-                            : 'Aucune'}
+                            ? (
+                              <div className="flex flex-wrap gap-1">
+                                {user.divisionAccess.slice(0, 3).map((da, i) => (
+                                  <span key={i} className="px-1.5 py-0.5 bg-gray-100 text-gray-700 rounded text-xs">
+                                    {da.division?.nom || da.divisionId}
+                                  </span>
+                                ))}
+                                {user.divisionAccess.length > 3 && (
+                                  <span className="text-xs text-gray-400">+{user.divisionAccess.length - 3}</span>
+                                )}
+                              </div>
+                            )
+                            : <span className="text-gray-400 text-xs">Aucune</span>}
                         </td>
                         <td className="px-4 py-3 text-sm">
                           <span
@@ -427,6 +453,13 @@ export const GestionProfils: React.FC = () => {
                           </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-right space-x-2">
+                          <button
+                            onClick={() => handleCopierUtilisateur(user)}
+                            className="text-gray-500 hover:text-gray-700"
+                            title="Créer un utilisateur similaire"
+                          >
+                            📋
+                          </button>
                           <button
                             onClick={() => {
                               setUtilisateurEnCours(user);
@@ -744,6 +777,17 @@ export const GestionProfils: React.FC = () => {
           </form>
         </Modal>
       )}
+
+      {/* Modal QuickUserCreation */}
+      <QuickUserCreation
+        ouvert={quickCreateOuvert}
+        onFermer={() => {
+          setQuickCreateOuvert(false);
+          setUtilisateurACopier(null);
+        }}
+        onSuccess={chargerDonnees}
+        utilisateurACopier={utilisateurACopier || undefined}
+      />
     </div>
   );
 };

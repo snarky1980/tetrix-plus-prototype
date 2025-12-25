@@ -11,12 +11,15 @@ const prisma = new PrismaClient();
 
 interface PlaygroundAccount {
   email: string;
+  nom?: string;
+  prenom?: string;
   role: Role;
   description: string;
   traducteurNom?: string;
 }
 
 const PLAYGROUND_ACCOUNTS: PlaygroundAccount[] = [
+  // Comptes génériques par portail
   {
     email: 'playground-admin@tetrix.com',
     role: Role.ADMIN,
@@ -37,6 +40,21 @@ const PLAYGROUND_ACCOUNTS: PlaygroundAccount[] = [
     role: Role.TRADUCTEUR,
     description: 'Portail Traducteur - Vue personnelle et planification',
     traducteurNom: 'Playground, Test',
+  },
+  // Comptes personnalisés pour gestionnaires
+  {
+    email: 'steeeve.gravehl@playground.tetrix.com',
+    nom: 'Gravehl',
+    prenom: 'Steeeve',
+    role: Role.CONSEILLER, // Accès aux 4 portails
+    description: 'Gestionnaire - Accès démo complet pour évaluation et recommandations',
+  },
+  {
+    email: 'july.parady@playground.tetrix.com',
+    nom: 'Parady',
+    prenom: 'July',
+    role: Role.CONSEILLER, // Accès aux 4 portails
+    description: 'Gestionnaire - Accès démo complet pour évaluation et recommandations',
   },
 ];
 
@@ -59,10 +77,17 @@ async function createPlaygroundAccounts() {
       });
 
       if (existingUser) {
-        // Mettre à jour le mot de passe si le compte existe
+        // Mettre à jour le mot de passe et marquer comme playground
         await prisma.utilisateur.update({
           where: { email: account.email },
-          data: { motDePasse: hashedPassword, actif: true },
+          data: { 
+            motDePasse: hashedPassword, 
+            actif: true,
+            isPlayground: true,
+            playgroundNote: account.description,
+            nom: account.nom || existingUser.nom,
+            prenom: account.prenom || existingUser.prenom,
+          },
         });
         results.push({ email: account.email, status: '↻ Mis à jour', role: account.role });
         console.log(`↻ ${account.email} - Mot de passe mis à jour`);
@@ -74,12 +99,16 @@ async function createPlaygroundAccounts() {
             data: {
               email: account.email,
               motDePasse: hashedPassword,
+              nom: account.nom,
+              prenom: account.prenom,
               role: account.role,
               actif: true,
+              isPlayground: true,
+              playgroundNote: account.description,
               traducteur: {
                 create: {
                   nom: account.traducteurNom,
-                  division: 'Playground',
+                  divisions: ['Playground'],
                   classification: 'TR-01',
                   actif: true,
                   capaciteHeuresParJour: 7,
@@ -95,8 +124,12 @@ async function createPlaygroundAccounts() {
             data: {
               email: account.email,
               motDePasse: hashedPassword,
+              nom: account.nom,
+              prenom: account.prenom,
               role: account.role,
               actif: true,
+              isPlayground: true,
+              playgroundNote: account.description,
             },
           });
         }
