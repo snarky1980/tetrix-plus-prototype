@@ -173,6 +173,7 @@ const DashboardConseiller: React.FC = () => {
                 <option value="">Tous statuts</option>
                 <option value="PLANIFIEE">📝 Planifiée</option>
                 <option value="EN_COURS">🔄 En cours</option>
+                <option value="EN_RETARD">⚠️ En retard</option>
                 <option value="TERMINEE">✅ Terminée</option>
               </Select>
               <div className="relative">

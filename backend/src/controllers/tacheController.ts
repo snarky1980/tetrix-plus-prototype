@@ -5,6 +5,7 @@ import { repartitionJusteATemps, repartitionPEPS, repartitionEquilibree, valider
 import { verifierCapaciteJournaliere } from '../services/capaciteService';
 import { parseOttawaDateISO, normalizeToOttawaWithTime, hasSignificantTime, parseHoraireTraducteur, capaciteNetteJour } from '../utils/dateTimeOttawa';
 import { enregistrerCreation, enregistrerModifications, enregistrerChangementRepartition } from '../services/historiqueService';
+import { terminerTache as terminerTacheService } from '../services/tacheStatutService';
 
 /**
  * Obtenir les tâches avec filtres
@@ -660,6 +661,7 @@ export const mettreAJourTache = async (
  * - Supprime les ajustements de temps FUTURS (libère le calendrier)
  * - Conserve les ajustements passés pour l'historique
  * - La tâche reste dans le système
+ * - Crée une notification de confirmation
  */
 export const terminerTache = async (
   req: AuthRequest,
@@ -667,6 +669,7 @@ export const terminerTache = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
+    const { commentaire } = req.body; // Commentaire optionnel
     const utilisateurId = req.utilisateur?.id || 'system';
     const utilisateurEmail = req.utilisateur?.email || 'system';
 
@@ -675,7 +678,7 @@ export const terminerTache = async (
       where: { id },
       include: {
         ajustementsTemps: true,
-        traducteur: { select: { nom: true } },
+        traducteur: { select: { nom: true, utilisateurId: true } },
       },
     });
 
@@ -689,6 +692,23 @@ export const terminerTache = async (
       res.status(400).json({ erreur: 'Cette tâche est déjà terminée' });
       return;
     }
+    
+    // Vérifier que la tâche est en cours ou en retard
+    if (tache.statut === 'PLANIFIEE') {
+      res.status(400).json({ erreur: 'Impossible de terminer une tâche non démarrée' });
+      return;
+    }
+    
+    // Vérifier les permissions: traducteur assigné OU superviseur
+    const estTraducteurAssigne = tache.traducteur.utilisateurId === utilisateurId;
+    const estSuperviseur = ['ADMIN', 'CONSEILLER', 'GESTIONNAIRE'].includes(req.utilisateur?.role || '');
+    
+    if (!estTraducteurAssigne && !estSuperviseur) {
+      res.status(403).json({ erreur: 'Non autorisé à terminer cette tâche' });
+      return;
+    }
+    
+    const enRetard = tache.statut === 'EN_RETARD';
 
     // Date d'aujourd'hui à minuit (Ottawa)
     const aujourdhui = new Date();
@@ -717,12 +737,14 @@ export const terminerTache = async (
         where: { id },
         data: {
           statut: 'TERMINEE',
+          dateFinEffective: new Date(),
+          commentaireCloture: commentaire || null,
           modifiePar: utilisateurId,
           modifieLe: new Date(),
           version: { increment: 1 },
         },
         include: {
-          traducteur: { select: { id: true, nom: true } },
+          traducteur: { select: { id: true, nom: true, utilisateurId: true } },
           client: true,
           paireLinguistique: true,
           ajustementsTemps: {
@@ -730,6 +752,17 @@ export const terminerTache = async (
             orderBy: { date: 'asc' },
           },
         },
+      });
+      
+      // Créer la notification de confirmation au traducteur
+      await tx.notification.create({
+        data: {
+          type: 'TACHE_TERMINEE',
+          destinataireId: updated.traducteur.utilisateurId!,
+          titre: '✅ Tâche terminée',
+          message: `La tâche "${updated.numeroProjet}" a été marquée comme terminée.${enRetard ? ' (était en retard)' : ''}`,
+          tacheId: id
+        }
       });
 
       // Enregistrer dans l'historique
@@ -742,7 +775,13 @@ export const terminerTache = async (
           nouvelleValeur: 'TERMINEE',
           utilisateurId: utilisateurId,
           utilisateur: utilisateurEmail,
-          details: `Tâche terminée manuellement. ${heuresLiberees > 0 ? `${heuresLiberees.toFixed(1)}h libérées du calendrier.` : ''}`,
+          details: JSON.stringify({
+            raison: 'Tâche terminée manuellement',
+            heuresLiberees: heuresLiberees,
+            enRetard: enRetard,
+            commentaire: commentaire || null,
+            terminePar: estTraducteurAssigne ? 'traducteur' : 'superviseur'
+          }),
         },
       });
 
@@ -754,6 +793,7 @@ export const terminerTache = async (
       message: 'Tâche terminée avec succès',
       heuresLiberees,
       joursLiberes: ajustementsFuturs.length,
+      enRetard: enRetard
     });
   } catch (error) {
     console.error('Erreur terminaison tâche:', error);

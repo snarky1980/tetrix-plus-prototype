@@ -156,8 +156,16 @@ model Tache {
   modifiePar          String?            // Dernier utilisateur ayant modifié
   modifieLe           DateTime           @updatedAt
   version             Int                @default(0)
+  
+  // Nouveaux champs pour gestion des statuts
+  dateDebutEffective  DateTime?          // Quand la tâche est passée EN_COURS
+  dateFinEffective    DateTime?          // Quand la tâche est passée TERMINEE
+  commentaireCloture  String?            // Commentaire optionnel à la fermeture
+  notificationRetardEnvoyee Boolean      @default(false) // Pour éviter spam notifications
+  
   ajustementsTemps    AjustementTemps[]
   historique          HistoriqueTache[]
+  notifications       Notification[]
   client              Client?            @relation(fields: [clientId], references: [id])
   paireLinguistique   PaireLinguistique? @relation(fields: [paireLinguistiqueId], references: [id])
   sousDomaine         SousDomaine?       @relation(fields: [sousDomaineId], references: [id])
@@ -190,6 +198,35 @@ model HistoriqueTache {
   @@map("historique_taches")
 }
 
+// Notifications pour les utilisateurs
+model Notification {
+  id              String              @id @default(uuid())
+  type            TypeNotification
+  titre           String
+  message         String
+  lue             Boolean             @default(false)
+  destinataireId  String              // ID de l'utilisateur destinataire
+  tacheId         String?             // Tâche liée (optionnel)
+  donnees         String?             // JSON avec données supplémentaires
+  creeLe          DateTime            @default(now())
+  lueLe           DateTime?           // Quand la notification a été lue
+  
+  tache           Tache?              @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+  
+  @@index([destinataireId, lue])
+  @@index([destinataireId, creeLe])
+  @@index([tacheId])
+  @@map("notifications")
+}
+
+enum TypeNotification {
+  TACHE_EN_COURS        // Tâche passée automatiquement en cours
+  TACHE_EN_RETARD       // Rappel: tâche non terminée après délai
+  TACHE_TERMINEE        // Confirmation de fermeture
+  ESCALADE_GESTIONNAIRE // Tâche en retard > 2h, escalade au gestionnaire
+  RAPPEL_FERMETURE      // Rappel répété de fermer la tâche
+}
+
 model AjustementTemps {
   id           String         @id @default(uuid())
   date         DateTime       @db.Date
@@ -219,6 +256,7 @@ enum Role {
 enum StatutTache {
   PLANIFIEE
   EN_COURS
+  EN_RETARD
   TERMINEE
 }
 

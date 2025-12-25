@@ -69,11 +69,13 @@ const DashboardTraducteur: React.FC = () => {
   });
   
   // ============ États pour la terminaison de tâche ============
-  const [confirmTerminerTache, setConfirmTerminerTache] = useState<{ isOpen: boolean; tacheId: string | null }>({
+  const [confirmTerminerTache, setConfirmTerminerTache] = useState<{ isOpen: boolean; tacheId: string | null; tacheStatut?: string }>({
     isOpen: false,
-    tacheId: null
+    tacheId: null,
+    tacheStatut: undefined
   });
   const [terminerLoading, setTerminerLoading] = useState(false);
+  const [commentaireTerminaison, setCommentaireTerminaison] = useState('');
   
   // ============ États pour les paramètres ============
   const [parametresForm, setParametresForm] = useState({
@@ -187,8 +189,9 @@ const DashboardTraducteur: React.FC = () => {
   }, [chargerBlocages]);
 
   // ============ Fonction pour terminer une tâche ============
-  const handleTerminerTache = useCallback(async (tacheId: string) => {
-    setConfirmTerminerTache({ isOpen: true, tacheId });
+  const handleTerminerTache = useCallback(async (tacheId: string, tacheStatut?: string) => {
+    setCommentaireTerminaison(''); // Reset commentaire
+    setConfirmTerminerTache({ isOpen: true, tacheId, tacheStatut });
   }, []);
 
   const confirmerTerminerTache = useCallback(async () => {
@@ -196,13 +199,14 @@ const DashboardTraducteur: React.FC = () => {
     
     setTerminerLoading(true);
     try {
-      const result = await tacheService.terminerTache(confirmTerminerTache.tacheId);
+      const result = await tacheService.terminerTache(confirmTerminerTache.tacheId, commentaireTerminaison || undefined);
       // Recharger les tâches
       await chargerMesTaches();
       // Rafraîchir la planification
       refresh();
       // Fermer le dialog
-      setConfirmTerminerTache({ isOpen: false, tacheId: null });
+      setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
+      setCommentaireTerminaison('');
       // Afficher un message
       if (result.heuresLiberees > 0) {
         alert(`✅ Tâche terminée ! ${result.heuresLiberees.toFixed(1)}h libérées sur ${result.joursLiberes} jour(s).`);
@@ -215,7 +219,7 @@ const DashboardTraducteur: React.FC = () => {
     } finally {
       setTerminerLoading(false);
     }
-  }, [confirmTerminerTache.tacheId, chargerMesTaches, refresh]);
+  }, [confirmTerminerTache.tacheId, commentaireTerminaison, chargerMesTaches, refresh]);
 
   // ============ Statistiques ============
   const stats = useMemo(() => {
@@ -223,6 +227,7 @@ const DashboardTraducteur: React.FC = () => {
       nbTaches: mesTaches.length,
       tachesPlanifiees: mesTaches.filter(t => t.statut === 'PLANIFIEE').length,
       tachesEnCours: mesTaches.filter(t => t.statut === 'EN_COURS').length,
+      tachesEnRetard: mesTaches.filter(t => t.statut === 'EN_RETARD').length,
       tachesTerminees: mesTaches.filter(t => t.statut === 'TERMINEE').length,
     };
     
@@ -686,7 +691,7 @@ const DashboardTraducteur: React.FC = () => {
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle>📋 Toutes mes tâches ({mesTaches.length})</CardTitle>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <div className="flex items-center gap-1 text-xs">
                 <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
                 <span>Planifiées: {stats.tachesPlanifiees}</span>
@@ -695,6 +700,12 @@ const DashboardTraducteur: React.FC = () => {
                 <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
                 <span>En cours: {stats.tachesEnCours}</span>
               </div>
+              {stats.tachesEnRetard > 0 && (
+                <div className="flex items-center gap-1 text-xs text-red-600 font-medium">
+                  <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                  <span>En retard: {stats.tachesEnRetard}</span>
+                </div>
+              )}
               <div className="flex items-center gap-1 text-xs">
                 <span className="w-3 h-3 bg-green-500 rounded-full"></span>
                 <span>Terminées: {stats.tachesTerminees}</span>
@@ -1139,17 +1150,60 @@ const DashboardTraducteur: React.FC = () => {
         cancelText="Annuler"
       />
 
-      {/* Dialogue de confirmation terminaison de tâche */}
-      <ConfirmDialog
-        isOpen={confirmTerminerTache.isOpen}
-        onClose={() => setConfirmTerminerTache({ isOpen: false, tacheId: null })}
-        onConfirm={confirmerTerminerTache}
-        title="Terminer la tâche"
-        message="Voulez-vous marquer cette tâche comme terminée ? Les heures futures seront libérées de votre calendrier."
-        variant="warning"
-        confirmText={terminerLoading ? 'Terminaison...' : 'Terminer'}
-        cancelText="Annuler"
-      />
+      {/* Dialogue de confirmation terminaison de tâche avec commentaire */}
+      <Modal
+        ouvert={confirmTerminerTache.isOpen}
+        onFermer={() => {
+          setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
+          setCommentaireTerminaison('');
+        }}
+        titre="Terminer la tâche"
+      >
+        <div className="space-y-4">
+          {confirmTerminerTache.tacheStatut === 'EN_RETARD' && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+              <p className="font-medium">⚠️ Cette tâche est en retard</p>
+              <p className="text-sm mt-1">Merci d'indiquer un commentaire expliquant le retard.</p>
+            </div>
+          )}
+          
+          <p className="text-gray-600">
+            Voulez-vous marquer cette tâche comme terminée ? Les heures futures seront libérées de votre calendrier.
+          </p>
+          
+          <FormField label={confirmTerminerTache.tacheStatut === 'EN_RETARD' ? 'Commentaire (recommandé)' : 'Commentaire (optionnel)'}>
+            <textarea
+              value={commentaireTerminaison}
+              onChange={(e) => setCommentaireTerminaison(e.target.value)}
+              placeholder={confirmTerminerTache.tacheStatut === 'EN_RETARD' 
+                ? "Expliquez brièvement la raison du retard..." 
+                : "Commentaire sur la réalisation de la tâche..."
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={3}
+            />
+          </FormField>
+          
+          <div className="flex justify-end gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
+                setCommentaireTerminaison('');
+              }}
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={confirmerTerminerTache}
+              disabled={terminerLoading}
+              className={confirmTerminerTache.tacheStatut === 'EN_RETARD' ? 'bg-orange-600 hover:bg-orange-700' : ''}
+            >
+              {terminerLoading ? 'Terminaison...' : 'Terminer la tâche'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </AppLayout>
   );
 };

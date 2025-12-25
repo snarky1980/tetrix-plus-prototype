@@ -85,7 +85,7 @@ export interface SousDomaine {
 }
 
 // Types pour les tâches
-export type StatutTache = 'PLANIFIEE' | 'EN_COURS' | 'TERMINEE';
+export type StatutTache = 'PLANIFIEE' | 'EN_COURS' | 'EN_RETARD' | 'TERMINEE';
 export type TypeTache = 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE';
 export type ModeDistribution = 'JAT' | 'PEPS' | 'EQUILIBRE' | 'MANUEL';
 export type TypeRepartitionUI = 'JUSTE_TEMPS' | 'PEPS' | 'EQUILIBRE' | 'MANUEL';

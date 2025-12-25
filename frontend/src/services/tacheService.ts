@@ -90,18 +90,20 @@ export const tacheService = {
    * Terminer une tâche manuellement
    * Libère les heures futures du calendrier mais garde la tâche dans le système
    */
-  async terminerTache(id: string): Promise<{
+  async terminerTache(id: string, commentaire?: string): Promise<{
     tache: Tache;
     message: string;
     heuresLiberees: number;
     joursLiberes: number;
+    enRetard?: boolean;
   }> {
     const { data } = await api.post<{
       tache: Tache;
       message: string;
       heuresLiberees: number;
       joursLiberes: number;
-    }>(`/taches/${id}/terminer`);
+      enRetard?: boolean;
+    }>(`/taches/${id}/terminer`, { commentaire });
     return data;
   },
 };

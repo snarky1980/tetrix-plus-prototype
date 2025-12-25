@@ -6,6 +6,7 @@ import { NotificationBadge } from '../ui/NotificationBadge';
 import { cn } from '../../lib/cn';
 import { UserSettingsButton } from '../settings/UserSettingsButton';
 import { PortalSwitcherCompact } from '../navigation/PortalSwitcher';
+import NotificationBell from '../common/NotificationBell';
 
 interface AppLayoutProps {
   titre: string;
@@ -66,6 +67,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
                 />
               </div>
             )}
+            
+            {/* Cloche de notifications système (statuts tâches) */}
+            <div className="[&_button]:!text-primary-foreground [&_svg]:!text-primary-foreground">
+              <NotificationBell />
+            </div>
             
             <span className="text-xs" aria-label="Utilisateur connecté">{utilisateur?.email}</span>
             {actionsDroite}

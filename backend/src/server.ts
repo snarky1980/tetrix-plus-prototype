@@ -1,9 +1,11 @@
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import cron from 'node-cron';
 import { PrismaClient, Role } from '@prisma/client';
 import { config } from './config/env';
 import { gestionnaireErreurs } from './middleware/errorHandler';
+import { executerVerificationsStatuts } from './services/tacheStatutService';
 
 // Import des routes
 import authRoutes from './routes/authRoutes';
@@ -181,6 +183,31 @@ app.listen(PORT, HOST, () => {
 📝 Documentation API disponible
 🔐 Authentification JWT activée
   `);
+
+  // ============================================
+  // JOBS CRON
+  // ============================================
+  
+  // Vérification des statuts de tâches toutes les 20 minutes
+  cron.schedule('*/20 * * * *', async () => {
+    console.log(`\n[CRON] ⏰ Démarrage vérification des statuts - ${new Date().toLocaleString('fr-CA')}`);
+    try {
+      const result = await executerVerificationsStatuts();
+      console.log(`[CRON] ✅ Terminé:`, result);
+    } catch (error) {
+      console.error('[CRON] ❌ Erreur:', error);
+    }
+  });
+  
+  console.log('🕐 Job CRON: Vérification statuts tâches toutes les 20 minutes');
+  
+  // Exécution immédiate au démarrage (optionnel, utile pour tests)
+  if (config.nodeEnv === 'development') {
+    console.log('[CRON] 🔄 Exécution initiale des vérifications de statuts...');
+    executerVerificationsStatuts()
+      .then(result => console.log('[CRON] Vérification initiale:', result))
+      .catch(err => console.error('[CRON] Erreur vérification initiale:', err));
+  }
 });
 
 export default app;

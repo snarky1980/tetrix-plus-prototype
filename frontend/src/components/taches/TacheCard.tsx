@@ -12,8 +12,8 @@ interface TacheCardProps {
   onViewDetails?: () => void;
   /** Callback pour éditer */
   onEdit?: () => void;
-  /** Callback après terminaison de la tâche */
-  onTerminer?: (tacheId: string) => void;
+  /** Callback après terminaison de la tâche (reçoit l'id et le statut actuel) */
+  onTerminer?: (tacheId: string, statut?: string) => void;
   /** Afficher le bouton planning traducteur */
   showPlanningButton?: boolean;
   /** Mode compact (moins d'infos) */
@@ -41,6 +41,7 @@ export const TacheCard: React.FC<TacheCardProps> = ({
     switch (statut) {
       case 'TERMINEE': return 'bg-green-100 text-green-700';
       case 'EN_COURS': return 'bg-yellow-100 text-yellow-700';
+      case 'EN_RETARD': return 'bg-red-100 text-red-700 animate-pulse';
       default: return 'bg-blue-100 text-blue-700';
     }
   };
@@ -59,6 +60,7 @@ export const TacheCard: React.FC<TacheCardProps> = ({
     switch (statut) {
       case 'PLANIFIEE': return 'Planifiée';
       case 'EN_COURS': return 'En cours';
+      case 'EN_RETARD': return '⚠️ En retard';
       case 'TERMINEE': return 'Terminée';
       default: return statut;
     }
@@ -182,13 +184,20 @@ export const TacheCard: React.FC<TacheCardProps> = ({
               variant="outline"
               onClick={(e) => {
                 e.stopPropagation();
-                onTerminer(tache.id);
+                onTerminer(tache.id, tache.statut);
               }}
-              className="text-xs px-2 py-1 text-green-600 border-green-300 hover:bg-green-50"
+              className={`text-xs px-2 py-1 ${
+                tache.statut === 'EN_RETARD' 
+                  ? 'text-red-600 border-red-300 hover:bg-red-50 animate-pulse' 
+                  : 'text-green-600 border-green-300 hover:bg-green-50'
+              }`}
               aria-label="Terminer la tâche"
-              title="Terminer la tâche (libère le calendrier)"
+              title={tache.statut === 'EN_RETARD' 
+                ? 'Terminer la tâche en retard' 
+                : 'Terminer la tâche (libère le calendrier)'
+              }
             >
-              ✅
+              {tache.statut === 'EN_RETARD' ? '⚠️' : '✅'}
             </Button>
           )}
           {onEdit && (
