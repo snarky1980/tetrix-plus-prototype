@@ -1,6 +1,17 @@
+/**
+ * Contexte de notifications pour les compteurs globaux
+ * 
+ * Gère les compteurs de:
+ * - Traducteurs cherchant du travail (visible par conseillers/gestionnaires)
+ * - Demandes de ressources actives (visible par traducteurs)
+ * 
+ * À distinguer de useNotificationBell qui gère les notifications système (cloche).
+ */
+
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { notificationService, CompteursNotifications } from '../services/notificationService';
 import { useAuth } from './AuthContext';
+import { COMPTEURS_POLLING_INTERVAL_MS } from '../config/constants';
 
 interface NotificationContextType {
   compteurs: CompteursNotifications;
@@ -33,13 +44,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
 
   const rafraichirCompteurs = useCallback(async () => {
     if (!estAuthentifie) return;
+    // Ne pas rafraîchir si l'onglet est caché
+    if (document.hidden) return;
     
     try {
       setChargement(true);
       const data = await notificationService.obtenirCompteurs();
       setCompteurs(data);
     } catch (error) {
-      console.error('Erreur rafraîchissement compteurs:', error);
+      console.error('[NotificationContext] Erreur rafraîchissement compteurs:', error);
     } finally {
       setChargement(false);
     }
@@ -54,16 +67,25 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     }
   }, [estAuthentifie, rafraichirCompteurs]);
 
-  // Rafraîchir toutes les 30 secondes si authentifié
+  // Rafraîchir périodiquement si authentifié
   useEffect(() => {
-    if (estAuthentifie) {
-      intervalRef.current = setInterval(rafraichirCompteurs, 30000);
-    }
+    if (!estAuthentifie) return;
+
+    intervalRef.current = setInterval(rafraichirCompteurs, COMPTEURS_POLLING_INTERVAL_MS);
+
+    // Rafraîchir immédiatement quand l'onglet redevient visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        rafraichirCompteurs();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [estAuthentifie, rafraichirCompteurs]);
 

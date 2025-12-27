@@ -1,6 +1,27 @@
 /**
- * Utilitaires de formatage pour les champs de formulaire
+ * Utilitaires de formatage pour les champs de formulaire et l'affichage
  */
+
+/**
+ * Formate un horodatage en temps relatif en français
+ * 
+ * @param dateStr - Date au format ISO
+ * @returns Texte relatif (ex: "À l'instant", "Il y a 5 min", "Il y a 2h")
+ */
+export function formatRelativeTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffH = Math.floor(diffMin / 60);
+  const diffD = Math.floor(diffH / 24);
+
+  if (diffMin < 1) return 'À l\'instant';
+  if (diffMin < 60) return `Il y a ${diffMin} min`;
+  if (diffH < 24) return `Il y a ${diffH}h`;
+  if (diffD < 7) return `Il y a ${diffD}j`;
+  return date.toLocaleDateString('fr-CA');
+}
 
 /**
  * Formate un numéro de projet au format 123-123456-001

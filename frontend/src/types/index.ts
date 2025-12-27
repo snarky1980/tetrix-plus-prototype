@@ -233,3 +233,28 @@ export interface CreerBlocageForm {
   heureFin: string;
   motif: string;
 }
+
+// Types pour les notifications système
+export type TypeNotificationSysteme = 
+  | 'TACHE_EN_COURS' 
+  | 'TACHE_EN_RETARD' 
+  | 'TACHE_TERMINEE' 
+  | 'ESCALADE_GESTIONNAIRE' 
+  | 'RAPPEL_FERMETURE';
+
+export interface NotificationSysteme {
+  id: string;
+  type: TypeNotificationSysteme;
+  titre: string;
+  message: string;
+  lue: boolean;
+  creeLe: string;
+  lueLe?: string;
+  tache?: {
+    id: string;
+    numeroProjet: string;
+    statut: StatutTache;
+    dateEcheance: string;
+    traducteur?: { nom: string };
+  };
+}
