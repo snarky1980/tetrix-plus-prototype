@@ -66,15 +66,13 @@ const RedirectionDashboard: React.FC = () => {
     return <Navigate to="/connexion" replace />;
   }
 
-  // Les ADMIN ont accès à plusieurs portails - afficher le sélecteur
-  if (utilisateur.role === 'ADMIN') {
+  // Les ADMIN et CONSEILLER ont accès à plusieurs portails - afficher le sélecteur
+  if (utilisateur.role === 'ADMIN' || utilisateur.role === 'CONSEILLER') {
     return <PortalSelector />;
   }
 
   // Redirection selon le rôle
   switch (utilisateur.role) {
-    case 'CONSEILLER':
-      return <Navigate to="/conseiller" replace />;
     case 'GESTIONNAIRE':
       return <Navigate to="/gestionnaire" replace />;
     case 'TRADUCTEUR':

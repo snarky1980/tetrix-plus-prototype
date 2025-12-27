@@ -60,8 +60,8 @@ export const getAccessiblePortals = (role: string): Portal[] => {
       // Gestionnaire n'a accès qu'à son portail
       return ['gestionnaire'];
     case 'CONSEILLER':
-      // Conseiller n'a accès qu'à son portail
-      return ['conseiller'];
+      // Conseiller a accès aux 4 portails (Admin, Conseiller, Gestionnaire, Traducteur)
+      return ['admin', 'gestionnaire', 'conseiller', 'traducteur'];
     case 'TRADUCTEUR':
       // Traducteur n'a accès qu'à son portail
       return ['traducteur'];
