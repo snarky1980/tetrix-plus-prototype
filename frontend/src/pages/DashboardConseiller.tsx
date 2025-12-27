@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
@@ -8,75 +8,31 @@ import { LoadingSpinner } from '../components/ui/Spinner';
 import { TacheCard } from '../components/taches/TacheCard';
 import { DemandesRessources } from '../components/notifications/DemandesRessources';
 import { useAuth } from '../contexts/AuthContext';
-import { tacheService } from '../services/tacheService';
-import type { Tache } from '../types';
+import { useDashboardConseiller } from '../hooks/useDashboardConseiller';
 
 /**
  * Dashboard Conseiller - Vue d'ensemble avec les tâches créées
+ * 
+ * Architecture:
+ * - Utilise le hook useDashboardConseiller pour la logique métier
+ * - Le composant se concentre uniquement sur le rendu
  */
 const DashboardConseiller: React.FC = () => {
   const navigate = useNavigate();
   const { utilisateur } = useAuth();
-  const [taches, setTaches] = useState<Tache[]>([]);
-  const [tachesFiltered, setTachesFiltered] = useState<Tache[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [filtreStatut, setFiltreStatut] = useState('');
-  const [recherche, setRecherche] = useState('');
-
-  useEffect(() => {
-    chargerTaches();
-  }, []);
-
-  const chargerTaches = async () => {
-    setLoading(true);
-    try {
-      const data = await tacheService.obtenirTaches({});
-      // Trier par date de création (plus récent d'abord)
-      const tachesTries = data.sort((a, b) => 
-        new Date(b.creeLe).getTime() - new Date(a.creeLe).getTime()
-      );
-      setTaches(tachesTries);
-      setTachesFiltered(tachesTries);
-    } catch (err) {
-      console.error('Erreur chargement tâches:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const appliquerFiltres = () => {
-    let filtered = [...taches];
-
-    if (filtreStatut) {
-      filtered = filtered.filter(t => t.statut === filtreStatut);
-    }
-
-    if (recherche) {
-      const rech = recherche.toLowerCase();
-      filtered = filtered.filter(t => 
-        t.numeroProjet.toLowerCase().includes(rech) ||
-        t.description?.toLowerCase().includes(rech) ||
-        t.traducteur?.nom.toLowerCase().includes(rech) ||
-        t.client?.nom.toLowerCase().includes(rech)
-      );
-    }
-
-    setTachesFiltered(filtered);
-  };
-
-  const reinitialiserFiltres = () => {
-    setFiltreStatut('');
-    setRecherche('');
-    setTachesFiltered(taches);
-  };
-
-  const stats = {
-    total: taches.length,
-    planifiees: taches.filter(t => t.statut === 'PLANIFIEE').length,
-    enCours: taches.filter(t => t.statut === 'EN_COURS').length,
-    terminees: taches.filter(t => t.statut === 'TERMINEE').length,
-    heuresTotal: taches.reduce((sum, t) => sum + t.heuresTotal, 0),
-  };
+  
+  const {
+    taches,
+    tachesFiltered,
+    loading,
+    stats,
+    filtreStatut,
+    recherche,
+    setFiltreStatut,
+    setRecherche,
+    appliquerFiltres,
+    reinitialiserFiltres,
+  } = useDashboardConseiller();
 
   return (
     <AppLayout titre="Portail Conseiller">

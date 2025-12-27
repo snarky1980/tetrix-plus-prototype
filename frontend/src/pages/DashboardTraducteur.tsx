@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -16,21 +16,21 @@ import { DemandesRessourcesTraducteur } from '../components/notifications/Demand
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanification } from '../hooks/usePlanification';
+import { useDashboardTraducteur, ViewMode } from '../hooks/useDashboardTraducteur';
 import { formatHeures } from '../lib/format';
-import { traducteurService } from '../services/traducteurService';
-import { tacheService } from '../services/tacheService';
-import type { Traducteur, Tache } from '../types';
-import { todayOttawa, formatOttawaISO, addDaysOttawa } from '../utils/dateTimeOttawa';
+import { todayOttawa, formatOttawaISO } from '../utils/dateTimeOttawa';
 
-type ViewMode = '1' | '7' | '14' | '30' | 'custom';
 type Section = 'overview' | 'taches' | 'blocages' | 'parametres' | 'statistiques';
 
 /**
  * Dashboard Traducteur - Interface complète et moderne
- * Inspiré du portail conseiller avec forte emphase UI/UX
+ * 
+ * Architecture:
+ * - Utilise le hook useDashboardTraducteur pour la logique métier
+ * - Le composant se concentre sur le rendu et la navigation entre sections
  */
 const DashboardTraducteur: React.FC = () => {
-  // ============ États principaux ============
+  // ============ États UI uniquement ============
   const [section, setSection] = useState<Section>('overview');
   const [viewMode, setViewMode] = useState<ViewMode>('7');
   const [customStartDate, setCustomStartDate] = useState('');
@@ -40,76 +40,50 @@ const DashboardTraducteur: React.FC = () => {
   const todayDate = todayOttawa();
   const today = formatOttawaISO(todayDate);
   
-  // ============ États pour les données ============
-  const [traducteur, setTraducteur] = useState<Traducteur | null>(null);
-  const [mesTaches, setMesTaches] = useState<Tache[]>([]);
-  const [blocages, setBlocages] = useState<any[]>([]);
-  const [loadingTaches, setLoadingTaches] = useState(false);
-  const [loadingTraducteur, setLoadingTraducteur] = useState(true);
-  
-  // ============ États pour la disponibilité ============
-  const [disponibiliteActive, setDisponibiliteActive] = useState(false);
-  const [commentaireDisponibilite, setCommentaireDisponibilite] = useState('');
-  const [savingDisponibilite, setSavingDisponibilite] = useState(false);
-  
-  // ============ États pour les blocages ============
-  const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
-  const [blocageData, setBlocageData] = useState({ 
-    date: formatOttawaISO(todayDate), 
-    heureDebut: '09:00', 
-    heureFin: '17:00', 
-    motif: '',
-    journeeComplete: false
+  // ============ Hook métier principal ============
+  const {
+    traducteur,
+    mesTaches,
+    blocages,
+    loadingTraducteur,
+    loadingTaches,
+    disponibiliteActive,
+    commentaireDisponibilite,
+    savingDisponibilite,
+    setCommentaireDisponibilite,
+    toggleDisponibilite,
+    sauvegarderCommentaireDisponibilite,
+    ouvrirBlocage,
+    blocageData,
+    submittingBlocage,
+    erreurBlocage,
+    confirmDeleteBlocage,
+    setOuvrirBlocage,
+    setBlocageData,
+    creerBlocage,
+    supprimerBlocage,
+    executerSuppressionBlocage,
+    fermerConfirmDeleteBlocage,
+    confirmTerminerTache,
+    terminerLoading,
+    commentaireTerminaison,
+    setCommentaireTerminaison,
+    demanderTerminerTache,
+    confirmerTerminerTache,
+    annulerTerminerTache,
+    parametresForm,
+    savingParametres,
+    setParametresForm,
+    sauvegarderParametres,
+    stats: tacheStats,
+    periodeActuelle,
+  } = useDashboardTraducteur({
+    traducteurId: utilisateur?.traducteurId,
+    viewMode,
+    customStartDate,
+    customEndDate,
+    onRefresh: () => refresh(),
   });
-  const [submittingBlocage, setSubmittingBlocage] = useState(false);
-  const [erreurBlocage, setErreurBlocage] = useState('');
-  const [confirmDeleteBlocage, setConfirmDeleteBlocage] = useState<{ isOpen: boolean; id: string | null }>({
-    isOpen: false,
-    id: null
-  });
-  
-  // ============ États pour la terminaison de tâche ============
-  const [confirmTerminerTache, setConfirmTerminerTache] = useState<{ isOpen: boolean; tacheId: string | null; tacheStatut?: string }>({
-    isOpen: false,
-    tacheId: null,
-    tacheStatut: undefined
-  });
-  const [terminerLoading, setTerminerLoading] = useState(false);
-  const [commentaireTerminaison, setCommentaireTerminaison] = useState('');
-  
-  // ============ États pour les paramètres ============
-  const [parametresForm, setParametresForm] = useState({
-    horaireDebut: '09:00',
-    horaireFin: '17:00',
-    pauseMidiDebut: '12:00',
-    pauseMidiFin: '13:00',
-  });
-  const [savingParametres, setSavingParametres] = useState(false);
-
-  // ============ Calcul des dates de période ============
-  const periodeActuelle = useMemo(() => {
-    const baseDate = todayDate;
-    let nbJours = 7;
-    
-    switch (viewMode) {
-      case '1': nbJours = 1; break;
-      case '7': nbJours = 7; break;
-      case '14': nbJours = 14; break;
-      case '30': nbJours = 30; break;
-      case 'custom':
-        if (customStartDate && customEndDate) {
-          return { debut: customStartDate, fin: customEndDate };
-        }
-        nbJours = 7;
-        break;
-    }
-    
-    const fin = addDaysOttawa(baseDate, nbJours - 1);
-    return { 
-      debut: formatOttawaISO(baseDate), 
-      fin: formatOttawaISO(fin) 
-    };
-  }, [today, viewMode, customStartDate, customEndDate]);
   
   // ============ Hook de planification ============
   const { planification, loading: loadingPlanif, error: errorPlanif, refresh } = usePlanification(
@@ -121,119 +95,11 @@ const DashboardTraducteur: React.FC = () => {
   const titreTraducteur = traducteur?.nom || 'Mon espace';
   usePageTitle(`${titreTraducteur} - Tetrix PLUS`, 'Gérez votre planification et vos disponibilités');
 
-  // ============ Chargement du traducteur ============
-  useEffect(() => {
-    if (utilisateur?.traducteurId) {
-      setLoadingTraducteur(true);
-      traducteurService.obtenirTraducteur(utilisateur.traducteurId)
-        .then(data => {
-          setTraducteur(data);
-          setDisponibiliteActive(data.disponiblePourTravail);
-          setCommentaireDisponibilite(data.commentaireDisponibilite || '');
-          
-          // Parser l'horaire pour les paramètres
-          if (data.horaire) {
-            const match = data.horaire.match(/^(\d{1,2})h(\d{0,2})?\s*-\s*(\d{1,2})h(\d{0,2})?$/);
-            if (match) {
-              const hDebut = match[1].padStart(2, '0');
-              const mDebut = match[2] || '00';
-              const hFin = match[3].padStart(2, '0');
-              const mFin = match[4] || '00';
-              setParametresForm(prev => ({
-                ...prev,
-                horaireDebut: `${hDebut}:${mDebut}`,
-                horaireFin: `${hFin}:${mFin}`,
-              }));
-            }
-          }
-        })
-        .catch(err => console.error('Erreur chargement traducteur:', err))
-        .finally(() => setLoadingTraducteur(false));
-    }
-  }, [utilisateur?.traducteurId]);
-
-  // ============ Chargement des tâches ============
-  const chargerMesTaches = useCallback(async () => {
-    if (!utilisateur?.traducteurId) return;
-    setLoadingTaches(true);
-    try {
-      const data = await tacheService.obtenirTaches({ traducteurId: utilisateur.traducteurId });
-      const tachesTries = data.sort((a, b) => 
-        new Date(a.dateEcheance).getTime() - new Date(b.dateEcheance).getTime()
-      );
-      setMesTaches(tachesTries);
-    } catch (err) {
-      console.error('Erreur chargement tâches:', err);
-    } finally {
-      setLoadingTaches(false);
-    }
-  }, [utilisateur?.traducteurId]);
-
-  useEffect(() => {
-    chargerMesTaches();
-  }, [chargerMesTaches]);
-
-  // ============ Chargement des blocages ============
-  const chargerBlocages = useCallback(async () => {
-    if (!utilisateur?.traducteurId) return;
-    try {
-      const data = await traducteurService.obtenirBlocages(utilisateur.traducteurId, { dateDebut: periodeActuelle.debut, dateFin: periodeActuelle.fin });
-      setBlocages(data);
-    } catch (err) {
-      console.error('Erreur chargement blocages:', err);
-    }
-  }, [utilisateur?.traducteurId, periodeActuelle]);
-
-  useEffect(() => {
-    chargerBlocages();
-  }, [chargerBlocages]);
-
-  // ============ Fonction pour terminer une tâche ============
-  const handleTerminerTache = useCallback(async (tacheId: string, tacheStatut?: string) => {
-    setCommentaireTerminaison(''); // Reset commentaire
-    setConfirmTerminerTache({ isOpen: true, tacheId, tacheStatut });
-  }, []);
-
-  const confirmerTerminerTache = useCallback(async () => {
-    if (!confirmTerminerTache.tacheId) return;
-    
-    setTerminerLoading(true);
-    try {
-      const result = await tacheService.terminerTache(confirmTerminerTache.tacheId, commentaireTerminaison || undefined);
-      // Recharger les tâches
-      await chargerMesTaches();
-      // Rafraîchir la planification
-      refresh();
-      // Fermer le dialog
-      setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
-      setCommentaireTerminaison('');
-      // Afficher un message
-      if (result.heuresLiberees > 0) {
-        alert(`✅ Tâche terminée ! ${result.heuresLiberees.toFixed(1)}h libérées sur ${result.joursLiberes} jour(s).`);
-      } else {
-        alert('✅ Tâche terminée !');
-      }
-    } catch (err: any) {
-      console.error('Erreur terminaison tâche:', err);
-      alert('Erreur lors de la terminaison: ' + (err.response?.data?.erreur || err.message || 'Erreur inconnue'));
-    } finally {
-      setTerminerLoading(false);
-    }
-  }, [confirmTerminerTache.tacheId, commentaireTerminaison, chargerMesTaches, refresh]);
-
-  // ============ Statistiques ============
+  // ============ Statistiques combinées ============
   const stats = useMemo(() => {
-    const baseTaches = {
-      nbTaches: mesTaches.length,
-      tachesPlanifiees: mesTaches.filter(t => t.statut === 'PLANIFIEE').length,
-      tachesEnCours: mesTaches.filter(t => t.statut === 'EN_COURS').length,
-      tachesEnRetard: mesTaches.filter(t => t.statut === 'EN_RETARD').length,
-      tachesTerminees: mesTaches.filter(t => t.statut === 'TERMINEE').length,
-    };
-    
     if (!planification) return { 
       taches: 0, blocages: 0, libre: 0, capacite: 0, 
-      ...baseTaches
+      ...tacheStats
     };
     
     const totaux = planification.planification.reduce((acc: any, jour: any) => ({
@@ -245,111 +111,14 @@ const DashboardTraducteur: React.FC = () => {
     
     return { 
       ...totaux,
-      ...baseTaches
+      ...tacheStats
     };
-  }, [planification, mesTaches]);
+  }, [planification, tacheStats]);
 
   const percentageUtilise = useMemo(() => {
     if (stats.capacite === 0) return 0;
     return ((stats.taches + stats.blocages) / stats.capacite) * 100;
   }, [stats]);
-
-  // ============ Handlers ============
-  const handleToggleDisponibilite = async () => {
-    if (!utilisateur?.traducteurId) return;
-    
-    setSavingDisponibilite(true);
-    const nouvelleValeur = !disponibiliteActive;
-
-    try {
-      await traducteurService.mettreAJourDisponibilite(utilisateur.traducteurId, {
-        disponiblePourTravail: nouvelleValeur,
-        commentaireDisponibilite: nouvelleValeur ? commentaireDisponibilite : undefined,
-      });
-      setDisponibiliteActive(nouvelleValeur);
-      if (!nouvelleValeur) setCommentaireDisponibilite('');
-    } catch (err: any) {
-      alert(`Erreur: ${err.response?.data?.erreur || err.message || 'Erreur lors de la mise à jour'}`);
-    } finally {
-      setSavingDisponibilite(false);
-    }
-  };
-
-  const handleCreerBlocage = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!utilisateur?.traducteurId) return;
-    
-    setSubmittingBlocage(true);
-    setErreurBlocage('');
-
-    try {
-      const heureDebut = blocageData.journeeComplete ? '00:00' : blocageData.heureDebut;
-      const heureFin = blocageData.journeeComplete ? '23:59' : blocageData.heureFin;
-      
-      await traducteurService.bloquerTemps(utilisateur.traducteurId, {
-        date: blocageData.date,
-        heureDebut,
-        heureFin,
-        motif: blocageData.motif || 'Blocage personnel',
-      });
-      setOuvrirBlocage(false);
-      setBlocageData({ 
-        date: today, 
-        heureDebut: '09:00', 
-        heureFin: '17:00', 
-        motif: '',
-        journeeComplete: false
-      });
-      refresh();
-      chargerBlocages();
-    } catch (err: any) {
-      setErreurBlocage(err.response?.data?.message || err.response?.data?.erreur || 'Erreur lors de la création du blocage');
-    } finally {
-      setSubmittingBlocage(false);
-    }
-  };
-
-  const handleSupprimerBlocage = async (id: string) => {
-    setConfirmDeleteBlocage({ isOpen: true, id });
-  };
-
-  const executerSuppressionBlocage = async () => {
-    if (!confirmDeleteBlocage.id) return;
-    try {
-      await traducteurService.supprimerBlocage(confirmDeleteBlocage.id);
-      chargerBlocages();
-      refresh();
-    } catch (err) {
-      console.error('Erreur suppression blocage:', err);
-    } finally {
-      setConfirmDeleteBlocage({ isOpen: false, id: null });
-    }
-  };
-
-  const handleSaveParametres = async () => {
-    if (!utilisateur?.traducteurId) return;
-    setSavingParametres(true);
-    
-    try {
-      // Convertir les heures en format "9h-17h"
-      const formatHeure = (time: string) => {
-        const [h, m] = time.split(':');
-        return m === '00' ? `${parseInt(h)}h` : `${parseInt(h)}h${m}`;
-      };
-      
-      const horaire = `${formatHeure(parametresForm.horaireDebut)}-${formatHeure(parametresForm.horaireFin)}`;
-      
-      await traducteurService.mettreAJourTraducteur(utilisateur.traducteurId, { horaire });
-      
-      // Recharger les données du traducteur
-      const data = await traducteurService.obtenirTraducteur(utilisateur.traducteurId);
-      setTraducteur(data);
-    } catch (err: any) {
-      alert(`Erreur: ${err.response?.data?.erreur || 'Impossible de sauvegarder les paramètres'}`);
-    } finally {
-      setSavingParametres(false);
-    }
-  };
 
   // ============ Rendu du calendrier ============
   const renderCalendrier = () => {
@@ -479,7 +248,7 @@ const DashboardTraducteur: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={handleToggleDisponibilite}
+              onClick={toggleDisponibilite}
               disabled={savingDisponibilite}
               className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
                 disponibiliteActive ? 'bg-green-500' : 'bg-gray-300'
@@ -508,20 +277,7 @@ const DashboardTraducteur: React.FC = () => {
                 />
                 <Button
                   variant="secondaire"
-                  onClick={async () => {
-                    if (!utilisateur?.traducteurId) return;
-                    setSavingDisponibilite(true);
-                    try {
-                      await traducteurService.mettreAJourDisponibilite(utilisateur.traducteurId, {
-                        disponiblePourTravail: true,
-                        commentaireDisponibilite,
-                      });
-                    } catch (err) {
-                      alert('Erreur lors de la mise à jour');
-                    } finally {
-                      setSavingDisponibilite(false);
-                    }
-                  }}
+                  onClick={sauvegarderCommentaireDisponibilite}
                   disabled={savingDisponibilite}
                 >
                   💾
@@ -670,7 +426,7 @@ const DashboardTraducteur: React.FC = () => {
                   key={tache.id} 
                   tache={tache} 
                   compact 
-                  onTerminer={handleTerminerTache}
+                  onTerminer={demanderTerminerTache}
                 />
               ))}
               {mesTaches.length > 3 && (
@@ -728,7 +484,7 @@ const DashboardTraducteur: React.FC = () => {
                 <TacheCard 
                   key={tache.id} 
                   tache={tache} 
-                  onTerminer={handleTerminerTache}
+                  onTerminer={demanderTerminerTache}
                 />
               ))}
             </div>
@@ -791,7 +547,7 @@ const DashboardTraducteur: React.FC = () => {
                   </div>
                   <Button 
                     variant="danger" 
-                    onClick={() => handleSupprimerBlocage(blocage.id)}
+                    onClick={() => supprimerBlocage(blocage.id)}
                   >
                     Supprimer
                   </Button>
@@ -874,7 +630,7 @@ const DashboardTraducteur: React.FC = () => {
               </div>
               
               <div className="mt-4">
-                <Button onClick={handleSaveParametres} disabled={savingParametres}>
+                <Button onClick={sauvegarderParametres} disabled={savingParametres}>
                   {savingParametres ? 'Enregistrement...' : 'Enregistrer les modifications'}
                 </Button>
               </div>
@@ -1058,7 +814,7 @@ const DashboardTraducteur: React.FC = () => {
         onFermer={() => setOuvrirBlocage(false)}
         ariaDescription="Formulaire pour bloquer des heures sur une journée"
       >
-        <form onSubmit={handleCreerBlocage} className="space-y-4">
+        <form onSubmit={creerBlocage} className="space-y-4">
           {erreurBlocage && (
             <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
               {erreurBlocage}
@@ -1141,7 +897,7 @@ const DashboardTraducteur: React.FC = () => {
       {/* Dialogue de confirmation suppression */}
       <ConfirmDialog
         isOpen={confirmDeleteBlocage.isOpen}
-        onClose={() => setConfirmDeleteBlocage({ isOpen: false, id: null })}
+        onClose={fermerConfirmDeleteBlocage}
         onConfirm={executerSuppressionBlocage}
         title="Supprimer le blocage"
         message="Voulez-vous vraiment supprimer ce blocage ? Cette action est irréversible."
@@ -1153,10 +909,7 @@ const DashboardTraducteur: React.FC = () => {
       {/* Dialogue de confirmation terminaison de tâche avec commentaire */}
       <Modal
         ouvert={confirmTerminerTache.isOpen}
-        onFermer={() => {
-          setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
-          setCommentaireTerminaison('');
-        }}
+        onFermer={annulerTerminerTache}
         titre="Terminer la tâche"
       >
         <div className="space-y-4">
@@ -1187,10 +940,7 @@ const DashboardTraducteur: React.FC = () => {
           <div className="flex justify-end gap-2 mt-4">
             <Button 
               variant="outline" 
-              onClick={() => {
-                setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
-                setCommentaireTerminaison('');
-              }}
+              onClick={annulerTerminerTache}
             >
               Annuler
             </Button>
