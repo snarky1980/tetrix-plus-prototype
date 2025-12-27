@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -13,57 +13,69 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { TacheCard } from '../components/taches/TacheCard';
 import { DemandesRessourcesTraducteur } from '../components/notifications/DemandesRessourcesTraducteur';
-import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
-import { usePlanification } from '../hooks/usePlanification';
 import { useDashboardTraducteur, ViewMode } from '../hooks/useDashboardTraducteur';
 import { formatHeures } from '../lib/format';
-import { todayOttawa, formatOttawaISO } from '../utils/dateTimeOttawa';
+import { traducteurService } from '../services/traducteurService';
 
 type Section = 'overview' | 'taches' | 'blocages' | 'parametres' | 'statistiques';
 
 /**
  * Dashboard Traducteur - Interface complète et moderne
+ * Inspiré du portail conseiller avec forte emphase UI/UX
  * 
- * Architecture:
- * - Utilise le hook useDashboardTraducteur pour la logique métier
- * - Le composant se concentre sur le rendu et la navigation entre sections
+ * Logique métier extraite dans useDashboardTraducteur
  */
 const DashboardTraducteur: React.FC = () => {
-  // ============ États UI uniquement ============
+  // ============ État de navigation (UI uniquement) ============
   const [section, setSection] = useState<Section>('overview');
-  const [viewMode, setViewMode] = useState<ViewMode>('7');
-  const [customStartDate, setCustomStartDate] = useState('');
-  const [customEndDate, setCustomEndDate] = useState('');
-  
-  const { utilisateur } = useAuth();
-  const todayDate = todayOttawa();
-  const today = formatOttawaISO(todayDate);
-  
-  // ============ Hook métier principal ============
+
+  // ============ Hook métier ============
   const {
+    // Données
     traducteur,
     mesTaches,
     blocages,
+    planification,
+    stats,
+    percentageUtilise,
+    today,
+    
+    // Loading states
     loadingTraducteur,
     loadingTaches,
+    loadingPlanif,
+    errorPlanif,
+    
+    // Vue
+    viewMode,
+    setViewMode,
+    customStartDate,
+    setCustomStartDate,
+    customEndDate,
+    setCustomEndDate,
+    
+    // Disponibilité
     disponibiliteActive,
     commentaireDisponibilite,
-    savingDisponibilite,
     setCommentaireDisponibilite,
+    savingDisponibilite,
     toggleDisponibilite,
-    sauvegarderCommentaireDisponibilite,
+    
+    // Blocages
     ouvrirBlocage,
+    setOuvrirBlocage,
     blocageData,
+    setBlocageData,
     submittingBlocage,
     erreurBlocage,
-    confirmDeleteBlocage,
-    setOuvrirBlocage,
-    setBlocageData,
     creerBlocage,
-    supprimerBlocage,
+    confirmDeleteBlocage,
+    demanderSuppressionBlocage,
     executerSuppressionBlocage,
-    fermerConfirmDeleteBlocage,
+    annulerSuppressionBlocage,
+    
+    // Terminaison tâche
     confirmTerminerTache,
     terminerLoading,
     commentaireTerminaison,
@@ -71,54 +83,20 @@ const DashboardTraducteur: React.FC = () => {
     demanderTerminerTache,
     confirmerTerminerTache,
     annulerTerminerTache,
+    
+    // Paramètres
     parametresForm,
-    savingParametres,
     setParametresForm,
+    savingParametres,
     sauvegarderParametres,
-    stats: tacheStats,
-    periodeActuelle,
-  } = useDashboardTraducteur({
-    traducteurId: utilisateur?.traducteurId,
-    viewMode,
-    customStartDate,
-    customEndDate,
-    onRefresh: () => refresh(),
-  });
-  
-  // ============ Hook de planification ============
-  const { planification, loading: loadingPlanif, error: errorPlanif, refresh } = usePlanification(
-    utilisateur?.traducteurId, 
-    { dateDebut: periodeActuelle.debut, dateFin: periodeActuelle.fin }
-  );
+    
+    // Refresh
+    refresh,
+  } = useDashboardTraducteur();
 
   // ============ Titre dynamique ============
   const titreTraducteur = traducteur?.nom || 'Mon espace';
   usePageTitle(`${titreTraducteur} - Tetrix PLUS`, 'Gérez votre planification et vos disponibilités');
-
-  // ============ Statistiques combinées ============
-  const stats = useMemo(() => {
-    if (!planification) return { 
-      taches: 0, blocages: 0, libre: 0, capacite: 0, 
-      ...tacheStats
-    };
-    
-    const totaux = planification.planification.reduce((acc: any, jour: any) => ({
-      taches: acc.taches + (jour.heuresTaches || 0),
-      blocages: acc.blocages + (jour.heuresBlocages || 0),
-      libre: acc.libre + (jour.disponible || 0),
-      capacite: acc.capacite + (jour.capacite || 0),
-    }), { taches: 0, blocages: 0, libre: 0, capacite: 0 });
-    
-    return { 
-      ...totaux,
-      ...tacheStats
-    };
-  }, [planification, tacheStats]);
-
-  const percentageUtilise = useMemo(() => {
-    if (stats.capacite === 0) return 0;
-    return ((stats.taches + stats.blocages) / stats.capacite) * 100;
-  }, [stats]);
 
   // ============ Rendu du calendrier ============
   const renderCalendrier = () => {
@@ -277,7 +255,17 @@ const DashboardTraducteur: React.FC = () => {
                 />
                 <Button
                   variant="secondaire"
-                  onClick={sauvegarderCommentaireDisponibilite}
+                  onClick={async () => {
+                    if (!traducteur?.id) return;
+                    try {
+                      await traducteurService.mettreAJourDisponibilite(traducteur.id, {
+                        disponiblePourTravail: true,
+                        commentaireDisponibilite,
+                      });
+                    } catch (err) {
+                      alert('Erreur lors de la mise à jour');
+                    }
+                  }}
                   disabled={savingDisponibilite}
                 >
                   💾
@@ -547,7 +535,7 @@ const DashboardTraducteur: React.FC = () => {
                   </div>
                   <Button 
                     variant="danger" 
-                    onClick={() => supprimerBlocage(blocage.id)}
+                    onClick={() => demanderSuppressionBlocage(blocage.id)}
                   >
                     Supprimer
                   </Button>
@@ -897,7 +885,7 @@ const DashboardTraducteur: React.FC = () => {
       {/* Dialogue de confirmation suppression */}
       <ConfirmDialog
         isOpen={confirmDeleteBlocage.isOpen}
-        onClose={fermerConfirmDeleteBlocage}
+        onClose={annulerSuppressionBlocage}
         onConfirm={executerSuppressionBlocage}
         title="Supprimer le blocage"
         message="Voulez-vous vraiment supprimer ce blocage ? Cette action est irréversible."

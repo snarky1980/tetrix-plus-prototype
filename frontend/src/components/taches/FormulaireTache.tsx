@@ -1,19 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DateTimeInput } from '../ui/DateTimeInput';
 import { LoadingSpinner } from '../ui/Spinner';
 import { BoutonPlanificationTraducteur } from '../BoutonPlanificationTraducteur';
-import { traducteurService } from '../../services/traducteurService';
-import { clientService } from '../../services/clientService';
-import { sousDomaineService } from '../../services/sousDomaineService';
-import { domaineService } from '../../services/domaineService';
-import { tacheService } from '../../services/tacheService';
-import { repartitionService, SuggestionRepartitionResponse } from '../../services/repartitionService';
-import { extractDatePart, extractTimePart, combineDateAndTime, formatDateEcheanceDisplay } from '../../utils/dateTimeOttawa';
-import { Traducteur, Client, SousDomaine, PaireLinguistique, TypeTache, TypeRepartitionUI } from '../../types';
-import { toUIMode, MODE_LABELS } from '../../utils/modeDistribution';
+import { formatDateEcheanceDisplay } from '../../utils/dateTimeOttawa';
+import { MODE_LABELS } from '../../utils/modeDistribution';
+import { useFormulaireTache } from '../../hooks/useFormulaireTache';
 
 // Utilitaires pour formater les dates et heures
 const formatDateAvecJour = (dateStr: string): string => {
@@ -73,359 +67,53 @@ interface FormulaireTacheProps {
   compact?: boolean;
 }
 
-interface FormData {
-  numeroProjet: string;
-  traducteurId: string;
-  clientId: string;
-  domaine: string;
-  sousDomaineId: string;
-  paireLinguistiqueId: string;
-  typeTache: TypeTache;
-  specialisation: string;
-  description: string;
-  heuresTotal: string | number;
-  compteMots: string | number;
-  dateEcheance: string;
-  heureEcheance: string;
-  priorite: 'URGENT' | 'REGULIER';
-  typeRepartition: TypeRepartitionUI;
-  dateDebut: string;
-  dateFin: string;
-}
-
-interface RepartitionManuelle {
-  date: string;
-  heures: number;
-  heureDebut?: string;
-  heureFin?: string;
-}
-
-// Version de la tâche pour le verrouillage optimiste
-let tacheVersion: number = 0;
-
 export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   tacheId,
   onSuccess,
   onCancel,
   compact: _compact = false,
 }) => {
-  const [etape, setEtape] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [erreur, setErreur] = useState('');
+  // Utiliser le hook pour toute la logique métier
+  const {
+    loading,
+    submitting,
+    deleting,
+    loadingPreview,
+    loadingSuggestion,
+    traducteurs,
+    clients,
+    domaines,
+    sousDomaines,
+    pairesDisponibles,
+    formData,
+    setFormData,
+    repartitionManuelle,
+    setRepartitionManuelle,
+    previewRepartition,
+    setPreviewRepartition,
+    suggestionCapacite,
+    setSuggestionCapacite,
+    erreur,
+    warningDatesPassees,
+    datesPassees,
+    confirmDelete,
+    setConfirmDelete,
+    showConfirmDatesPassees,
+    setShowConfirmDatesPassees,
+    etape,
+    setEtape,
+    chargerPreview,
+    demanderSuggestion,
+    appliquerSuggestion,
+    validerEtape1,
+    handleSubmit,
+    handleDelete,
+    formatNumeroProjet,
+    traducteurSelectionne,
+  } = useFormulaireTache({ tacheId, onSuccess, onCancel });
 
-  // Données de référence
-  const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [domaines, setDomaines] = useState<string[]>([]);
-  const [sousDomaines, setSousDomaines] = useState<SousDomaine[]>([]);
-  const [pairesDisponibles, setPairesDisponibles] = useState<PaireLinguistique[]>([]);
-
-  // Formulaire
-  const today = new Date().toISOString().split('T')[0];
-  const [formData, setFormData] = useState<FormData>({
-    numeroProjet: '',
-    traducteurId: '',
-    clientId: '',
-    domaine: '',
-    sousDomaineId: '',
-    paireLinguistiqueId: '',
-    typeTache: 'TRADUCTION',
-    specialisation: '',
-    description: '',
-    heuresTotal: '',
-    compteMots: '',
-    dateEcheance: '',
-    heureEcheance: '17:00',
-    priorite: 'REGULIER',
-    typeRepartition: 'JUSTE_TEMPS',
-    dateDebut: today,
-    dateFin: '',
-  });
-
-  const [repartitionManuelle, setRepartitionManuelle] = useState<RepartitionManuelle[]>([]);
-  const [previewRepartition, setPreviewRepartition] = useState<any[] | null>(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const [warningDatesPassees, setWarningDatesPassees] = useState<string | null>(null);
-  const [datesPassees, setDatesPassees] = useState<string[]>([]);
-  const [showConfirmDatesPassees, setShowConfirmDatesPassees] = useState(false);
-  
-  // État pour la suggestion de répartition
-  const [suggestionCapacite, setSuggestionCapacite] = useState<SuggestionRepartitionResponse | null>(null);
-  const [loadingSuggestion, setLoadingSuggestion] = useState(false);
-
-  // Chargement des données
-  useEffect(() => {
-    chargerDonnees();
-  }, []);
-
-  // Chargement de la tâche à éditer
-  useEffect(() => {
-    if (tacheId) {
-      chargerTache();
-    }
-  }, [tacheId]);
-
-  // Mise à jour des paires linguistiques selon le traducteur
-  useEffect(() => {
-    if (formData.traducteurId) {
-      const trad = traducteurs.find(t => t.id === formData.traducteurId);
-      setPairesDisponibles(trad?.pairesLinguistiques || []);
-      if (!tacheId) {
-        // Reset paire seulement si création
-        setFormData(prev => ({ ...prev, paireLinguistiqueId: '' }));
-      }
-    }
-  }, [formData.traducteurId, traducteurs, tacheId]);
-
-  const chargerDonnees = async () => {
-    setLoading(true);
-    try {
-      const [traducs, cls, domns, doms] = await Promise.all([
-        traducteurService.obtenirTraducteurs({ actif: true }),
-        clientService.obtenirClients(true),
-        domaineService.obtenirDomaines(),
-        sousDomaineService.obtenirSousDomaines(true),
-      ]);
-      setTraducteurs(traducs);
-      setClients(cls);
-      setSousDomaines(doms);
-      
-      // Agréger tous les domaines (comme dans PlanificationGlobale)
-      const domainesNoms = Array.from(new Set([
-        ...domns.map(d => d.nom),
-        ...traducs.flatMap(t => t.domaines || []),
-        ...doms.map(sd => sd.nom),
-      ])).sort();
-      setDomaines(domainesNoms);
-    } catch (err) {
-      console.error('Erreur chargement données:', err);
-      setErreur('Erreur lors du chargement des données');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const chargerTache = async () => {
-    if (!tacheId) return;
-    
-    try {
-      const tache = await tacheService.obtenirTache(tacheId);
-      
-      // Stocker la version pour le verrouillage optimiste
-      tacheVersion = tache.version || 0;
-      
-      // Remplir le formulaire avec les données de la tâche
-      // Parser la date d'échéance avec les utilitaires standardisés
-      const dateEcheanceStr = extractDatePart(tache.dateEcheance);
-      const heureEcheance = extractTimePart(tache.dateEcheance, '17:00');
-      // Combiner date + heure au format attendu par DateTimeInput: "YYYY-MM-DDTHH:mm:00"
-      const dateEcheanceComplete = combineDateAndTime(dateEcheanceStr, heureEcheance);
-      
-      setFormData({
-        numeroProjet: tache.numeroProjet || '',
-        traducteurId: tache.traducteurId,
-        clientId: tache.clientId || '',
-        domaine: '', // Champ non disponible sur le type Tache
-        sousDomaineId: tache.sousDomaineId || '',
-        paireLinguistiqueId: tache.paireLinguistiqueId || '',
-        typeTache: tache.typeTache || 'TRADUCTION',
-        specialisation: tache.specialisation || '',
-        description: tache.description || '',
-        heuresTotal: tache.heuresTotal,
-        compteMots: tache.compteMots || '',
-        dateEcheance: dateEcheanceComplete, // Format complet avec heure pour DateTimeInput
-        heureEcheance: heureEcheance, // Gardé pour compatibilité
-        priorite: (tache.priorite === 'URGENT' ? 'URGENT' : 'REGULIER') as 'URGENT' | 'REGULIER',
-        typeRepartition: toUIMode(tache.modeDistribution),
-        dateDebut: today,
-        dateFin: '',
-      });
-
-      // Charger les ajustements de temps existants si disponibles
-      if (tache.ajustementsTemps && tache.ajustementsTemps.length > 0) {
-        const repartitions = tache.ajustementsTemps
-          .filter((a: any) => a.type === 'TACHE')
-          .map((a: any) => ({
-            date: a.date.split('T')[0],
-            heures: a.heures
-          }));
-        if (repartitions.length > 0) {
-          setFormData(prev => ({ ...prev, typeRepartition: 'MANUEL' }));
-          setRepartitionManuelle(repartitions);
-        }
-      }
-    } catch (err) {
-      console.error('Erreur chargement tâche:', err);
-      setErreur('Erreur lors du chargement de la tâche');
-    }
-  };
-
-  const formatNumeroProjet = (value: string): string => {
-    // Format: 123-123456-001
-    const cleaned = value.replace(/[^0-9]/g, '');
-    if (cleaned.length <= 3) return cleaned;
-    if (cleaned.length <= 9) return `${cleaned.slice(0, 3)}-${cleaned.slice(3)}`;
-    return `${cleaned.slice(0, 3)}-${cleaned.slice(3, 9)}-${cleaned.slice(9, 12)}`;
-  };
-
-  const chargerPreview = async () => {
-    if (!formData.traducteurId || !formData.heuresTotal || !formData.dateEcheance) {
-      setErreur('Veuillez remplir tous les champs obligatoires');
-      return;
-    }
-
-    // Validation supplémentaire pour PEPS et EQUILIBRE
-    if ((formData.typeRepartition === 'PEPS' || formData.typeRepartition === 'EQUILIBRE') && !formData.dateDebut) {
-      setErreur('La date de début est requise pour ce mode de répartition');
-      return;
-    }
-    if (formData.typeRepartition === 'EQUILIBRE' && !formData.dateFin) {
-      setErreur('La date de fin est requise pour le mode équilibré');
-      return;
-    }
-
-    setLoadingPreview(true);
-    setErreur('');
-    setWarningDatesPassees(null);
-    setDatesPassees([]);
-    
-    try {
-      const dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance}:00`;
-      
-      let result;
-      switch (formData.typeRepartition) {
-        case 'PEPS':
-          result = await repartitionService.previewPEPS({
-            traducteurId: formData.traducteurId,
-            heuresTotal: Number(formData.heuresTotal),
-            dateDebut: `${formData.dateDebut}T09:00:00`,
-            dateEcheance: dateEcheanceComplete,
-          });
-          break;
-        case 'EQUILIBRE':
-          result = await repartitionService.previewEquilibre({
-            traducteurId: formData.traducteurId,
-            heuresTotal: Number(formData.heuresTotal),
-            dateDebut: `${formData.dateDebut}T09:00:00`,
-            dateFin: `${formData.dateFin}T17:00:00`,
-          });
-          break;
-        case 'JUSTE_TEMPS':
-        default:
-          result = await repartitionService.previewJAT({
-            traducteurId: formData.traducteurId,
-            heuresTotal: Number(formData.heuresTotal),
-            dateEcheance: dateEcheanceComplete,
-          });
-          break;
-      }
-      
-      setPreviewRepartition(result.repartition);
-      
-      // Gérer le warning pour les dates passées
-      if (result.warning && result.datesPassees && result.datesPassees.length > 0) {
-        setWarningDatesPassees(result.warning);
-        setDatesPassees(result.datesPassees);
-      }
-    } catch (err: any) {
-      console.error('Erreur preview:', err);
-      setErreur(err.response?.data?.erreur || 'Erreur lors du calcul de la répartition');
-      setPreviewRepartition(null);
-    } finally {
-      setLoadingPreview(false);
-    }
-  };
-
-  // Fonction pour demander une suggestion de répartition au système
-  const demanderSuggestion = async () => {
-    if (!formData.traducteurId || !formData.heuresTotal || !formData.dateEcheance) {
-      setErreur('Veuillez remplir traducteur, heures et échéance pour obtenir une suggestion');
-      return;
-    }
-
-    setLoadingSuggestion(true);
-    setErreur('');
-    setSuggestionCapacite(null);
-
-    try {
-      // Déterminer la période en fonction du mode
-      let dateDebut = formData.dateDebut || new Date().toISOString().split('T')[0];
-      let dateFin = formData.dateFin || formData.dateEcheance;
-      
-      // Convertir mode UI vers mode API
-      let modeApi: 'equilibre' | 'jat' | 'peps' = 'equilibre';
-      if (formData.typeRepartition === 'JUSTE_TEMPS') {
-        modeApi = 'jat';
-        dateDebut = new Date().toISOString().split('T')[0];
-        dateFin = formData.dateEcheance;
-      } else if (formData.typeRepartition === 'PEPS') {
-        modeApi = 'peps';
-        dateFin = formData.dateEcheance;
-      }
-
-      const suggestion = await repartitionService.suggererRepartition({
-        traducteurId: formData.traducteurId,
-        heuresTotal: Number(formData.heuresTotal),
-        dateDebut,
-        dateFin,
-        mode: modeApi,
-      });
-
-      setSuggestionCapacite(suggestion);
-      
-      // Si une répartition est suggérée et on peut l'accepter, on peut optionnellement l'appliquer automatiquement
-      // Pour l'instant, on affiche juste les informations
-    } catch (err: any) {
-      console.error('Erreur suggestion:', err);
-      setErreur(err.response?.data?.erreur || 'Erreur lors de la suggestion');
-    } finally {
-      setLoadingSuggestion(false);
-    }
-  };
-
-  // Appliquer la suggestion proposée
-  const appliquerSuggestion = () => {
-    if (suggestionCapacite?.repartition) {
-      setPreviewRepartition(suggestionCapacite.repartition);
-      setSuggestionCapacite(null);
-    }
-  };
-
-  const validerEtape1 = (): boolean => {
-    if (!formData.numeroProjet.trim()) {
-      setErreur('Veuillez saisir un numéro de projet');
-      return false;
-    }
-    if (!formData.traducteurId) {
-      setErreur('Veuillez sélectionner un traducteur');
-      return false;
-    }
-    if (!formData.heuresTotal || Number(formData.heuresTotal) <= 0) {
-      setErreur('Les heures doivent être supérieures à 0');
-      return false;
-    }
-    if (!formData.dateEcheance) {
-      setErreur('Veuillez sélectionner une date d\'échéance');
-      return false;
-    }
-    setErreur('');
-    return true;
-  };
-
-  const handleEtape1Suivant = () => {
-    if (validerEtape1()) {
-      if (formData.typeRepartition !== 'MANUEL') {
-        chargerPreview();
-      }
-      setEtape(2);
-    }
-  };
-
+  // Fonctions locales pour la répartition manuelle
   const ajouterRepartitionManuelle = () => {
-    // Récupérer l'horaire du traducteur pour les plages par défaut
     const trad = traducteurs.find(t => t.id === formData.traducteurId);
     const horaireMatch = trad?.horaire?.match(/^(\d{1,2})h?-(\d{1,2})h?$/);
     const heureDebutDefaut = horaireMatch ? `${horaireMatch[1]}h` : '9h';
@@ -444,7 +132,6 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
     const nouvelles = [...repartitionManuelle];
     nouvelles[index] = { ...nouvelles[index], [champ]: valeur };
     
-    // Si on modifie les heures, recalculer l'heure de fin
     if (champ === 'heures' && nouvelles[index].heureDebut) {
       const heureDebut = convertirHeureVersFomatHTML(nouvelles[index].heureDebut);
       nouvelles[index].heureFin = calculerHeureFin(heureDebut, Number(valeur));
@@ -453,124 +140,12 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
     setRepartitionManuelle(nouvelles);
   };
 
-  const handleSubmit = async (confirmeDatesPassees: boolean = false) => {
-    // Si des dates passées et pas encore confirmé, demander confirmation
-    if (datesPassees.length > 0 && !confirmeDatesPassees && !showConfirmDatesPassees) {
-      setShowConfirmDatesPassees(true);
-      return;
-    }
-    
-    setShowConfirmDatesPassees(false);
-    setSubmitting(true);
-    setErreur('');
-
-    try {
-      // Validation des champs requis
-      if (!formData.numeroProjet || !formData.traducteurId || !formData.heuresTotal || !formData.dateEcheance) {
-        setErreur('Veuillez remplir tous les champs obligatoires');
-        setSubmitting(false);
-        return;
+  const handleEtape1Suivant = () => {
+    if (validerEtape1()) {
+      if (formData.typeRepartition !== 'MANUEL') {
+        chargerPreview();
       }
-
-      // Validation pour répartition manuelle
-      if (formData.typeRepartition === 'MANUEL') {
-        const totalHeuresManuel = repartitionManuelle.reduce((s, r) => s + r.heures, 0);
-        const heuresAttendu = parseFloat(String(formData.heuresTotal));
-        
-        if (Math.abs(totalHeuresManuel - heuresAttendu) > 0.01) {
-          setErreur(`Le total des heures (${totalHeuresManuel.toFixed(2)}h) ne correspond pas au total attendu (${heuresAttendu}h)`);
-          setSubmitting(false);
-          return;
-        }
-      }
-
-      // Construire la dateEcheance - vérifier si déjà au format complet
-      let dateEcheanceComplete = formData.dateEcheance;
-      if (!formData.dateEcheance.includes('T')) {
-        // Format YYYY-MM-DD seul, ajouter l'heure
-        dateEcheanceComplete = `${formData.dateEcheance}T${formData.heureEcheance || '17:00'}:00`;
-      }
-
-      const data: any = {
-        numeroProjet: formData.numeroProjet,
-        traducteurId: formData.traducteurId,
-        typeTache: formData.typeTache, // Corrigé: typeTache au lieu de type
-        description: formData.description || '',
-        heuresTotal: parseFloat(String(formData.heuresTotal)),
-        dateEcheance: dateEcheanceComplete,
-      };
-
-      // Champs optionnels
-      if (formData.clientId) data.clientId = formData.clientId;
-      if (formData.sousDomaineId) data.sousDomaineId = formData.sousDomaineId;
-      if (formData.paireLinguistiqueId) data.paireLinguistiqueId = formData.paireLinguistiqueId;
-      if (formData.specialisation && formData.specialisation.trim()) data.specialisation = formData.specialisation;
-      if (formData.compteMots) data.compteMots = parseInt(String(formData.compteMots));
-
-      // Gérer les différentes méthodes de répartition
-      if (formData.typeRepartition === 'MANUEL') {
-        // Manuel: envoyer la répartition manuelle
-        data.repartition = repartitionManuelle;
-        data.repartitionAuto = false;
-        data.modeDistribution = 'MANUEL';
-      } else {
-        // JAT, EQUILIBRE et PEPS: utiliser la prévisualisation (qui peut avoir été éditée par l'utilisateur)
-        if (previewRepartition && previewRepartition.length > 0) {
-          data.repartition = previewRepartition;
-          data.repartitionAuto = false;
-          // Mapper le mode de distribution
-          const modeMapping: Record<string, string> = {
-            'JUSTE_TEMPS': 'JAT',
-            'EQUILIBRE': 'EQUILIBRE',
-            'PEPS': 'PEPS'
-          };
-          data.modeDistribution = modeMapping[formData.typeRepartition] || 'JAT';
-        } else {
-          setErreur('Aucune répartition générée. Veuillez recalculer.');
-          setSubmitting(false);
-          return;
-        }
-      }
-
-      let resultat;
-      if (tacheId) {
-        // Ajouter la version pour le verrouillage optimiste
-        data.version = tacheVersion;
-        resultat = await tacheService.mettreAJourTache(tacheId, data);
-      } else {
-        resultat = await tacheService.creerTache(data);
-      }
-
-      if (onSuccess) {
-        onSuccess(resultat.id);
-      }
-    } catch (err: any) {
-      console.error('Erreur soumission:', err);
-      const messageErreur = err.response?.data?.erreur || `Erreur lors de ${tacheId ? 'la modification' : 'la création'} de la tâche`;
-      const detailsErreur = err.response?.data?.details ? `\nDétails: ${JSON.stringify(err.response.data.details)}` : '';
-      setErreur(messageErreur + detailsErreur);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!tacheId || !confirmDelete) return;
-    
-    setDeleting(true);
-    setErreur('');
-    
-    try {
-      await tacheService.supprimerTache(tacheId);
-      if (onCancel) {
-        onCancel(); // Fermer le formulaire après suppression
-      }
-    } catch (err: any) {
-      console.error('Erreur suppression:', err);
-      setErreur(err.response?.data?.erreur || 'Erreur lors de la suppression de la tâche');
-      setConfirmDelete(false);
-    } finally {
-      setDeleting(false);
+      setEtape(2);
     }
   };
 
@@ -580,9 +155,6 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
 
   const totalManuel = repartitionManuelle.reduce((sum, r) => sum + r.heures, 0);
   const totalFormulaire = Number(formData.heuresTotal) || 0;
-  
-  // Mémoisation du traducteur sélectionné pour éviter les find() répétés
-  const traducteurSelectionne = traducteurs.find(t => t.id === formData.traducteurId);
 
   return (
     <div className="space-y-4">

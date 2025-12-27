@@ -1,26 +1,29 @@
 /**
  * Hook useDashboardTraducteur
  * 
- * Gère la logique métier du dashboard traducteur:
- * - Données du traducteur connecté
- * - Tâches assignées
- * - Blocages de temps
- * - Disponibilité pour travail
+ * Centralise la logique métier du dashboard traducteur:
+ * - Chargement des données (traducteur, tâches, blocages)
+ * - Gestion de la disponibilité
+ * - Gestion des blocages de temps
+ * - Terminaison des tâches
  * - Paramètres horaires
- * - Terminaison de tâches
+ * 
+ * Extrait de DashboardTraducteur.tsx pour améliorer la maintenabilité.
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { usePlanification } from './usePlanification';
 import { traducteurService } from '../services/traducteurService';
 import { tacheService } from '../services/tacheService';
 import type { Traducteur, Tache } from '../types';
-import { formatOttawaISO, todayOttawa, addDaysOttawa } from '../utils/dateTimeOttawa';
+import { todayOttawa, formatOttawaISO, addDaysOttawa } from '../utils/dateTimeOttawa';
 
 // ============ Types ============
 
 export type ViewMode = '1' | '7' | '14' | '30' | 'custom';
 
-interface BlocageData {
+export interface BlocageData {
   date: string;
   heureDebut: string;
   heureFin: string;
@@ -28,147 +31,96 @@ interface BlocageData {
   journeeComplete: boolean;
 }
 
-interface ParametresForm {
+export interface ParametresForm {
   horaireDebut: string;
   horaireFin: string;
   pauseMidiDebut: string;
   pauseMidiFin: string;
 }
 
-interface ConfirmDialog<T = string> {
-  isOpen: boolean;
-  id: T | null;
+export interface Blocage {
+  id: string;
+  date: string;
+  heureDebut: string;
+  heureFin: string;
+  motif: string;
 }
 
-interface ConfirmTerminerTache {
+export interface TerminerTacheState {
   isOpen: boolean;
   tacheId: string | null;
   tacheStatut?: string;
 }
 
-interface DashboardTraducteurStats {
-  /** Nombre total de tâches */
+export interface DeleteBlocageState {
+  isOpen: boolean;
+  id: string | null;
+}
+
+export interface DashboardStats {
+  taches: number;
+  blocages: number;
+  libre: number;
+  capacite: number;
   nbTaches: number;
-  /** Tâches planifiées */
   tachesPlanifiees: number;
-  /** Tâches en cours */
   tachesEnCours: number;
-  /** Tâches en retard */
   tachesEnRetard: number;
-  /** Tâches terminées */
   tachesTerminees: number;
 }
 
-interface UseDashboardTraducteurResult {
-  // Données
-  traducteur: Traducteur | null;
-  mesTaches: Tache[];
-  blocages: any[];
-  
-  // États de chargement
-  loadingTraducteur: boolean;
-  loadingTaches: boolean;
-  
-  // Disponibilité
-  disponibiliteActive: boolean;
-  commentaireDisponibilite: string;
-  savingDisponibilite: boolean;
-  setCommentaireDisponibilite: (comment: string) => void;
-  toggleDisponibilite: () => Promise<void>;
-  sauvegarderCommentaireDisponibilite: () => Promise<void>;
-  
-  // Blocages
-  ouvrirBlocage: boolean;
-  blocageData: BlocageData;
-  submittingBlocage: boolean;
-  erreurBlocage: string;
-  confirmDeleteBlocage: ConfirmDialog;
-  setOuvrirBlocage: (open: boolean) => void;
-  setBlocageData: (data: BlocageData) => void;
-  creerBlocage: (e: React.FormEvent) => Promise<void>;
-  supprimerBlocage: (id: string) => void;
-  executerSuppressionBlocage: () => Promise<void>;
-  fermerConfirmDeleteBlocage: () => void;
-  
-  // Terminaison tâche
-  confirmTerminerTache: ConfirmTerminerTache;
-  terminerLoading: boolean;
-  commentaireTerminaison: string;
-  setCommentaireTerminaison: (comment: string) => void;
-  demanderTerminerTache: (tacheId: string, tacheStatut?: string) => void;
-  confirmerTerminerTache: () => Promise<void>;
-  annulerTerminerTache: () => void;
-  
-  // Paramètres
-  parametresForm: ParametresForm;
-  savingParametres: boolean;
-  setParametresForm: (form: ParametresForm | ((prev: ParametresForm) => ParametresForm)) => void;
-  sauvegarderParametres: () => Promise<void>;
-  
-  // Statistiques
-  stats: DashboardTraducteurStats;
-  
-  // Période
-  periodeActuelle: { debut: string; fin: string };
-  
-  // Actions
-  chargerBlocages: () => Promise<void>;
-  chargerMesTaches: () => Promise<void>;
-  refreshAll: () => void;
-}
+// ============ Hook ============
 
-interface UseDashboardTraducteurOptions {
-  traducteurId?: string;
-  viewMode: ViewMode;
-  customStartDate?: string;
-  customEndDate?: string;
-  onRefresh?: () => void;
-}
-
-export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): UseDashboardTraducteurResult {
-  const { traducteurId, viewMode, customStartDate, customEndDate, onRefresh } = options;
+export function useDashboardTraducteur() {
+  const { utilisateur } = useAuth();
+  const traducteurId = utilisateur?.traducteurId;
   
   const todayDate = todayOttawa();
   const today = formatOttawaISO(todayDate);
-  
-  // ============ États pour les données ============
+
+  // ============ États de vue ============
+  const [viewMode, setViewMode] = useState<ViewMode>('7');
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
+  // ============ États données ============
   const [traducteur, setTraducteur] = useState<Traducteur | null>(null);
   const [mesTaches, setMesTaches] = useState<Tache[]>([]);
-  const [blocages, setBlocages] = useState<any[]>([]);
+  const [blocages, setBlocages] = useState<Blocage[]>([]);
   const [loadingTaches, setLoadingTaches] = useState(false);
   const [loadingTraducteur, setLoadingTraducteur] = useState(true);
-  
-  // ============ États pour la disponibilité ============
+
+  // ============ États disponibilité ============
   const [disponibiliteActive, setDisponibiliteActive] = useState(false);
   const [commentaireDisponibilite, setCommentaireDisponibilite] = useState('');
   const [savingDisponibilite, setSavingDisponibilite] = useState(false);
-  
-  // ============ États pour les blocages ============
+
+  // ============ États blocages ============
   const [ouvrirBlocage, setOuvrirBlocage] = useState(false);
-  const [blocageData, setBlocageData] = useState<BlocageData>({ 
-    date: today, 
-    heureDebut: '09:00', 
-    heureFin: '17:00', 
+  const [blocageData, setBlocageData] = useState<BlocageData>({
+    date: today,
+    heureDebut: '09:00',
+    heureFin: '17:00',
     motif: '',
-    journeeComplete: false
+    journeeComplete: false,
   });
   const [submittingBlocage, setSubmittingBlocage] = useState(false);
   const [erreurBlocage, setErreurBlocage] = useState('');
-  const [confirmDeleteBlocage, setConfirmDeleteBlocage] = useState<ConfirmDialog>({
+  const [confirmDeleteBlocage, setConfirmDeleteBlocage] = useState<DeleteBlocageState>({
     isOpen: false,
-    id: null
+    id: null,
   });
-  
-  // ============ États pour la terminaison de tâche ============
-  const [confirmTerminerTache, setConfirmTerminerTache] = useState<ConfirmTerminerTache>({
+
+  // ============ États terminaison tâche ============
+  const [confirmTerminerTache, setConfirmTerminerTache] = useState<TerminerTacheState>({
     isOpen: false,
     tacheId: null,
-    tacheStatut: undefined
+    tacheStatut: undefined,
   });
   const [terminerLoading, setTerminerLoading] = useState(false);
   const [commentaireTerminaison, setCommentaireTerminaison] = useState('');
-  
-  // ============ États pour les paramètres ============
+
+  // ============ États paramètres ============
   const [parametresForm, setParametresForm] = useState<ParametresForm>({
     horaireDebut: '09:00',
     horaireFin: '17:00',
@@ -177,11 +129,11 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
   });
   const [savingParametres, setSavingParametres] = useState(false);
 
-  // ============ Calcul des dates de période ============
+  // ============ Calcul période ============
   const periodeActuelle = useMemo(() => {
     const baseDate = todayDate;
     let nbJours = 7;
-    
+
     switch (viewMode) {
       case '1': nbJours = 1; break;
       case '7': nbJours = 7; break;
@@ -194,28 +146,37 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
         nbJours = 7;
         break;
     }
-    
+
     const fin = addDaysOttawa(baseDate, nbJours - 1);
-    return { 
-      debut: formatOttawaISO(baseDate), 
-      fin: formatOttawaISO(fin) 
+    return {
+      debut: formatOttawaISO(baseDate),
+      fin: formatOttawaISO(fin),
     };
   }, [todayDate, viewMode, customStartDate, customEndDate]);
 
-  // ============ Chargement du traducteur ============
+  // ============ Hook planification ============
+  const {
+    planification,
+    loading: loadingPlanif,
+    error: errorPlanif,
+    refresh: refreshPlanification,
+  } = usePlanification(traducteurId, {
+    dateDebut: periodeActuelle.debut,
+    dateFin: periodeActuelle.fin,
+  });
+
+  // ============ Chargement traducteur ============
   useEffect(() => {
-    if (!traducteurId) {
-      setLoadingTraducteur(false);
-      return;
-    }
-    
+    if (!traducteurId) return;
+
     setLoadingTraducteur(true);
-    traducteurService.obtenirTraducteur(traducteurId)
-      .then(data => {
+    traducteurService
+      .obtenirTraducteur(traducteurId)
+      .then((data) => {
         setTraducteur(data);
         setDisponibiliteActive(data.disponiblePourTravail);
         setCommentaireDisponibilite(data.commentaireDisponibilite || '');
-        
+
         // Parser l'horaire pour les paramètres
         if (data.horaire) {
           const match = data.horaire.match(/^(\d{1,2})h(\d{0,2})?\s*-\s*(\d{1,2})h(\d{0,2})?$/);
@@ -224,7 +185,7 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
             const mDebut = match[2] || '00';
             const hFin = match[3].padStart(2, '0');
             const mFin = match[4] || '00';
-            setParametresForm(prev => ({
+            setParametresForm((prev) => ({
               ...prev,
               horaireDebut: `${hDebut}:${mDebut}`,
               horaireFin: `${hFin}:${mFin}`,
@@ -232,22 +193,22 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
           }
         }
       })
-      .catch(err => console.error('[DashboardTraducteur] Erreur chargement traducteur:', err))
+      .catch((err) => console.error('Erreur chargement traducteur:', err))
       .finally(() => setLoadingTraducteur(false));
   }, [traducteurId]);
 
-  // ============ Chargement des tâches ============
+  // ============ Chargement tâches ============
   const chargerMesTaches = useCallback(async () => {
     if (!traducteurId) return;
     setLoadingTaches(true);
     try {
       const data = await tacheService.obtenirTaches({ traducteurId });
-      const tachesTries = data.sort((a, b) => 
-        new Date(a.dateEcheance).getTime() - new Date(b.dateEcheance).getTime()
+      const tachesTries = data.sort(
+        (a, b) => new Date(a.dateEcheance).getTime() - new Date(b.dateEcheance).getTime()
       );
       setMesTaches(tachesTries);
     } catch (err) {
-      console.error('[DashboardTraducteur] Erreur chargement tâches:', err);
+      console.error('Erreur chargement tâches:', err);
     } finally {
       setLoadingTaches(false);
     }
@@ -257,17 +218,17 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
     chargerMesTaches();
   }, [chargerMesTaches]);
 
-  // ============ Chargement des blocages ============
+  // ============ Chargement blocages ============
   const chargerBlocages = useCallback(async () => {
     if (!traducteurId) return;
     try {
-      const data = await traducteurService.obtenirBlocages(traducteurId, { 
-        dateDebut: periodeActuelle.debut, 
-        dateFin: periodeActuelle.fin 
+      const data = await traducteurService.obtenirBlocages(traducteurId, {
+        dateDebut: periodeActuelle.debut,
+        dateFin: periodeActuelle.fin,
       });
       setBlocages(data);
     } catch (err) {
-      console.error('[DashboardTraducteur] Erreur chargement blocages:', err);
+      console.error('Erreur chargement blocages:', err);
     }
   }, [traducteurId, periodeActuelle]);
 
@@ -276,18 +237,41 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
   }, [chargerBlocages]);
 
   // ============ Statistiques ============
-  const stats = useMemo<DashboardTraducteurStats>(() => ({
-    nbTaches: mesTaches.length,
-    tachesPlanifiees: mesTaches.filter(t => t.statut === 'PLANIFIEE').length,
-    tachesEnCours: mesTaches.filter(t => t.statut === 'EN_COURS').length,
-    tachesEnRetard: mesTaches.filter(t => t.statut === 'EN_RETARD').length,
-    tachesTerminees: mesTaches.filter(t => t.statut === 'TERMINEE').length,
-  }), [mesTaches]);
+  const stats = useMemo<DashboardStats>(() => {
+    const baseTaches = {
+      nbTaches: mesTaches.length,
+      tachesPlanifiees: mesTaches.filter((t) => t.statut === 'PLANIFIEE').length,
+      tachesEnCours: mesTaches.filter((t) => t.statut === 'EN_COURS').length,
+      tachesEnRetard: mesTaches.filter((t) => t.statut === 'EN_RETARD').length,
+      tachesTerminees: mesTaches.filter((t) => t.statut === 'TERMINEE').length,
+    };
 
-  // ============ Handlers disponibilité ============
+    if (!planification) {
+      return { taches: 0, blocages: 0, libre: 0, capacite: 0, ...baseTaches };
+    }
+
+    const totaux = planification.planification.reduce(
+      (acc: any, jour: any) => ({
+        taches: acc.taches + (jour.heuresTaches || 0),
+        blocages: acc.blocages + (jour.heuresBlocages || 0),
+        libre: acc.libre + (jour.disponible || 0),
+        capacite: acc.capacite + (jour.capacite || 0),
+      }),
+      { taches: 0, blocages: 0, libre: 0, capacite: 0 }
+    );
+
+    return { ...totaux, ...baseTaches };
+  }, [planification, mesTaches]);
+
+  const percentageUtilise = useMemo(() => {
+    if (stats.capacite === 0) return 0;
+    return ((stats.taches + stats.blocages) / stats.capacite) * 100;
+  }, [stats]);
+
+  // ============ Actions disponibilité ============
   const toggleDisponibilite = useCallback(async () => {
     if (!traducteurId) return;
-    
+
     setSavingDisponibilite(true);
     const nouvelleValeur = !disponibiliteActive;
 
@@ -305,57 +289,48 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
     }
   }, [traducteurId, disponibiliteActive, commentaireDisponibilite]);
 
-  const sauvegarderCommentaireDisponibilite = useCallback(async () => {
-    if (!traducteurId) return;
-    setSavingDisponibilite(true);
-    try {
-      await traducteurService.mettreAJourDisponibilite(traducteurId, {
-        disponiblePourTravail: true,
-        commentaireDisponibilite,
-      });
-    } catch (err) {
-      alert('Erreur lors de la mise à jour');
-    } finally {
-      setSavingDisponibilite(false);
-    }
-  }, [traducteurId, commentaireDisponibilite]);
+  // ============ Actions blocages ============
+  const creerBlocage = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!traducteurId) return;
 
-  // ============ Handlers blocages ============
-  const creerBlocage = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!traducteurId) return;
-    
-    setSubmittingBlocage(true);
-    setErreurBlocage('');
+      setSubmittingBlocage(true);
+      setErreurBlocage('');
 
-    try {
-      const heureDebut = blocageData.journeeComplete ? '00:00' : blocageData.heureDebut;
-      const heureFin = blocageData.journeeComplete ? '23:59' : blocageData.heureFin;
-      
-      await traducteurService.bloquerTemps(traducteurId, {
-        date: blocageData.date,
-        heureDebut,
-        heureFin,
-        motif: blocageData.motif || 'Blocage personnel',
-      });
-      setOuvrirBlocage(false);
-      setBlocageData({ 
-        date: today, 
-        heureDebut: '09:00', 
-        heureFin: '17:00', 
-        motif: '',
-        journeeComplete: false
-      });
-      onRefresh?.();
-      chargerBlocages();
-    } catch (err: any) {
-      setErreurBlocage(err.response?.data?.message || err.response?.data?.erreur || 'Erreur lors de la création du blocage');
-    } finally {
-      setSubmittingBlocage(false);
-    }
-  }, [traducteurId, blocageData, today, onRefresh, chargerBlocages]);
+      try {
+        const heureDebut = blocageData.journeeComplete ? '00:00' : blocageData.heureDebut;
+        const heureFin = blocageData.journeeComplete ? '23:59' : blocageData.heureFin;
 
-  const supprimerBlocage = useCallback((id: string) => {
+        await traducteurService.bloquerTemps(traducteurId, {
+          date: blocageData.date,
+          heureDebut,
+          heureFin,
+          motif: blocageData.motif || 'Blocage personnel',
+        });
+
+        setOuvrirBlocage(false);
+        setBlocageData({
+          date: today,
+          heureDebut: '09:00',
+          heureFin: '17:00',
+          motif: '',
+          journeeComplete: false,
+        });
+        refreshPlanification();
+        chargerBlocages();
+      } catch (err: any) {
+        setErreurBlocage(
+          err.response?.data?.message || err.response?.data?.erreur || 'Erreur lors de la création du blocage'
+        );
+      } finally {
+        setSubmittingBlocage(false);
+      }
+    },
+    [traducteurId, blocageData, today, refreshPlanification, chargerBlocages]
+  );
+
+  const demanderSuppressionBlocage = useCallback((id: string) => {
     setConfirmDeleteBlocage({ isOpen: true, id });
   }, []);
 
@@ -364,19 +339,19 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
     try {
       await traducteurService.supprimerBlocage(confirmDeleteBlocage.id);
       chargerBlocages();
-      onRefresh?.();
+      refreshPlanification();
     } catch (err) {
-      console.error('[DashboardTraducteur] Erreur suppression blocage:', err);
+      console.error('Erreur suppression blocage:', err);
     } finally {
       setConfirmDeleteBlocage({ isOpen: false, id: null });
     }
-  }, [confirmDeleteBlocage.id, chargerBlocages, onRefresh]);
+  }, [confirmDeleteBlocage.id, chargerBlocages, refreshPlanification]);
 
-  const fermerConfirmDeleteBlocage = useCallback(() => {
+  const annulerSuppressionBlocage = useCallback(() => {
     setConfirmDeleteBlocage({ isOpen: false, id: null });
   }, []);
 
-  // ============ Handlers terminaison tâche ============
+  // ============ Actions terminaison tâche ============
   const demanderTerminerTache = useCallback((tacheId: string, tacheStatut?: string) => {
     setCommentaireTerminaison('');
     setConfirmTerminerTache({ isOpen: true, tacheId, tacheStatut });
@@ -384,48 +359,51 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
 
   const confirmerTerminerTache = useCallback(async () => {
     if (!confirmTerminerTache.tacheId) return;
-    
+
     setTerminerLoading(true);
     try {
-      const result = await tacheService.terminerTache(confirmTerminerTache.tacheId, commentaireTerminaison || undefined);
+      const result = await tacheService.terminerTache(
+        confirmTerminerTache.tacheId,
+        commentaireTerminaison || undefined
+      );
       await chargerMesTaches();
-      onRefresh?.();
+      refreshPlanification();
       setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
       setCommentaireTerminaison('');
-      
+
       if (result.heuresLiberees > 0) {
         alert(`✅ Tâche terminée ! ${result.heuresLiberees.toFixed(1)}h libérées sur ${result.joursLiberes} jour(s).`);
       } else {
         alert('✅ Tâche terminée !');
       }
     } catch (err: any) {
-      console.error('[DashboardTraducteur] Erreur terminaison tâche:', err);
+      console.error('Erreur terminaison tâche:', err);
       alert('Erreur lors de la terminaison: ' + (err.response?.data?.erreur || err.message || 'Erreur inconnue'));
     } finally {
       setTerminerLoading(false);
     }
-  }, [confirmTerminerTache.tacheId, commentaireTerminaison, chargerMesTaches, onRefresh]);
+  }, [confirmTerminerTache.tacheId, commentaireTerminaison, chargerMesTaches, refreshPlanification]);
 
   const annulerTerminerTache = useCallback(() => {
     setConfirmTerminerTache({ isOpen: false, tacheId: null, tacheStatut: undefined });
     setCommentaireTerminaison('');
   }, []);
 
-  // ============ Handlers paramètres ============
+  // ============ Actions paramètres ============
   const sauvegarderParametres = useCallback(async () => {
     if (!traducteurId) return;
     setSavingParametres(true);
-    
+
     try {
       const formatHeure = (time: string) => {
         const [h, m] = time.split(':');
         return m === '00' ? `${parseInt(h)}h` : `${parseInt(h)}h${m}`;
       };
-      
+
       const horaire = `${formatHeure(parametresForm.horaireDebut)}-${formatHeure(parametresForm.horaireFin)}`;
-      
+
       await traducteurService.mettreAJourTraducteur(traducteurId, { horaire });
-      
+
       const data = await traducteurService.obtenirTraducteur(traducteurId);
       setTraducteur(data);
     } catch (err: any) {
@@ -435,44 +413,52 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
     }
   }, [traducteurId, parametresForm]);
 
-  // ============ Refresh global ============
-  const refreshAll = useCallback(() => {
-    chargerMesTaches();
-    chargerBlocages();
-    onRefresh?.();
-  }, [chargerMesTaches, chargerBlocages, onRefresh]);
-
+  // ============ Retour ============
   return {
     // Données
     traducteur,
     mesTaches,
     blocages,
-    
-    // États de chargement
+    planification,
+    stats,
+    percentageUtilise,
+    today,
+    periodeActuelle,
+
+    // Loading states
     loadingTraducteur,
     loadingTaches,
-    
+    loadingPlanif,
+    errorPlanif,
+
+    // Vue
+    viewMode,
+    setViewMode,
+    customStartDate,
+    setCustomStartDate,
+    customEndDate,
+    setCustomEndDate,
+
     // Disponibilité
     disponibiliteActive,
     commentaireDisponibilite,
-    savingDisponibilite,
     setCommentaireDisponibilite,
+    savingDisponibilite,
     toggleDisponibilite,
-    sauvegarderCommentaireDisponibilite,
-    
+
     // Blocages
     ouvrirBlocage,
+    setOuvrirBlocage,
     blocageData,
+    setBlocageData,
     submittingBlocage,
     erreurBlocage,
-    confirmDeleteBlocage,
-    setOuvrirBlocage,
-    setBlocageData,
     creerBlocage,
-    supprimerBlocage,
+    confirmDeleteBlocage,
+    demanderSuppressionBlocage,
     executerSuppressionBlocage,
-    fermerConfirmDeleteBlocage,
-    
+    annulerSuppressionBlocage,
+
     // Terminaison tâche
     confirmTerminerTache,
     terminerLoading,
@@ -481,22 +467,16 @@ export function useDashboardTraducteur(options: UseDashboardTraducteurOptions): 
     demanderTerminerTache,
     confirmerTerminerTache,
     annulerTerminerTache,
-    
+
     // Paramètres
     parametresForm,
-    savingParametres,
     setParametresForm,
+    savingParametres,
     sauvegarderParametres,
-    
-    // Statistiques
-    stats,
-    
-    // Période
-    periodeActuelle,
-    
-    // Actions
-    chargerBlocages,
+
+    // Refresh
+    refresh: refreshPlanification,
     chargerMesTaches,
-    refreshAll,
+    chargerBlocages,
   };
 }
