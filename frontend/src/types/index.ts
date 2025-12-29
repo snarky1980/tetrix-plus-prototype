@@ -51,12 +51,15 @@ export interface PaireLinguistique {
   langueCible: string;
 }
 
+export type CategorieTraducteur = 'TR01' | 'TR02' | 'TR03';
+
 export interface Traducteur {
   id: string;
   nom: string;
   divisions: string[]; // Droit, Science et technologie, CISR, etc. - Un traducteur peut appartenir à plusieurs divisions
-  classification: string; // TR1, TR2, TR3
   horaire?: string; // Optionnel: "9h-17h", "8h30-16h30"
+  heureDinerDebut?: string; // Heure de début du dîner (ex: "12:00")
+  heureDinerFin?: string; // Heure de fin du dîner (ex: "13:00")
   domaines: string[];
   clientsHabituels: string[];
   specialisations: string[]; // Immigration, juridique, médical, etc.
@@ -64,9 +67,12 @@ export interface Traducteur {
   capaciteHeuresParJour: number;
   actif: boolean;
   utilisateurId: string; // ID de l'utilisateur associé
+  utilisateur?: { email: string; actif: boolean }; // Données de l'utilisateur (peuplé par API)
   pairesLinguistiques: PaireLinguistique[];
   disponiblePourTravail: boolean; // Traducteur cherche activement du travail
   commentaireDisponibilite?: string; // Commentaire optionnel sur la disponibilité
+  categorie: CategorieTraducteur; // TR01, TR02, TR03
+  necessiteRevision?: boolean; // Si TR02, indique si nécessite révision
 }
 
 // Types pour les clients et domaines

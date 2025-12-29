@@ -173,7 +173,7 @@ const DashboardGestionnaire: React.FC = () => {
                     </div>
                     <div>
                       <div className="font-medium">{tr.nom}</div>
-                      <div className="text-xs text-muted">{tr.classification}</div>
+                      <div className="text-xs text-muted">{tr.categorie ? `TR-0${tr.categorie.slice(-1)}` : ''}</div>
                     </div>
                   </div>
                   {tr.commentaireDisponibilite && (
@@ -313,7 +313,7 @@ const DashboardGestionnaire: React.FC = () => {
                     <div>
                       <div className="font-medium">{tr.nom}</div>
                       <div className="text-xs text-muted">
-                        {tr.classification} • {tr.horaire || '9h-17h'}
+                        {tr.categorie ? `TR-0${tr.categorie.slice(-1)}` : ''} • {tr.horaire || '9h-17h'}
                         {tr.disponiblePourTravail && ' • ✋ Disponible'}
                       </div>
                     </div>
@@ -394,7 +394,7 @@ const DashboardGestionnaire: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <div className="font-semibold">{tr.nom}</div>
-                      <div className="text-sm text-muted">{tr.classification}</div>
+                      <div className="text-sm text-muted">{tr.categorie ? `TR-0${tr.categorie.slice(-1)}` : ''}</div>
                       <div className="text-xs text-muted mt-1">
                         🕐 {tr.horaire || '9h-17h'} • 📊 {tr.capaciteHeuresParJour || 7.5}h/jour
                       </div>

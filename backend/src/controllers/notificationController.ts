@@ -11,7 +11,13 @@ export const obtenirCompteurs = async (
   res: Response
 ): Promise<void> => {
   try {
-    const utilisateur = req.utilisateur!;
+    const utilisateur = req.utilisateur;
+    
+    // Vérification que l'utilisateur est bien authentifié
+    if (!utilisateur) {
+      res.status(401).json({ erreur: 'Non authentifié' });
+      return;
+    }
     
     // Compteur traducteurs cherchant du travail (pour conseillers/gestionnaires)
     let traducteursCherchentTravail = 0;

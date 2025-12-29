@@ -405,7 +405,7 @@ function analyserCapacites(
     if (tauxUtilisation > 100) {
       type = 'SURCHARGE';
       gravite = tauxUtilisation > 120 ? 'CRITIQUE' : tauxUtilisation > 110 ? 'ELEVE' : 'MOYEN';
-      description = `${trad.nom} (${trad.classification || 'TR2'}) est surchargé à ${tauxUtilisation.toFixed(0)}%`;
+      description = `${trad.nom} (${trad.categorie || 'TR02'}) est surchargé à ${tauxUtilisation.toFixed(0)}%`;
       impact = `${(heuresAssignees - capaciteEffective).toFixed(1)}h de surcharge sur la période`;
     } else if (joursProblematiques.size > 0) {
       type = 'CUMUL_CRITIQUE';
@@ -420,7 +420,7 @@ function analyserCapacites(
     } else if (tauxUtilisation < 50 && heuresAssignees > 0) {
       type = 'SOUS_UTILISATION';
       gravite = 'FAIBLE';
-      description = `${trad.nom} (${trad.classification || 'TR2'}) est sous-utilisé à ${tauxUtilisation.toFixed(0)}%`;
+      description = `${trad.nom} (${trad.categorie || 'TR02'}) est sous-utilisé à ${tauxUtilisation.toFixed(0)}%`;
       impact = `${(capaciteEffective - heuresAssignees).toFixed(1)}h de capacité disponible`;
     }
 
@@ -428,7 +428,7 @@ function analyserCapacites(
       analyses.push({
         traducteurId: trad.id,
         traducteurNom: trad.nom,
-        profil: (trad.classification || 'TR2') as 'TR1' | 'TR2' | 'TR3',
+        profil: (trad.categorie || 'TR02') as 'TR1' | 'TR2' | 'TR3',
         type,
         gravite,
         description,

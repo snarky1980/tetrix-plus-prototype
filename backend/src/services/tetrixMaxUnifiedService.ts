@@ -648,13 +648,13 @@ function analyserCapacitesParTraducteur(
     // Déterminer type et gravité
     let type: AnalyseCapaciteTraducteur['type'] = 'OPTIMAL';
     let gravite: AnalyseCapaciteTraducteur['gravite'] = 'FAIBLE';
-    let description = `${trad.nom} (${trad.classification || 'TR2'}) - utilisation ${tauxUtilisation.toFixed(0)}%`;
+    let description = `${trad.nom} (${trad.categorie || 'TR02'}) - utilisation ${tauxUtilisation.toFixed(0)}%`;
     let impact = '';
 
     if (tauxUtilisation > 100) {
       type = 'SURCHARGE';
       gravite = tauxUtilisation > 120 ? 'CRITIQUE' : tauxUtilisation > 110 ? 'ELEVE' : 'MOYEN';
-      description = `${trad.nom} (${trad.classification || 'TR2'}) est surchargé à ${tauxUtilisation.toFixed(0)}%`;
+      description = `${trad.nom} (${trad.categorie || 'TR02'}) est surchargé à ${tauxUtilisation.toFixed(0)}%`;
       impact = `${(heuresAssignees - capaciteEffective).toFixed(1)}h de surcharge sur la période`;
     } else if (joursProblematiques.size > 0) {
       type = 'CUMUL_CRITIQUE';
@@ -669,14 +669,14 @@ function analyserCapacitesParTraducteur(
     } else if (tauxUtilisation < 50 && heuresAssignees > 0) {
       type = 'SOUS_UTILISATION';
       gravite = 'FAIBLE';
-      description = `${trad.nom} (${trad.classification || 'TR2'}) est sous-utilisé à ${tauxUtilisation.toFixed(0)}%`;
+      description = `${trad.nom} (${trad.categorie || 'TR02'}) est sous-utilisé à ${tauxUtilisation.toFixed(0)}%`;
       impact = `${(capaciteEffective - heuresAssignees).toFixed(1)}h de capacité disponible`;
     }
 
     analyses.push({
       traducteurId: trad.id,
       traducteurNom: trad.nom,
-      profil: (trad.classification || 'TR2') as 'TR1' | 'TR2' | 'TR3',
+      profil: (trad.categorie || 'TR02') as 'TR1' | 'TR2' | 'TR3',
       type,
       gravite,
       description,
@@ -718,7 +718,7 @@ function analyserProfilsTR(
   const tr2SousUtilises: string[] = [];
 
   donnees.traducteurs.forEach((trad) => {
-    const profil = trad.classification || 'TR2';
+    const profil = trad.categorie || 'TR02';
     const capacite = trad.capaciteHeuresParJour * donnees.joursOuvrables.length;
     const taches = Array.isArray(trad.taches) ? trad.taches : [];
     
@@ -994,8 +994,8 @@ function verifierConformite(donnees: DonneesAnalyse): AnalyseConformite[] {
     const traducteur = donnees.traducteurs.find(t => t.id === tache.traducteurId);
     if (!traducteur) return;
 
-    // TR1 doit avoir révision
-    if (traducteur.classification === 'TR1' && tache.typeTache === 'TRADUCTION') {
+    // TR01 doit avoir révision
+    if (traducteur.categorie === 'TR01' && tache.typeTache === 'TRADUCTION') {
       // Vérifier s'il y a une révision associée (simplification)
       const hasRevision = donnees.taches.some(
         t => t.numeroProjet === tache.numeroProjet && 

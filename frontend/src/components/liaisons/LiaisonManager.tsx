@@ -59,19 +59,19 @@ interface CategorieBadgeProps {
 const CategorieBadge: React.FC<CategorieBadgeProps> = ({ categorie, size = 'md' }) => {
   const config = {
     TR01: {
-      label: 'TR01 - Débutant',
+      label: 'TR-01',
       bg: 'bg-amber-100',
       text: 'text-amber-800',
       border: 'border-amber-300',
     },
     TR02: {
-      label: 'TR02 - Intermédiaire',
+      label: 'TR-02',
       bg: 'bg-blue-100',
       text: 'text-blue-800',
       border: 'border-blue-300',
     },
     TR03: {
-      label: 'TR03 - Réviseur',
+      label: 'TR-03',
       bg: 'bg-green-100',
       text: 'text-green-800',
       border: 'border-green-300',

@@ -532,7 +532,7 @@ export const EquipeProjetManagement: React.FC = () => {
                     <option value="">-- Sélectionner --</option>
                     {traducteursDisponibles.map(t => (
                       <option key={t.id} value={t.id}>
-                        {t.nom} ({t.classification})
+                        {t.nom} ({t.categorie ? `TR-0${t.categorie.slice(-1)}` : ''})
                       </option>
                     ))}
                   </select>

@@ -26,7 +26,7 @@ router.get('/', authentifier, async (req: Request, res: Response) => {
           where: { actif: true },
           include: {
             traducteur: {
-              select: { id: true, nom: true, classification: true, divisions: true }
+              select: { id: true, nom: true, categorie: true, divisions: true }
             }
           }
         }
@@ -57,7 +57,7 @@ router.get('/', authentifier, async (req: Request, res: Response) => {
         id: m.id,
         traducteurId: m.traducteurId,
         nom: m.traducteur.nom,
-        classification: m.traducteur.classification,
+        categorie: m.traducteur.categorie,
         divisions: m.traducteur.divisions,
         role: m.role,
         dateAjout: m.dateAjout
@@ -83,7 +83,7 @@ router.get('/:id', authentifier, async (req: Request, res: Response) => {
               select: { 
                 id: true, 
                 nom: true, 
-                classification: true, 
+                categorie: true, 
                 divisions: true,
                 domaines: true,
                 pairesLinguistiques: true,
@@ -260,7 +260,7 @@ router.post('/:id/membres', authentifier, verifierRole('ADMIN', 'GESTIONNAIRE'),
           },
           include: {
             traducteur: {
-              select: { id: true, nom: true, classification: true }
+              select: { id: true, nom: true, categorie: true }
             }
           }
         });
@@ -279,7 +279,7 @@ router.post('/:id/membres', authentifier, verifierRole('ADMIN', 'GESTIONNAIRE'),
       },
       include: {
         traducteur: {
-          select: { id: true, nom: true, classification: true }
+          select: { id: true, nom: true, categorie: true }
         }
       }
     });
@@ -306,7 +306,7 @@ router.put('/:id/membres/:membreId', authentifier, verifierRole('ADMIN', 'GESTIO
       },
       include: {
         traducteur: {
-          select: { id: true, nom: true, classification: true }
+          select: { id: true, nom: true, categorie: true }
         }
       }
     });

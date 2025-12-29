@@ -1149,8 +1149,8 @@ export function TetrixMaxUnified({ rapport, onRefresh, isLoading }: TetrixMaxUni
             {projections?.impactTR1TR3 && (
               <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
                 <div className="flex items-center gap-1 mb-2">
-                  <TooltipInfo texte="Analyse de l'équilibre entre traducteurs TR1 (profil standard, 7h/jour) et TR3 (profil senior/spécialisé, quota variable). Un déséquilibre peut affecter la capacité à traiter certains types de dossiers spécialisés.">
-                    <h4 className="font-semibold text-sm text-blue-800">⚖️ Impact TR1/TR3</h4>
+                  <TooltipInfo texte="Analyse de l'équilibre entre traducteurs TR-01 (7h/jour) et TR-03 (quota variable). Un déséquilibre peut affecter la capacité à traiter certains types de dossiers.">
+                    <h4 className="font-semibold text-sm text-blue-800">⚖️ Impact TR-01/TR-03</h4>
                   </TooltipInfo>
                 </div>
                 <p className="text-sm text-blue-700">{projections.impactTR1TR3}</p>

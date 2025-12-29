@@ -447,7 +447,7 @@ function analyserProfilsTR(
   const tr2SousUtilises: string[] = [];
 
   donnees.traducteurs.forEach((trad) => {
-    const profil = trad.classification || 'TR2';
+    const profil = trad.categorie || 'TR02';
     const capacite = trad.capaciteHeuresParJour * donnees.joursOuvrables.length;
     
     const heuresTaches = trad.taches.reduce((sum: number, t: any) => {

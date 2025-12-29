@@ -253,6 +253,13 @@ export const mettreAJourTraducteur = async (
       notes,
       capaciteHeuresParJour,
       actif,
+      // Nouveaux champs
+      categorie,
+      necessiteRevision,
+      heureDinerDebut,
+      heureDinerFin,
+      disponiblePourTravail,
+      commentaireDisponibilite,
     } = req.body;
 
     // Synchroniser les clients habituels avec la table clients
@@ -273,6 +280,13 @@ export const mettreAJourTraducteur = async (
         ...(notes !== undefined && { notes }),
         ...(capaciteHeuresParJour && { capaciteHeuresParJour }),
         ...(actif !== undefined && { actif }),
+        // Nouveaux champs
+        ...(categorie !== undefined && { categorie }),
+        ...(necessiteRevision !== undefined && { necessiteRevision }),
+        ...(heureDinerDebut !== undefined && { heureDinerDebut }),
+        ...(heureDinerFin !== undefined && { heureDinerFin }),
+        ...(disponiblePourTravail !== undefined && { disponiblePourTravail }),
+        ...(commentaireDisponibilite !== undefined && { commentaireDisponibilite }),
       },
       include: {
         pairesLinguistiques: true,

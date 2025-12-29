@@ -8,47 +8,47 @@ datasource db {
 }
 
 model Utilisateur {
-  id                 String              @id @default(uuid())
-  email              String              @unique
-  motDePasse         String
-  nom                String?
-  prenom             String?
-  role               Role                @default(TRADUCTEUR)
-  actif              Boolean             @default(true)
-  isPlayground       Boolean             @default(false) // Compte de démonstration/test
-  playgroundNote     String?             // Note descriptive pour le compte playground
-  creeLe             DateTime            @default(now())
-  modifieLe          DateTime            @updatedAt
-  traducteur         Traducteur?
-  divisionAccess     DivisionAccess[]
+  id             String           @id @default(uuid())
+  email          String           @unique
+  motDePasse     String
+  nom            String?
+  prenom         String?
+  role           Role             @default(TRADUCTEUR)
+  actif          Boolean          @default(true)
+  creeLe         DateTime         @default(now())
+  modifieLe      DateTime         @updatedAt
+  isPlayground   Boolean          @default(false)
+  playgroundNote String?
+  divisionAccess DivisionAccess[]
+  traducteur     Traducteur?
 
   @@map("utilisateurs")
 }
 
 model Division {
-  id           String           @id @default(uuid())
-  nom          String           @unique
-  code         String           @unique
-  description  String?
-  actif        Boolean          @default(true)
-  creeLe       DateTime         @default(now())
-  modifieLe    DateTime         @updatedAt
-  acces        DivisionAccess[]
+  id          String           @id @default(uuid())
+  nom         String           @unique
+  code        String           @unique
+  description String?
+  actif       Boolean          @default(true)
+  creeLe      DateTime         @default(now())
+  modifieLe   DateTime         @updatedAt
+  acces       DivisionAccess[]
 
   @@map("divisions")
 }
 
 model DivisionAccess {
-  id            String    @id @default(uuid())
+  id            String      @id @default(uuid())
   utilisateurId String
   divisionId    String
-  peutLire      Boolean   @default(true)
-  peutEcrire    Boolean   @default(false)
-  peutGerer     Boolean   @default(false)
-  creeLe        DateTime  @default(now())
-  modifieLe     DateTime  @updatedAt
-  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  peutLire      Boolean     @default(true)
+  peutEcrire    Boolean     @default(false)
+  peutGerer     Boolean     @default(false)
+  creeLe        DateTime    @default(now())
+  modifieLe     DateTime    @updatedAt
   division      Division    @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@unique([utilisateurId, divisionId])
   @@index([utilisateurId])
@@ -57,39 +57,31 @@ model DivisionAccess {
 }
 
 model Traducteur {
-  id                       String              @id @default(uuid())
+  id                       String               @id @default(uuid())
   nom                      String
-  divisions                String[]            @default([])
   domaines                 String[]
   clientsHabituels         String[]
-  capaciteHeuresParJour    Float               @default(7.5)
-  actif                    Boolean             @default(true)
-  utilisateurId            String              @unique
-  creeLe                   DateTime            @default(now())
-  modifieLe                DateTime            @updatedAt
+  capaciteHeuresParJour    Float                @default(7.5)
+  actif                    Boolean              @default(true)
+  utilisateurId            String               @unique
+  creeLe                   DateTime             @default(now())
+  modifieLe                DateTime             @updatedAt
   classification           String
   horaire                  String?
   notes                    String?
-  specialisations          String[]            @default([])
-  disponiblePourTravail    Boolean             @default(false)
+  specialisations          String[]             @default([])
+  disponiblePourTravail    Boolean              @default(false)
   commentaireDisponibilite String?
-  
-  // Catégorie de traducteur (TR01, TR02, TR03)
-  categorie                CategorieTraducteur @default(TR01)
-  // TR02 qui nécessitent révision (par défaut false)
-  necessiteRevision        Boolean             @default(true)
-  
+  categorie                CategorieTraducteur  @default(TR01)
+  necessiteRevision        Boolean              @default(true)
+  divisions                String[]             @default([])
   ajustementsTemps         AjustementTemps[]
+  equipesProjet            EquipeProjetMembre[]
+  reviseursDe              LiaisonReviseur[]    @relation("TraducteurReviseur")
+  revisePar                LiaisonReviseur[]    @relation("TraducteurRevise")
   pairesLinguistiques      PaireLinguistique[]
   taches                   Tache[]
-  utilisateur              Utilisateur         @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-  
-  // Liaisons réviseur-traducteur
-  reviseursDe              LiaisonReviseur[]   @relation("TraducteurReviseur")
-  revisePar                LiaisonReviseur[]   @relation("TraducteurRevise")
-  
-  // Équipes-projet
-  equipesProjet            EquipeProjetMembre[]
+  utilisateur              Utilisateur          @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@index([actif])
   @@index([disponiblePourTravail])
@@ -136,40 +128,37 @@ model SousDomaine {
 }
 
 model Tache {
-  id                  String             @id @default(uuid())
-  numeroProjet        String             @default("N/A")
-  description         String             @default("")
-  specialisation      String             @default("")
-  heuresTotal         Float
-  compteMots          Int?
-  dateEcheance        DateTime           // Stocke date + heure complète (ex: 2025-02-14T10:30:00)
-  priorite            String             @default("REGULIER")
-  statut              StatutTache        @default(PLANIFIEE)
-  typeTache           TypeTache          @default(TRADUCTION)
-  modeDistribution    ModeDistribution   @default(JAT)
-  traducteurId        String
-  clientId            String?
-  sousDomaineId       String?
-  paireLinguistiqueId String?
-  creePar             String
-  creeLe              DateTime           @default(now())
-  modifiePar          String?            // Dernier utilisateur ayant modifié
-  modifieLe           DateTime           @updatedAt
-  version             Int                @default(0)
-  
-  // Nouveaux champs pour gestion des statuts
-  dateDebutEffective  DateTime?          // Quand la tâche est passée EN_COURS
-  dateFinEffective    DateTime?          // Quand la tâche est passée TERMINEE
-  commentaireCloture  String?            // Commentaire optionnel à la fermeture
-  notificationRetardEnvoyee Boolean      @default(false) // Pour éviter spam notifications
-  
-  ajustementsTemps    AjustementTemps[]
-  historique          HistoriqueTache[]
-  notifications       Notification[]
-  client              Client?            @relation(fields: [clientId], references: [id])
-  paireLinguistique   PaireLinguistique? @relation(fields: [paireLinguistiqueId], references: [id])
-  sousDomaine         SousDomaine?       @relation(fields: [sousDomaineId], references: [id])
-  traducteur          Traducteur         @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+  id                        String             @id @default(uuid())
+  numeroProjet              String             @default("N/A")
+  description               String             @default("")
+  specialisation            String             @default("")
+  heuresTotal               Float
+  compteMots                Int?
+  dateEcheance              DateTime
+  priorite                  String             @default("REGULIER")
+  statut                    StatutTache        @default(PLANIFIEE)
+  typeTache                 TypeTache          @default(TRADUCTION)
+  modeDistribution          ModeDistribution   @default(JAT)
+  traducteurId              String
+  clientId                  String?
+  sousDomaineId             String?
+  paireLinguistiqueId       String?
+  creePar                   String
+  creeLe                    DateTime           @default(now())
+  modifieLe                 DateTime           @updatedAt
+  version                   Int                @default(0)
+  modifiePar                String?
+  commentaireCloture        String?
+  dateDebutEffective        DateTime?
+  dateFinEffective          DateTime?
+  notificationRetardEnvoyee Boolean            @default(false)
+  ajustementsTemps          AjustementTemps[]
+  historique                HistoriqueTache[]
+  notifications             Notification[]
+  client                    Client?            @relation(fields: [clientId], references: [id])
+  paireLinguistique         PaireLinguistique? @relation(fields: [paireLinguistiqueId], references: [id])
+  sousDomaine               SousDomaine?       @relation(fields: [sousDomaineId], references: [id])
+  traducteur                Traducteur         @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
 
   @@index([traducteurId])
   @@index([dateEcheance])
@@ -178,72 +167,156 @@ model Tache {
   @@map("taches")
 }
 
-// Historique des modifications d'une tâche
 model HistoriqueTache {
-  id            String   @id @default(uuid())
-  tacheId       String
-  action        String   // CREATION, MODIFICATION, REASSIGNATION, STATUT_CHANGE, etc.
-  champModifie  String?  // Nom du champ modifié (ex: "traducteurId", "statut", "heuresTotal")
-  ancienneValeur String? // Valeur avant modification
-  nouvelleValeur String? // Valeur après modification
-  utilisateurId String   // ID de l'utilisateur qui a fait la modification
-  utilisateur   String   // Nom de l'utilisateur (dénormalisé pour affichage)
-  details       String?  // Détails supplémentaires (JSON si besoin)
-  creeLe        DateTime @default(now())
-  
-  tache         Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
-  
+  id             String   @id @default(uuid())
+  tacheId        String
+  action         String
+  champModifie   String?
+  ancienneValeur String?
+  nouvelleValeur String?
+  utilisateurId  String
+  utilisateur    String
+  details        String?
+  creeLe         DateTime @default(now())
+  tache          Tache    @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+
   @@index([tacheId])
   @@index([creeLe])
   @@map("historique_taches")
 }
 
-// Notifications pour les utilisateurs
 model Notification {
-  id              String              @id @default(uuid())
-  type            TypeNotification
-  titre           String
-  message         String
-  lue             Boolean             @default(false)
-  destinataireId  String              // ID de l'utilisateur destinataire
-  tacheId         String?             // Tâche liée (optionnel)
-  donnees         String?             // JSON avec données supplémentaires
-  creeLe          DateTime            @default(now())
-  lueLe           DateTime?           // Quand la notification a été lue
-  
-  tache           Tache?              @relation(fields: [tacheId], references: [id], onDelete: Cascade)
-  
+  id             String           @id @default(uuid())
+  type           TypeNotification
+  titre          String
+  message        String
+  lue            Boolean          @default(false)
+  destinataireId String
+  tacheId        String?
+  donnees        String?
+  creeLe         DateTime         @default(now())
+  lueLe          DateTime?
+  tache          Tache?           @relation(fields: [tacheId], references: [id], onDelete: Cascade)
+
   @@index([destinataireId, lue])
   @@index([destinataireId, creeLe])
   @@index([tacheId])
   @@map("notifications")
 }
 
-enum TypeNotification {
-  TACHE_EN_COURS        // Tâche passée automatiquement en cours
-  TACHE_EN_RETARD       // Rappel: tâche non terminée après délai
-  TACHE_TERMINEE        // Confirmation de fermeture
-  ESCALADE_GESTIONNAIRE // Tâche en retard > 2h, escalade au gestionnaire
-  RAPPEL_FERMETURE      // Rappel répété de fermer la tâche
-}
-
 model AjustementTemps {
   id           String         @id @default(uuid())
-  date         DateTime       @db.Date
-  heures       Float
-  heureDebut   String?        // Format: "10h" ou "10h30" - Heure de début de l'allocation
-  heureFin     String?        // Format: "17h" ou "17h30" - Heure de fin de l'allocation
   type         TypeAjustement
   traducteurId String
   tacheId      String?
   creePar      String
   creeLe       DateTime       @default(now())
+  date         DateTime       @db.Date
+  heures       Float
+  heureDebut   String?
+  heureFin     String?
   tache        Tache?         @relation(fields: [tacheId], references: [id], onDelete: Cascade)
   traducteur   Traducteur     @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
 
   @@unique([traducteurId, date, tacheId, type])
   @@index([traducteurId, date])
   @@map("ajustements_temps")
+}
+
+model LiaisonReviseur {
+  id           String      @id @default(uuid())
+  traducteurId String
+  reviseurId   String
+  estPrincipal Boolean     @default(true)
+  actif        Boolean     @default(true)
+  notes        String?
+  creeLe       DateTime    @default(now())
+  modifieLe    DateTime    @updatedAt
+  dateFin      DateTime?
+  domaine      String?
+  mode         ModeLiaison @default(ATTITRE)
+  reviseur     Traducteur  @relation("TraducteurReviseur", fields: [reviseurId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur  @relation("TraducteurRevise", fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, reviseurId])
+  @@index([traducteurId])
+  @@index([reviseurId])
+  @@index([estPrincipal])
+  @@map("liaisons_reviseur")
+}
+
+model DemandeRessource {
+  id             String    @id @default(uuid())
+  conseillerId   String
+  titre          String
+  description    String?
+  heuresEstimees Float?
+  langueSource   String?
+  langueCible    String?
+  division       String?
+  urgence        Urgence   @default(NORMALE)
+  actif          Boolean   @default(true)
+  creeLe         DateTime  @default(now())
+  modifieLe      DateTime  @updatedAt
+  expireLe       DateTime?
+
+  @@index([conseillerId])
+  @@index([actif])
+  @@index([urgence])
+  @@map("demandes_ressources")
+}
+
+model EquipeProjet {
+  id          String               @id @default(uuid())
+  nom         String               @unique
+  code        String               @unique
+  description String?
+  couleur     String               @default("#3B82F6")
+  clientId    String?
+  clientNom   String?
+  objectif    String?
+  dateDebut   DateTime?
+  dateFin     DateTime?
+  actif       Boolean              @default(true)
+  archive     Boolean              @default(false)
+  creePar     String
+  creeLe      DateTime             @default(now())
+  modifiePar  String?
+  modifieLe   DateTime             @updatedAt
+  membres     EquipeProjetMembre[]
+
+  @@index([actif])
+  @@index([archive])
+  @@index([clientId])
+  @@map("equipes_projet")
+}
+
+model EquipeProjetMembre {
+  id             String       @id @default(uuid())
+  equipeProjetId String
+  traducteurId   String
+  role           RoleEquipe   @default(MEMBRE)
+  dateAjout      DateTime     @default(now())
+  dateRetrait    DateTime?
+  actif          Boolean      @default(true)
+  ajoutePar      String
+  notes          String?
+  equipeProjet   EquipeProjet @relation(fields: [equipeProjetId], references: [id], onDelete: Cascade)
+  traducteur     Traducteur   @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([equipeProjetId, traducteurId])
+  @@index([equipeProjetId])
+  @@index([traducteurId])
+  @@index([actif])
+  @@map("equipes_projet_membres")
+}
+
+enum TypeNotification {
+  TACHE_EN_COURS
+  TACHE_EN_RETARD
+  TACHE_TERMINEE
+  ESCALADE_GESTIONNAIRE
+  RAPPEL_FERMETURE
 }
 
 enum Role {
@@ -256,8 +329,8 @@ enum Role {
 enum StatutTache {
   PLANIFIEE
   EN_COURS
-  EN_RETARD
   TERMINEE
+  EN_RETARD
 }
 
 enum TypeTache {
@@ -280,62 +353,15 @@ enum ModeDistribution {
   MANUEL
 }
 
-// Catégorie de traducteur
 enum CategorieTraducteur {
-  TR01  // Débutant - doit toujours être révisé
-  TR02  // Intermédiaire - peut nécessiter révision
-  TR03  // Senior/Réviseur - peut réviser les autres
-}
-
-// Liaison entre un traducteur et son réviseur attitré
-model LiaisonReviseur {
-  id              String     @id @default(uuid())
-  traducteurId    String     // TR01 ou TR02 qui sera révisé
-  reviseurId      String     // TR03 qui effectue la révision
-  estPrincipal    Boolean    @default(true)  // Réviseur attitré principal
-  actif           Boolean    @default(true)
-  mode         ModeLiaison @default(ATTITRE)
-  domaine      String?
-  dateFin      DateTime?
-  notes           String?
-  creeLe          DateTime   @default(now())
-  modifieLe       DateTime   @updatedAt
-  
-  traducteur      Traducteur @relation("TraducteurRevise", fields: [traducteurId], references: [id], onDelete: Cascade)
-  reviseur        Traducteur @relation("TraducteurReviseur", fields: [reviseurId], references: [id], onDelete: Cascade)
-
-  @@unique([traducteurId, reviseurId])
-  @@index([traducteurId])
-  @@index([reviseurId])
-  @@index([estPrincipal])
-  @@map("liaisons_reviseur")
+  TR01
+  TR02
+  TR03
 }
 
 enum ModeLiaison {
   ATTITRE
   PONCTUEL
-}
-
-// Demandes de ressources par les conseillers (cherche un traducteur)
-model DemandeRessource {
-  id              String   @id @default(uuid())
-  conseillerId    String   // ID de l'utilisateur conseiller
-  titre           String   // Ex: "Besoin urgent traducteur EN→FR"
-  description     String?  // Détails supplémentaires
-  heuresEstimees  Float?   // Heures de travail estimées
-  langueSource    String?  // Langue source recherchée
-  langueCible     String?  // Langue cible recherchée
-  division        String?  // Division préférée
-  urgence         Urgence  @default(NORMALE)
-  actif           Boolean  @default(true) // false quand la demande est satisfaite
-  creeLe          DateTime @default(now())
-  modifieLe       DateTime @updatedAt
-  expireLe        DateTime? // Date d'expiration optionnelle
-
-  @@index([conseillerId])
-  @@index([actif])
-  @@index([urgence])
-  @@map("demandes_ressources")
 }
 
 enum Urgence {
@@ -345,78 +371,8 @@ enum Urgence {
   CRITIQUE
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// ÉQUIPES-PROJET - Regroupement flexible de traducteurs
-// ═══════════════════════════════════════════════════════════════════════════
-
-model EquipeProjet {
-  id              String   @id @default(uuid())
-  nom             String   @unique
-  code            String   @unique        // Code court (ex: "SATG-BL", "PROJ-2025")
-  description     String?
-  couleur         String   @default("#3B82F6") // Couleur pour l'affichage (hex)
-  
-  // Liaison optionnelle à un client
-  clientId        String?
-  clientNom       String?                 // Dénormalisé pour affichage rapide
-  
-  // Objectif/contexte
-  objectif        String?                 // Ex: "Rattrapage backlog Q4", "Projet spécial immigration"
-  
-  // Dates
-  dateDebut       DateTime?               // Date de début prévue
-  dateFin         DateTime?               // Date de fin prévue (null = indéterminé)
-  
-  // Statut
-  actif           Boolean  @default(true) // Équipe activable/désactivable
-  archive         Boolean  @default(false) // Archivé = historique, plus modifiable
-  
-  // Métadonnées
-  creePar         String                  // ID utilisateur créateur
-  creeLe          DateTime @default(now())
-  modifiePar      String?
-  modifieLe       DateTime @updatedAt
-  
-  // Relations
-  membres         EquipeProjetMembre[]
-
-  @@index([actif])
-  @@index([archive])
-  @@index([clientId])
-  @@map("equipes_projet")
-}
-
-model EquipeProjetMembre {
-  id              String       @id @default(uuid())
-  equipeProjetId  String
-  traducteurId    String
-  
-  // Rôle dans l'équipe
-  role            RoleEquipe   @default(MEMBRE)
-  
-  // Dates d'appartenance
-  dateAjout       DateTime     @default(now())
-  dateRetrait     DateTime?    // null = toujours membre
-  
-  // Statut
-  actif           Boolean      @default(true)
-  
-  // Métadonnées
-  ajoutePar       String       // ID utilisateur qui a ajouté
-  notes           String?
-  
-  equipeProjet    EquipeProjet @relation(fields: [equipeProjetId], references: [id], onDelete: Cascade)
-  traducteur      Traducteur   @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
-
-  @@unique([equipeProjetId, traducteurId])
-  @@index([equipeProjetId])
-  @@index([traducteurId])
-  @@index([actif])
-  @@map("equipes_projet_membres")
-}
-
 enum RoleEquipe {
-  RESPONSABLE  // Chef d'équipe / coordinateur
-  MEMBRE       // Membre régulier
-  REVISEUR     // Réviseur attitré de l'équipe
+  RESPONSABLE
+  MEMBRE
+  REVISEUR
 }

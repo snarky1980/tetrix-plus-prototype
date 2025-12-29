@@ -569,8 +569,8 @@ const DashboardTraducteur: React.FC = () => {
                   <span className="ml-2 font-medium">{traducteur?.divisions?.join(', ') || '-'}</span>
                 </div>
                 <div>
-                  <span className="text-muted">Classification:</span>
-                  <span className="ml-2 font-medium">{traducteur?.classification || '-'}</span>
+                  <span className="text-muted">Catégorie:</span>
+                  <span className="ml-2 font-medium">{traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : '-'}</span>
                 </div>
                 <div>
                   <span className="text-muted">Capacité/jour:</span>
@@ -729,7 +729,7 @@ const DashboardTraducteur: React.FC = () => {
             <div>
               <h1 className="text-3xl font-bold">Bonjour, {traducteur?.nom || 'Traducteur'} 👋</h1>
               <p className="text-muted mt-1">
-                {traducteur?.divisions?.join(', ')} • {traducteur?.classification} • 
+                {traducteur?.divisions?.join(', ')} • {traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : ''} • 
                 Horaire: {traducteur?.horaire || '9h-17h'}
               </p>
             </div>

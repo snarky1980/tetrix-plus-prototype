@@ -4,7 +4,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { FormField } from '../ui/FormField';
 import { useToast } from '../../contexts/ToastContext';
-import { Traducteur, PaireLinguistique } from '../../types';
+import { Traducteur, PaireLinguistique, CategorieTraducteur } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
 import { authService } from '../../services/authService';
 
@@ -23,11 +23,11 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
 }) => {
   const { addToast } = useToast();
   const DIVISION_OPTIONS = ['CISR', 'Droit 1', 'Droit 2', 'Traduction anglaise 1', 'Traduction anglaise 2', 'Multilingue', 'FINANCE', 'SATJ backlog', 'TEST', 'Autre'];
-  const CLASSIFICATION_OPTIONS = ['TR-01', 'TR-02', 'TR-03'];
+  const CATEGORIE_OPTIONS: CategorieTraducteur[] = ['TR01', 'TR02', 'TR03'];
   const [formData, setFormData] = useState({
     nom: '',
     divisions: [DIVISION_OPTIONS[0]] as string[],
-    classification: 'TR-02' as string,
+    categorie: 'TR02' as CategorieTraducteur,
     horaire: '' as string,
     email: '',
     motDePasse: 'password123',
@@ -52,7 +52,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
       setFormData({
         nom: traducteur.nom,
         divisions: traducteur.divisions?.length > 0 ? [...traducteur.divisions] : [DIVISION_OPTIONS[0]],
-        classification: traducteur.classification || 'TR-02',
+        categorie: traducteur.categorie || 'TR02',
         horaire: traducteur.horaire || '',
         email: '',
         motDePasse: '',
@@ -73,7 +73,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
       setFormData({
         nom: '',
         divisions: [DIVISION_OPTIONS[0]],
-        classification: 'TR-02',
+        categorie: 'TR02',
         horaire: '',
         email: '',
         motDePasse: 'password123',
@@ -191,7 +191,6 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
         await traducteurService.mettreAJourTraducteur(traducteur.id, {
           nom: formData.nom,
           divisions: formData.divisions,
-          classification: formData.classification,
           horaire: formData.horaire,
           notes: formData.notes,
           capaciteHeuresParJour: formData.capaciteHeuresParJour,
@@ -199,6 +198,7 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           clientsHabituels: formData.clientsHabituels,
           specialisations: formData.specialisations,
           actif: formData.actif,
+          categorie: formData.categorie,
         });
 
         // Mettre à jour les paires linguistiques (ignorer les erreurs si la paire existe déjà)
@@ -292,16 +292,16 @@ export const TraducteurForm: React.FC<TraducteurFormProps> = ({
           </div>
         </FormField>
 
-        <FormField label="Classification" required helper="Niveau de compétence du traducteur">
+        <FormField label="Catégorie" required helper="Niveau du traducteur">
           <select
-            value={formData.classification}
-            onChange={e => setFormData({ ...formData, classification: e.target.value })}
+            value={formData.categorie}
+            onChange={e => setFormData({ ...formData, categorie: e.target.value as CategorieTraducteur })}
             className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-card"
             required
           >
-            {CLASSIFICATION_OPTIONS.map(option => (
+            {CATEGORIE_OPTIONS.map(option => (
               <option key={option} value={option}>
-                {option}
+                TR-0{option.slice(-1)}
               </option>
             ))}
           </select>

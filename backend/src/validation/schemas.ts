@@ -97,11 +97,21 @@ export const mettreAJourTraducteurSchema = z.object({
   params: z.object({ id: uuid() }),
   body: z.object({
     nom: z.string().min(2).optional(),
-    division: z.string().min(2).optional(),
+    divisions: z.array(z.string()).optional(),
+    classification: z.string().optional(),
+    horaire: z.string().optional(),
+    heureDinerDebut: z.string().optional(),
+    heureDinerFin: z.string().optional(),
     domaines: z.array(z.string()).optional(),
     clientsHabituels: z.array(z.string()).optional(),
+    specialisations: z.array(z.string()).optional(),
+    notes: z.string().optional(),
     capaciteHeuresParJour: z.number().positive().max(24).optional(),
     actif: z.boolean().optional(),
+    categorie: z.enum(['TR01', 'TR02', 'TR03']).optional(),
+    necessiteRevision: z.boolean().optional(),
+    disponiblePourTravail: z.boolean().optional(),
+    commentaireDisponibilite: z.string().optional(),
   })
 });
 
