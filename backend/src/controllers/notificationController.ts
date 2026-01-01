@@ -31,9 +31,10 @@ export const obtenirCompteurs = async (
     }
 
     // Compteur demandes de ressources actives (pour traducteurs)
+    // Pour les traducteurs, on compte seulement celles qui correspondent à leur profil
     let demandesRessourcesActives = 0;
     if (['TRADUCTEUR', 'CONSEILLER', 'GESTIONNAIRE', 'ADMIN'].includes(utilisateur.role)) {
-      demandesRessourcesActives = await prisma.demandeRessource.count({
+      const toutesLesDemandes = await prisma.demandeRessource.findMany({
         where: {
           actif: true,
           OR: [
@@ -42,6 +43,44 @@ export const obtenirCompteurs = async (
           ],
         },
       });
+      
+      // Filtrer selon le profil si c'est un traducteur
+      if (utilisateur.role === 'TRADUCTEUR') {
+        const traducteur = await prisma.traducteur.findFirst({
+          where: { utilisateurId: utilisateur.id },
+          include: {
+            equipeProjets: { select: { equipeProjetId: true } },
+          },
+        });
+        
+        if (traducteur) {
+          const equipesIds = traducteur.equipeProjets.map(ep => ep.equipeProjetId);
+          
+          demandesRessourcesActives = toutesLesDemandes.filter(demande => {
+            // Aucun ciblage → visible par tous
+            const aucunCiblage = 
+              (!demande.divisions || demande.divisions.length === 0) &&
+              (!demande.categories || demande.categories.length === 0) &&
+              (!demande.specialisations || demande.specialisations.length === 0) &&
+              (!demande.domaines || demande.domaines.length === 0) &&
+              !demande.equipeProjetId;
+            
+            if (aucunCiblage) return true;
+            
+            // Vérifier correspondance (OR logic)
+            if (demande.divisions?.length > 0 && traducteur.divisions?.some(d => demande.divisions!.includes(d))) return true;
+            if (demande.categories?.length > 0 && traducteur.categorie && demande.categories.includes(traducteur.categorie)) return true;
+            if (demande.specialisations?.length > 0 && traducteur.specialisations?.some(s => demande.specialisations!.includes(s))) return true;
+            if (demande.domaines?.length > 0 && traducteur.domaines?.some(d => demande.domaines!.includes(d))) return true;
+            if (demande.equipeProjetId && equipesIds.includes(demande.equipeProjetId)) return true;
+            
+            return false;
+          }).length;
+        }
+      } else {
+        // Conseillers/Gestionnaires/Admin voient tout
+        demandesRessourcesActives = toutesLesDemandes.length;
+      }
     }
 
     res.json({
@@ -110,7 +149,21 @@ export const creerDemandeRessource = async (
       return;
     }
 
-    const { titre, description, heuresEstimees, langueSource, langueCible, division, urgence, expireLe } = req.body;
+    const { 
+      titre, 
+      description, 
+      heuresEstimees, 
+      langueSource, 
+      langueCible, 
+      division,  // DEPRECATED - conservé pour compatibilité
+      divisions,
+      categories,
+      specialisations,
+      domaines,
+      equipeProjetId,
+      urgence, 
+      expireLe 
+    } = req.body;
 
     if (!titre) {
       res.status(400).json({ erreur: 'Le titre est requis' });
@@ -125,7 +178,12 @@ export const creerDemandeRessource = async (
         heuresEstimees: heuresEstimees ? parseFloat(heuresEstimees) : null,
         langueSource,
         langueCible,
-        division,
+        division, // DEPRECATED
+        divisions: divisions || [],
+        categories: categories || [],
+        specialisations: specialisations || [],
+        domaines: domaines || [],
+        equipeProjetId: equipeProjetId || null,
         urgence: urgence || 'NORMALE',
         expireLe: expireLe ? new Date(expireLe) : null,
       },
@@ -141,12 +199,20 @@ export const creerDemandeRessource = async (
 /**
  * Obtenir les demandes de ressources actives
  * GET /api/notifications/demandes-ressources
+ * 
+ * Filtrage intelligent selon le profil:
+ * - Conseillers/Gestionnaires/Admin: voient TOUTES les demandes
+ * - Traducteurs: voient uniquement les demandes qui correspondent à leur profil
+ *   (ou les demandes sans ciblage, visibles par tous)
  */
 export const obtenirDemandesRessources = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
+    const utilisateur = req.utilisateur!;
+    
+    // Récupérer toutes les demandes actives
     const demandes = await prisma.demandeRessource.findMany({
       where: {
         actif: true,
@@ -161,9 +227,80 @@ export const obtenirDemandesRessources = async (
       ],
     });
 
+    // Filtrer selon le profil si c'est un traducteur
+    let demandesFiltrees = demandes;
+    
+    if (utilisateur.role === 'TRADUCTEUR') {
+      // Charger le profil du traducteur
+      const traducteur = await prisma.traducteur.findFirst({
+        where: { utilisateurId: utilisateur.id },
+        include: {
+          equipeProjets: { select: { equipeProjetId: true } },
+        },
+      });
+      
+      if (traducteur) {
+        const equipesIds = traducteur.equipeProjets.map(ep => ep.equipeProjetId);
+        
+        demandesFiltrees = demandes.filter(demande => {
+          // Si aucun ciblage défini → visible par tous
+          const aucunCiblage = 
+            (!demande.divisions || demande.divisions.length === 0) &&
+            (!demande.categories || demande.categories.length === 0) &&
+            (!demande.specialisations || demande.specialisations.length === 0) &&
+            (!demande.domaines || demande.domaines.length === 0) &&
+            !demande.equipeProjetId;
+          
+          if (aucunCiblage) return true;
+          
+          // Vérifier si le traducteur correspond à AU MOINS UN critère
+          // (logique OR entre les critères)
+          
+          // Divisions: le traducteur doit appartenir à au moins une division ciblée
+          if (demande.divisions?.length > 0) {
+            const matchDivision = traducteur.divisions?.some(d => 
+              demande.divisions!.includes(d)
+            );
+            if (matchDivision) return true;
+          }
+          
+          // Catégorie: TR01, TR02, TR03
+          if (demande.categories?.length > 0) {
+            if (traducteur.categorie && demande.categories.includes(traducteur.categorie)) {
+              return true;
+            }
+          }
+          
+          // Spécialisations
+          if (demande.specialisations?.length > 0) {
+            const matchSpec = traducteur.specialisations?.some(s => 
+              demande.specialisations!.includes(s)
+            );
+            if (matchSpec) return true;
+          }
+          
+          // Domaines
+          if (demande.domaines?.length > 0) {
+            const matchDomaine = traducteur.domaines?.some(d => 
+              demande.domaines!.includes(d)
+            );
+            if (matchDomaine) return true;
+          }
+          
+          // Équipe-projet
+          if (demande.equipeProjetId) {
+            if (equipesIds.includes(demande.equipeProjetId)) return true;
+          }
+          
+          // Aucun match trouvé
+          return false;
+        });
+      }
+    }
+
     // Enrichir avec les infos du conseiller
     const demandesEnrichies = await Promise.all(
-      demandes.map(async (demande) => {
+      demandesFiltrees.map(async (demande) => {
         const conseiller = await prisma.utilisateur.findUnique({
           where: { id: demande.conseillerId },
           select: { nom: true, prenom: true, email: true },

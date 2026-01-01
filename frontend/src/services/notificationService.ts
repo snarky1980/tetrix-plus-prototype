@@ -27,7 +27,12 @@ export interface DemandeRessource {
   heuresEstimees?: number;
   langueSource?: string;
   langueCible?: string;
-  division?: string;
+  division?: string; // DEPRECATED
+  divisions: string[];
+  categories: string[];
+  specialisations: string[];
+  domaines: string[];
+  equipeProjetId?: string;
   urgence: 'FAIBLE' | 'NORMALE' | 'HAUTE' | 'CRITIQUE';
   actif: boolean;
   creeLe: string;
@@ -46,7 +51,12 @@ export interface CreerDemandeRessourceDTO {
   heuresEstimees?: number;
   langueSource?: string;
   langueCible?: string;
-  division?: string;
+  division?: string; // DEPRECATED
+  divisions?: string[];
+  categories?: string[];
+  specialisations?: string[];
+  domaines?: string[];
+  equipeProjetId?: string;
   urgence?: 'FAIBLE' | 'NORMALE' | 'HAUTE' | 'CRITIQUE';
   expireLe?: string;
 }

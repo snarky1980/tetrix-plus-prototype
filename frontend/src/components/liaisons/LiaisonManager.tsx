@@ -555,42 +555,6 @@ export const LiaisonManager: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Barre de navigation */}
-        <div className="mb-6 flex items-center justify-between gap-4 bg-white border border-gray-200 rounded-lg p-4">
-          <button
-            onClick={() => window.location.href = '/tetrix-plus-prototype/conseiller'}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            ← Portail Conseiller
-          </button>
-          <div className="flex gap-2">
-            <button
-              onClick={() => window.location.href = '/tetrix-plus-prototype/conseiller/creation-tache'}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              ➕ Nouvelle tâche
-            </button>
-            <button
-              onClick={() => window.location.href = '/tetrix-plus-prototype/planification-globale'}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              📅 Planification
-            </button>
-            <button
-              onClick={() => window.location.href = '/tetrix-plus-prototype/statistiques-productivite'}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              📊 Statistiques
-            </button>
-            <button
-              onClick={() => window.location.href = '/tetrix-plus-prototype/conflict-resolution'}
-              className="inline-flex items-center gap-2 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              ⚠️ Conflits
-            </button>
-          </div>
-        </div>
-
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -615,34 +579,22 @@ export const LiaisonManager: React.FC = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards - Simplifiées */}
         {resume && (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
             <StatCard
-              title="TR01 Débutants"
-              value={resume.statistiques.tr01}
+              title="À réviser"
+              value={resume.statistiques.tr01 + resume.statistiques.tr02NecessiteRevision}
               icon={<IconUsers />}
               color="amber"
-              subtitle="Révision obligatoire"
+              subtitle={`${resume.statistiques.tr01} TR01 + ${resume.statistiques.tr02NecessiteRevision} TR02`}
             />
             <StatCard
-              title="TR02 Formation"
-              value={resume.statistiques.tr02NecessiteRevision}
-              icon={<IconUsers />}
-              color="blue"
-              subtitle="Révision requise"
-            />
-            <StatCard
-              title="TR02 Autonomes"
-              value={resume.statistiques.tr02Autonome}
-              icon={<IconUsers />}
-              color="blue"
-            />
-            <StatCard
-              title="TR03 Réviseurs"
+              title="Réviseurs (TR03)"
               value={resume.statistiques.tr03}
               icon={<IconStar />}
               color="green"
+              subtitle="Disponibles"
             />
             <StatCard
               title="Liaisons actives"
@@ -651,32 +603,18 @@ export const LiaisonManager: React.FC = () => {
               color="purple"
             />
             <StatCard
-              title="Liaisons attitrées"
-              value={resume.statistiques.liaisonsAttitres}
-              icon={<IconLink />}
-              color="blue"
-              subtitle="Attitrés"
-            />
-            <StatCard
-              title="Liaisons ponctuelles"
-              value={resume.statistiques.liaisonsPonctuelles}
-              icon={<IconLink />}
-              color="purple"
-              subtitle="Affectations ponctuelles"
-            />
-            <StatCard
-              title="Couverture obligatoire"
+              title="Couverture"
               value={resume.statistiques.tauxCouvertureObligatoire}
               icon={<IconCheck />}
               color="green"
-              subtitle="% TR01/TR02 couverts"
+              subtitle="% couverts"
             />
             <StatCard
               title="Sans réviseur"
               value={resume.statistiques.sansReviseur}
               icon={<IconWarning />}
-              color="amber"
-              subtitle="TR01/TR02 à couvrir"
+              color={resume.statistiques.sansReviseur > 0 ? "red" : "green"}
+              subtitle="À assigner"
             />
           </div>
         )}

@@ -7,6 +7,8 @@ import { LoadingSpinner } from '../ui/Spinner';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 import { notificationService, DemandeRessource, TraducteurDisponible } from '../../services/notificationService';
 import { traducteurService } from '../../services/traducteurService';
+import { divisionService } from '../../services/divisionService';
+import { equipeProjetService } from '../../services/equipeProjetService';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 const urgenceOptions = [
@@ -16,11 +18,13 @@ const urgenceOptions = [
   { value: 'CRITIQUE', label: '🔴 Critique', color: 'bg-red-100 text-red-800' },
 ];
 
+const categorieOptions = ['TR01', 'TR02', 'TR03'];
+
 interface DemandesRessourcesProps {
   divisions?: string[];
 }
 
-export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ divisions = [] }) => {
+export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
   const { rafraichirCompteurs } = useNotifications();
   const [demandes, setDemandes] = useState<DemandeRessource[]>([]);
   const [traducteursDispo, setTraducteursDispo] = useState<TraducteurDisponible[]>([]);
@@ -31,6 +35,9 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   // Options de filtres - toutes les divisions/classifications de tous les traducteurs
   const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
   const [toutesLesClassifications, setToutesLesClassifications] = useState<string[]>([]);
+  const [toutesLesSpecialisations, setToutesLesSpecialisations] = useState<string[]>([]);
+  const [tousLesDomaines, setTousLesDomaines] = useState<string[]>([]);
+  const [equipesProjet, setEquipesProjet] = useState<Array<{ id: string; nom: string; code: string }>>([]);
   
   // Filtres pour les traducteurs disponibles (multi-sélection)
   const [filtresDivisions, setFiltresDivisions] = useState<string[]>([]);
@@ -42,8 +49,13 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
     heuresEstimees: '',
     langueSource: '',
     langueCible: '',
-    division: '',
     urgence: 'NORMALE',
+    // Nouveaux champs de ciblage
+    divisions: [] as string[],
+    categories: [] as string[],
+    specialisations: [] as string[],
+    domaines: [] as string[],
+    equipeProjetId: '',
   });
 
   useEffect(() => {
@@ -53,19 +65,29 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   const chargerDonnees = async () => {
     setLoading(true);
     try {
-      const [demandesData, traducteursData, tousTraducteurs] = await Promise.all([
+      const [demandesData, traducteursData, tousTraducteurs, divisionsData, equipesData] = await Promise.all([
         notificationService.obtenirDemandesRessources(),
         notificationService.obtenirTraducteursDisponibles(),
         traducteurService.obtenirTraducteurs({ actif: true }),
+        divisionService.obtenirDivisions().catch(() => []),
+        equipeProjetService.lister({ actif: true }).catch(() => []),
       ]);
       setDemandes(demandesData);
       setTraducteursDispo(traducteursData);
+      setEquipesProjet(equipesData);
       
-      // Extraire toutes les divisions et classifications de tous les traducteurs
-      const divisions = Array.from(new Set(tousTraducteurs.flatMap(t => t.divisions || []))).filter(Boolean).sort();
-      const classifications = Array.from(new Set(tousTraducteurs.map(t => t.categorie).filter(Boolean))).sort();
-      setToutesLesDivisions(divisions);
+      // Extraire toutes les divisions depuis le service divisions (plus fiable)
+      const divisionNames = divisionsData.map((d: any) => d.nom).filter(Boolean).sort();
+      setToutesLesDivisions(divisionNames);
+      
+      // Extraire toutes les classifications (catégories) et spécialisations des traducteurs
+      const classifications = Array.from(new Set(tousTraducteurs.map((t: any) => t.categorie).filter(Boolean))).sort() as string[];
+      const specialisations = Array.from(new Set(tousTraducteurs.flatMap((t: any) => t.specialisations || []))).filter(Boolean).sort() as string[];
+      const domaines = Array.from(new Set(tousTraducteurs.flatMap((t: any) => t.domaines || []))).filter(Boolean).sort() as string[];
+      
       setToutesLesClassifications(classifications);
+      setToutesLesSpecialisations(specialisations);
+      setTousLesDomaines(domaines);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -84,8 +106,13 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
         heuresEstimees: formData.heuresEstimees ? parseFloat(formData.heuresEstimees) : undefined,
         langueSource: formData.langueSource || undefined,
         langueCible: formData.langueCible || undefined,
-        division: formData.division || undefined,
         urgence: formData.urgence as any,
+        // Critères de ciblage
+        divisions: formData.divisions.length > 0 ? formData.divisions : undefined,
+        categories: formData.categories.length > 0 ? formData.categories : undefined,
+        specialisations: formData.specialisations.length > 0 ? formData.specialisations : undefined,
+        domaines: formData.domaines.length > 0 ? formData.domaines : undefined,
+        equipeProjetId: formData.equipeProjetId || undefined,
       });
       
       setFormData({
@@ -94,8 +121,12 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
         heuresEstimees: '',
         langueSource: '',
         langueCible: '',
-        division: '',
         urgence: 'NORMALE',
+        divisions: [],
+        categories: [],
+        specialisations: [],
+        domaines: [],
+        equipeProjetId: '',
       });
       setShowForm(false);
       chargerDonnees();
@@ -305,19 +336,80 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
                     maxLength={3}
                   />
                 </div>
+              </div>
+              
+              {/* Section ciblage */}
+              <div className="mt-4 p-3 bg-white/50 rounded-lg border border-blue-100">
+                <h5 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                  🎯 Ciblage (optionnel)
+                  <span className="text-xs font-normal text-blue-600">Restreindre qui verra cette demande</span>
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <MultiSelectDropdown
+                    label="Divisions"
+                    options={toutesLesDivisions}
+                    selected={formData.divisions}
+                    onChange={(val) => setFormData({ ...formData, divisions: val })}
+                    placeholder="Toutes divisions"
+                    minWidth="100%"
+                  />
+                  
+                  <MultiSelectDropdown
+                    label="Catégories"
+                    options={categorieOptions}
+                    selected={formData.categories}
+                    onChange={(val) => setFormData({ ...formData, categories: val })}
+                    placeholder="Toutes catégories"
+                    minWidth="100%"
+                  />
+                  
+                  {equipesProjet.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Équipe-projet</label>
+                      <Select
+                        value={formData.equipeProjetId}
+                        onChange={e => setFormData({ ...formData, equipeProjetId: e.target.value })}
+                      >
+                        <option value="">Toutes équipes</option>
+                        {equipesProjet.map(eq => (
+                          <option key={eq.id} value={eq.id}>{eq.nom} ({eq.code})</option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+                  
+                  {toutesLesSpecialisations.length > 0 && (
+                    <MultiSelectDropdown
+                      label="Spécialisations"
+                      options={toutesLesSpecialisations}
+                      selected={formData.specialisations}
+                      onChange={(val) => setFormData({ ...formData, specialisations: val })}
+                      placeholder="Toutes spécialisations"
+                      minWidth="100%"
+                    />
+                  )}
+                  
+                  {tousLesDomaines.length > 0 && (
+                    <MultiSelectDropdown
+                      label="Domaines"
+                      options={tousLesDomaines}
+                      selected={formData.domaines}
+                      onChange={(val) => setFormData({ ...formData, domaines: val })}
+                      placeholder="Tous domaines"
+                      minWidth="100%"
+                    />
+                  )}
+                </div>
                 
-                {divisions.length > 0 && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Division préférée</label>
-                    <Select
-                      value={formData.division}
-                      onChange={e => setFormData({ ...formData, division: e.target.value })}
-                    >
-                      <option value="">Toutes divisions</option>
-                      {divisions.map(d => (
-                        <option key={d} value={d}>{d}</option>
-                      ))}
-                    </Select>
+                {/* Résumé du ciblage */}
+                {(formData.divisions.length > 0 || formData.categories.length > 0 || formData.equipeProjetId || formData.specialisations.length > 0 || formData.domaines.length > 0) && (
+                  <div className="mt-2 text-xs text-blue-700 bg-blue-100 p-2 rounded">
+                    <strong>Ciblage actif :</strong>{' '}
+                    {formData.divisions.length > 0 && `${formData.divisions.length} division(s)`}
+                    {formData.categories.length > 0 && ` • ${formData.categories.join(', ')}`}
+                    {formData.equipeProjetId && ` • Équipe: ${equipesProjet.find(e => e.id === formData.equipeProjetId)?.code}`}
+                    {formData.specialisations.length > 0 && ` • ${formData.specialisations.length} spécialisation(s)`}
+                    {formData.domaines.length > 0 && ` • ${formData.domaines.length} domaine(s)`}
                   </div>
                 )}
               </div>
@@ -364,12 +456,39 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
                         {demande.langueSource && demande.langueCible && (
                           <span>🌐 {demande.langueSource}→{demande.langueCible}</span>
                         )}
-                        {demande.division && (
-                          <span>🏢 {demande.division}</span>
-                        )}
                         <span>👤 {demande.conseiller?.prenom || demande.conseiller?.email}</span>
                         <span>📅 {new Date(demande.creeLe).toLocaleDateString('fr-CA')}</span>
                       </div>
+                      {/* Affichage des critères de ciblage */}
+                      {(demande.divisions?.length > 0 || demande.categories?.length > 0 || demande.specialisations?.length > 0 || demande.domaines?.length > 0 || demande.equipeProjetId) && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {demande.divisions?.map(d => (
+                            <span key={d} className="px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded text-xs">
+                              🏢 {d}
+                            </span>
+                          ))}
+                          {demande.categories?.map(c => (
+                            <span key={c} className="px-1.5 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                              {c}
+                            </span>
+                          ))}
+                          {demande.specialisations?.map(s => (
+                            <span key={s} className="px-1.5 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                              {s}
+                            </span>
+                          ))}
+                          {demande.domaines?.map(d => (
+                            <span key={d} className="px-1.5 py-0.5 bg-amber-100 text-amber-700 rounded text-xs">
+                              {d}
+                            </span>
+                          ))}
+                          {demande.equipeProjetId && (
+                            <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-700 rounded text-xs">
+                              👥 Équipe
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <Button 

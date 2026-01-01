@@ -246,19 +246,24 @@ model LiaisonReviseur {
 }
 
 model DemandeRessource {
-  id             String    @id @default(uuid())
-  conseillerId   String
-  titre          String
-  description    String?
-  heuresEstimees Float?
-  langueSource   String?
-  langueCible    String?
-  division       String?
-  urgence        Urgence   @default(NORMALE)
-  actif          Boolean   @default(true)
-  creeLe         DateTime  @default(now())
-  modifieLe      DateTime  @updatedAt
-  expireLe       DateTime?
+  id               String    @id @default(uuid())
+  conseillerId     String
+  titre            String
+  description      String?
+  heuresEstimees   Float?
+  langueSource     String?
+  langueCible      String?
+  division         String?   // DEPRECATED - utiliser divisions[]
+  divisions        String[]  @default([])  // Filtrer par divisions
+  categories       String[]  @default([])  // TR01, TR02, TR03
+  specialisations  String[]  @default([])  // Spécialités recherchées
+  domaines         String[]  @default([])  // Domaines de compétence
+  equipeProjetId   String?                 // Équipe-projet spécifique
+  urgence          Urgence   @default(NORMALE)
+  actif            Boolean   @default(true)
+  creeLe           DateTime  @default(now())
+  modifieLe        DateTime  @updatedAt
+  expireLe         DateTime?
 
   @@index([conseillerId])
   @@index([actif])
