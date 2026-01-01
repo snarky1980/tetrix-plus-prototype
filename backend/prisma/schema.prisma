@@ -68,6 +68,8 @@ model Traducteur {
   modifieLe                DateTime             @updatedAt
   classification           String
   horaire                  String?
+  heureDinerDebut          String?              @default("12:00")
+  heureDinerFin            String?              @default("13:00")
   notes                    String?
   specialisations          String[]             @default([])
   disponiblePourTravail    Boolean              @default(false)
