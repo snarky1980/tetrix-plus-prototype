@@ -6,6 +6,7 @@ import {
   obtenirTraducteursDisponibles,
   creerDemandeRessource,
   obtenirDemandesRessources,
+  modifierDemandeRessource,
   fermerDemandeRessource,
   supprimerDemandeRessource,
 } from '../controllers/notificationController';
@@ -32,6 +33,11 @@ router.post(
   '/demandes-ressources',
   verifierRole(Role.CONSEILLER, Role.GESTIONNAIRE, Role.ADMIN),
   creerDemandeRessource
+);
+router.put(
+  '/demandes-ressources/:id',
+  verifierRole(Role.CONSEILLER, Role.GESTIONNAIRE, Role.ADMIN),
+  modifierDemandeRessource
 );
 router.put('/demandes-ressources/:id/fermer', fermerDemandeRessource);
 router.delete('/demandes-ressources/:id', supprimerDemandeRessource);

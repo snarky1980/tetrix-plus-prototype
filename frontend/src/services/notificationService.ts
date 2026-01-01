@@ -95,6 +95,14 @@ export const notificationService = {
   },
 
   /**
+   * Modifier une demande de ressource
+   */
+  async modifierDemandeRessource(id: string, data: Partial<CreerDemandeRessourceDTO>): Promise<DemandeRessource> {
+    const response = await api.put(`/notifications/demandes-ressources/${id}`, data);
+    return response.data;
+  },
+
+  /**
    * Fermer une demande (trouvé un traducteur)
    */
   async fermerDemandeRessource(id: string): Promise<DemandeRessource> {

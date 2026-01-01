@@ -320,6 +320,73 @@ export const obtenirDemandesRessources = async (
 };
 
 /**
+ * Modifier une demande de ressource
+ * PUT /api/notifications/demandes-ressources/:id
+ */
+export const modifierDemandeRessource = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const utilisateur = req.utilisateur!;
+
+    const demande = await prisma.demandeRessource.findUnique({
+      where: { id },
+    });
+
+    if (!demande) {
+      res.status(404).json({ erreur: 'Demande non trouvée' });
+      return;
+    }
+
+    // Seul le créateur ou un admin peut modifier
+    if (demande.conseillerId !== utilisateur.id && utilisateur.role !== 'ADMIN') {
+      res.status(403).json({ erreur: 'Non autorisé' });
+      return;
+    }
+
+    const { 
+      titre, 
+      description, 
+      heuresEstimees, 
+      langueSource, 
+      langueCible, 
+      divisions,
+      categories,
+      specialisations,
+      domaines,
+      equipeProjetId,
+      urgence, 
+      expireLe 
+    } = req.body;
+
+    const demandeModifiee = await prisma.demandeRessource.update({
+      where: { id },
+      data: {
+        titre: titre ?? demande.titre,
+        description: description !== undefined ? description : demande.description,
+        heuresEstimees: heuresEstimees !== undefined ? (heuresEstimees ? parseFloat(heuresEstimees) : null) : demande.heuresEstimees,
+        langueSource: langueSource !== undefined ? langueSource : demande.langueSource,
+        langueCible: langueCible !== undefined ? langueCible : demande.langueCible,
+        divisions: divisions !== undefined ? divisions : demande.divisions,
+        categories: categories !== undefined ? categories : demande.categories,
+        specialisations: specialisations !== undefined ? specialisations : demande.specialisations,
+        domaines: domaines !== undefined ? domaines : demande.domaines,
+        equipeProjetId: equipeProjetId !== undefined ? (equipeProjetId || null) : demande.equipeProjetId,
+        urgence: urgence ?? demande.urgence,
+        expireLe: expireLe !== undefined ? (expireLe ? new Date(expireLe) : null) : demande.expireLe,
+      },
+    });
+
+    res.json(demandeModifiee);
+  } catch (error) {
+    console.error('Erreur modification demande:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la modification de la demande' });
+  }
+};
+
+/**
  * Fermer une demande de ressource (trouvé un traducteur)
  * PUT /api/notifications/demandes-ressources/:id/fermer
  */

@@ -31,6 +31,7 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null); // Mode édition
   
   // Options de filtres - toutes les divisions/classifications de tous les traducteurs
   const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
@@ -43,7 +44,7 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
   const [filtresDivisions, setFiltresDivisions] = useState<string[]>([]);
   const [filtresClassifications, setFiltresClassifications] = useState<string[]>([]);
   
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     titre: '',
     description: '',
     heuresEstimees: '',
@@ -56,7 +57,9 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
     specialisations: [] as string[],
     domaines: [] as string[],
     equipeProjetId: '',
-  });
+  };
+  
+  const [formData, setFormData] = useState(initialFormData);
 
   useEffect(() => {
     chargerDonnees();
@@ -100,7 +103,7 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
     setSubmitting(true);
     
     try {
-      await notificationService.creerDemandeRessource({
+      const payload = {
         titre: formData.titre,
         description: formData.description || undefined,
         heuresEstimees: formData.heuresEstimees ? parseFloat(formData.heuresEstimees) : undefined,
@@ -108,34 +111,53 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
         langueCible: formData.langueCible || undefined,
         urgence: formData.urgence as any,
         // Critères de ciblage
-        divisions: formData.divisions.length > 0 ? formData.divisions : undefined,
-        categories: formData.categories.length > 0 ? formData.categories : undefined,
-        specialisations: formData.specialisations.length > 0 ? formData.specialisations : undefined,
-        domaines: formData.domaines.length > 0 ? formData.domaines : undefined,
+        divisions: formData.divisions.length > 0 ? formData.divisions : [],
+        categories: formData.categories.length > 0 ? formData.categories : [],
+        specialisations: formData.specialisations.length > 0 ? formData.specialisations : [],
+        domaines: formData.domaines.length > 0 ? formData.domaines : [],
         equipeProjetId: formData.equipeProjetId || undefined,
-      });
+      };
       
-      setFormData({
-        titre: '',
-        description: '',
-        heuresEstimees: '',
-        langueSource: '',
-        langueCible: '',
-        urgence: 'NORMALE',
-        divisions: [],
-        categories: [],
-        specialisations: [],
-        domaines: [],
-        equipeProjetId: '',
-      });
-      setShowForm(false);
+      if (editingId) {
+        // Mode modification
+        await notificationService.modifierDemandeRessource(editingId, payload);
+      } else {
+        // Mode création
+        await notificationService.creerDemandeRessource(payload);
+      }
+      
+      resetForm();
       chargerDonnees();
       rafraichirCompteurs();
     } catch (error) {
-      console.error('Erreur création demande:', error);
+      console.error('Erreur sauvegarde demande:', error);
     } finally {
       setSubmitting(false);
     }
+  };
+  
+  const resetForm = () => {
+    setFormData(initialFormData);
+    setShowForm(false);
+    setEditingId(null);
+  };
+  
+  const handleEdit = (demande: DemandeRessource) => {
+    setFormData({
+      titre: demande.titre,
+      description: demande.description || '',
+      heuresEstimees: demande.heuresEstimees?.toString() || '',
+      langueSource: demande.langueSource || '',
+      langueCible: demande.langueCible || '',
+      urgence: demande.urgence,
+      divisions: demande.divisions || [],
+      categories: demande.categories || [],
+      specialisations: demande.specialisations || [],
+      domaines: demande.domaines || [],
+      equipeProjetId: demande.equipeProjetId || '',
+    });
+    setEditingId(demande.id);
+    setShowForm(true);
   };
 
   const handleFermer = async (id: string) => {
@@ -262,16 +284,24 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
               <span>📢</span>
               Demandes de ressources ({demandes.length})
             </CardTitle>
-            <Button size="sm" onClick={() => setShowForm(!showForm)}>
+            <Button size="sm" onClick={() => { 
+              if (showForm) {
+                resetForm();
+              } else {
+                setShowForm(true);
+              }
+            }}>
               {showForm ? '✕' : '➕ Nouvelle'}
             </Button>
           </div>
         </CardHeader>
         <CardContent className="pt-2">
-          {/* Formulaire de création */}
+          {/* Formulaire de création/modification */}
           {showForm && (
-            <form onSubmit={handleSubmit} className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-medium mb-4">Publier une demande de ressources</h4>
+            <form onSubmit={handleSubmit} className={`mb-6 p-4 rounded-lg border ${editingId ? 'bg-amber-50 border-amber-200' : 'bg-blue-50 border-blue-200'}`}>
+              <h4 className="font-medium mb-4 flex items-center gap-2">
+                {editingId ? '✏️ Modifier la demande' : '📢 Publier une demande de ressources'}
+              </h4>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium mb-1">Titre *</label>
@@ -415,11 +445,11 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
               </div>
               
               <div className="flex justify-end gap-2 mt-4">
-                <Button type="button" variant="outline" onClick={() => setShowForm(false)}>
+                <Button type="button" variant="outline" onClick={resetForm}>
                   Annuler
                 </Button>
                 <Button type="submit" disabled={submitting || !formData.titre}>
-                  {submitting ? 'Publication...' : 'Publier la demande'}
+                  {submitting ? 'Enregistrement...' : (editingId ? '💾 Enregistrer' : 'Publier la demande')}
                 </Button>
               </div>
             </form>
@@ -491,6 +521,14 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
                       )}
                     </div>
                     <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => handleEdit(demande)}
+                        className="text-xs px-2 py-1"
+                        title="Modifier"
+                      >
+                        ✏️
+                      </Button>
                       <Button 
                         variant="outline" 
                         onClick={() => handleFermer(demande.id)}
