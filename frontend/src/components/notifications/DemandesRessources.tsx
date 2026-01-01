@@ -5,7 +5,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { LoadingSpinner } from '../ui/Spinner';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
-import { notificationService, DemandeRessource, TraducteurDisponible } from '../../services/notificationService';
+import { notificationService, DemandeRessource, TraducteurDisponible, InteretDemande } from '../../services/notificationService';
 import { traducteurService } from '../../services/traducteurService';
 import { divisionService } from '../../services/divisionService';
 import { equipeProjetService } from '../../services/equipeProjetService';
@@ -32,6 +32,9 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null); // Mode édition
+  const [expandedInterets, setExpandedInterets] = useState<Set<string>>(new Set()); // IDs des demandes avec liste intérêts dépliée
+  const [interetsParDemande, setInteretsParDemande] = useState<Record<string, InteretDemande[]>>({});
+  const [loadingInterets, setLoadingInterets] = useState<Set<string>>(new Set());
   
   // Options de filtres - toutes les divisions/classifications de tous les traducteurs
   const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
@@ -180,6 +183,37 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
     } catch (error) {
       console.error('Erreur suppression:', error);
     }
+  };
+
+  // Charger/afficher les intérêts pour une demande
+  const toggleInterets = async (demandeId: string) => {
+    const newExpanded = new Set(expandedInterets);
+    
+    if (newExpanded.has(demandeId)) {
+      // Fermer la liste
+      newExpanded.delete(demandeId);
+    } else {
+      // Ouvrir et charger les intérêts si pas déjà chargés
+      newExpanded.add(demandeId);
+      
+      if (!interetsParDemande[demandeId]) {
+        setLoadingInterets(prev => new Set(prev).add(demandeId));
+        try {
+          const interets = await notificationService.obtenirInterets(demandeId);
+          setInteretsParDemande(prev => ({ ...prev, [demandeId]: interets }));
+        } catch (error) {
+          console.error('Erreur chargement intérêts:', error);
+        } finally {
+          setLoadingInterets(prev => {
+            const next = new Set(prev);
+            next.delete(demandeId);
+            return next;
+          });
+        }
+      }
+    }
+    
+    setExpandedInterets(newExpanded);
   };
 
   const getUrgenceStyle = (urgence: string) => {
@@ -536,6 +570,55 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
                             <span className="px-1.5 py-0.5 bg-cyan-100 text-cyan-700 rounded text-xs">
                               👥 Équipe
                             </span>
+                          )}
+                        </div>
+                      )}
+                      {/* Bouton pour voir les traducteurs intéressés */}
+                      {(demande.nbInterets ?? 0) > 0 && (
+                        <button
+                          onClick={() => toggleInterets(demande.id)}
+                          className="mt-2 flex items-center gap-1.5 text-xs text-emerald-700 hover:text-emerald-900 transition-colors"
+                        >
+                          <span className="px-2 py-1 bg-emerald-100 rounded-full font-medium">
+                            🙋 {demande.nbInterets} intéressé{(demande.nbInterets ?? 0) > 1 ? 's' : ''}
+                          </span>
+                          <span>{expandedInterets.has(demande.id) ? '▲' : '▼'}</span>
+                        </button>
+                      )}
+                      {/* Liste des traducteurs intéressés */}
+                      {expandedInterets.has(demande.id) && (
+                        <div className="mt-2 p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                          {loadingInterets.has(demande.id) ? (
+                            <div className="text-xs text-gray-500 flex items-center gap-2">
+                              <LoadingSpinner /> Chargement...
+                            </div>
+                          ) : interetsParDemande[demande.id]?.length > 0 ? (
+                            <div className="space-y-2">
+                              <div className="text-xs font-medium text-emerald-800 mb-1">Traducteurs intéressés :</div>
+                              {interetsParDemande[demande.id].map(interet => (
+                                <div key={interet.id} className="flex items-center gap-2 p-2 bg-white rounded border border-emerald-100">
+                                  <div className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                    {interet.traducteur?.nom?.charAt(0) || '?'}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="font-medium text-sm">{interet.traducteur?.nom || 'Traducteur'}</div>
+                                    <div className="text-xs text-gray-500">
+                                      {interet.traducteur?.categorie} • {interet.traducteur?.divisions?.join(', ')}
+                                    </div>
+                                  </div>
+                                  {interet.message && (
+                                    <div className="text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded max-w-[200px] truncate" title={interet.message}>
+                                      💬 {interet.message}
+                                    </div>
+                                  )}
+                                  <div className="text-[10px] text-gray-400">
+                                    {new Date(interet.creeLe).toLocaleDateString('fr-CA')}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="text-xs text-gray-500">Aucun intérêt pour le moment</div>
                           )}
                         </div>
                       )}

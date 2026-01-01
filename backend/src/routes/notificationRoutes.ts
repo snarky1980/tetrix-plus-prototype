@@ -9,6 +9,9 @@ import {
   modifierDemandeRessource,
   fermerDemandeRessource,
   supprimerDemandeRessource,
+  manifesterInteret,
+  retirerInteret,
+  obtenirInterets,
 } from '../controllers/notificationController';
 
 const router = Router();
@@ -41,6 +44,23 @@ router.put(
 );
 router.put('/demandes-ressources/:id/fermer', fermerDemandeRessource);
 router.delete('/demandes-ressources/:id', supprimerDemandeRessource);
+
+// Manifestations d'intérêt (traducteurs)
+router.post(
+  '/demandes-ressources/:id/interet',
+  verifierRole(Role.TRADUCTEUR),
+  manifesterInteret
+);
+router.delete(
+  '/demandes-ressources/:id/interet',
+  verifierRole(Role.TRADUCTEUR),
+  retirerInteret
+);
+router.get(
+  '/demandes-ressources/:id/interets',
+  verifierRole(Role.CONSEILLER, Role.GESTIONNAIRE, Role.ADMIN),
+  obtenirInterets
+);
 
 // ============================================
 // NOTIFICATIONS SYSTÈME (statuts de tâches)

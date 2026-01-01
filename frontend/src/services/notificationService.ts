@@ -26,6 +26,25 @@ export interface TraducteurDisponible {
   }>;
 }
 
+export interface InteretDemande {
+  id: string;
+  demandeId: string;
+  traducteurId: string;
+  message?: string;
+  creeLe: string;
+  traducteur: {
+    id: string;
+    nom: string;
+    categorie: string;
+    divisions?: string[];
+    capaciteHeuresParJour?: number;
+    pairesLinguistiques?: Array<{
+      langueSource: string;
+      langueCible: string;
+    }>;
+  };
+}
+
 export interface DemandeRessource {
   id: string;
   conseillerId: string;
@@ -50,6 +69,10 @@ export interface DemandeRessource {
     prenom?: string;
     email: string;
   };
+  // Pour savoir si le traducteur connecté a déjà manifesté son intérêt
+  monInteret?: InteretDemande | null;
+  // Nombre d'intérêts manifestés (visible pour les conseillers)
+  nbInterets?: number;
 }
 
 export interface CreerDemandeRessourceDTO {
@@ -122,5 +145,28 @@ export const notificationService = {
    */
   async supprimerDemandeRessource(id: string): Promise<void> {
     await api.delete(`/notifications/demandes-ressources/${id}`);
+  },
+
+  /**
+   * Manifester son intérêt pour une demande (traducteur)
+   */
+  async manifesterInteret(demandeId: string, message?: string): Promise<InteretDemande> {
+    const response = await api.post(`/notifications/demandes-ressources/${demandeId}/interet`, { message });
+    return response.data;
+  },
+
+  /**
+   * Retirer sa manifestation d'intérêt (traducteur)
+   */
+  async retirerInteret(demandeId: string): Promise<void> {
+    await api.delete(`/notifications/demandes-ressources/${demandeId}/interet`);
+  },
+
+  /**
+   * Obtenir les manifestations d'intérêt pour une demande (conseiller)
+   */
+  async obtenirInterets(demandeId: string): Promise<InteretDemande[]> {
+    const response = await api.get(`/notifications/demandes-ressources/${demandeId}/interets`);
+    return response.data;
   },
 };

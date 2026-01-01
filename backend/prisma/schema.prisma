@@ -79,6 +79,7 @@ model Traducteur {
   divisions                String[]             @default([])
   ajustementsTemps         AjustementTemps[]
   equipesProjet            EquipeProjetMembre[]
+  interetsDemandes         InteretDemande[]
   reviseursDe              LiaisonReviseur[]    @relation("TraducteurReviseur")
   revisePar                LiaisonReviseur[]    @relation("TraducteurRevise")
   pairesLinguistiques      PaireLinguistique[]
@@ -248,29 +249,46 @@ model LiaisonReviseur {
 }
 
 model DemandeRessource {
-  id               String    @id @default(uuid())
+  id               String           @id @default(uuid())
   conseillerId     String
   titre            String
   description      String?
   heuresEstimees   Float?
   langueSource     String?
   langueCible      String?
-  division         String?   // DEPRECATED - utiliser divisions[]
-  divisions        String[]  @default([])  // Filtrer par divisions
-  categories       String[]  @default([])  // TR01, TR02, TR03
-  specialisations  String[]  @default([])  // Spécialités recherchées
-  domaines         String[]  @default([])  // Domaines de compétence
-  equipeProjetId   String?                 // Équipe-projet spécifique
-  urgence          Urgence   @default(NORMALE)
-  actif            Boolean   @default(true)
-  creeLe           DateTime  @default(now())
-  modifieLe        DateTime  @updatedAt
+  division         String?          // DEPRECATED - utiliser divisions[]
+  divisions        String[]         @default([])  // Filtrer par divisions
+  categories       String[]         @default([])  // TR01, TR02, TR03
+  specialisations  String[]         @default([])  // Spécialités recherchées
+  domaines         String[]         @default([])  // Domaines de compétence
+  equipeProjetId   String?                        // Équipe-projet spécifique
+  urgence          Urgence          @default(NORMALE)
+  actif            Boolean          @default(true)
+  creeLe           DateTime         @default(now())
+  modifieLe        DateTime         @updatedAt
   expireLe         DateTime?
+  interets         InteretDemande[]
 
   @@index([conseillerId])
   @@index([actif])
   @@index([urgence])
   @@map("demandes_ressources")
+}
+
+// Manifestation d'intérêt d'un traducteur pour une demande de ressource
+model InteretDemande {
+  id           String          @id @default(uuid())
+  demandeId    String
+  traducteurId String
+  message      String?         // Message optionnel du traducteur
+  creeLe       DateTime        @default(now())
+  demande      DemandeRessource @relation(fields: [demandeId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur      @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([demandeId, traducteurId])
+  @@index([demandeId])
+  @@index([traducteurId])
+  @@map("interets_demandes")
 }
 
 model EquipeProjet {

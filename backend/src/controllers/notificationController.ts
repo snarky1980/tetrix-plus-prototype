@@ -291,7 +291,7 @@ export const obtenirDemandesRessources = async (
   try {
     const utilisateur = req.utilisateur!;
     
-    // Récupérer toutes les demandes actives
+    // Récupérer toutes les demandes actives avec les intérêts
     const demandes = await prisma.demandeRessource.findMany({
       where: {
         actif: true,
@@ -299,6 +299,15 @@ export const obtenirDemandesRessources = async (
           { expireLe: null },
           { expireLe: { gt: new Date() } },
         ],
+      },
+      include: {
+        interets: {
+          include: {
+            traducteur: {
+              select: { id: true, nom: true, categorie: true },
+            },
+          },
+        },
       },
       orderBy: [
         { urgence: 'desc' },
@@ -308,18 +317,20 @@ export const obtenirDemandesRessources = async (
 
     // Filtrer selon le profil si c'est un traducteur
     let demandesFiltrees = demandes;
+    let traducteurId: string | null = null;
     
     if (utilisateur.role === 'TRADUCTEUR') {
       // Charger le profil du traducteur
       const traducteur = await prisma.traducteur.findFirst({
         where: { utilisateurId: utilisateur.id },
         include: {
-          equipeProjets: { select: { equipeProjetId: true } },
+          equipesProjet: { select: { equipeProjetId: true } },
         },
       });
       
       if (traducteur) {
-        const equipesIds = traducteur.equipeProjets.map(ep => ep.equipeProjetId);
+        traducteurId = traducteur.id;
+        const equipesIds = traducteur.equipesProjet.map(ep => ep.equipeProjetId);
         
         demandesFiltrees = demandes.filter(demande => {
           // Si aucun ciblage défini → visible par tous
@@ -377,16 +388,30 @@ export const obtenirDemandesRessources = async (
       }
     }
 
-    // Enrichir avec les infos du conseiller
+    // Enrichir avec les infos du conseiller + état de l'intérêt
     const demandesEnrichies = await Promise.all(
       demandesFiltrees.map(async (demande) => {
         const conseiller = await prisma.utilisateur.findUnique({
           where: { id: demande.conseillerId },
           select: { nom: true, prenom: true, email: true },
         });
+        
+        // Pour les traducteurs: inclure leur propre intérêt s'il existe
+        const monInteret = traducteurId 
+          ? demande.interets.find(i => i.traducteurId === traducteurId) || null
+          : null;
+        
+        // Pour les conseillers: inclure le nombre d'intérêts
+        const nbInterets = demande.interets.length;
+        
+        // Ne pas exposer tous les intérêts aux traducteurs (seulement leur propre)
+        const { interets, ...demandeData } = demande;
+        
         return {
-          ...demande,
+          ...demandeData,
           conseiller,
+          monInteret: utilisateur.role === 'TRADUCTEUR' ? monInteret : undefined,
+          nbInterets: utilisateur.role !== 'TRADUCTEUR' ? nbInterets : undefined,
         };
       })
     );
@@ -539,5 +564,138 @@ export const supprimerDemandeRessource = async (
   } catch (error) {
     console.error('Erreur suppression demande:', error);
     res.status(500).json({ erreur: 'Erreur lors de la suppression de la demande' });
+  }
+};
+
+/**
+ * Manifester son intérêt pour une demande de ressource (traducteur)
+ * POST /api/notifications/demandes-ressources/:id/interet
+ */
+export const manifesterInteret = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const utilisateur = req.utilisateur!;
+    const { message } = req.body;
+
+    // Vérifier que c'est un traducteur
+    const traducteur = await prisma.traducteur.findFirst({
+      where: { utilisateurId: utilisateur.id },
+    });
+
+    if (!traducteur) {
+      res.status(403).json({ erreur: 'Seuls les traducteurs peuvent manifester leur intérêt' });
+      return;
+    }
+
+    // Vérifier que la demande existe et est active
+    const demande = await prisma.demandeRessource.findUnique({
+      where: { id },
+    });
+
+    if (!demande || !demande.actif) {
+      res.status(404).json({ erreur: 'Demande non trouvée ou inactive' });
+      return;
+    }
+
+    // Créer ou mettre à jour la manifestation d'intérêt
+    const interet = await prisma.interetDemande.upsert({
+      where: {
+        demandeId_traducteurId: {
+          demandeId: id,
+          traducteurId: traducteur.id,
+        },
+      },
+      update: { message },
+      create: {
+        demandeId: id,
+        traducteurId: traducteur.id,
+        message,
+      },
+      include: {
+        traducteur: {
+          select: { id: true, nom: true, categorie: true },
+        },
+      },
+    });
+
+    res.status(201).json(interet);
+  } catch (error) {
+    console.error('Erreur manifestation intérêt:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la manifestation d\'intérêt' });
+  }
+};
+
+/**
+ * Retirer sa manifestation d'intérêt (traducteur)
+ * DELETE /api/notifications/demandes-ressources/:id/interet
+ */
+export const retirerInteret = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const utilisateur = req.utilisateur!;
+
+    const traducteur = await prisma.traducteur.findFirst({
+      where: { utilisateurId: utilisateur.id },
+    });
+
+    if (!traducteur) {
+      res.status(403).json({ erreur: 'Non autorisé' });
+      return;
+    }
+
+    await prisma.interetDemande.deleteMany({
+      where: {
+        demandeId: id,
+        traducteurId: traducteur.id,
+      },
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Erreur retrait intérêt:', error);
+    res.status(500).json({ erreur: 'Erreur lors du retrait de l\'intérêt' });
+  }
+};
+
+/**
+ * Obtenir les manifestations d'intérêt pour une demande (conseiller)
+ * GET /api/notifications/demandes-ressources/:id/interets
+ */
+export const obtenirInterets = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const interets = await prisma.interetDemande.findMany({
+      where: { demandeId: id },
+      include: {
+        traducteur: {
+          select: {
+            id: true,
+            nom: true,
+            categorie: true,
+            divisions: true,
+            capaciteHeuresParJour: true,
+            pairesLinguistiques: {
+              select: { langueSource: true, langueCible: true },
+            },
+          },
+        },
+      },
+      orderBy: { creeLe: 'asc' },
+    });
+
+    res.json(interets);
+  } catch (error) {
+    console.error('Erreur obtention intérêts:', error);
+    res.status(500).json({ erreur: 'Erreur lors de l\'obtention des intérêts' });
   }
 };
