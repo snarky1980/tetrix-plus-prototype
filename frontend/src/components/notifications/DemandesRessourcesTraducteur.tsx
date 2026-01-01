@@ -179,7 +179,7 @@ export const DemandesRessourcesTraducteur: React.FC = () => {
                     <Button
                       onClick={() => toggleInteret(demande.id)}
                       disabled={interet.loading}
-                      variant={interet.interesse ? 'secondary' : 'default'}
+                      variant={interet.interesse ? 'secondaire' : 'primaire'}
                       size="sm"
                       className={interet.interesse 
                         ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-300' 
