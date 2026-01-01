@@ -49,12 +49,12 @@ export const obtenirCompteurs = async (
         const traducteur = await prisma.traducteur.findFirst({
           where: { utilisateurId: utilisateur.id },
           include: {
-            equipeProjets: { select: { equipeProjetId: true } },
+            equipesProjet: { select: { equipeProjetId: true } },
           },
         });
         
         if (traducteur) {
-          const equipesIds = traducteur.equipeProjets.map(ep => ep.equipeProjetId);
+          const equipesIds = traducteur.equipesProjet.map((ep: { equipeProjetId: string }) => ep.equipeProjetId);
           
           demandesRessourcesActives = toutesLesDemandes.filter(demande => {
             // Aucun ciblage → visible par tous
@@ -199,7 +199,7 @@ export const obtenirTraducteursDisponibles = async (
     }
 
     // Retourner sans le champ ciblageDisponibilite (nettoyage)
-    const resultat = traducteursFiltres.map(({ ciblageDisponibilite, equipeProjets, ...tr }) => ({
+    const resultat = traducteursFiltres.map(({ ciblageDisponibilite, equipesProjet, ...tr }) => ({
       ...tr,
       ciblage: ciblageDisponibilite, // Renommer pour le frontend
     }));
