@@ -38,6 +38,7 @@ export const connexion = async (req: Request, res: Response): Promise<void> => {
         id: utilisateur.id,
         email: utilisateur.email,
         role: utilisateur.role,
+        isPlayground: utilisateur.isPlayground,
       },
       config.jwtSecret,
       { expiresIn: '24h' }

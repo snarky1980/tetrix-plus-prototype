@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -25,8 +26,13 @@ type Section = 'overview' | 'taches' | 'blocages' | 'parametres' | 'statistiques
  * Inspiré du portail conseiller avec forte emphase UI/UX
  * 
  * Logique métier extraite dans useDashboardTraducteur
+ * Supporte un mode "vue admin" via paramètre URL :id
  */
 const DashboardTraducteur: React.FC = () => {
+  // ============ Paramètre URL pour mode admin ============
+  const { id: traducteurIdParam } = useParams<{ id?: string }>();
+  const navigate = useNavigate();
+
   // ============ État de navigation (UI uniquement) ============
   const [section, setSection] = useState<Section>('overview');
 
@@ -40,6 +46,7 @@ const DashboardTraducteur: React.FC = () => {
     stats,
     percentageUtilise,
     today,
+    isViewingAsAdmin,
     
     // Loading states
     loadingTraducteur,
@@ -92,7 +99,7 @@ const DashboardTraducteur: React.FC = () => {
     
     // Refresh
     refresh,
-  } = useDashboardTraducteur();
+  } = useDashboardTraducteur(traducteurIdParam);
 
   // ============ Titre dynamique ============
   const titreTraducteur = traducteur?.nom || 'Mon espace';
@@ -720,14 +727,46 @@ const DashboardTraducteur: React.FC = () => {
     );
   }
 
+  // Si pas de profil traducteur associé
+  if (!traducteur) {
+    return (
+      <AppLayout titre="Profil manquant">
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="text-6xl mb-4">🔗</div>
+          <h2 className="text-xl font-bold text-gray-700 mb-2">Profil traducteur non configuré</h2>
+          <p className="text-gray-500 text-center max-w-md">
+            Votre compte utilisateur n'est pas lié à un profil traducteur. 
+            Contactez un administrateur pour configurer votre accès.
+          </p>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout titre="">
       <div className="space-y-6">
+        {/* Bannière mode admin */}
+        {isViewingAsAdmin && (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">👁️</span>
+              <div>
+                <p className="font-medium text-amber-800">Mode visualisation administrateur</p>
+                <p className="text-sm text-amber-600">Vous consultez le portail de {traducteur.nom}</p>
+              </div>
+            </div>
+            <Button variant="outline" onClick={() => navigate('/admin')}>
+              ← Retour à l'admin
+            </Button>
+          </div>
+        )}
+
         {/* En-tête avec navigation */}
         <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold">Bonjour, {traducteur?.nom || 'Traducteur'} 👋</h1>
+              <h1 className="text-3xl font-bold">{isViewingAsAdmin ? traducteur.nom : `Bonjour, ${traducteur?.nom || 'Traducteur'}`} 👋</h1>
               <p className="text-muted mt-1">
                 {traducteur?.divisions?.join(', ')} • {traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : ''} • 
                 Horaire: {traducteur?.horaire || '9h-17h'}

@@ -13,6 +13,11 @@ interface PortalConfig {
   color: string;
 }
 
+// ID du traducteur playground (traducteur@tetrix.com)
+const DEV_TRADUCTEUR_ID = '906142de-dc63-4368-8c8d-73ca9a331c13';
+// ID du traducteur pour playground-traducteur@tetrix.com
+const PLAYGROUND_TRADUCTEUR_ID = '4e9a8b30-7a6b-4c06-a2cb-8505a5721e27';
+
 const PORTALS: PortalConfig[] = [
   {
     id: 'admin',
@@ -49,9 +54,14 @@ const PORTALS: PortalConfig[] = [
 ];
 
 /**
- * Détermine les portails accessibles selon le rôle de l'utilisateur
+ * Détermine les portails accessibles selon le rôle et le statut playground
  */
-export const getAccessiblePortals = (role: string): Portal[] => {
+export const getAccessiblePortals = (role: string, isPlayground?: boolean): Portal[] => {
+  // Les comptes Playground ont accès à TOUS les portails
+  if (isPlayground) {
+    return ['admin', 'gestionnaire', 'conseiller', 'traducteur'];
+  }
+  
   switch (role) {
     case 'ADMIN':
       // Admin a accès à TOUS les portails
@@ -92,7 +102,7 @@ export const PortalSwitcherCompact: React.FC = () => {
 
   if (!utilisateur) return null;
 
-  const accessiblePortals = getAccessiblePortals(utilisateur.role);
+  const accessiblePortals = getAccessiblePortals(utilisateur.role, utilisateur.isPlayground);
   const currentPortal = getCurrentPortal(location.pathname);
   const currentConfig = PORTALS.find(p => p.id === currentPortal);
 
@@ -133,31 +143,45 @@ export const PortalSwitcherCompact: React.FC = () => {
               Changer de portail
             </div>
             <div className="p-2">
-              {PORTALS.filter(p => accessiblePortals.includes(p.id)).map(portal => (
-                <button
-                  key={portal.id}
-                  onClick={() => {
-                    navigate(portal.path);
-                    setIsOpen(false);
-                  }}
-                  className={`
-                    w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all
-                    ${currentPortal === portal.id 
-                      ? 'bg-blue-50 border-2 border-blue-200' 
-                      : 'hover:bg-gray-50 border-2 border-transparent'
-                    }
-                  `}
-                >
-                  <span className="text-2xl">{portal.icon}</span>
-                  <div className="flex-1">
-                    <div className="font-semibold text-gray-900">{portal.label}</div>
-                    <div className="text-xs text-gray-500">{portal.description}</div>
-                  </div>
-                  {currentPortal === portal.id && (
-                    <span className="text-blue-600">✓</span>
-                  )}
-                </button>
-              ))}
+              {PORTALS.filter(p => accessiblePortals.includes(p.id)).map(portal => {
+                // Déterminer le chemin cible pour le portail Traducteur
+                let targetPath = portal.path;
+                if (portal.id === 'traducteur') {
+                  if (utilisateur.isPlayground) {
+                    // Compte playground → portail du traducteur playground
+                    targetPath = `/traducteur/${PLAYGROUND_TRADUCTEUR_ID}`;
+                  } else if (utilisateur.role === 'ADMIN') {
+                    // Admin → portail de traducteur@tetrix.com
+                    targetPath = `/traducteur/${DEV_TRADUCTEUR_ID}`;
+                  }
+                }
+                
+                return (
+                  <button
+                    key={portal.id}
+                    onClick={() => {
+                      navigate(targetPath);
+                      setIsOpen(false);
+                    }}
+                    className={`
+                      w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all
+                      ${currentPortal === portal.id 
+                        ? 'bg-blue-50 border-2 border-blue-200' 
+                        : 'hover:bg-gray-50 border-2 border-transparent'
+                      }
+                    `}
+                  >
+                    <span className="text-2xl">{portal.icon}</span>
+                    <div className="flex-1">
+                      <div className="font-semibold text-gray-900">{portal.label}</div>
+                      <div className="text-xs text-gray-500">{portal.description}</div>
+                    </div>
+                    {currentPortal === portal.id && (
+                      <span className="text-blue-600">✓</span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </>

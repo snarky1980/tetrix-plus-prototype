@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 import { Role } from '@prisma/client';
+import { playgroundGuard } from './playgroundGuard';
 
 // Extension du type Request pour inclure l'utilisateur authentifié
 export interface AuthRequest extends Request {
@@ -9,6 +10,7 @@ export interface AuthRequest extends Request {
     id: string;
     email: string;
     role: Role;
+    isPlayground?: boolean;
   };
 }
 
@@ -34,10 +36,13 @@ export const authentifier = (
       id: string;
       email: string;
       role: Role;
+      isPlayground?: boolean;
     };
 
     req.utilisateur = decoded;
-    next();
+    
+    // Appliquer le guard playground pour les comptes démo
+    playgroundGuard(req, res, next);
   } catch (error) {
     res.status(401).json({ erreur: 'Token invalide ou expiré' });
   }

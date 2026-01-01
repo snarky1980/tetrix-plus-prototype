@@ -113,21 +113,22 @@ export const UserSettingsButton: React.FC<UserSettingsButtonProps> = ({ classNam
                   {isDark ? <Moon className="h-4 w-4 text-muted-foreground" /> : <Sun className="h-4 w-4 text-muted-foreground" />}
                   <span className="text-sm font-medium text-foreground">Mode d'affichage</span>
                 </div>
-                <div className="flex gap-1 bg-muted/20 p-1 rounded-lg">
+                <div className="flex gap-1">
                   {themeOptions.map((option) => (
                     <button
                       key={option.value}
                       onClick={() => handleThemeChange(option.value)}
                       className={cn(
-                        "flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium transition-all",
+                        "flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded-md text-[11px] font-semibold transition-all",
                         theme === option.value
-                          ? "bg-primary text-primary-foreground shadow-sm"
-                          : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                          ? "bg-primary shadow-md"
+                          : "bg-white border border-gray-300 shadow-sm"
                       )}
+                      style={{ color: theme === option.value ? '#ffffff' : '#000000' }}
                       title={option.description}
                     >
-                      {option.icon}
-                      <span>{option.label}</span>
+                      <span className="h-3.5 w-3.5" style={{ color: theme === option.value ? '#ffffff' : '#000000' }}>{option.icon}</span>
+                      <span style={{ color: theme === option.value ? '#ffffff' : '#000000' }}>{option.label}</span>
                     </button>
                   ))}
                 </div>

@@ -30,6 +30,16 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
         <div className="max-w-7xl mx-auto px-4 py-1.5 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h1 className="text-sm font-semibold tracking-wide" aria-label={titre}>{titre}</h1>
+            {/* Badge Mode Démo pour les comptes playground */}
+            {utilisateur?.isPlayground && (
+              <div 
+                className="flex items-center gap-1.5 bg-amber-500 text-white px-2 py-0.5 rounded-full text-xs animate-pulse"
+                title="Mode Démo : les modifications ne sont pas enregistrées"
+              >
+                <span>🎮</span>
+                <span className="font-medium">Mode Démo</span>
+              </div>
+            )}
             {/* Sélecteur de portail pour les utilisateurs multi-portails */}
             <PortalSwitcherCompact />
             {actionsGauche}

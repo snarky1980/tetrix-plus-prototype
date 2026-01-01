@@ -71,9 +71,11 @@ export interface DashboardStats {
 
 // ============ Hook ============
 
-export function useDashboardTraducteur() {
+export function useDashboardTraducteur(traducteurIdOverride?: string) {
   const { utilisateur } = useAuth();
-  const traducteurId = utilisateur?.traducteurId;
+  // Permet à l'admin de voir le portail d'un autre traducteur
+  const traducteurId = traducteurIdOverride || utilisateur?.traducteurId;
+  const isViewingAsAdmin = !!traducteurIdOverride && utilisateur?.role === 'ADMIN';
   
   const todayDate = todayOttawa();
   const today = formatOttawaISO(todayDate);
@@ -167,7 +169,11 @@ export function useDashboardTraducteur() {
 
   // ============ Chargement traducteur ============
   useEffect(() => {
-    if (!traducteurId) return;
+    if (!traducteurId) {
+      // Pas de traducteurId = pas de profil traducteur lié
+      setLoadingTraducteur(false);
+      return;
+    }
 
     setLoadingTraducteur(true);
     traducteurService
@@ -424,6 +430,7 @@ export function useDashboardTraducteur() {
     percentageUtilise,
     today,
     periodeActuelle,
+    isViewingAsAdmin,
 
     // Loading states
     loadingTraducteur,

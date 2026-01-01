@@ -1,6 +1,7 @@
 import { TraducteurFormV2 as TraducteurForm } from './TraducteurFormV2';
 import { Traducteur, CategorieTraducteur } from '../../types';
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -95,6 +96,7 @@ const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, selecte
 };
 
 export const TraducteurManagement: React.FC = () => {
+  const navigate = useNavigate();
   const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOuvert, setModalOuvert] = useState(false);
@@ -411,18 +413,33 @@ export const TraducteurManagement: React.FC = () => {
 
         {/* Actions */}
         <td className="px-4 py-3 text-right">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClick();
-            }}
-            className="p-1.5 text-gray-500 hover:text-primaire hover:bg-primaire/10 rounded transition-colors"
-            title="Modifier"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
-          </button>
+          <div className="flex items-center justify-end gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/traducteur/${t.id}`);
+              }}
+              className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              title="Voir le portail"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onClick();
+              }}
+              className="p-1.5 text-gray-500 hover:text-primaire hover:bg-primaire/10 rounded transition-colors"
+              title="Modifier"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </button>
+          </div>
         </td>
       </tr>
     );
@@ -472,9 +489,10 @@ export const TraducteurManagement: React.FC = () => {
                     onClick={() => setFiltres({ ...filtres, actif: statut })}
                     className={`px-3 py-1.5 text-xs font-medium transition-colors ${
                       filtres.actif === statut
-                        ? 'bg-primaire text-white'
-                        : 'bg-white text-gray-600 hover:bg-gray-50'
+                        ? 'bg-blue-600'
+                        : 'bg-white hover:bg-gray-50'
                     }`}
+                    style={{ color: filtres.actif === statut ? '#ffffff' : '#000000' }}
                   >
                     {statut === 'tous' ? 'Tous' : statut === 'actif' ? 'Actifs' : 'Inactifs'}
                   </button>

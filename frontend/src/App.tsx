@@ -123,6 +123,16 @@ function App() {
             }
           />
 
+          {/* Route admin pour voir le portail d'un traducteur spécifique */}
+          <Route
+            path="/traducteur/:id"
+            element={
+              <RouteProtegee rolesAutorises={['ADMIN']}>
+                <DashboardTraducteur />
+              </RouteProtegee>
+            }
+          />
+
           <Route
             path="/conseiller/*"
             element={

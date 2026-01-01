@@ -1,15 +1,19 @@
 import React, { useMemo, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
+import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { InfoTooltip } from '../components/ui/Tooltip';
 import { usePageTitle } from '../hooks/usePageTitle';
+import { useAuth } from '../contexts/AuthContext';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { TraducteurManagement } from '../components/admin/TraducteurManagement';
 import { ClientDomaineManagement } from '../components/admin/ClientDomaineManagementV2';
 import { UserManagement } from '../components/admin/UserManagement';
 import { EquipeProjetManagement } from '../components/admin/EquipeProjetManagement';
+import { SystemSettings } from '../components/admin/SystemSettings';
 import { traducteurService } from '../services/traducteurService';
 import { utilisateurService } from '../services/utilisateurService';
 import { divisionService } from '../services/divisionService';
@@ -27,10 +31,12 @@ interface SystemStats {
 
 /**
  * Dashboard Admin - Interface complète et moderne de gestion
- * Inspiré du portail conseiller avec forte emphase UI/UX
+ * Style harmonisé avec les portails Conseiller et Gestionnaire
  */
 const DashboardAdmin: React.FC = () => {
   usePageTitle('Administration Tetrix PLUS', 'Gérez les utilisateurs, traducteurs et système');
+  const navigate = useNavigate();
+  const { utilisateur } = useAuth();
   
   const [section, setSection] = useState<Section>('overview');
   const [loading, setLoading] = useState(true);
@@ -47,6 +53,7 @@ const DashboardAdmin: React.FC = () => {
   const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
   const dateISO = (d: Date) => d.toISOString().split('T')[0];
   const { planificationGlobale } = usePlanificationGlobal({ dateDebut: dateISO(aujourdHui), dateFin: dateISO(fin) });
+
 
   // Stats de capacité
   const capaciteStats = useMemo(() => {
@@ -215,20 +222,7 @@ const DashboardAdmin: React.FC = () => {
       case 'utilisateurs':
         return <UserManagement />;
       case 'systeme':
-        return (
-          <Card>
-            <CardHeader>
-              <CardTitle>🔧 Configuration système</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EmptyState
-                icon="🔧"
-                title="Configuration avancée"
-                description="Les paramètres système avancés seront disponibles prochainement"
-              />
-            </CardContent>
-          </Card>
-        );
+        return <SystemSettings />;
       case 'overview':
       default:
         return renderOverview();
@@ -244,70 +238,99 @@ const DashboardAdmin: React.FC = () => {
   }
 
   return (
-    <AppLayout titre="">
+    <AppLayout titre="Administration">
       <div className="space-y-4">
-        {/* En-tête compact avec navigation */}
-        <div className="bg-white border-b border-gray-200 -mx-4 -mt-4 px-4 pt-3 pb-2">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <h1 className="text-xl font-semibold">Administration</h1>
-              <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs font-medium">
-                ● En ligne
-              </span>
+        {/* En-tête compact style Conseiller */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl font-bold">Bonjour, {utilisateur?.prenom || 'Admin'}</h1>
+              <p className="text-sm text-muted">Console d'administration système</p>
+            </div>
+            
+            {/* Actions rapides */}
+            <div className="flex flex-wrap gap-2">
+              <Button 
+                onClick={() => setSection('utilisateurs')}
+                size="sm"
+                className="gap-1.5"
+              >
+                <span>➕</span> Nouvel utilisateur
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => navigate('/planification-globale')}
+                className="gap-1.5"
+              >
+                <span>📅</span> Planification
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm" 
+                onClick={() => navigate('/statistiques-productivite')}
+                className="gap-1.5"
+              >
+                <span>📊</span> Stats
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm" 
+                onClick={() => navigate('/liaisons')}
+                className="gap-1.5"
+              >
+                <span>🔗</span> Liaisons
+              </Button>
             </div>
           </div>
-          
-          {/* Menu de navigation horizontal compact */}
-          <div className="flex gap-1 overflow-x-auto pb-1">
+        </div>
+
+        {/* Stats en barre horizontale style Conseiller */}
+        <div className="bg-white border rounded-lg px-4 py-2 shadow-sm flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded font-semibold">{systemStats.traducteurs.total} traducteurs</span>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">{systemStats.traducteurs.actifs} actifs</span>
+            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{systemStats.utilisateurs.total} utilisateurs</span>
+            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded">{systemStats.divisions} divisions</span>
+            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded">{systemStats.taches.enCours} tâches en cours</span>
+          </div>
+          <div className="text-xs text-green-600 flex items-center gap-1">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+            Système en ligne
+          </div>
+        </div>
+
+        {/* Navigation par onglets */}
+        <div className="bg-white border rounded-lg shadow-sm">
+          <div className="px-4 py-2 border-b bg-gray-50/50 flex flex-wrap items-center gap-1 overflow-x-auto">
             {[
-              { id: 'overview' as const, icon: '🏠', label: 'Vue d\'ensemble', tooltip: 'Aperçu général du système avec statistiques et état en temps réel' },
-              { id: 'traducteurs' as const, icon: '👥', label: 'Traducteurs', tooltip: 'Gérer les profils traducteurs : compétences, divisions, disponibilités' },
-              { id: 'equipes-projet' as const, icon: '🎯', label: 'Équipes-projet', tooltip: 'Groupes temporaires pour projets spéciaux (ex: backlog SATG)' },
-              { id: 'utilisateurs' as const, icon: '🔐', label: 'Utilisateurs', tooltip: 'Comptes de connexion et gestion des accès (Admin, Conseiller, etc.)' },
-              { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel', tooltip: 'Clients, domaines, divisions et données de référence' },
-              { id: 'systeme' as const, icon: '⚙️', label: 'Système', tooltip: 'Configuration avancée et paramètres système' },
+              { id: 'overview' as const, icon: '🏠', label: 'Vue d\'ensemble' },
+              { id: 'traducteurs' as const, icon: '👥', label: 'Traducteurs' },
+              { id: 'equipes-projet' as const, icon: '🎯', label: 'Équipes-projet' },
+              { id: 'utilisateurs' as const, icon: '🔐', label: 'Utilisateurs' },
+              { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel' },
+              { id: 'systeme' as const, icon: '⚙️', label: 'Système' },
             ].map(item => (
-            <button
+              <button
                 key={item.id}
                 onClick={() => setSection(item.id)}
-                className={`px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1 ${
+                className={`px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
                   section === item.id
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-primary text-white'
                     : 'text-gray-600 hover:bg-gray-100'
                 }`}
-                title={item.tooltip}
               >
-                <span className="mr-1">{item.icon}</span>
+                <span>{item.icon}</span>
                 {item.label}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Liens rapides compacts */}
-        {section === 'overview' && (
-          <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={() => window.location.href = '/tetrix-plus-prototype/admin/gestion-profils'}
-              className="flex items-center gap-2 px-3 py-2 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
-            >
-              <span>🔑</span>
-              <span className="text-sm font-medium text-purple-700">Profils & Accès</span>
-              <span className="text-purple-400">→</span>
-            </button>
-            <button
-              onClick={() => window.location.href = '/tetrix-plus-prototype/statistiques-productivite'}
-              className="flex items-center gap-2 px-3 py-2 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 transition-colors"
-            >
-              <span>📊</span>
-              <span className="text-sm font-medium text-orange-700">Statistiques</span>
-              <span className="text-orange-400">→</span>
-            </button>
+          {/* Contenu de la section */}
+          <div className="p-4">
+            {renderContent()}
           </div>
-        )}
-
-        {/* Contenu de la section */}
-        {renderContent()}
+        </div>
       </div>
     </AppLayout>
   );

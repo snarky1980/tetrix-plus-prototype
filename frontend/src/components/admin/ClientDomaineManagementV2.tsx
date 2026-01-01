@@ -1,20 +1,28 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { Modal } from '../ui/Modal';
-import { ConfirmDialog } from '../ui/ConfirmDialog';
-import { FormField } from '../ui/FormField';
 import { DataTable } from '../ui/Table';
 import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { InfoTooltip } from '../ui/Tooltip';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
 import { useToast } from '../../contexts/ToastContext';
 import { Client, SousDomaine } from '../../types';
 import { clientService } from '../../services/clientService';
 import { sousDomaineService } from '../../services/sousDomaineService';
 import { divisionService, Division } from '../../services/divisionService';
-import { referentielService, PaireLangue, Specialisation, Langue, LANGUES_STANDARDS } from '../../services/referentielService';
+import { referentielService, PaireLangue, Specialisation, Langue } from '../../services/referentielService';
+
+// Formulaires extraits
+import {
+  ClientForm,
+  DomaineForm,
+  SousDomaineForm,
+  DivisionForm,
+  PaireForm,
+  SpecialisationForm,
+  LangueForm
+} from './forms';
 
 type OngletActif = 'divisions' | 'domaines' | 'sous-domaines' | 'specialisations' | 'paires' | 'clients';
 
@@ -25,6 +33,13 @@ interface Statistiques {
   totalSpecialisations: number;
   totalPaires: number;
   totalDivisions: number;
+}
+
+interface Domaine {
+  id: string;
+  nom: string;
+  sousDomainesNoms: string[];
+  actif: boolean;
 }
 
 export const ClientDomaineManagement: React.FC = () => {
@@ -40,7 +55,7 @@ export const ClientDomaineManagement: React.FC = () => {
   const [paires, setPaires] = useState<PaireLangue[]>([]);
   const [specialisations, setSpecialisations] = useState<Specialisation[]>([]);
   const [langues, setLangues] = useState<Langue[]>([]);
-  const [domaines, setDomaines] = useState<{ id: string; nom: string; sousDomainesNoms: string[]; actif: boolean }[]>([]);
+  const [domaines, setDomaines] = useState<Domaine[]>([]);
 
   // Modals
   const [modalClient, setModalClient] = useState(false);
@@ -58,7 +73,12 @@ export const ClientDomaineManagement: React.FC = () => {
   const [divisionSelectionnee, setDivisionSelectionnee] = useState<Division | undefined>();
 
   // Confirmation suppression
-  const [confirmDelete, setConfirmDelete] = useState<{ isOpen: boolean; type: string; id: string | null; nom: string }>({
+  const [confirmDelete, setConfirmDelete] = useState<{ 
+    isOpen: boolean; 
+    type: string; 
+    id: string | null; 
+    nom: string 
+  }>({
     isOpen: false,
     type: '',
     id: null,
@@ -75,7 +95,6 @@ export const ClientDomaineManagement: React.FC = () => {
         pairesData,
         specsData,
         languesData,
-        domainesData,
         statsData
       ] = await Promise.all([
         clientService.obtenirClients(),
@@ -84,29 +103,26 @@ export const ClientDomaineManagement: React.FC = () => {
         referentielService.obtenirPairesLinguistiques(),
         referentielService.obtenirSpecialisations(),
         referentielService.obtenirLangues(),
-        referentielService.obtenirPairesLinguistiques().then(() => 
-          // Charger les domaines depuis les sous-domaines
-          sousDomaineService.obtenirSousDomaines().then(sds => {
-            const domainesMap = new Map<string, string[]>();
-            sds.forEach(sd => {
-              const parent = sd.domaineParent || 'Sans catégorie';
-              if (!domainesMap.has(parent)) {
-                domainesMap.set(parent, []);
-              }
-              domainesMap.get(parent)!.push(sd.nom);
-            });
-            return Array.from(domainesMap.entries())
-              .sort((a, b) => a[0].localeCompare(b[0]))
-              .map(([nom, sousDomainesNoms], i) => ({
-                id: `dom-${i + 1}`,
-                nom,
-                sousDomainesNoms,
-                actif: true
-              }));
-          })
-        ),
         referentielService.obtenirStatistiques()
       ]);
+
+      // Construire les domaines depuis les sous-domaines
+      const domainesMap = new Map<string, string[]>();
+      sousDomainesData.forEach(sd => {
+        const parent = sd.domaineParent || 'Sans catégorie';
+        if (!domainesMap.has(parent)) {
+          domainesMap.set(parent, []);
+        }
+        domainesMap.get(parent)!.push(sd.nom);
+      });
+      const domainesData = Array.from(domainesMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .map(([nom, sousDomainesNoms], i) => ({
+          id: `dom-${i + 1}`,
+          nom,
+          sousDomainesNoms,
+          actif: true
+        }));
 
       setClients(clientsData);
       setSousDomaines(sousDomainesData);
@@ -127,15 +143,6 @@ export const ClientDomaineManagement: React.FC = () => {
   useEffect(() => {
     chargerDonnees();
   }, []);
-
-  const onglets = [
-    { id: 'divisions' as const, label: 'Divisions', icon: '🏛️', count: stats?.totalDivisions },
-    { id: 'domaines' as const, label: 'Domaines', icon: '📁', count: stats?.totalDomaines },
-    { id: 'sous-domaines' as const, label: 'Sous-domaines', icon: '📄', count: stats?.totalSousDomaines },
-    { id: 'specialisations' as const, label: 'Spécialisations', icon: '🎯', count: stats?.totalSpecialisations },
-    { id: 'paires' as const, label: 'Paires de langues', icon: '🌐', count: stats?.totalPaires },
-    { id: 'clients' as const, label: 'Clients', icon: '🏢', count: stats?.totalClients },
-  ];
 
   const handleSupprimer = async () => {
     if (!confirmDelete.id) return;
@@ -161,7 +168,17 @@ export const ClientDomaineManagement: React.FC = () => {
     }
   };
 
-  // ====== COLONNES CLIENTS ======
+  const onglets = [
+    { id: 'divisions' as const, label: 'Divisions', icon: '🏛️', count: stats?.totalDivisions },
+    { id: 'domaines' as const, label: 'Domaines', icon: '📁', count: stats?.totalDomaines },
+    { id: 'sous-domaines' as const, label: 'Sous-domaines', icon: '📄', count: stats?.totalSousDomaines },
+    { id: 'specialisations' as const, label: 'Spécialisations', icon: '🎯', count: stats?.totalSpecialisations },
+    { id: 'paires' as const, label: 'Paires de langues', icon: '🌐', count: stats?.totalPaires },
+    { id: 'clients' as const, label: 'Clients', icon: '🏢', count: stats?.totalClients },
+  ];
+
+  // ====== DÉFINITIONS DES COLONNES ======
+  
   const colonnesClients = [
     { header: 'Nom', accessor: 'nom' },
     {
@@ -189,10 +206,18 @@ export const ClientDomaineManagement: React.FC = () => {
       accessor: 'id',
       render: (_: string, row: Client) => (
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setClientSelectionne(row); setModalClient(true); }} className="py-1 px-2 text-xs">
+          <Button 
+            variant="outline" 
+            onClick={() => { setClientSelectionne(row); setModalClient(true); }} 
+            className="py-1 px-2 text-xs"
+          >
             Modifier
           </Button>
-          <Button variant="danger" onClick={() => setConfirmDelete({ isOpen: true, type: 'client', id: row.id, nom: row.nom })} className="py-1 px-2 text-xs">
+          <Button 
+            variant="danger" 
+            onClick={() => setConfirmDelete({ isOpen: true, type: 'client', id: row.id, nom: row.nom })} 
+            className="py-1 px-2 text-xs"
+          >
             Supprimer
           </Button>
         </div>
@@ -200,7 +225,6 @@ export const ClientDomaineManagement: React.FC = () => {
     },
   ];
 
-  // ====== COLONNES DOMAINES ======
   const colonnesDomaines = [
     { header: 'Nom', accessor: 'nom' },
     {
@@ -238,7 +262,6 @@ export const ClientDomaineManagement: React.FC = () => {
     },
   ];
 
-  // ====== COLONNES SOUS-DOMAINES ======
   const colonnesSousDomaines = [
     { header: 'Nom', accessor: 'nom' },
     {
@@ -258,10 +281,18 @@ export const ClientDomaineManagement: React.FC = () => {
       accessor: 'id',
       render: (_: string, row: SousDomaine) => (
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setSousDomaineSelectionne(row); setModalSousDomaine(true); }} className="py-1 px-2 text-xs">
+          <Button 
+            variant="outline" 
+            onClick={() => { setSousDomaineSelectionne(row); setModalSousDomaine(true); }} 
+            className="py-1 px-2 text-xs"
+          >
             Modifier
           </Button>
-          <Button variant="danger" onClick={() => setConfirmDelete({ isOpen: true, type: 'sous-domaine', id: row.id, nom: row.nom })} className="py-1 px-2 text-xs">
+          <Button 
+            variant="danger" 
+            onClick={() => setConfirmDelete({ isOpen: true, type: 'sous-domaine', id: row.id, nom: row.nom })} 
+            className="py-1 px-2 text-xs"
+          >
             Supprimer
           </Button>
         </div>
@@ -269,7 +300,6 @@ export const ClientDomaineManagement: React.FC = () => {
     },
   ];
 
-  // ====== COLONNES SPÉCIALISATIONS ======
   const colonnesSpecs = [
     { header: 'Nom', accessor: 'nom' },
     {
@@ -288,7 +318,6 @@ export const ClientDomaineManagement: React.FC = () => {
     },
   ];
 
-  // ====== COLONNES PAIRES LINGUISTIQUES ======
   const colonnesPaires = [
     {
       header: 'Paire',
@@ -310,7 +339,6 @@ export const ClientDomaineManagement: React.FC = () => {
     },
   ];
 
-  // ====== COLONNES DIVISIONS ======
   const colonnesDivisions = [
     { header: 'Nom', accessor: 'nom' },
     { header: 'Code', accessor: 'code' },
@@ -324,10 +352,18 @@ export const ClientDomaineManagement: React.FC = () => {
       accessor: 'id',
       render: (_: string, row: Division) => (
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => { setDivisionSelectionnee(row); setModalDivision(true); }} className="py-1 px-2 text-xs">
+          <Button 
+            variant="outline" 
+            onClick={() => { setDivisionSelectionnee(row); setModalDivision(true); }} 
+            className="py-1 px-2 text-xs"
+          >
             Modifier
           </Button>
-          <Button variant="danger" onClick={() => setConfirmDelete({ isOpen: true, type: 'division', id: row.id, nom: row.nom })} className="py-1 px-2 text-xs">
+          <Button 
+            variant="danger" 
+            onClick={() => setConfirmDelete({ isOpen: true, type: 'division', id: row.id, nom: row.nom })} 
+            className="py-1 px-2 text-xs"
+          >
             Supprimer
           </Button>
         </div>
@@ -335,130 +371,112 @@ export const ClientDomaineManagement: React.FC = () => {
     },
   ];
 
+  // ====== RENDU DU CONTENU PAR ONGLET ======
+  
   const renderContenu = () => {
     if (loading) {
       return <SkeletonTable />;
     }
 
+    const renderTable = (
+      titre: string,
+      data: any[],
+      columns: any[],
+      emptyIcon: string,
+      emptyTitle: string,
+      emptyDesc: string,
+      onNouveau: () => void,
+      footer?: React.ReactNode
+    ) => (
+      <div className="bg-white rounded-lg border">
+        <div className="flex items-center justify-between p-3 border-b">
+          <span className="font-medium">{titre} ({data.length})</span>
+          <Button size="sm" onClick={onNouveau}>
+            + Nouveau
+          </Button>
+        </div>
+        <div className="p-2">
+          {data.length === 0 ? (
+            <EmptyState icon={emptyIcon} title={emptyTitle} description={emptyDesc} />
+          ) : (
+            <DataTable data={data} columns={columns} />
+          )}
+          {footer}
+        </div>
+      </div>
+    );
+
     switch (ongletActif) {
       case 'clients':
-        return (
-          <div className="bg-white rounded-lg border">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Clients ({clients.length})</span>
-              <Button size="sm" onClick={() => { setClientSelectionne(undefined); setModalClient(true); }}>
-                + Nouveau
-              </Button>
-            </div>
-            <div className="p-2">
-              {clients.length === 0 ? (
-                <EmptyState icon="🏢" title="Aucun client" description="Créez votre premier client" />
-              ) : (
-                <DataTable data={clients} columns={colonnesClients} />
-              )}
-            </div>
-          </div>
+        return renderTable(
+          'Clients',
+          clients,
+          colonnesClients,
+          '🏢',
+          'Aucun client',
+          'Créez votre premier client',
+          () => { setClientSelectionne(undefined); setModalClient(true); }
         );
 
       case 'domaines':
-        return (
-          <div className="bg-white rounded-lg border">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Domaines ({domaines.length})</span>
-              <Button size="sm" onClick={() => { setDomaineSelectionne(undefined); setModalDomaine(true); }}>
-                + Nouveau
-              </Button>
-            </div>
-            <div className="p-2">
-              {domaines.length === 0 ? (
-                <EmptyState icon="📁" title="Aucun domaine" description="Les domaines sont créés via les sous-domaines" />
-              ) : (
-                <DataTable data={domaines} columns={colonnesDomaines} />
-              )}
-            </div>
-          </div>
+        return renderTable(
+          'Domaines',
+          domaines,
+          colonnesDomaines,
+          '📁',
+          'Aucun domaine',
+          'Les domaines sont créés via les sous-domaines',
+          () => { setDomaineSelectionne(undefined); setModalDomaine(true); }
         );
 
       case 'sous-domaines':
-        return (
-          <div className="bg-white rounded-lg border">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Sous-domaines ({sousDomaines.length})</span>
-              <Button size="sm" onClick={() => { setSousDomaineSelectionne(undefined); setModalSousDomaine(true); }}>
-                + Nouveau
-              </Button>
-            </div>
-            <div className="p-2">
-              {sousDomaines.length === 0 ? (
-                <EmptyState icon="📄" title="Aucun sous-domaine" description="Créez votre premier sous-domaine" />
-              ) : (
-                <DataTable data={sousDomaines} columns={colonnesSousDomaines} />
-              )}
-            </div>
-          </div>
+        return renderTable(
+          'Sous-domaines',
+          sousDomaines,
+          colonnesSousDomaines,
+          '📄',
+          'Aucun sous-domaine',
+          'Créez votre premier sous-domaine',
+          () => { setSousDomaineSelectionne(undefined); setModalSousDomaine(true); }
         );
 
       case 'specialisations':
-        return (
-          <div className="bg-white rounded-lg border">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Spécialisations ({specialisations.length})</span>
-              <Button size="sm" onClick={() => setModalSpec(true)}>
-                + Nouveau
-              </Button>
-            </div>
-            <div className="p-2">
-              {specialisations.length === 0 ? (
-                <EmptyState icon="🎯" title="Aucune spécialisation" description="Définies sur les traducteurs" />
-              ) : (
-                <DataTable data={specialisations} columns={colonnesSpecs} />
-              )}
-              <p className="text-xs text-gray-400 mt-2 px-2">
-                💡 Les spécialisations viennent des profils traducteurs
-              </p>
-            </div>
-          </div>
+        return renderTable(
+          'Spécialisations',
+          specialisations,
+          colonnesSpecs,
+          '🎯',
+          'Aucune spécialisation',
+          'Définies sur les traducteurs',
+          () => setModalSpec(true),
+          <p className="text-xs text-gray-400 mt-2 px-2">
+            💡 Les spécialisations viennent des profils traducteurs
+          </p>
         );
 
       case 'paires':
-        return (
-          <div className="bg-white rounded-lg border">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Paires de langues ({paires.length})</span>
-              <Button size="sm" onClick={() => setModalPaire(true)}>
-                + Nouveau
-              </Button>
-            </div>
-            <div className="p-2">
-              {paires.length === 0 ? (
-                <EmptyState icon="🌐" title="Aucune paire" description="Définies sur les traducteurs" />
-              ) : (
-                <DataTable data={paires} columns={colonnesPaires} />
-              )}
-              <p className="text-xs text-gray-400 mt-2 px-2">
-                💡 Les paires viennent des profils traducteurs
-              </p>
-            </div>
-          </div>
+        return renderTable(
+          'Paires de langues',
+          paires,
+          colonnesPaires,
+          '🌐',
+          'Aucune paire',
+          'Définies sur les traducteurs',
+          () => setModalPaire(true),
+          <p className="text-xs text-gray-400 mt-2 px-2">
+            💡 Les paires viennent des profils traducteurs
+          </p>
         );
 
       case 'divisions':
-        return (
-          <div className="bg-white rounded-lg border">
-            <div className="flex items-center justify-between p-3 border-b">
-              <span className="font-medium">Divisions ({divisions.length})</span>
-              <Button size="sm" onClick={() => { setDivisionSelectionnee(undefined); setModalDivision(true); }}>
-                + Nouveau
-              </Button>
-            </div>
-            <div className="p-2">
-              {divisions.length === 0 ? (
-                <EmptyState icon="🏛️" title="Aucune division" description="Créez votre première division" />
-              ) : (
-                <DataTable data={divisions} columns={colonnesDivisions} />
-              )}
-            </div>
-          </div>
+        return renderTable(
+          'Divisions',
+          divisions,
+          colonnesDivisions,
+          '🏛️',
+          'Aucune division',
+          'Créez votre première division',
+          () => { setDivisionSelectionnee(undefined); setModalDivision(true); }
         );
 
       default:
@@ -503,9 +521,8 @@ export const ClientDomaineManagement: React.FC = () => {
       {/* Contenu de l'onglet actif */}
       {renderContenu()}
 
-      {/* ====== MODALS ====== */}
+      {/* ====== MODALS (importés des forms/) ====== */}
       
-      {/* Modal Client */}
       <ClientForm
         client={clientSelectionne}
         ouvert={modalClient}
@@ -513,7 +530,6 @@ export const ClientDomaineManagement: React.FC = () => {
         onSauvegarder={chargerDonnees}
       />
 
-      {/* Modal Domaine */}
       <DomaineForm
         domaine={domaineSelectionne}
         ouvert={modalDomaine}
@@ -522,7 +538,6 @@ export const ClientDomaineManagement: React.FC = () => {
         sousDomaines={sousDomaines}
       />
 
-      {/* Modal Sous-Domaine */}
       <SousDomaineForm
         sousDomaine={sousDomaineSelectionne}
         ouvert={modalSousDomaine}
@@ -531,7 +546,6 @@ export const ClientDomaineManagement: React.FC = () => {
         domaines={domaines}
       />
 
-      {/* Modal Division */}
       <DivisionForm
         division={divisionSelectionnee}
         ouvert={modalDivision}
@@ -539,7 +553,6 @@ export const ClientDomaineManagement: React.FC = () => {
         onSauvegarder={chargerDonnees}
       />
 
-      {/* Modal Paire Linguistique */}
       <PaireForm
         ouvert={modalPaire}
         onFermer={() => setModalPaire(false)}
@@ -547,14 +560,12 @@ export const ClientDomaineManagement: React.FC = () => {
         langues={langues}
       />
 
-      {/* Modal Spécialisation */}
       <SpecialisationForm
         ouvert={modalSpec}
         onFermer={() => setModalSpec(false)}
         onSauvegarder={chargerDonnees}
       />
 
-      {/* Modal Langue */}
       <LangueForm
         ouvert={modalLangue}
         onFermer={() => setModalLangue(false)}
@@ -573,540 +584,5 @@ export const ClientDomaineManagement: React.FC = () => {
         cancelText="Annuler"
       />
     </>
-  );
-};
-
-// ====== FORMULAIRES ======
-
-// Formulaire Client
-const ClientForm: React.FC<{
-  client?: Client;
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-}> = ({ client, ouvert, onFermer, onSauvegarder }) => {
-  const { addToast } = useToast();
-  const [nom, setNom] = useState('');
-  const [actif, setActif] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState('');
-
-  useEffect(() => {
-    if (client) {
-      setNom(client.nom);
-      setActif(client.actif);
-    } else {
-      setNom('');
-      setActif(true);
-    }
-    setErreur('');
-  }, [client, ouvert]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErreur('');
-
-    try {
-      if (client) {
-        await clientService.mettreAJourClient(client.id, { nom, actif });
-        addToast('Client modifié avec succès', 'success');
-      } else {
-        await clientService.creerClient({ nom });
-        addToast('Client créé avec succès', 'success');
-      }
-      onSauvegarder();
-      onFermer();
-    } catch (err: any) {
-      setErreur(err.response?.data?.erreur || 'Erreur lors de la sauvegarde');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal titre={client ? 'Modifier client' : 'Nouveau client'} ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        {erreur && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{erreur}</div>}
-        
-        <FormField label="Nom du client" required>
-          <Input value={nom} onChange={e => setNom(e.target.value)} required placeholder="Nom du client" />
-        </FormField>
-
-        {client && (
-          <FormField label="Statut">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={actif} onChange={e => setActif(e.target.checked)} />
-              <span className="text-sm">Actif</span>
-            </label>
-          </FormField>
-        )}
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading}>{loading ? 'Sauvegarde...' : 'Sauvegarder'}</Button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Formulaire Domaine
-const DomaineForm: React.FC<{
-  domaine?: { id: string; nom: string };
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-  sousDomaines: SousDomaine[];
-}> = ({ domaine, ouvert, onFermer, onSauvegarder, sousDomaines }) => {
-  const { addToast } = useToast();
-  const [nom, setNom] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setNom(domaine?.nom || '');
-  }, [domaine, ouvert]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      if (domaine) {
-        // Mettre à jour tous les sous-domaines avec ce parent
-        const sdsToUpdate = sousDomaines.filter(sd => sd.domaineParent === domaine.nom);
-        for (const sd of sdsToUpdate) {
-          await sousDomaineService.mettreAJourSousDomaine(sd.id, { domaineParent: nom });
-        }
-        addToast('Domaine renommé avec succès', 'success');
-      } else {
-        addToast('Créez un sous-domaine avec ce domaine parent', 'info');
-      }
-      onSauvegarder();
-      onFermer();
-    } catch (err) {
-      addToast('Erreur lors de la modification', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal titre={domaine ? 'Modifier domaine' : 'Nouveau domaine'} ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        <FormField label="Nom du domaine" required helper="Les domaines regroupent plusieurs sous-domaines">
-          <Input value={nom} onChange={e => setNom(e.target.value)} required placeholder="Ex: Juridique, Technique..." />
-        </FormField>
-
-        {!domaine && (
-          <p className="text-sm text-amber-600 bg-amber-50 p-3 rounded mt-4">
-            💡 Pour créer un nouveau domaine, ajoutez un sous-domaine avec ce domaine comme parent.
-          </p>
-        )}
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading} disabled={!domaine}>{loading ? 'Sauvegarde...' : 'Sauvegarder'}</Button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Formulaire Sous-Domaine
-const SousDomaineForm: React.FC<{
-  sousDomaine?: SousDomaine;
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-  domaines: { nom: string }[];
-}> = ({ sousDomaine, ouvert, onFermer, onSauvegarder, domaines }) => {
-  const { addToast } = useToast();
-  const [nom, setNom] = useState('');
-  const [domaineParent, setDomaineParent] = useState('');
-  const [nouveauDomaine, setNouveauDomaine] = useState('');
-  const [actif, setActif] = useState(true);
-  const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState('');
-
-  useEffect(() => {
-    if (sousDomaine) {
-      setNom(sousDomaine.nom);
-      setDomaineParent(sousDomaine.domaineParent || '');
-      setActif(sousDomaine.actif);
-    } else {
-      setNom('');
-      setDomaineParent('');
-      setActif(true);
-    }
-    setNouveauDomaine('');
-    setErreur('');
-  }, [sousDomaine, ouvert]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErreur('');
-
-    const parentFinal = nouveauDomaine || domaineParent || undefined;
-
-    try {
-      if (sousDomaine) {
-        await sousDomaineService.mettreAJourSousDomaine(sousDomaine.id, { nom, domaineParent: parentFinal, actif });
-        addToast('Sous-domaine modifié avec succès', 'success');
-      } else {
-        await sousDomaineService.creerSousDomaine({ nom, domaineParent: parentFinal });
-        addToast('Sous-domaine créé avec succès', 'success');
-      }
-      onSauvegarder();
-      onFermer();
-    } catch (err: any) {
-      setErreur(err.response?.data?.erreur || 'Erreur lors de la sauvegarde');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal titre={sousDomaine ? 'Modifier sous-domaine' : 'Nouveau sous-domaine'} ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        {erreur && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{erreur}</div>}
-
-        <FormField label="Nom du sous-domaine" required>
-          <Input value={nom} onChange={e => setNom(e.target.value)} required placeholder="Ex: Immigration, Brevets..." />
-        </FormField>
-
-        <FormField label="Domaine parent" helper="Sélectionnez un domaine existant ou créez-en un nouveau">
-          <select
-            value={domaineParent}
-            onChange={e => setDomaineParent(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Aucun domaine parent --</option>
-            {domaines.filter(d => d.nom !== 'Sans catégorie').map(d => (
-              <option key={d.nom} value={d.nom}>{d.nom}</option>
-            ))}
-          </select>
-        </FormField>
-
-        <FormField label="Ou créer un nouveau domaine parent">
-          <Input 
-            value={nouveauDomaine} 
-            onChange={e => { setNouveauDomaine(e.target.value); setDomaineParent(''); }} 
-            placeholder="Nouveau domaine..." 
-          />
-        </FormField>
-
-        {sousDomaine && (
-          <FormField label="Statut">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" checked={actif} onChange={e => setActif(e.target.checked)} />
-              <span className="text-sm">Actif</span>
-            </label>
-          </FormField>
-        )}
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading}>{loading ? 'Sauvegarde...' : 'Sauvegarder'}</Button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Formulaire Division
-const DivisionForm: React.FC<{
-  division?: Division;
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-}> = ({ division, ouvert, onFermer, onSauvegarder }) => {
-  const { addToast } = useToast();
-  const [nom, setNom] = useState('');
-  const [code, setCode] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [erreur, setErreur] = useState('');
-
-  useEffect(() => {
-    if (division) {
-      setNom(division.nom);
-      setCode(division.code || '');
-      setDescription(division.description || '');
-    } else {
-      setNom('');
-      setCode('');
-      setDescription('');
-    }
-    setErreur('');
-  }, [division, ouvert]);
-
-  // Génération auto du code
-  useEffect(() => {
-    if (!division && nom && !code) {
-      const codeGen = nom.toUpperCase().replace(/[^A-Z0-9]/g, '').substring(0, 6);
-      setCode(codeGen);
-    }
-  }, [nom, division, code]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErreur('');
-
-    try {
-      if (division) {
-        await divisionService.mettreAJourDivision(division.id, { nom, description });
-        addToast('Division modifiée avec succès', 'success');
-      } else {
-        await divisionService.creerDivision({ nom, description });
-        addToast('Division créée avec succès', 'success');
-      }
-      onSauvegarder();
-      onFermer();
-    } catch (err: any) {
-      setErreur(err.response?.data?.message || 'Erreur lors de la sauvegarde');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal titre={division ? 'Modifier division' : 'Nouvelle division'} ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        {erreur && <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">{erreur}</div>}
-
-        <FormField label="Nom de la division" required>
-          <Input value={nom} onChange={e => setNom(e.target.value)} required placeholder="Ex: Droit, CISR, Science..." />
-        </FormField>
-
-        <FormField label="Code" helper="Code court auto-généré">
-          <Input value={code} onChange={e => setCode(e.target.value)} placeholder="DROIT" disabled={!!division} />
-        </FormField>
-
-        <FormField label="Description">
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows={3}
-            placeholder="Description de la division..."
-          />
-        </FormField>
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading}>{loading ? 'Sauvegarde...' : 'Sauvegarder'}</Button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Formulaire Paire Linguistique
-const PaireForm: React.FC<{
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-  langues: Langue[];
-}> = ({ ouvert, onFermer, onSauvegarder, langues }) => {
-  const { addToast } = useToast();
-  const [langueSource, setLangueSource] = useState('');
-  const [langueCible, setLangueCible] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setLangueSource('');
-    setLangueCible('');
-  }, [ouvert]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await referentielService.creerPaireLinguistique({ langueSource, langueCible });
-      addToast('Paire linguistique créée', 'success');
-      onSauvegarder();
-      onFermer();
-    } catch (err: any) {
-      addToast(err.response?.data?.message || 'Erreur lors de la création', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const languesDisponibles = langues.length > 0 ? langues : LANGUES_STANDARDS;
-
-  return (
-    <Modal titre="Nouvelle paire linguistique" ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        <FormField label="Langue source" required>
-          <select
-            value={langueSource}
-            onChange={e => setLangueSource(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">-- Sélectionner --</option>
-            {languesDisponibles.map(l => (
-              <option key={l.code} value={l.code}>{l.nom} ({l.code})</option>
-            ))}
-          </select>
-        </FormField>
-
-        <FormField label="Langue cible" required>
-          <select
-            value={langueCible}
-            onChange={e => setLangueCible(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            required
-          >
-            <option value="">-- Sélectionner --</option>
-            {languesDisponibles.filter(l => l.code !== langueSource).map(l => (
-              <option key={l.code} value={l.code}>{l.nom} ({l.code})</option>
-            ))}
-          </select>
-        </FormField>
-
-        <p className="text-sm text-gray-500 mt-4">
-          💡 Cette paire sera disponible lors de la création de profils traducteurs.
-        </p>
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading} disabled={!langueSource || !langueCible}>
-            {loading ? 'Création...' : 'Créer'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Formulaire Spécialisation
-const SpecialisationForm: React.FC<{
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-}> = ({ ouvert, onFermer, onSauvegarder }) => {
-  const { addToast } = useToast();
-  const [nom, setNom] = useState('');
-  const [description, setDescription] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setNom('');
-    setDescription('');
-  }, [ouvert]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await referentielService.creerSpecialisation({ nom, description });
-      addToast('Spécialisation créée', 'success');
-      onSauvegarder();
-      onFermer();
-    } catch (err: any) {
-      addToast(err.response?.data?.message || 'Erreur lors de la création', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal titre="Nouvelle spécialisation" ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        <FormField label="Nom de la spécialisation" required>
-          <Input value={nom} onChange={e => setNom(e.target.value)} required placeholder="Ex: Immigration, Brevets..." />
-        </FormField>
-
-        <FormField label="Description">
-          <textarea
-            value={description}
-            onChange={e => setDescription(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-            rows={2}
-            placeholder="Description..."
-          />
-        </FormField>
-
-        <p className="text-sm text-gray-500 mt-4">
-          💡 Assignez cette spécialisation à des traducteurs via leur profil.
-        </p>
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading} disabled={!nom}>{loading ? 'Création...' : 'Créer'}</Button>
-        </div>
-      </form>
-    </Modal>
-  );
-};
-
-// Formulaire Langue
-const LangueForm: React.FC<{
-  ouvert: boolean;
-  onFermer: () => void;
-  onSauvegarder: () => void;
-}> = ({ ouvert, onFermer, onSauvegarder }) => {
-  const { addToast } = useToast();
-  const [code, setCode] = useState('');
-  const [nom, setNom] = useState('');
-  const [nativeName, setNativeName] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    setCode('');
-    setNom('');
-    setNativeName('');
-  }, [ouvert]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      await referentielService.creerLangue({ code: code.toUpperCase(), nom, nativeName });
-      addToast('Langue créée', 'success');
-      onSauvegarder();
-      onFermer();
-    } catch (err: any) {
-      addToast(err.response?.data?.message || 'Erreur lors de la création', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Modal titre="Nouvelle langue" ouvert={ouvert} onFermer={onFermer}>
-      <form onSubmit={handleSubmit}>
-        <FormField label="Code ISO" required helper="Code à 2 lettres (ex: FR, EN, ES)">
-          <Input 
-            value={code} 
-            onChange={e => setCode(e.target.value.toUpperCase())} 
-            required 
-            placeholder="FR" 
-            maxLength={3}
-          />
-        </FormField>
-
-        <FormField label="Nom en français" required>
-          <Input value={nom} onChange={e => setNom(e.target.value)} required placeholder="Français" />
-        </FormField>
-
-        <FormField label="Nom natif">
-          <Input value={nativeName} onChange={e => setNativeName(e.target.value)} placeholder="Français" />
-        </FormField>
-
-        <div className="flex justify-end gap-2 mt-6">
-          <Button type="button" variant="outline" onClick={onFermer} disabled={loading}>Annuler</Button>
-          <Button type="submit" loading={loading} disabled={!code || !nom}>{loading ? 'Création...' : 'Créer'}</Button>
-        </div>
-      </form>
-    </Modal>
   );
 };

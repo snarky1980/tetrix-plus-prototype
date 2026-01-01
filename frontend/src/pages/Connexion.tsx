@@ -73,9 +73,6 @@ const Connexion: React.FC = () => {
           <h1 className="text-2xl font-bold text-primary tracking-tight">
             Tetrix PLUS
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            Système de gestion des traductions
-          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
@@ -96,6 +93,7 @@ const Connexion: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                autoComplete="email"
                 placeholder="votre@email.gc.ca"
                 className="pl-10"
                 error={!!erreur}
@@ -120,6 +118,7 @@ const Connexion: React.FC = () => {
                 value={motDePasse}
                 onChange={(e) => setMotDePasse(e.target.value)}
                 required
+                autoComplete="current-password"
                 placeholder="••••••••"
                 className="pl-10 pr-20"
                 error={!!erreur}
