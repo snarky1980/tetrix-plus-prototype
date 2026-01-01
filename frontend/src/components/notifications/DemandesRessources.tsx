@@ -268,6 +268,26 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
                         💬 {tr.commentaireDisponibilite}
                       </div>
                     )}
+                    {/* Affichage du ciblage du traducteur */}
+                    {tr.ciblage && ((tr.ciblage.divisions?.length ?? 0) > 0 || (tr.ciblage.categories?.length ?? 0) > 0 || tr.ciblage.equipeProjetId) && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {tr.ciblage.divisions?.map(d => (
+                          <span key={d} className="px-1 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px]">
+                            🏢 {d}
+                          </span>
+                        ))}
+                        {tr.ciblage.categories?.map(c => (
+                          <span key={c} className="px-1 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px]">
+                            {c}
+                          </span>
+                        ))}
+                        {tr.ciblage.equipeProjetId && (
+                          <span className="px-1 py-0.5 bg-cyan-100 text-cyan-700 rounded text-[10px]">
+                            👥 Équipe
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

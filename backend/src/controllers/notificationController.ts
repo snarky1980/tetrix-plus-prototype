@@ -96,12 +96,18 @@ export const obtenirCompteurs = async (
 /**
  * Obtenir la liste des traducteurs cherchant du travail
  * GET /api/notifications/traducteurs-disponibles
+ * 
+ * Filtrage intelligent selon le profil:
+ * - Si le traducteur a un ciblage défini, seuls les conseillers correspondants le verront
+ * - Sans ciblage = visible par tous les conseillers
  */
 export const obtenirTraducteursDisponibles = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
+    const utilisateur = req.utilisateur!;
+    
     const traducteurs = await prisma.traducteur.findMany({
       where: {
         disponiblePourTravail: true,
@@ -115,17 +121,90 @@ export const obtenirTraducteursDisponibles = async (
         categorie: true,
         capaciteHeuresParJour: true,
         commentaireDisponibilite: true,
+        ciblageDisponibilite: true,
         pairesLinguistiques: {
           select: {
             langueSource: true,
             langueCible: true,
           },
         },
+        equipeProjets: {
+          select: {
+            equipeProjetId: true,
+          },
+        },
       },
       orderBy: { nom: 'asc' },
     });
 
-    res.json(traducteurs);
+    // Filtrer selon le ciblage si c'est un conseiller
+    let traducteursFiltres = traducteurs;
+    
+    if (['CONSEILLER', 'GESTIONNAIRE'].includes(utilisateur.role)) {
+      // Charger les divisions accessibles par ce conseiller
+      const divisionAccess = await prisma.divisionAccess.findMany({
+        where: { utilisateurId: utilisateur.id, peutLire: true },
+        select: { division: { select: { nom: true } } },
+      });
+      const divisionsConseiller = divisionAccess.map(da => da.division.nom);
+      
+      // Charger les équipes-projets du conseiller (si applicable)
+      const equipesConseiller = await prisma.equipeProjetMembre.findMany({
+        where: { traducteur: { utilisateurId: utilisateur.id } },
+        select: { equipeProjetId: true },
+      }).catch(() => []);
+      const equipesIds = equipesConseiller.map(e => e.equipeProjetId);
+      
+      traducteursFiltres = traducteurs.filter(tr => {
+        const ciblage = tr.ciblageDisponibilite as any;
+        
+        // Sans ciblage → visible par tous
+        if (!ciblage) return true;
+        
+        const aucunCiblage = 
+          (!ciblage.divisions || ciblage.divisions.length === 0) &&
+          (!ciblage.categories || ciblage.categories.length === 0) &&
+          (!ciblage.specialisations || ciblage.specialisations.length === 0) &&
+          (!ciblage.domaines || ciblage.domaines.length === 0) &&
+          !ciblage.equipeProjetId;
+        
+        if (aucunCiblage) return true;
+        
+        // Vérifier correspondance (OR logic)
+        // Le conseiller doit avoir accès à au moins une des divisions ciblées
+        if (ciblage.divisions?.length > 0) {
+          if (divisionsConseiller.some(d => ciblage.divisions.includes(d))) return true;
+        }
+        
+        // Équipe-projet ciblée
+        if (ciblage.equipeProjetId) {
+          if (equipesIds.includes(ciblage.equipeProjetId)) return true;
+        }
+        
+        // Note: categories, specialisations et domaines sont des critères sur le conseiller
+        // mais les conseillers n'ont pas ces attributs - donc on les ignore pour le filtrage
+        // et on les affiche simplement comme indication
+        
+        // Si des critères sont définis mais ne correspondent pas, masquer
+        // Sauf si seuls categories/specialisations/domaines sont définis (pas de division/équipe)
+        const seulementCriteresNonFiltrables = 
+          (!ciblage.divisions || ciblage.divisions.length === 0) &&
+          !ciblage.equipeProjetId &&
+          (ciblage.categories?.length > 0 || ciblage.specialisations?.length > 0 || ciblage.domaines?.length > 0);
+        
+        if (seulementCriteresNonFiltrables) return true;
+        
+        return false;
+      });
+    }
+
+    // Retourner sans le champ ciblageDisponibilite (nettoyage)
+    const resultat = traducteursFiltres.map(({ ciblageDisponibilite, equipeProjets, ...tr }) => ({
+      ...tr,
+      ciblage: ciblageDisponibilite, // Renommer pour le frontend
+    }));
+
+    res.json(resultat);
   } catch (error) {
     console.error('Erreur obtention traducteurs disponibles:', error);
     res.status(500).json({ erreur: 'Erreur lors de l\'obtention des traducteurs' });

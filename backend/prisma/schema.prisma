@@ -72,6 +72,8 @@ model Traducteur {
   specialisations          String[]             @default([])
   disponiblePourTravail    Boolean              @default(false)
   commentaireDisponibilite String?
+  // Ciblage de la recherche de travail
+  ciblageDisponibilite     Json?                // { divisions: [], categories: [], domaines: [], specialisations: [], equipeProjetId: null }
   categorie                CategorieTraducteur  @default(TR01)
   necessiteRevision        Boolean              @default(true)
   divisions                String[]             @default([])

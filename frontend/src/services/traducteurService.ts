@@ -85,6 +85,13 @@ export const traducteurService = {
     disponibilite: {
       disponiblePourTravail: boolean;
       commentaireDisponibilite?: string;
+      ciblageDisponibilite?: {
+        divisions?: string[];
+        categories?: string[];
+        specialisations?: string[];
+        domaines?: string[];
+        equipeProjetId?: string | null;
+      } | null;
     }
   ): Promise<Traducteur> {
     const { data } = await api.put<Traducteur>(

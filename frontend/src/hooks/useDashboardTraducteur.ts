@@ -95,6 +95,19 @@ export function useDashboardTraducteur(traducteurIdOverride?: string) {
   // ============ États disponibilité ============
   const [disponibiliteActive, setDisponibiliteActive] = useState(false);
   const [commentaireDisponibilite, setCommentaireDisponibilite] = useState('');
+  const [ciblageDisponibilite, setCiblageDisponibilite] = useState<{
+    divisions: string[];
+    categories: string[];
+    specialisations: string[];
+    domaines: string[];
+    equipeProjetId: string;
+  }>({
+    divisions: [],
+    categories: [],
+    specialisations: [],
+    domaines: [],
+    equipeProjetId: '',
+  });
   const [savingDisponibilite, setSavingDisponibilite] = useState(false);
 
   // ============ États blocages ============
@@ -182,6 +195,17 @@ export function useDashboardTraducteur(traducteurIdOverride?: string) {
         setTraducteur(data);
         setDisponibiliteActive(data.disponiblePourTravail);
         setCommentaireDisponibilite(data.commentaireDisponibilite || '');
+        // Charger le ciblage existant
+        const ciblage = (data as any).ciblageDisponibilite;
+        if (ciblage) {
+          setCiblageDisponibilite({
+            divisions: ciblage.divisions || [],
+            categories: ciblage.categories || [],
+            specialisations: ciblage.specialisations || [],
+            domaines: ciblage.domaines || [],
+            equipeProjetId: ciblage.equipeProjetId || '',
+          });
+        }
 
         // Parser l'horaire pour les paramètres
         if (data.horaire) {
@@ -282,18 +306,78 @@ export function useDashboardTraducteur(traducteurIdOverride?: string) {
     const nouvelleValeur = !disponibiliteActive;
 
     try {
+      // Préparer le ciblage (null si tous les champs sont vides)
+      const ciblageEffectif = nouvelleValeur ? {
+        divisions: ciblageDisponibilite.divisions,
+        categories: ciblageDisponibilite.categories,
+        specialisations: ciblageDisponibilite.specialisations,
+        domaines: ciblageDisponibilite.domaines,
+        equipeProjetId: ciblageDisponibilite.equipeProjetId || null,
+      } : null;
+      
+      const hasCiblage = ciblageEffectif && (
+        ciblageEffectif.divisions.length > 0 ||
+        ciblageEffectif.categories.length > 0 ||
+        ciblageEffectif.specialisations.length > 0 ||
+        ciblageEffectif.domaines.length > 0 ||
+        ciblageEffectif.equipeProjetId
+      );
+      
       await traducteurService.mettreAJourDisponibilite(traducteurId, {
         disponiblePourTravail: nouvelleValeur,
         commentaireDisponibilite: nouvelleValeur ? commentaireDisponibilite : undefined,
+        ciblageDisponibilite: hasCiblage ? ciblageEffectif : null,
       });
       setDisponibiliteActive(nouvelleValeur);
-      if (!nouvelleValeur) setCommentaireDisponibilite('');
+      if (!nouvelleValeur) {
+        setCommentaireDisponibilite('');
+        setCiblageDisponibilite({
+          divisions: [],
+          categories: [],
+          specialisations: [],
+          domaines: [],
+          equipeProjetId: '',
+        });
+      }
     } catch (err: any) {
       alert(`Erreur: ${err.response?.data?.erreur || err.message || 'Erreur lors de la mise à jour'}`);
     } finally {
       setSavingDisponibilite(false);
     }
-  }, [traducteurId, disponibiliteActive, commentaireDisponibilite]);
+  }, [traducteurId, disponibiliteActive, commentaireDisponibilite, ciblageDisponibilite]);
+  
+  // Sauvegarder le commentaire et ciblage sans changer le statut
+  const sauvegarderCiblageDisponibilite = useCallback(async () => {
+    if (!traducteurId || !disponibiliteActive) return;
+
+    setSavingDisponibilite(true);
+    try {
+      const ciblageEffectif = {
+        divisions: ciblageDisponibilite.divisions,
+        categories: ciblageDisponibilite.categories,
+        specialisations: ciblageDisponibilite.specialisations,
+        domaines: ciblageDisponibilite.domaines,
+        equipeProjetId: ciblageDisponibilite.equipeProjetId || null,
+      };
+      
+      const hasCiblage = 
+        ciblageEffectif.divisions.length > 0 ||
+        ciblageEffectif.categories.length > 0 ||
+        ciblageEffectif.specialisations.length > 0 ||
+        ciblageEffectif.domaines.length > 0 ||
+        ciblageEffectif.equipeProjetId;
+      
+      await traducteurService.mettreAJourDisponibilite(traducteurId, {
+        disponiblePourTravail: true,
+        commentaireDisponibilite,
+        ciblageDisponibilite: hasCiblage ? ciblageEffectif : null,
+      });
+    } catch (err: any) {
+      alert(`Erreur: ${err.response?.data?.erreur || err.message || 'Erreur lors de la mise à jour'}`);
+    } finally {
+      setSavingDisponibilite(false);
+    }
+  }, [traducteurId, disponibiliteActive, commentaireDisponibilite, ciblageDisponibilite]);
 
   // ============ Actions blocages ============
   const creerBlocage = useCallback(
@@ -450,8 +534,11 @@ export function useDashboardTraducteur(traducteurIdOverride?: string) {
     disponibiliteActive,
     commentaireDisponibilite,
     setCommentaireDisponibilite,
+    ciblageDisponibilite,
+    setCiblageDisponibilite,
     savingDisponibilite,
     toggleDisponibilite,
+    sauvegarderCiblageDisponibilite,
 
     // Blocages
     ouvrirBlocage,

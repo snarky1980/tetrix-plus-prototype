@@ -13,6 +13,13 @@ export interface TraducteurDisponible {
   categorie: string;
   capaciteHeuresParJour: number;
   commentaireDisponibilite?: string;
+  ciblage?: {
+    divisions?: string[];
+    categories?: string[];
+    specialisations?: string[];
+    domaines?: string[];
+    equipeProjetId?: string;
+  } | null;
   pairesLinguistiques: Array<{
     langueSource: string;
     langueCible: string;

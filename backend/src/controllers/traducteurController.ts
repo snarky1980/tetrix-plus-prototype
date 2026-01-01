@@ -435,7 +435,7 @@ export const mettreAJourDisponibilite = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { disponiblePourTravail, commentaireDisponibilite } = req.body;
+    const { disponiblePourTravail, commentaireDisponibilite, ciblageDisponibilite } = req.body;
 
     // Vérifier que le traducteur existe
     const traducteur = await prisma.traducteur.findUnique({
@@ -466,6 +466,9 @@ export const mettreAJourDisponibilite = async (
         commentaireDisponibilite: commentaireDisponibilite !== undefined 
           ? commentaireDisponibilite 
           : traducteur.commentaireDisponibilite,
+        ciblageDisponibilite: ciblageDisponibilite !== undefined
+          ? ciblageDisponibilite
+          : traducteur.ciblageDisponibilite,
       },
       include: {
         pairesLinguistiques: true,
@@ -479,7 +482,9 @@ export const mettreAJourDisponibilite = async (
     });
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log(`[DISPONIBILITE] ${traducteur.nom}: ${disponiblePourTravail ? '🟢 Cherche du travail' : '⚪ Pas disponible'}${commentaireDisponibilite ? ` - ${commentaireDisponibilite}` : ''}`);
+      const ciblage = ciblageDisponibilite as any;
+      const ciblageStr = ciblage ? ` [Ciblage: ${JSON.stringify(ciblage)}]` : '';
+      console.log(`[DISPONIBILITE] ${traducteur.nom}: ${disponiblePourTravail ? '🟢 Cherche du travail' : '⚪ Pas disponible'}${commentaireDisponibilite ? ` - ${commentaireDisponibilite}` : ''}${ciblageStr}`);
     }
 
     res.json(traducteurMisAJour);

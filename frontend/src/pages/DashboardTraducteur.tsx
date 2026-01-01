@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -12,12 +12,14 @@ import { StatCard } from '../components/ui/StatCard';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/Spinner';
+import { MultiSelectDropdown } from '../components/ui/MultiSelectDropdown';
 import { TacheCard } from '../components/taches/TacheCard';
 import { DemandesRessourcesTraducteur } from '../components/notifications/DemandesRessourcesTraducteur';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { useDashboardTraducteur, ViewMode } from '../hooks/useDashboardTraducteur';
 import { formatHeures } from '../lib/format';
-import { traducteurService } from '../services/traducteurService';
+import { divisionService } from '../services/divisionService';
+import { equipeProjetService } from '../services/equipeProjetService';
 
 type Section = 'overview' | 'taches' | 'blocages' | 'parametres' | 'statistiques';
 
@@ -66,8 +68,11 @@ const DashboardTraducteur: React.FC = () => {
     disponibiliteActive,
     commentaireDisponibilite,
     setCommentaireDisponibilite,
+    ciblageDisponibilite,
+    setCiblageDisponibilite,
     savingDisponibilite,
     toggleDisponibilite,
+    sauvegarderCiblageDisponibilite,
     
     // Blocages
     ouvrirBlocage,
@@ -104,6 +109,22 @@ const DashboardTraducteur: React.FC = () => {
   // ============ Titre dynamique ============
   const titreTraducteur = traducteur?.nom || 'Mon espace';
   usePageTitle(`${titreTraducteur} - Tetrix PLUS`, 'Gérez votre planification et vos disponibilités');
+
+  // ============ Options de ciblage ============
+  const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
+  const [equipesProjet, setEquipesProjet] = useState<Array<{ id: string; nom: string; code: string }>>([]);
+  const categorieOptions = ['TR01', 'TR02', 'TR03'];
+  
+  // Charger les options de ciblage
+  useEffect(() => {
+    Promise.all([
+      divisionService.obtenirDivisions().catch(() => []),
+      equipeProjetService.lister({ actif: true }).catch(() => []),
+    ]).then(([divisions, equipes]) => {
+      setToutesLesDivisions(divisions.map((d: any) => d.nom).sort());
+      setEquipesProjet(equipes);
+    });
+  }, []);
 
   // ============ Rendu du calendrier ============
   const renderCalendrier = () => {
@@ -250,7 +271,8 @@ const DashboardTraducteur: React.FC = () => {
           </div>
           
           {disponibiliteActive && (
-            <div className="mt-4 pt-4 border-t border-blue-200">
+            <div className="mt-4 pt-4 border-t border-blue-200 space-y-4">
+              {/* Commentaire */}
               <div className="flex gap-2">
                 <Input
                   type="text"
@@ -260,22 +282,68 @@ const DashboardTraducteur: React.FC = () => {
                   className="flex-1"
                   maxLength={200}
                 />
+              </div>
+              
+              {/* Section ciblage */}
+              <div className="p-3 bg-white/50 rounded-lg border border-blue-100">
+                <h5 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
+                  🎯 Ciblage (optionnel)
+                  <span className="text-xs font-normal text-blue-600">Restreindre qui verra votre disponibilité</span>
+                </h5>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <MultiSelectDropdown
+                    label="Divisions"
+                    options={toutesLesDivisions}
+                    selected={ciblageDisponibilite.divisions}
+                    onChange={(val) => setCiblageDisponibilite({ ...ciblageDisponibilite, divisions: val })}
+                    placeholder="Toutes divisions"
+                    minWidth="100%"
+                  />
+                  
+                  <MultiSelectDropdown
+                    label="Catégories de tâches"
+                    options={categorieOptions}
+                    selected={ciblageDisponibilite.categories}
+                    onChange={(val) => setCiblageDisponibilite({ ...ciblageDisponibilite, categories: val })}
+                    placeholder="Toutes catégories"
+                    minWidth="100%"
+                  />
+                  
+                  {equipesProjet.length > 0 && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Équipe-projet</label>
+                      <Select
+                        value={ciblageDisponibilite.equipeProjetId}
+                        onChange={e => setCiblageDisponibilite({ ...ciblageDisponibilite, equipeProjetId: e.target.value })}
+                      >
+                        <option value="">Toutes équipes</option>
+                        {equipesProjet.map(eq => (
+                          <option key={eq.id} value={eq.id}>{eq.nom} ({eq.code})</option>
+                        ))}
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Résumé du ciblage */}
+                {(ciblageDisponibilite.divisions.length > 0 || ciblageDisponibilite.categories.length > 0 || ciblageDisponibilite.equipeProjetId) && (
+                  <div className="mt-2 text-xs text-blue-700 bg-blue-100 p-2 rounded">
+                    <strong>Ciblage actif :</strong>{' '}
+                    {ciblageDisponibilite.divisions.length > 0 && `${ciblageDisponibilite.divisions.length} division(s)`}
+                    {ciblageDisponibilite.categories.length > 0 && ` • ${ciblageDisponibilite.categories.join(', ')}`}
+                    {ciblageDisponibilite.equipeProjetId && ` • Équipe: ${equipesProjet.find(e => e.id === ciblageDisponibilite.equipeProjetId)?.code}`}
+                  </div>
+                )}
+              </div>
+              
+              {/* Bouton sauvegarder */}
+              <div className="flex justify-end">
                 <Button
                   variant="secondaire"
-                  onClick={async () => {
-                    if (!traducteur?.id) return;
-                    try {
-                      await traducteurService.mettreAJourDisponibilite(traducteur.id, {
-                        disponiblePourTravail: true,
-                        commentaireDisponibilite,
-                      });
-                    } catch (err) {
-                      alert('Erreur lors de la mise à jour');
-                    }
-                  }}
+                  onClick={sauvegarderCiblageDisponibilite}
                   disabled={savingDisponibilite}
                 >
-                  💾
+                  {savingDisponibilite ? '⏳' : '💾'} Enregistrer
                 </Button>
               </div>
             </div>
