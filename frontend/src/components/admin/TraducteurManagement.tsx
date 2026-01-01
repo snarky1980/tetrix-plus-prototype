@@ -1,6 +1,6 @@
 import { TraducteurFormV2 as TraducteurForm } from './TraducteurFormV2';
 import { Traducteur, CategorieTraducteur } from '../../types';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -9,6 +9,7 @@ import { Badge } from '../ui/Badge';
 import { SkeletonTable } from '../ui/Skeleton';
 import { EmptyState } from '../ui/EmptyState';
 import { InfoTooltip } from '../ui/Tooltip';
+import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 import { traducteurService } from '../../services/traducteurService';
 
 // Labels pour les catégories
@@ -16,83 +17,6 @@ const CATEGORIE_LABELS: Record<CategorieTraducteur, { label: string; color: stri
   'TR01': { label: 'TR-01', color: 'bg-emerald-100 text-emerald-800' },
   'TR02': { label: 'TR-02', color: 'bg-amber-100 text-amber-800' },
   'TR03': { label: 'TR-03', color: 'bg-sky-100 text-sky-800' },
-};
-
-// Composant FilterDropdown réutilisable
-interface FilterDropdownProps {
-  label: string;
-  options: string[];
-  selected: string[];
-  onToggle: (value: string) => void;
-}
-
-const FilterDropdown: React.FC<FilterDropdownProps> = ({ label, options, selected, onToggle }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Fermer le dropdown si on clique en dehors
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors
-          ${selected.length > 0 
-            ? 'bg-primaire text-white border-primaire' 
-            : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
-          }
-        `}
-      >
-        <span>{label}</span>
-        {selected.length > 0 && (
-          <span className="bg-white/20 text-xs px-1.5 rounded">{selected.length}</span>
-        )}
-        <svg 
-          className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} 
-          fill="none" 
-          stroke="currentColor" 
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-      
-      {isOpen && (
-        <div className="absolute z-50 mt-1 w-48 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
-          {options.length === 0 ? (
-            <div className="p-3 text-sm text-gray-500 text-center">Aucune option</div>
-          ) : (
-            <div className="p-2">
-              {options.map(option => (
-                <label 
-                  key={option} 
-                  className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-1.5 rounded"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(option)}
-                    onChange={() => onToggle(option)}
-                    className="rounded border-gray-300 text-primaire focus:ring-primaire"
-                  />
-                  <span className="truncate">{option}</span>
-                </label>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
 };
 
 export const TraducteurManagement: React.FC = () => {
@@ -499,84 +423,58 @@ export const TraducteurManagement: React.FC = () => {
                 ))}
               </div>
 
-              <FilterDropdown
+              <MultiSelectDropdown
+                variant="badge"
                 label="Catégorie"
                 options={categories.map(c => CATEGORIE_LABELS[c].label)}
                 selected={filtres.categories.map(c => CATEGORIE_LABELS[c as CategorieTraducteur]?.label || c)}
-                onToggle={(label) => {
-                  // Convertir le label en code
-                  const code = Object.entries(CATEGORIE_LABELS).find(([, v]) => v.label === label)?.[0] || label;
-                  if (filtres.categories.includes(code)) {
-                    setFiltres({ ...filtres, categories: filtres.categories.filter(v => v !== code) });
-                  } else {
-                    setFiltres({ ...filtres, categories: [...filtres.categories, code] });
-                  }
+                onChange={(labels) => {
+                  // Convertir les labels en codes
+                  const codes = labels.map(label => 
+                    Object.entries(CATEGORIE_LABELS).find(([, v]) => v.label === label)?.[0] || label
+                  );
+                  setFiltres({ ...filtres, categories: codes });
                 }}
               />
               
-              <FilterDropdown
+              <MultiSelectDropdown
+                variant="badge"
                 label="Division"
                 options={divisions}
                 selected={filtres.divisions}
-                onToggle={(d) => {
-                  if (filtres.divisions.includes(d)) {
-                    setFiltres({ ...filtres, divisions: filtres.divisions.filter(v => v !== d) });
-                  } else {
-                    setFiltres({ ...filtres, divisions: [...filtres.divisions, d] });
-                  }
-                }}
+                onChange={(d) => setFiltres({ ...filtres, divisions: d })}
               />
               
-              <FilterDropdown
+              <MultiSelectDropdown
+                variant="badge"
                 label="Domaines"
                 options={domaines}
                 selected={filtres.domaines}
-                onToggle={(d) => {
-                  if (filtres.domaines.includes(d)) {
-                    setFiltres({ ...filtres, domaines: filtres.domaines.filter(v => v !== d) });
-                  } else {
-                    setFiltres({ ...filtres, domaines: [...filtres.domaines, d] });
-                  }
-                }}
+                onChange={(d) => setFiltres({ ...filtres, domaines: d })}
               />
               
-              <FilterDropdown
+              <MultiSelectDropdown
+                variant="badge"
                 label="Paires linguistiques"
                 options={paires}
                 selected={filtres.paires}
-                onToggle={(p) => {
-                  if (filtres.paires.includes(p)) {
-                    setFiltres({ ...filtres, paires: filtres.paires.filter(v => v !== p) });
-                  } else {
-                    setFiltres({ ...filtres, paires: [...filtres.paires, p] });
-                  }
-                }}
+                onChange={(p) => setFiltres({ ...filtres, paires: p })}
               />
 
-              <FilterDropdown
+              <MultiSelectDropdown
+                variant="badge"
                 label="Spécialisations"
                 options={specialisations}
                 selected={filtres.specialisations}
-                onToggle={(s) => {
-                  if (filtres.specialisations.includes(s)) {
-                    setFiltres({ ...filtres, specialisations: filtres.specialisations.filter(v => v !== s) });
-                  } else {
-                    setFiltres({ ...filtres, specialisations: [...filtres.specialisations, s] });
-                  }
-                }}
+                onChange={(s) => setFiltres({ ...filtres, specialisations: s })}
               />
 
-              <FilterDropdown
+              <MultiSelectDropdown
+                variant="badge"
                 label="Clients"
                 options={clientsHabituels}
                 selected={filtres.clients}
-                onToggle={(c) => {
-                  if (filtres.clients.includes(c)) {
-                    setFiltres({ ...filtres, clients: filtres.clients.filter(v => v !== c) });
-                  } else {
-                    setFiltres({ ...filtres, clients: [...filtres.clients, c] });
-                  }
-                }}
+                onChange={(c) => setFiltres({ ...filtres, clients: c })}
               />
               
               {/* Bouton réinitialiser inline */}

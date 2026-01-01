@@ -1,10 +1,12 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { LoadingSpinner } from '../ui/Spinner';
+import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 import { notificationService, DemandeRessource, TraducteurDisponible } from '../../services/notificationService';
+import { traducteurService } from '../../services/traducteurService';
 import { useNotifications } from '../../contexts/NotificationContext';
 
 const urgenceOptions = [
@@ -13,97 +15,6 @@ const urgenceOptions = [
   { value: 'HAUTE', label: '🟠 Haute', color: 'bg-orange-100 text-orange-800' },
   { value: 'CRITIQUE', label: '🔴 Critique', color: 'bg-red-100 text-red-800' },
 ];
-
-// Composant dropdown multi-sélection
-interface MultiSelectDropdownProps {
-  label: string;
-  options: string[];
-  selected: string[];
-  onChange: (selected: string[]) => void;
-  placeholder?: string;
-  minWidth?: string;
-}
-
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({ 
-  label, options, selected, onChange, placeholder = "Tous", minWidth = "120px"
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Fermer le dropdown quand on clique ailleurs
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const toggleOption = (option: string) => {
-    if (selected.includes(option)) {
-      onChange(selected.filter(s => s !== option));
-    } else {
-      onChange([...selected, option]);
-    }
-  };
-
-  const displayText = selected.length === 0 
-    ? placeholder 
-    : selected.length === 1 
-      ? selected[0] 
-      : `${selected.length} sélectionnés`;
-
-  return (
-    <div className="relative" ref={dropdownRef} style={{ minWidth }}>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full text-left px-2 py-1.5 text-xs border border-gray-300 rounded bg-white hover:bg-gray-50 flex items-center justify-between gap-2"
-      >
-        <span className={selected.length === 0 ? 'text-gray-400' : 'text-gray-900 truncate'}>
-          {displayText}
-        </span>
-        <span className="text-gray-400">{isOpen ? '▲' : '▼'}</span>
-      </button>
-      {isOpen && (
-        <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-          {options.length === 0 ? (
-            <div className="px-2 py-1 text-xs text-gray-400">Aucune option</div>
-          ) : (
-            options.map(option => (
-              <label
-                key={option}
-                className="flex items-center gap-2 px-2 py-1.5 text-xs cursor-pointer hover:bg-gray-50"
-              >
-                <input
-                  type="checkbox"
-                  checked={selected.includes(option)}
-                  onChange={() => toggleOption(option)}
-                  className="rounded text-primary"
-                />
-                <span>{option}</span>
-              </label>
-            ))
-          )}
-          {selected.length > 0 && (
-            <div className="border-t px-2 py-1">
-              <button
-                type="button"
-                onClick={() => onChange([])}
-                className="text-xs text-primary hover:underline"
-              >
-                Tout effacer
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
 
 interface DemandesRessourcesProps {
   divisions?: string[];
@@ -116,6 +27,10 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  
+  // Options de filtres - toutes les divisions/classifications de tous les traducteurs
+  const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
+  const [toutesLesClassifications, setToutesLesClassifications] = useState<string[]>([]);
   
   // Filtres pour les traducteurs disponibles (multi-sélection)
   const [filtresDivisions, setFiltresDivisions] = useState<string[]>([]);
@@ -138,12 +53,19 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
   const chargerDonnees = async () => {
     setLoading(true);
     try {
-      const [demandesData, traducteursData] = await Promise.all([
+      const [demandesData, traducteursData, tousTraducteurs] = await Promise.all([
         notificationService.obtenirDemandesRessources(),
         notificationService.obtenirTraducteursDisponibles(),
+        traducteurService.obtenirTraducteurs({ actif: true }),
       ]);
       setDemandes(demandesData);
       setTraducteursDispo(traducteursData);
+      
+      // Extraire toutes les divisions et classifications de tous les traducteurs
+      const divisions = Array.from(new Set(tousTraducteurs.flatMap(t => t.divisions || []))).filter(Boolean).sort();
+      const classifications = Array.from(new Set(tousTraducteurs.map(t => t.categorie).filter(Boolean))).sort();
+      setToutesLesDivisions(divisions);
+      setToutesLesClassifications(classifications);
     } catch (error) {
       console.error('Erreur chargement:', error);
     } finally {
@@ -211,17 +133,6 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
     return urgenceOptions.find(u => u.value === urgence)?.color || '';
   };
 
-  // Extraire les divisions et classifications uniques des traducteurs disponibles
-  const divisionsDisponibles = useMemo(() => 
-    Array.from(new Set(traducteursDispo.flatMap(t => t.divisions))).sort(),
-    [traducteursDispo]
-  );
-  
-  const classificationsDisponibles = useMemo(() => 
-    Array.from(new Set(traducteursDispo.map(t => t.classification))).sort(),
-    [traducteursDispo]
-  );
-
   // Filtrer les traducteurs (multi-sélection avec OR logic)
   const traducteursFiltres = useMemo(() => {
     return traducteursDispo.filter(tr => {
@@ -248,11 +159,11 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
                 <span>✋</span>
                 Traducteurs cherchant du travail ({traducteursFiltres.length}/{traducteursDispo.length})
               </CardTitle>
-              {/* Filtres dropdown inline */}
+              {/* Filtres dropdown inline - affiche TOUTES les divisions et classifications */}
               <div className="flex items-center gap-2">
                 <MultiSelectDropdown
                   label=""
-                  options={divisionsDisponibles}
+                  options={toutesLesDivisions}
                   selected={filtresDivisions}
                   onChange={setFiltresDivisions}
                   placeholder="Divisions"
@@ -260,7 +171,7 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ division
                 />
                 <MultiSelectDropdown
                   label=""
-                  options={classificationsDisponibles}
+                  options={toutesLesClassifications}
                   selected={filtresClassifications}
                   onChange={setFiltresClassifications}
                   placeholder="Classifications"

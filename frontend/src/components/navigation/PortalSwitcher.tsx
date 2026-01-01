@@ -67,7 +67,7 @@ export const getAccessiblePortals = (role: string, isPlayground?: boolean): Port
       // Admin a accès à TOUS les portails
       return ['admin', 'gestionnaire', 'conseiller', 'traducteur'];
     case 'GESTIONNAIRE':
-      // Gestionnaire n'a accès qu'à son portail
+      // Gestionnaire n'a accès qu'à son portail (pas de création de tâches)
       return ['gestionnaire'];
     case 'CONSEILLER':
       // Conseiller a accès aux 4 portails (Admin, Conseiller, Gestionnaire, Traducteur)

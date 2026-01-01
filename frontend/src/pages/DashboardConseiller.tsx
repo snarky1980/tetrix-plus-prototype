@@ -91,13 +91,16 @@ const DashboardConseiller: React.FC = () => {
             
             {/* Navigation compacte */}
             <div className="flex flex-wrap gap-2">
-              <Button 
-                onClick={() => navigate('/conseiller/creation-tache')}
-                size="sm"
-                className="gap-1.5"
-              >
-                <span>➕</span> Nouvelle tâche
-              </Button>
+              {/* Masquer création de tâche pour les Gestionnaires */}
+              {utilisateur?.role !== 'GESTIONNAIRE' && (
+                <Button 
+                  onClick={() => navigate('/conseiller/creation-tache')}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <span>➕</span> Nouvelle tâche
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm"
@@ -212,9 +215,11 @@ const DashboardConseiller: React.FC = () => {
                   <span className="text-2xl">📭</span>
                 </div>
                 <p className="text-gray-500 mb-3">Aucune tâche trouvée</p>
-                <Button onClick={() => navigate('/conseiller/creation-tache')} className="gap-2">
-                  <span>➕</span> Créer une tâche
-                </Button>
+                {utilisateur?.role !== 'GESTIONNAIRE' && (
+                  <Button onClick={() => navigate('/conseiller/creation-tache')} className="gap-2">
+                    <span>➕</span> Créer une tâche
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-2 max-h-[350px] overflow-y-auto pr-1">
