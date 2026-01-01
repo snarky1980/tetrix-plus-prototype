@@ -3833,15 +3833,15 @@ const PlanificationGlobale: React.FC = () => {
           <div className="flex gap-2 text-[10px] items-center">
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-green-100">
               <span className="w-2 h-2 rounded bg-green-400"></span>
-              Libre
+              {showAvailable ? 'Libre' : 'Bien utilisé'}
             </span>
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-yellow-100">
               <span className="w-2 h-2 rounded bg-yellow-400"></span>
-              ≈Plein
+              {showAvailable ? '≈Plein' : 'Partiel'}
             </span>
             <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-100">
               <span className="w-2 h-2 rounded bg-red-400"></span>
-              Plein
+              {showAvailable ? 'Plein' : 'Sous-utilisé'}
             </span>
             <Button
               variant="outline"
@@ -4094,12 +4094,24 @@ const PlanificationGlobale: React.FC = () => {
                         if (isGrayed) {
                           bgClass = 'bg-gray-300';
                           textClass = 'text-gray-500';
-                        } else {
-                          // Calculer la couleur basée sur la disponibilité
+                        } else if (showAvailable) {
+                          // Mode Disponibilité: vert = libre, rouge = surchargé
                           if (disponible >= capacite * 0.8) {
                             bgClass = 'bg-green-100';
                             textClass = 'text-green-700';
                           } else if (disponible > 0) {
+                            bgClass = 'bg-yellow-100';
+                            textClass = 'text-yellow-700';
+                          } else {
+                            bgClass = 'bg-red-100';
+                            textClass = 'text-red-700';
+                          }
+                        } else {
+                          // Mode Charge: vert = bien utilisé, rouge = sous-utilisé
+                          if (heures >= capacite * 0.8) {
+                            bgClass = 'bg-green-100';
+                            textClass = 'text-green-700';
+                          } else if (heures > 0) {
                             bgClass = 'bg-yellow-100';
                             textClass = 'text-yellow-700';
                           } else {

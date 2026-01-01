@@ -128,7 +128,7 @@ export const obtenirTraducteursDisponibles = async (
             langueCible: true,
           },
         },
-        equipeProjets: {
+        equipesProjet: {
           select: {
             equipeProjetId: true,
           },

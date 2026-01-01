@@ -45,15 +45,14 @@ router.put(
 router.put('/demandes-ressources/:id/fermer', fermerDemandeRessource);
 router.delete('/demandes-ressources/:id', supprimerDemandeRessource);
 
-// Manifestations d'intérêt (traducteurs)
+// Manifestations d'intérêt (tout utilisateur ayant un profil traducteur)
+// La vérification du profil traducteur se fait dans le controller
 router.post(
   '/demandes-ressources/:id/interet',
-  verifierRole(Role.TRADUCTEUR),
   manifesterInteret
 );
 router.delete(
   '/demandes-ressources/:id/interet',
-  verifierRole(Role.TRADUCTEUR),
   retirerInteret
 );
 router.get(
