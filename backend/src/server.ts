@@ -73,9 +73,37 @@ if (config.nodeEnv === 'development') {
 // ROUTES
 // ============================================
 
-// Route de santé
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+// Route de santé avec vérification réelle de la BDD
+app.get('/api/health', async (_req, res) => {
+  try {
+    // Vérifier la connexion à la base de données
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ 
+      status: 'ok', 
+      database: 'ok',
+      api: 'ok',
+      timestamp: new Date().toISOString() 
+    });
+  } catch (error) {
+    console.error('Health check failed:', error);
+    res.status(503).json({ 
+      status: 'error', 
+      database: 'error',
+      api: 'ok',
+      timestamp: new Date().toISOString(),
+      error: 'Database connection failed'
+    });
+  }
+});
+
+// Route de santé legacy (pour Render et autres services)
+app.get('/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', timestamp: new Date().toISOString() });
+  }
 });
 
 // Endpoint d'initialisation (pour seeder la base en production)

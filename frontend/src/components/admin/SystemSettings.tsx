@@ -32,19 +32,29 @@ export const SystemSettings: React.FC = () => {
   const [logs, setLogs] = useState<ActivityLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
 
-  // Simuler un check de santé
+  // Check de santé réel de l'API et de la BDD
   useEffect(() => {
     const checkHealth = async () => {
       try {
         // Ping API pour vérifier la connectivité
-        const response = await fetch('/api/health').catch(() => null);
-        setHealth({
-          database: response?.ok ? 'ok' : 'warning',
-          api: 'ok',
-          lastCheck: new Date()
-        });
+        const response = await fetch('/api/health');
+        if (response.ok) {
+          const data = await response.json();
+          setHealth({
+            database: data.database || 'ok',
+            api: data.api || 'ok',
+            lastCheck: new Date()
+          });
+        } else {
+          // API répond mais avec erreur
+          setHealth({
+            database: 'error',
+            api: 'warning',
+            lastCheck: new Date()
+          });
+        }
       } catch {
-        setHealth(prev => ({ ...prev, api: 'error', lastCheck: new Date() }));
+        setHealth({ database: 'warning', api: 'error', lastCheck: new Date() });
       }
     };
     checkHealth();
