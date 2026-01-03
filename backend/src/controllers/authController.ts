@@ -3,12 +3,22 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import prisma from '../config/database';
 import { config } from '../config/env';
+import { auditService } from '../services/auditService';
+import { sessionService } from '../services/sessionService';
+
+// Helper pour extraire l'IP et le User-Agent
+const getClientInfo = (req: Request) => ({
+  adresseIp: (req.headers['x-forwarded-for'] as string)?.split(',')[0] || req.socket.remoteAddress,
+  userAgent: req.headers['user-agent'],
+});
 
 /**
  * Connexion d'un utilisateur
  * POST /api/auth/connexion
  */
 export const connexion = async (req: Request, res: Response): Promise<void> => {
+  const { adresseIp, userAgent } = getClientInfo(req);
+  
   try {
     const { email, motDePasse } = req.body;
 
@@ -21,6 +31,8 @@ export const connexion = async (req: Request, res: Response): Promise<void> => {
     });
 
     if (!utilisateur || !utilisateur.actif) {
+      // Logger la tentative échouée
+      await auditService.logConnexionEchouee(email, adresseIp, userAgent);
       res.status(401).json({ erreur: 'Identifiants invalides' });
       return;
     }
@@ -28,6 +40,8 @@ export const connexion = async (req: Request, res: Response): Promise<void> => {
     // Vérifier le mot de passe
     const motDePasseValide = await bcrypt.compare(motDePasse, utilisateur.motDePasse);
     if (!motDePasseValide) {
+      // Logger la tentative échouée
+      await auditService.logConnexionEchouee(email, adresseIp, userAgent);
       res.status(401).json({ erreur: 'Identifiants invalides' });
       return;
     }
@@ -43,6 +57,12 @@ export const connexion = async (req: Request, res: Response): Promise<void> => {
       config.jwtSecret,
       { expiresIn: '24h' }
     );
+
+    // Créer une session et logger la connexion
+    await Promise.all([
+      sessionService.creerSession(utilisateur.id, token, adresseIp, userAgent),
+      auditService.logConnexion(utilisateur.id, adresseIp, userAgent),
+    ]);
 
     res.json({
       token,

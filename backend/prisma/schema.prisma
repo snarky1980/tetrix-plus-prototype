@@ -21,6 +21,8 @@ model Utilisateur {
   playgroundNote String?
   divisionAccess DivisionAccess[]
   traducteur     Traducteur?
+  sessions       Session[]
+  auditLogs      AuditLog[]
 
   @@map("utilisateurs")
 }
@@ -43,6 +45,87 @@ enum TypeJourFerie {
   FEDERAL      // Jour férié fédéral
   PROVINCIAL   // Jour férié provincial (Ontario)
   ORGANISATIONNEL // Congé spécifique à l'organisation
+}
+
+// ============================================
+// SESSIONS & AUDIT
+// ============================================
+
+model Session {
+  id            String    @id @default(uuid())
+  utilisateurId String
+  token         String    @unique
+  adresseIp     String?
+  userAgent     String?
+  actif         Boolean   @default(true)
+  dernierAcces  DateTime  @default(now())
+  expireA       DateTime
+  creeLe        DateTime  @default(now())
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@index([utilisateurId])
+  @@index([token])
+  @@index([actif])
+  @@map("sessions")
+}
+
+model AuditLog {
+  id            String       @id @default(uuid())
+  utilisateurId String?
+  action        ActionAudit
+  entite        String       // Ex: "Tache", "Traducteur", "Utilisateur"
+  entiteId      String?      // ID de l'entité concernée
+  details       Json?        // Détails supplémentaires (ancien/nouveau valeur, etc.)
+  adresseIp     String?
+  userAgent     String?
+  succes        Boolean      @default(true)
+  creeLe        DateTime     @default(now())
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
+
+  @@index([utilisateurId])
+  @@index([action])
+  @@index([entite])
+  @@index([creeLe])
+  @@map("audit_logs")
+}
+
+enum ActionAudit {
+  // Authentification
+  CONNEXION
+  DECONNEXION
+  CONNEXION_ECHOUEE
+  SESSION_EXPIREE
+  SESSION_FORCEE       // Déconnexion forcée par admin
+  
+  // Utilisateurs
+  UTILISATEUR_CREE
+  UTILISATEUR_MODIFIE
+  UTILISATEUR_SUPPRIME
+  MOT_DE_PASSE_CHANGE
+  ROLE_MODIFIE
+  
+  // Tâches
+  TACHE_CREEE
+  TACHE_MODIFIEE
+  TACHE_SUPPRIMEE
+  STATUT_TACHE_CHANGE
+  TACHE_ASSIGNEE
+  
+  // Traducteurs
+  TRADUCTEUR_CREE
+  TRADUCTEUR_MODIFIE
+  TRADUCTEUR_SUPPRIME
+  CAPACITE_MODIFIEE
+  
+  // Administration
+  JOUR_FERIE_CREE
+  JOUR_FERIE_MODIFIE
+  JOUR_FERIE_SUPPRIME
+  REFERENTIEL_MODIFIE
+  
+  // Système
+  EXPORT_DONNEES
+  IMPORT_DONNEES
 }
 
 model Division {

@@ -79,7 +79,7 @@ async function restoreFromBackup() {
         await prisma.traducteur.update({
           where: { id: existingTrad.id },
           data: {
-            division: trad.division,
+            divisions: trad.division ? [trad.division] : (trad.divisions || []),
             domaines: trad.domaines,
             clientsHabituels: trad.clientsHabituels,
             capaciteHeuresParJour: trad.capaciteHeuresParJour,
@@ -97,7 +97,7 @@ async function restoreFromBackup() {
         await prisma.traducteur.create({
           data: {
             nom: pseudoName,
-            division: trad.division,
+            divisions: trad.division ? [trad.division] : (trad.divisions || []),
             domaines: trad.domaines,
             clientsHabituels: trad.clientsHabituels,
             capaciteHeuresParJour: trad.capaciteHeuresParJour,

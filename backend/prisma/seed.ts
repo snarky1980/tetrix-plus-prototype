@@ -62,11 +62,12 @@ async function main() {
     const trad = await prisma.traducteur.create({
       data: {
         nom: 'Jean Exemple',
-        division: 'FINANCE',
+        divisions: ['FINANCE'],
         domaines: ['FINANCE', 'LEGAL'],
         clientsHabituels: ['ClientA'],
         capaciteHeuresParJour: 7.5,
         actif: true,
+        classification: 'TR-01',
         utilisateurId: tradUser.id,
         pairesLinguistiques: {
           create: [
