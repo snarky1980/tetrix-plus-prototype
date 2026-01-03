@@ -30,6 +30,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import referentielRoutes from './routes/referentielRoutes';
 import equipeProjetRoutes from './routes/equipeProjetRoutes';
 import sessionsAuditRoutes from './routes/sessionsAuditRoutes';
+import backupRoutes from './routes/backupRoutes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -154,6 +155,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/referentiel', referentielRoutes);
 app.use('/api/equipes-projet', equipeProjetRoutes);
 app.use('/api/admin', sessionsAuditRoutes);
+app.use('/api/admin/backup', backupRoutes);
 
 // Route 404
 app.use((req, res) => {

@@ -14,6 +14,7 @@ import { EquipeProjetManagement } from '../components/admin/EquipeProjetManageme
 import { DivisionManagement } from '../components/admin/DivisionManagement';
 import JoursFeriesManagement from '../components/admin/JoursFeriesManagement';
 import SessionsAuditManagement from '../components/admin/SessionsAuditManagement';
+import BackupManagement from '../components/admin/BackupManagement';
 import { AdminSearchBar } from '../components/admin/AdminSearchBar';
 import { ActivityLog } from '../components/admin/ActivityLog';
 import { SystemAlerts } from '../components/admin/SystemAlerts';
@@ -24,7 +25,7 @@ import { divisionService } from '../services/divisionService';
 import { tacheService } from '../services/tacheService';
 import type { Traducteur, Utilisateur } from '../types';
 
-type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'jours-feries' | 'sessions-audit' | 'systeme';
+type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'jours-feries' | 'sessions-audit' | 'backup' | 'systeme';
 
 interface SystemStats {
   traducteurs: { total: number; actifs: number; inactifs: number };
@@ -241,6 +242,8 @@ const DashboardAdmin: React.FC = () => {
         return <JoursFeriesManagement />;
       case 'sessions-audit':
         return <SessionsAuditManagement />;
+      case 'backup':
+        return <BackupManagement />;
       case 'systeme':
         return <SystemSettings />;
       case 'overview':
@@ -337,6 +340,7 @@ const DashboardAdmin: React.FC = () => {
               { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel' },
               { id: 'jours-feries' as const, icon: '📅', label: 'Jours fériés' },
               { id: 'sessions-audit' as const, icon: '🔒', label: 'Sessions / Audit' },
+              { id: 'backup' as const, icon: '💾', label: 'Sauvegarde' },
               { id: 'systeme' as const, icon: '⚙️', label: 'Système' },
             ].map(item => (
               <button
