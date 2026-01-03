@@ -52,7 +52,7 @@ beforeAll(async () => {
   const traducteur = await prisma.traducteur.create({
     data: {
       nom: 'Traducteur Validation',
-      division: 'Test',
+      divisions: ['Test'],
       domaines: ['Technique'],
       clientsHabituels: [],
       capaciteHeuresParJour: 8.0,

@@ -281,6 +281,8 @@ export const TraducteurFormV2: React.FC<TraducteurFormProps> = ({
           specialisations: formData.specialisations,
           notes: formData.notes,
           actif: formData.actif,
+          categorie: formData.categorie,
+          necessiteRevision: formData.necessiteRevision,
           email: formData.email,
           motDePasse: formData.motDePasse,
         });

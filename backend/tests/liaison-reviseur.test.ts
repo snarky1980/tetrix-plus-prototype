@@ -83,7 +83,7 @@ describe('🔗 Service de liaison traducteur-réviseur', () => {
     const tr01 = await prisma.traducteur.create({
       data: {
         nom: 'Traducteur TR01',
-        division: 'TEST',
+        divisions: ['TEST'],
         classification: 'TT4',
         utilisateurId: user01.id,
         capaciteHeuresParJour: 7,
@@ -100,7 +100,7 @@ describe('🔗 Service de liaison traducteur-réviseur', () => {
     const tr02 = await prisma.traducteur.create({
       data: {
         nom: 'Traducteur TR02',
-        division: 'TEST',
+        divisions: ['TEST'],
         classification: 'TT5',
         utilisateurId: user02.id,
         capaciteHeuresParJour: 7,
@@ -117,7 +117,7 @@ describe('🔗 Service de liaison traducteur-réviseur', () => {
     const tr03 = await prisma.traducteur.create({
       data: {
         nom: 'Réviseur TR03',
-        division: 'TEST',
+        divisions: ['TEST'],
         classification: 'TT6',
         utilisateurId: user03.id,
         capaciteHeuresParJour: 7,
@@ -133,7 +133,7 @@ describe('🔗 Service de liaison traducteur-réviseur', () => {
     const tr03bis = await prisma.traducteur.create({
       data: {
         nom: 'Réviseur TR03 Bis',
-        division: 'TEST',
+        divisions: ['TEST'],
         classification: 'TT6',
         utilisateurId: user03bis.id,
         capaciteHeuresParJour: 5,

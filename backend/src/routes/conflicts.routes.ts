@@ -5,8 +5,13 @@ import {
   genererSuggestions,
   genererRapportConflits
 } from '../services/conflictDetectionService';
+import { authentifier, verifierRole } from '../middleware/auth';
 
 const router = Router();
+
+// Toutes les routes de conflits nécessitent authentification
+router.use(authentifier);
+router.use(verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'));
 
 /**
  * POST /api/conflicts/detect/allocation/:allocationId

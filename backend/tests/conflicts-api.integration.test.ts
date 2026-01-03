@@ -34,7 +34,7 @@ describe('API Conflicts - Tests d\'intégration', () => {
       data: {
         nom: 'Test API Traducteur',
         utilisateurId: testUser.id,
-        division: 'IAD',
+        divisions: ['IAD'],
         classification: 'TR4',
         capaciteHeuresParJour: 7,
         horaire: '07:00-16:00',

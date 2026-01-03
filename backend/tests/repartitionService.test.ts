@@ -29,7 +29,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'JAT Testeur',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 5,
@@ -52,7 +52,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'JAT Cap Insuff',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 2,
@@ -69,7 +69,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'JAT String Date',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 6,
@@ -89,7 +89,7 @@ describe('repartitionService.repartitionJusteATemps', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'JAT DateTime ISO',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 6,
@@ -113,7 +113,7 @@ describe('repartitionService.repartitionEquilibree', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'Equilibre Test',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 6,
@@ -142,7 +142,7 @@ describe('repartitionService.repartitionEquilibree', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'Equilibre Limit',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 3,
@@ -161,7 +161,7 @@ describe('repartitionService.repartitionPEPS', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'PEPS Test',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 5,
@@ -191,7 +191,7 @@ describe('repartitionService.repartitionPEPS', () => {
     const traducteur = await prisma.traducteur.create({
       data: {
         nom: 'PEPS Limit',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 4,

@@ -86,9 +86,14 @@ export const creerTraducteurSchema = z.object({
     nom: z.string().min(2),
     email: z.string().email(),
     motDePasse: z.string().min(6),
-    division: z.string().min(2),
+    divisions: z.array(z.string()).optional(),
+    classification: z.string().optional(),
+    categorie: z.enum(['TR01', 'TR02', 'TR03']).optional(),
+    horaire: z.string().optional(),
     domaines: z.array(z.string()).optional(),
     clientsHabituels: z.array(z.string()).optional(),
+    specialisations: z.array(z.string()).optional(),
+    notes: z.string().optional(),
     capaciteHeuresParJour: z.number().positive().max(24).optional(),
   })
 });

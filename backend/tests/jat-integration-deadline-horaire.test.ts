@@ -34,7 +34,7 @@ async function creerTraducteurTest(horaire: string, capacite: number = 7.5) {
   return await prisma.traducteur.create({
     data: {
       nom: `Test Traducteur ${horaire}`,
-      division: 'TEST',
+      divisions: ['TEST'],
       domaines: [],
       clientsHabituels: [],
       capaciteHeuresParJour: capacite,

@@ -5,8 +5,13 @@
 import { Router, Request, Response } from 'express';
 import liaisonService from '../services/liaisonReviseurService';
 import { CategorieTraducteur } from '@prisma/client';
+import { authentifier, verifierRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
+
+// Toutes les routes de liaisons nécessitent authentification
+router.use(authentifier);
+router.use(verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'));
 
 /**
  * GET /api/liaisons/resume

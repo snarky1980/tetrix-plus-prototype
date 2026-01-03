@@ -6,6 +6,8 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
+import { parseOttawaDateISO, todayOttawa, formatOttawaISO } from '../utils/dateTimeOttawa';
 
 const prisma = new PrismaClient();
 
@@ -216,7 +218,9 @@ export const importTraducteurs = async (req: Request, res: Response) => {
       return res.status(400).json({ erreur: 'Liste de traducteurs manquante' });
     }
     
-    const defaultPassword = await bcrypt.hash('password123', 10);
+    // Générer un mot de passe temporaire sécurisé (les utilisateurs devront le changer)
+    const tempPassword = 'Tetrix2026!';
+    const defaultPassword = await bcrypt.hash(tempPassword, 10);
     let created = 0;
     let errors: string[] = [];
     
@@ -393,8 +397,10 @@ export const importTaches = async (req: Request, res: Response) => {
     let created = 0;
     let errors: string[] = [];
     
-    // Récupérer le client par défaut ou le premier
-    const clientDefaut = await prisma.client.findFirst();
+    // Récupérer tous les clients pour mapping par nom
+    const clients = await prisma.client.findMany({ select: { id: true, nom: true } });
+    const clientsByNom = new Map(clients.map(c => [c.nom.toLowerCase(), c.id]));
+    const clientDefaut = clients[0]; // Fallback
     
     for (const tache of taches) {
       try {
@@ -406,12 +412,27 @@ export const importTaches = async (req: Request, res: Response) => {
         
         const dateEcheance = parseDate(tache.dateEcheance)!;
         
+        // Valider les heures (max 200h selon les règles métier)
+        if (tache.heuresTotal <= 0 || tache.heuresTotal > 200) {
+          errors.push(`${tache.numeroProjet}: Heures doivent être entre 0.1 et 200`);
+          continue;
+        }
+        
         // Mapper mode distribution
         let modeDistribution: 'JAT' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' = 'JAT';
         const mode = (tache.modeDistribution || '').toUpperCase();
         if (mode.includes('PEPS') || mode.includes('FIFO')) modeDistribution = 'PEPS';
         else if (mode.includes('EQUI') || mode.includes('BALANCE')) modeDistribution = 'EQUILIBRE';
         else if (mode.includes('MAN')) modeDistribution = 'MANUEL';
+        
+        // Mapper client par nom si spécifié
+        let clientId: string | undefined = clientDefaut?.id;
+        if (tache.client) {
+          const foundClientId = clientsByNom.get(tache.client.toLowerCase());
+          if (foundClientId) {
+            clientId = foundClientId;
+          }
+        }
         
         await prisma.tache.create({
           data: {
@@ -422,7 +443,7 @@ export const importTaches = async (req: Request, res: Response) => {
             statut: 'PLANIFIEE',
             modeDistribution,
             traducteurId: tache.traducteurId,
-            clientId: clientDefaut?.id || undefined,
+            clientId,
             creePar: utilisateurId
           }
         });
@@ -447,29 +468,25 @@ export const importTaches = async (req: Request, res: Response) => {
 
 /**
  * Parse une date flexible (YYYY-MM-DD, DD/MM/YYYY, MM/DD/YYYY, etc.)
+ * Utilise le timezone Ottawa conformément aux instructions du projet
  */
 function parseDate(dateStr: string): Date | null {
   if (!dateStr) return null;
   
-  // Format ISO (YYYY-MM-DD)
+  // Format ISO (YYYY-MM-DD) - utiliser parseOttawaDateISO
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-    return new Date(dateStr + 'T12:00:00');
+    return parseOttawaDateISO(dateStr);
   }
   
-  // Format DD/MM/YYYY ou DD-MM-YYYY
+  // Format DD/MM/YYYY ou DD-MM-YYYY (format canadien)
   const dmyMatch = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (dmyMatch) {
     const [, day, month, year] = dmyMatch;
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day), 12, 0, 0);
+    const isoDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+    return parseOttawaDateISO(isoDate);
   }
   
-  // Format MM/DD/YYYY (US)
-  const mdyMatch = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
-  if (mdyMatch) {
-    // Déjà traité ci-dessus, on assume DD/MM/YYYY pour le Canada
-  }
-  
-  // Tenter un parsing natif
+  // Tenter un parsing natif en dernier recours
   const parsed = new Date(dateStr);
   if (!isNaN(parsed.getTime())) {
     return parsed;

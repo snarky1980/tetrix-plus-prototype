@@ -22,9 +22,10 @@ const categorieOptions = ['TR01', 'TR02', 'TR03'];
 
 interface DemandesRessourcesProps {
   divisions?: string[];
+  showAll?: boolean;
 }
 
-export const DemandesRessources: React.FC<DemandesRessourcesProps> = () => {
+export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ showAll: _showAll }) => {
   const { rafraichirCompteurs } = useNotifications();
   const [demandes, setDemandes] = useState<DemandeRessource[]>([]);
   const [traducteursDispo, setTraducteursDispo] = useState<TraducteurDisponible[]>([]);

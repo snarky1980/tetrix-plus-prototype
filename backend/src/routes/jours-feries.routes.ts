@@ -1,7 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { JoursFeriesService } from '../services/joursFeriesService';
+import { authentifier } from '../middleware/auth';
 
 const router = Router();
+
+// Les routes de jours fériés nécessitent authentification (lecture seule pour tous)
+router.use(authentifier);
 
 /**
  * GET /api/jours-feries

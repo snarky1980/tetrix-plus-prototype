@@ -163,6 +163,7 @@ export const creerTraducteur = async (
       motDePasse,
       divisions,
       classification,
+      categorie,
       horaire,
       domaines,
       clientsHabituels,
@@ -170,6 +171,16 @@ export const creerTraducteur = async (
       notes,
       capaciteHeuresParJour,
     } = req.body;
+
+    // Mapper classification vers categorie si nécessaire
+    let categorieEffective = categorie;
+    if (!categorieEffective && classification) {
+      // Convertir TR-01 -> TR01, TR-02 -> TR02, TR-03 -> TR03
+      if (classification === 'TR-01') categorieEffective = 'TR01';
+      else if (classification === 'TR-02') categorieEffective = 'TR02';
+      else if (classification === 'TR-03') categorieEffective = 'TR03';
+      else categorieEffective = 'TR03'; // Par défaut
+    }
 
     // Créer l'utilisateur et le traducteur en une transaction
     const result = await prisma.$transaction(async (tx) => {
@@ -202,7 +213,8 @@ export const creerTraducteur = async (
         data: {
           nom,
           divisions: divisions || [],
-          classification,
+          classification: classification || 'TR-03',
+          categorie: categorieEffective || 'TR03',
           horaire: horaire || null,
           domaines: domaines || [],
           clientsHabituels: clientsHabituels || [],
@@ -267,12 +279,28 @@ export const mettreAJourTraducteur = async (
       await synchroniserClients(clientsHabituels);
     }
 
+    // Synchroniser classification et categorie
+    let categorieEffective = categorie;
+    let classificationEffective = classification;
+    
+    if (classification && !categorie) {
+      // Convertir classification -> categorie
+      if (classification === 'TR-01') categorieEffective = 'TR01';
+      else if (classification === 'TR-02') categorieEffective = 'TR02';
+      else if (classification === 'TR-03') categorieEffective = 'TR03';
+    } else if (categorie && !classification) {
+      // Convertir categorie -> classification  
+      if (categorie === 'TR01') classificationEffective = 'TR-01';
+      else if (categorie === 'TR02') classificationEffective = 'TR-02';
+      else if (categorie === 'TR03') classificationEffective = 'TR-03';
+    }
+
     const traducteur = await prisma.traducteur.update({
       where: { id },
       data: {
         ...(nom && { nom }),
         ...(divisions && { divisions }),
-        ...(classification && { classification }),
+        ...(classificationEffective && { classification: classificationEffective }),
         ...(horaire !== undefined && { horaire }),
         ...(domaines && { domaines }),
         ...(clientsHabituels && { clientsHabituels }),
@@ -281,7 +309,7 @@ export const mettreAJourTraducteur = async (
         ...(capaciteHeuresParJour && { capaciteHeuresParJour }),
         ...(actif !== undefined && { actif }),
         // Nouveaux champs
-        ...(categorie !== undefined && { categorie }),
+        ...(categorieEffective !== undefined && { categorie: categorieEffective }),
         ...(necessiteRevision !== undefined && { necessiteRevision }),
         ...(heureDinerDebut !== undefined && { heureDinerDebut }),
         ...(heureDinerFin !== undefined && { heureDinerFin }),

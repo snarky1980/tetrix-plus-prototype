@@ -10,7 +10,7 @@ describe('Mode MANUEL - Suggestions et validation heures précises', () => {
     traducteur = await prisma.traducteur.create({
       data: {
         nom: 'Test Manuel',
-        division: 'TEST',
+        divisions: ['TEST'],
         domaines: [],
         clientsHabituels: [],
         capaciteHeuresParJour: 8,

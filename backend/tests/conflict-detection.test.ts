@@ -54,7 +54,7 @@ describe('Système de détection de conflits', () => {
       data: {
         nom: 'Test Conflit 1',
         utilisateurId: testUser1.id,
-        division: 'IAD',
+        divisions: ['IAD'],
         classification: 'TR4',
         capaciteHeuresParJour: 7,
         horaire: '07:00-16:00',
@@ -66,7 +66,7 @@ describe('Système de détection de conflits', () => {
       data: {
         nom: 'Test Conflit 2',
         utilisateurId: testUser2.id,
-        division: 'IAD',
+        divisions: ['IAD'],
         classification: 'TR4',
         capaciteHeuresParJour: 7,
         horaire: '07:00-16:00',

@@ -57,7 +57,7 @@ describe('Service de Détection et Suggestion de Réattribution', () => {
     traducteur1 = await prisma.traducteur.create({
       data: {
         nom: 'Test Conflit 1',
-        division: 'TEST',
+        divisions: ['TEST'],
         classification: 'TT4',
         utilisateurId: user1.id,
         capaciteHeuresParJour: 7.5,
@@ -69,7 +69,7 @@ describe('Service de Détection et Suggestion de Réattribution', () => {
     traducteur2 = await prisma.traducteur.create({
       data: {
         nom: 'Test Conflit 2',
-        division: 'TEST',
+        divisions: ['TEST'],
         classification: 'TT4',
         utilisateurId: user2.id,
         capaciteHeuresParJour: 7.5,
