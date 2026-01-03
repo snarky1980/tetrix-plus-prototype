@@ -19,6 +19,7 @@ import { AdminSearchBar } from '../components/admin/AdminSearchBar';
 import { ActivityLog } from '../components/admin/ActivityLog';
 import { SystemAlerts } from '../components/admin/SystemAlerts';
 import { SystemSettings } from '../components/admin/SystemSettings';
+import { ImportBatchModal } from '../components/admin/ImportBatchModal';
 import { traducteurService } from '../services/traducteurService';
 import { utilisateurService } from '../services/utilisateurService';
 import { divisionService } from '../services/divisionService';
@@ -45,6 +46,7 @@ const DashboardAdmin: React.FC = () => {
   
   const [section, setSection] = useState<Section>('overview');
   const [loading, setLoading] = useState(true);
+  const [importModalType, setImportModalType] = useState<'traducteurs' | 'taches' | null>(null);
   const [systemStats, setSystemStats] = useState<SystemStats>({
     traducteurs: { total: 0, actifs: 0, inactifs: 0 },
     utilisateurs: { total: 0, parRole: {} },
@@ -74,56 +76,58 @@ const DashboardAdmin: React.FC = () => {
     return { total: libre + presque + plein, libre, presque, plein };
   }, [planificationGlobale]);
 
-  // Chargement des stats système
+  // Fonction de chargement des stats système
+  const chargerStats = async () => {
+    setLoading(true);
+    try {
+      const [traducteurs, utilisateurs, divisions, taches] = await Promise.all([
+        traducteurService.obtenirTraducteurs({}).catch(() => []),
+        utilisateurService.obtenirUtilisateurs().catch(() => []),
+        divisionService.obtenirDivisions().catch(() => []),
+        tacheService.obtenirTaches({}).catch(() => [])
+      ]);
+
+      // Stats traducteurs
+      const tradActifs = (traducteurs as Traducteur[]).filter(t => t.actif).length;
+      const tradsDispo = (traducteurs as Traducteur[]).filter(t => t.disponiblePourTravail);
+      setTraducteursDispo(tradsDispo);
+
+      // Stats utilisateurs par rôle
+      const parRole: Record<string, number> = {};
+      (utilisateurs as Utilisateur[]).forEach(u => {
+        parRole[u.role] = (parRole[u.role] || 0) + 1;
+      });
+
+      // Stats tâches
+      const tachesEnCours = (taches as any[]).filter(t => t.statut === 'EN_COURS' || t.statut === 'PLANIFIEE').length;
+      const tachesTerminees = (taches as any[]).filter(t => t.statut === 'TERMINEE').length;
+
+      setSystemStats({
+        traducteurs: {
+          total: traducteurs.length,
+          actifs: tradActifs,
+          inactifs: traducteurs.length - tradActifs
+        },
+        utilisateurs: {
+          total: utilisateurs.length,
+          parRole
+        },
+        divisions: divisions.length,
+        taches: {
+          total: taches.length,
+          enCours: tachesEnCours,
+          terminees: tachesTerminees
+        }
+      });
+    } catch (err) {
+      console.error('Erreur chargement stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Chargement initial des stats système
   useEffect(() => {
-    const chargerStats = async () => {
-      setLoading(true);
-      try {
-        const [traducteurs, utilisateurs, divisions, taches] = await Promise.all([
-          traducteurService.obtenirTraducteurs({}).catch(() => []),
-          utilisateurService.obtenirUtilisateurs().catch(() => []),
-          divisionService.obtenirDivisions().catch(() => []),
-          tacheService.obtenirTaches({}).catch(() => [])
-        ]);
-
-        // Stats traducteurs
-        const tradActifs = (traducteurs as Traducteur[]).filter(t => t.actif).length;
-        const tradsDispo = (traducteurs as Traducteur[]).filter(t => t.disponiblePourTravail);
-        setTraducteursDispo(tradsDispo);
-
-        // Stats utilisateurs par rôle
-        const parRole: Record<string, number> = {};
-        (utilisateurs as Utilisateur[]).forEach(u => {
-          parRole[u.role] = (parRole[u.role] || 0) + 1;
-        });
-
-        // Stats tâches
-        const tachesEnCours = (taches as any[]).filter(t => t.statut === 'EN_COURS' || t.statut === 'PLANIFIEE').length;
-        const tachesTerminees = (taches as any[]).filter(t => t.statut === 'TERMINEE').length;
-
-        setSystemStats({
-          traducteurs: {
-            total: traducteurs.length,
-            actifs: tradActifs,
-            inactifs: traducteurs.length - tradActifs
-          },
-          utilisateurs: {
-            total: utilisateurs.length,
-            parRole
-          },
-          divisions: divisions.length,
-          taches: {
-            total: taches.length,
-            enCours: tachesEnCours,
-            terminees: tachesTerminees
-          }
-        });
-      } catch (err) {
-        console.error('Erreur chargement stats:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
     chargerStats();
   }, []);
 
@@ -288,26 +292,26 @@ const DashboardAdmin: React.FC = () => {
               <Button 
                 variant="outline" 
                 size="sm"
+                onClick={() => setImportModalType('traducteurs')}
+                className="gap-1.5"
+              >
+                <span>📥</span> Import traducteurs
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setImportModalType('taches')}
+                className="gap-1.5"
+              >
+                <span>📥</span> Import tâches
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
                 onClick={() => navigate('/planification-globale')}
                 className="gap-1.5"
               >
                 <span>📅</span> Planification
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm" 
-                onClick={() => navigate('/statistiques-productivite')}
-                className="gap-1.5"
-              >
-                <span>📊</span> Stats
-              </Button>
-              <Button 
-                variant="outline"
-                size="sm" 
-                onClick={() => navigate('/liaisons')}
-                className="gap-1.5"
-              >
-                <span>🔗</span> Liaisons
               </Button>
               <Button 
                 variant="outline"
@@ -372,6 +376,19 @@ const DashboardAdmin: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal d'import batch */}
+      {importModalType && (
+        <ImportBatchModal
+          type={importModalType}
+          ouvert={true}
+          onFermer={() => setImportModalType(null)}
+          onSuccess={() => {
+            // Rafraîchir les stats après import
+            chargerStats();
+          }}
+        />
+      )}
     </AppLayout>
   );
 };

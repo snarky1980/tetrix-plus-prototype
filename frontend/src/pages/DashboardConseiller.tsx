@@ -8,6 +8,7 @@ import { LoadingSpinner } from '../components/ui/Spinner';
 import { InfoTooltip } from '../components/ui/Tooltip';
 import { TacheCard } from '../components/taches/TacheCard';
 import { DemandesRessources } from '../components/notifications/DemandesRessources';
+import { ImportBatchModal } from '../components/admin/ImportBatchModal';
 import { useAuth } from '../contexts/AuthContext';
 import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
@@ -33,6 +34,7 @@ const DashboardConseiller: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [filtreStatut, setFiltreStatut] = useState('');
   const [recherche, setRecherche] = useState('');
+  const [showImportModal, setShowImportModal] = useState(false);
 
   // Planification des 7 prochains jours
   const aujourdHui = useMemo(() => new Date(), []);
@@ -404,6 +406,14 @@ const DashboardConseiller: React.FC = () => {
               >
                 <span>📝</span> Mes notes
               </Button>
+              <Button 
+                variant="outline"
+                size="sm" 
+                onClick={() => setShowImportModal(true)}
+                className="gap-1.5"
+              >
+                <span>📥</span> Import tâches
+              </Button>
             </div>
           </div>
         </div>
@@ -460,6 +470,19 @@ const DashboardConseiller: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal d'import de tâches */}
+      {showImportModal && (
+        <ImportBatchModal
+          type="taches"
+          ouvert={showImportModal}
+          onFermer={() => setShowImportModal(false)}
+          onSuccess={() => {
+            setShowImportModal(false);
+            chargerDonnees();
+          }}
+        />
+      )}
     </AppLayout>
   );
 };

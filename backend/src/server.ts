@@ -32,6 +32,7 @@ import equipeProjetRoutes from './routes/equipeProjetRoutes';
 import sessionsAuditRoutes from './routes/sessionsAuditRoutes';
 import backupRoutes from './routes/backupRoutes';
 import noteRoutes from './routes/noteRoutes';
+import importBatchRoutes from './routes/importBatch.routes';
 
 const app = express();
 const prisma = new PrismaClient();
@@ -157,6 +158,7 @@ app.use('/api/referentiel', referentielRoutes);
 app.use('/api/equipes-projet', equipeProjetRoutes);
 app.use('/api/admin', sessionsAuditRoutes);
 app.use('/api/admin/backup', backupRoutes);
+app.use('/api/admin/import', importBatchRoutes);
 app.use('/api/notes', noteRoutes);
 
 // Route 404
