@@ -533,6 +533,9 @@ async function verifierEntiteExiste(
     case 'SOUS_DOMAINE':
       existe = !!(await prisma.sousDomaine.findUnique({ where: { id: entiteId } }));
       break;
+    case 'UTILISATEUR':
+      existe = !!(await prisma.utilisateur.findUnique({ where: { id: entiteId } }));
+      break;
   }
 
   if (!existe) {
@@ -589,6 +592,13 @@ export async function obtenirNomEntite(
         select: { nom: true }
       });
       return sousDomaine?.nom || 'Sous-domaine inconnu';
+    }
+    case 'UTILISATEUR': {
+      const utilisateur = await prisma.utilisateur.findUnique({ 
+        where: { id: entiteId },
+        select: { email: true }
+      });
+      return utilisateur?.email || 'Utilisateur inconnu';
     }
     default:
       return 'Entité inconnue';

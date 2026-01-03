@@ -396,6 +396,14 @@ const DashboardConseiller: React.FC = () => {
               >
                 <span>⚠️</span> Conflits
               </Button>
+              <Button 
+                variant="outline"
+                size="sm" 
+                onClick={() => navigate('/mes-notes')}
+                className="gap-1.5"
+              >
+                <span>📝</span> Mes notes
+              </Button>
             </div>
           </div>
         </div>

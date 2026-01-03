@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
@@ -23,6 +24,8 @@ type ViewMode = '1' | '7' | '14' | '30' | 'custom';
  * SANS création/modification de tâches
  */
 const DashboardGestionnaire: React.FC = () => {
+  const navigate = useNavigate();
+  
   // ============ Hook métier ============
   const {
     // Navigation
@@ -593,7 +596,7 @@ const DashboardGestionnaire: React.FC = () => {
           </div>
           
           {/* Menu de navigation */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <Button 
               variant={section === 'overview' ? 'primaire' : 'outline'}
               onClick={() => setSection('overview')}
@@ -633,6 +636,14 @@ const DashboardGestionnaire: React.FC = () => {
             >
               <span className="text-2xl">📊</span>
               <span className="text-sm">Statistiques</span>
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/mes-notes')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">📝</span>
+              <span className="text-sm">Mes notes</span>
             </Button>
           </div>
         </div>

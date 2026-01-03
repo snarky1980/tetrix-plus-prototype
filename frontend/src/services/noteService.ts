@@ -10,7 +10,8 @@ export type TypeEntiteNote =
   | 'DIVISION' 
   | 'EQUIPE_PROJET' 
   | 'TACHE' 
-  | 'SOUS_DOMAINE';
+  | 'SOUS_DOMAINE'
+  | 'UTILISATEUR';
 
 export type CategorieNote = 
   | 'GENERALE' 
@@ -348,4 +349,5 @@ export const TYPES_ENTITE_LABELS: Record<TypeEntiteNote, string> = {
   EQUIPE_PROJET: 'Équipe-projet',
   TACHE: 'Tâche',
   SOUS_DOMAINE: 'Sous-domaine',
+  UTILISATEUR: 'Notes personnelles',
 };

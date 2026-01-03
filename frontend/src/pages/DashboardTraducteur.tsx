@@ -850,7 +850,7 @@ const DashboardTraducteur: React.FC = () => {
           </div>
           
           {/* Menu de navigation */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <Button 
               variant={section === 'overview' ? 'primaire' : 'outline'}
               onClick={() => setSection('overview')}
@@ -882,6 +882,14 @@ const DashboardTraducteur: React.FC = () => {
             >
               <span className="text-2xl">📊</span>
               <span className="text-sm">Statistiques</span>
+            </Button>
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/mes-notes')}
+              className="flex flex-col items-center gap-2 h-auto py-4"
+            >
+              <span className="text-2xl">📝</span>
+              <span className="text-sm">Mes notes</span>
             </Button>
             <Button 
               variant={section === 'parametres' ? 'primaire' : 'outline'}

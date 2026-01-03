@@ -21,6 +21,7 @@ const GestionProfils = lazy(() => import('./pages/GestionProfils').then(m => ({ 
 const StatistiquesProductivite = lazy(() => import('./pages/StatistiquesProductivite'));
 const ConflictResolution = lazy(() => import('./pages/ConflictResolution'));
 const LiaisonsPage = lazy(() => import('./pages/LiaisonsPage'));
+const MesNotes = lazy(() => import('./pages/MesNotes'));
 
 // Composant de chargement pour Suspense
 const PageLoader: React.FC = () => (
@@ -203,6 +204,16 @@ function App() {
             element={
               <RouteProtegee rolesAutorises={['CONSEILLER', 'GESTIONNAIRE', 'ADMIN']}>
                 <LiaisonsPage />
+              </RouteProtegee>
+            }
+          />
+
+          {/* Mes Notes - accessible à tous les utilisateurs authentifiés */}
+          <Route
+            path="/mes-notes"
+            element={
+              <RouteProtegee>
+                <MesNotes />
               </RouteProtegee>
             }
           />

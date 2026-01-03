@@ -577,6 +577,7 @@ enum TypeEntiteNote {
   EQUIPE_PROJET
   TACHE
   SOUS_DOMAINE
+  UTILISATEUR    // Notes personnelles de l'utilisateur
 }
 
 enum CategorieNote {
