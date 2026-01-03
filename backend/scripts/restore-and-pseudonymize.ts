@@ -133,7 +133,7 @@ async function restoreAndPseudonymize() {
   console.log('🔄 Restauration et pseudonymisation en cours...\n');
 
   // Charger le backup original
-  const backupPath = path.join(__dirname, '../prisma/backup-before-pseudonymization-1766101667697.json');
+  const backupPath = path.join(__dirname, '../prisma/backup-original-real-names.json');
   const backupData = JSON.parse(fs.readFileSync(backupPath, 'utf-8'));
 
   console.log(`📦 ${backupData.length} traducteurs à traiter\n`);
@@ -181,7 +181,7 @@ async function restoreAndPseudonymize() {
         where: { id: traducteur.id },
         update: {
           nom: pseudonym.pseudonymName,
-          division: traducteur.division,
+          divisions: traducteur.division ? [traducteur.division] : [],
           domaines: traducteur.domaines,
           clientsHabituels: traducteur.clientsHabituels,
           capaciteHeuresParJour: traducteur.capaciteHeuresParJour,
@@ -196,7 +196,7 @@ async function restoreAndPseudonymize() {
         create: {
           id: traducteur.id,
           nom: pseudonym.pseudonymName,
-          division: traducteur.division,
+          divisions: traducteur.division ? [traducteur.division] : [],
           domaines: traducteur.domaines,
           clientsHabituels: traducteur.clientsHabituels,
           capaciteHeuresParJour: traducteur.capaciteHeuresParJour,
