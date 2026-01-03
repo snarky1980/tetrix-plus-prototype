@@ -3,6 +3,9 @@ import { Button } from '../ui/Button';
 import { Badge, BadgeVariant } from '../ui/Badge';
 import { InfoTooltip } from '../ui/Tooltip';
 
+// API URL pour les health checks
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+
 interface SystemHealth {
   database: 'ok' | 'warning' | 'error';
   api: 'ok' | 'warning' | 'error';
@@ -37,7 +40,7 @@ export const SystemSettings: React.FC = () => {
     const checkHealth = async () => {
       try {
         // Ping API pour vérifier la connectivité
-        const response = await fetch('/api/health');
+        const response = await fetch(`${API_BASE_URL}/health`);
         if (response.ok) {
           const data = await response.json();
           setHealth({
