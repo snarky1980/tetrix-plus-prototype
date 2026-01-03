@@ -1,7 +1,12 @@
 /**
  * Service de gestion des jours fériés canadiens
- * Gère les congés statutaires pour 2025-2027 selon le calendrier PSAC/AFPC
+ * Gère les congés statutaires - version hybride BD + fallback hardcodé
  */
+
+import { PrismaClient } from '.prisma/client';
+
+// Import direct du client Prisma pour éviter les problèmes de cache TypeScript
+const prisma = new PrismaClient();
 
 export interface JourFerie {
   date: Date;
@@ -10,8 +15,8 @@ export interface JourFerie {
 }
 
 /**
- * Liste complète des jours fériés pour 2025, 2026 et 2027
- * Basé sur le calendrier officiel PSAC/AFPC
+ * Liste de fallback des jours fériés pour 2025, 2026 et 2027
+ * Utilisée si la BD est vide ou inaccessible
  */
 const JOURS_FERIES_2025: JourFerie[] = [
   { date: new Date('2025-12-25'), nom: 'Noël' },
@@ -46,15 +51,75 @@ const JOURS_FERIES_2027: JourFerie[] = [
   { date: new Date('2027-12-28'), nom: 'Lendemain de Noël (observé)' },
 ];
 
-const TOUS_JOURS_FERIES = [...JOURS_FERIES_2025, ...JOURS_FERIES_2026, ...JOURS_FERIES_2027];
+const FALLBACK_JOURS_FERIES = [...JOURS_FERIES_2025, ...JOURS_FERIES_2026, ...JOURS_FERIES_2027];
+
+// Cache des jours fériés de la BD (rafraîchi toutes les 5 minutes)
+let cacheJoursFeries: JourFerie[] | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export class JoursFeriesService {
+  /**
+   * Récupère les jours fériés de la BD avec cache
+   */
+  private static async getJoursFeriesFromDB(): Promise<JourFerie[]> {
+    const now = Date.now();
+    
+    // Utiliser le cache si valide
+    if (cacheJoursFeries && (now - cacheTimestamp) < CACHE_TTL) {
+      return cacheJoursFeries;
+    }
+    
+    try {
+      const joursFeriesDB = await prisma.jourFerie.findMany({
+        where: { actif: true },
+        orderBy: { date: 'asc' },
+      });
+      
+      if (joursFeriesDB.length > 0) {
+        cacheJoursFeries = joursFeriesDB.map((jf: { date: Date; nom: string; description: string | null }) => ({
+          date: jf.date,
+          nom: jf.nom,
+          description: jf.description || undefined,
+        }));
+        cacheTimestamp = now;
+        return cacheJoursFeries!;
+      }
+    } catch (error) {
+      console.warn('JoursFeriesService: Impossible de lire la BD, utilisation du fallback');
+    }
+    
+    // Fallback si BD vide ou erreur
+    return FALLBACK_JOURS_FERIES;
+  }
+
+  /**
+   * Invalide le cache (à appeler après modification)
+   */
+  static invalidateCache(): void {
+    cacheJoursFeries = null;
+    cacheTimestamp = 0;
+  }
+
   /**
    * Vérifie si une date donnée est un jour férié
    */
   static estJourFerie(date: Date): boolean {
+    // Version synchrone - utilise le cache ou le fallback
+    const joursFeries = cacheJoursFeries || FALLBACK_JOURS_FERIES;
     const dateStr = this.formatDate(date);
-    return TOUS_JOURS_FERIES.some(
+    return joursFeries.some(
+      (jf) => this.formatDate(jf.date) === dateStr
+    );
+  }
+
+  /**
+   * Version asynchrone qui vérifie la BD
+   */
+  static async estJourFerieAsync(date: Date): Promise<boolean> {
+    const joursFeries = await this.getJoursFeriesFromDB();
+    const dateStr = this.formatDate(date);
+    return joursFeries.some(
       (jf) => this.formatDate(jf.date) === dateStr
     );
   }
@@ -63,8 +128,9 @@ export class JoursFeriesService {
    * Obtient le nom du jour férié pour une date donnée
    */
   static obtenirNomJourFerie(date: Date): string | null {
+    const joursFeries = cacheJoursFeries || FALLBACK_JOURS_FERIES;
     const dateStr = this.formatDate(date);
-    const jourFerie = TOUS_JOURS_FERIES.find(
+    const jourFerie = joursFeries.find(
       (jf) => this.formatDate(jf.date) === dateStr
     );
     return jourFerie?.nom || null;
@@ -74,10 +140,16 @@ export class JoursFeriesService {
    * Retourne tous les jours fériés pour une année donnée
    */
   static obtenirJoursFeries(annee: number): JourFerie[] {
-    if (annee === 2025) return JOURS_FERIES_2025;
-    if (annee === 2026) return JOURS_FERIES_2026;
-    if (annee === 2027) return JOURS_FERIES_2027;
-    return [];
+    const joursFeries = cacheJoursFeries || FALLBACK_JOURS_FERIES;
+    return joursFeries.filter(jf => jf.date.getFullYear() === annee);
+  }
+
+  /**
+   * Version asynchrone
+   */
+  static async obtenirJoursFeriesAsync(annee: number): Promise<JourFerie[]> {
+    const joursFeries = await this.getJoursFeriesFromDB();
+    return joursFeries.filter(jf => jf.date.getFullYear() === annee);
   }
 
   /**
@@ -87,7 +159,8 @@ export class JoursFeriesService {
     dateDebut: Date,
     dateFin: Date
   ): JourFerie[] {
-    return TOUS_JOURS_FERIES.filter(
+    const joursFeries = cacheJoursFeries || FALLBACK_JOURS_FERIES;
+    return joursFeries.filter(
       (jf) => jf.date >= dateDebut && jf.date <= dateFin
     );
   }
@@ -147,6 +220,21 @@ export class JoursFeriesService {
    * Retourne tous les jours fériés configurés
    */
   static obtenirTousLesJoursFeries(): JourFerie[] {
-    return TOUS_JOURS_FERIES;
+    return cacheJoursFeries || FALLBACK_JOURS_FERIES;
+  }
+
+  /**
+   * Version asynchrone - charge de la BD
+   */
+  static async obtenirTousLesJoursFeriesAsync(): Promise<JourFerie[]> {
+    return this.getJoursFeriesFromDB();
+  }
+
+  /**
+   * Force le rechargement du cache depuis la BD
+   */
+  static async rechargerCache(): Promise<void> {
+    this.invalidateCache();
+    await this.getJoursFeriesFromDB();
   }
 }

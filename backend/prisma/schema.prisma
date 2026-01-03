@@ -25,6 +25,26 @@ model Utilisateur {
   @@map("utilisateurs")
 }
 
+model JourFerie {
+  id          String   @id @default(uuid())
+  date        DateTime @unique
+  nom         String
+  description String?
+  type        TypeJourFerie @default(FEDERAL)
+  actif       Boolean  @default(true)
+  creeLe      DateTime @default(now())
+  modifieLe   DateTime @updatedAt
+
+  @@index([date])
+  @@map("jours_feries")
+}
+
+enum TypeJourFerie {
+  FEDERAL      // Jour férié fédéral
+  PROVINCIAL   // Jour férié provincial (Ontario)
+  ORGANISATIONNEL // Congé spécifique à l'organisation
+}
+
 model Division {
   id          String           @id @default(uuid())
   nom         String           @unique

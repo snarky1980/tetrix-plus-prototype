@@ -12,6 +12,7 @@ import { ClientDomaineManagement } from '../components/admin/ClientDomaineManage
 import { UserManagement } from '../components/admin/UserManagement';
 import { EquipeProjetManagement } from '../components/admin/EquipeProjetManagement';
 import { DivisionManagement } from '../components/admin/DivisionManagement';
+import JoursFeriesManagement from '../components/admin/JoursFeriesManagement';
 import { AdminSearchBar } from '../components/admin/AdminSearchBar';
 import { ActivityLog } from '../components/admin/ActivityLog';
 import { SystemAlerts } from '../components/admin/SystemAlerts';
@@ -22,7 +23,7 @@ import { divisionService } from '../services/divisionService';
 import { tacheService } from '../services/tacheService';
 import type { Traducteur, Utilisateur } from '../types';
 
-type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'systeme';
+type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'jours-feries' | 'systeme';
 
 interface SystemStats {
   traducteurs: { total: number; actifs: number; inactifs: number };
@@ -235,6 +236,8 @@ const DashboardAdmin: React.FC = () => {
         return <UserManagement />;
       case 'divisions':
         return <DivisionManagement />;
+      case 'jours-feries':
+        return <JoursFeriesManagement />;
       case 'systeme':
         return <SystemSettings />;
       case 'overview':
@@ -329,6 +332,7 @@ const DashboardAdmin: React.FC = () => {
               { id: 'utilisateurs' as const, icon: '🔐', label: 'Utilisateurs' },
               { id: 'divisions' as const, icon: '🏛️', label: 'Divisions' },
               { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel' },
+              { id: 'jours-feries' as const, icon: '📅', label: 'Jours fériés' },
               { id: 'systeme' as const, icon: '⚙️', label: 'Système' },
             ].map(item => (
               <button
