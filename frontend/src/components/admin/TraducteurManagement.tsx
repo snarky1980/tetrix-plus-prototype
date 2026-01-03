@@ -11,6 +11,7 @@ import { EmptyState } from '../ui/EmptyState';
 import { InfoTooltip } from '../ui/Tooltip';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
 import { traducteurService } from '../../services/traducteurService';
+import { exporterTraducteurs } from '../../utils/exportUtils';
 
 // Labels pour les catégories
 const CATEGORIE_LABELS: Record<CategorieTraducteur, { label: string; color: string }> = {
@@ -381,9 +382,19 @@ export const TraducteurManagement: React.FC = () => {
                 size="md"
               />
             </div>
-            <Button variant="primaire" onClick={handleNouveauTraducteur}>
-              + Nouveau traducteur
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => exporterTraducteurs(traducteursFiltres)}
+                title="Exporter la liste en CSV"
+              >
+                📥 Export CSV
+              </Button>
+              <Button variant="primaire" onClick={handleNouveauTraducteur}>
+                + Nouveau traducteur
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>

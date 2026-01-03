@@ -11,6 +11,10 @@ import { TraducteurManagement } from '../components/admin/TraducteurManagement';
 import { ClientDomaineManagement } from '../components/admin/ClientDomaineManagementV2';
 import { UserManagement } from '../components/admin/UserManagement';
 import { EquipeProjetManagement } from '../components/admin/EquipeProjetManagement';
+import { DivisionManagement } from '../components/admin/DivisionManagement';
+import { AdminSearchBar } from '../components/admin/AdminSearchBar';
+import { ActivityLog } from '../components/admin/ActivityLog';
+import { SystemAlerts } from '../components/admin/SystemAlerts';
 import { SystemSettings } from '../components/admin/SystemSettings';
 import { traducteurService } from '../services/traducteurService';
 import { utilisateurService } from '../services/utilisateurService';
@@ -18,7 +22,7 @@ import { divisionService } from '../services/divisionService';
 import { tacheService } from '../services/tacheService';
 import type { Traducteur, Utilisateur } from '../types';
 
-type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'systeme';
+type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'systeme';
 
 interface SystemStats {
   traducteurs: { total: number; actifs: number; inactifs: number };
@@ -122,24 +126,28 @@ const DashboardAdmin: React.FC = () => {
 
   const renderOverview = () => (
     <div className="space-y-4">
-      {/* Stats compactes en ligne */}
+      {/* Stats compactes en ligne - cliquables */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {[
-          { label: 'Traducteurs', value: systemStats.traducteurs.total, sub: `${systemStats.traducteurs.actifs} actifs`, color: 'blue', tooltip: 'Nombre total de profils traducteurs dans le système. Les traducteurs actifs peuvent recevoir des tâches.' },
-          { label: 'Utilisateurs', value: systemStats.utilisateurs.total, sub: `${Object.keys(systemStats.utilisateurs.parRole).length} rôles`, color: 'gray', tooltip: 'Comptes utilisateurs (Admin, Conseiller, Gestionnaire, Traducteur) pouvant se connecter au système.' },
-          { label: 'Divisions', value: systemStats.divisions, color: 'gray', tooltip: 'Unités organisationnelles (ex: CISR, Droit, Finance). Les traducteurs sont assignés à une ou plusieurs divisions.' },
-          { label: 'Tâches', value: systemStats.taches.total, sub: `${systemStats.taches.enCours} en cours`, color: 'amber', tooltip: 'Travaux de traduction planifiés. Inclut les tâches en attente, en cours et terminées.' },
-          { label: 'Dispo.', value: capaciteStats.libre, sub: '7 jours', color: 'green', tooltip: 'Créneaux de disponibilité sur les 7 prochains jours. Indique la capacité restante pour nouvelles tâches.' },
-          { label: 'Saturé', value: capaciteStats.plein, color: 'red', tooltip: 'Créneaux complètement occupés. Ces traducteurs ne peuvent pas accepter de travail supplémentaire.' },
+          { label: 'Traducteurs', value: systemStats.traducteurs.total, sub: `${systemStats.traducteurs.actifs} actifs`, color: 'blue', tooltip: 'Nombre total de profils traducteurs dans le système. Les traducteurs actifs peuvent recevoir des tâches.', action: () => setSection('traducteurs') },
+          { label: 'Utilisateurs', value: systemStats.utilisateurs.total, sub: `${Object.keys(systemStats.utilisateurs.parRole).length} rôles`, color: 'gray', tooltip: 'Comptes utilisateurs (Admin, Conseiller, Gestionnaire, Traducteur) pouvant se connecter au système.', action: () => setSection('utilisateurs') },
+          { label: 'Divisions', value: systemStats.divisions, color: 'purple', tooltip: 'Unités organisationnelles (ex: CISR, Droit, Finance). Les traducteurs sont assignés à une ou plusieurs divisions.', action: () => setSection('divisions') },
+          { label: 'Tâches', value: systemStats.taches.total, sub: `${systemStats.taches.enCours} en cours`, color: 'amber', tooltip: 'Travaux de traduction planifiés. Inclut les tâches en attente, en cours et terminées.', action: () => navigate('/conseiller') },
+          { label: 'Dispo.', value: capaciteStats.libre, sub: '7 jours', color: 'green', tooltip: 'Créneaux de disponibilité sur les 7 prochains jours. Indique la capacité restante pour nouvelles tâches.', action: () => navigate('/planification-globale') },
+          { label: 'Saturé', value: capaciteStats.plein, color: 'red', tooltip: 'Créneaux complètement occupés. Ces traducteurs ne peuvent pas accepter de travail supplémentaire.', action: () => navigate('/planification-globale') },
         ].map((stat, i) => (
-          <div key={i} className={`p-2 rounded border bg-${stat.color}-50 border-${stat.color}-200`}>
+          <button
+            key={i}
+            onClick={stat.action}
+            className={`p-2 rounded border bg-${stat.color}-50 border-${stat.color}-200 hover:bg-${stat.color}-100 hover:border-${stat.color}-300 transition-colors text-left cursor-pointer`}
+          >
             <div className="text-xs text-gray-500 flex items-center gap-1">
               {stat.label}
               {stat.tooltip && <InfoTooltip content={stat.tooltip} size="sm" />}
             </div>
             <div className="text-lg font-bold">{stat.value}</div>
             {stat.sub && <div className="text-xs text-gray-400">{stat.sub}</div>}
-          </div>
+          </button>
         ))}
       </div>
 
@@ -197,6 +205,12 @@ const DashboardAdmin: React.FC = () => {
         </div>
       </div>
 
+      {/* Journal d'activité et Alertes - nouvelle grille */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <ActivityLog maxItems={6} />
+        <SystemAlerts />
+      </div>
+
       {/* État système compact */}
       <div className="flex items-center gap-4 text-xs text-gray-500 border-t pt-3">
         <span className="flex items-center gap-1">
@@ -219,6 +233,8 @@ const DashboardAdmin: React.FC = () => {
         return <ClientDomaineManagement />;
       case 'utilisateurs':
         return <UserManagement />;
+      case 'divisions':
+        return <DivisionManagement />;
       case 'systeme':
         return <SystemSettings />;
       case 'overview':
@@ -244,6 +260,11 @@ const DashboardAdmin: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold">Bonjour, {utilisateur?.prenom || 'Admin'}</h1>
               <p className="text-sm text-muted">Console d'administration système</p>
+            </div>
+            
+            {/* Recherche globale */}
+            <div className="flex-1 max-w-md mx-4">
+              <AdminSearchBar />
             </div>
             
             {/* Actions rapides */}
@@ -306,6 +327,7 @@ const DashboardAdmin: React.FC = () => {
               { id: 'traducteurs' as const, icon: '👥', label: 'Traducteurs' },
               { id: 'equipes-projet' as const, icon: '🎯', label: 'Équipes-projet' },
               { id: 'utilisateurs' as const, icon: '🔐', label: 'Utilisateurs' },
+              { id: 'divisions' as const, icon: '🏛️', label: 'Divisions' },
               { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel' },
               { id: 'systeme' as const, icon: '⚙️', label: 'Système' },
             ].map(item => (

@@ -16,6 +16,7 @@ import { Utilisateur, Traducteur } from '../../types';
 import { utilisateurService } from '../../services/utilisateurService';
 import { traducteurService } from '../../services/traducteurService';
 import { QuickUserCreation, QuickCreateInline } from './QuickUserCreation';
+import { exporterUtilisateurs } from '../../utils/exportUtils';
 
 export const UserManagement: React.FC = () => {
   const { addToast } = useToast();
@@ -226,6 +227,14 @@ export const UserManagement: React.FC = () => {
           <div className="flex items-center justify-between">
             <CardTitle>Gestion des utilisateurs</CardTitle>
             <div className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => exporterUtilisateurs(utilisateursNormaux)}
+                title="Exporter la liste en CSV"
+              >
+                📥 Export CSV
+              </Button>
               <Button 
                 variant="outline" 
                 onClick={() => setShowQuickCreate(!showQuickCreate)}

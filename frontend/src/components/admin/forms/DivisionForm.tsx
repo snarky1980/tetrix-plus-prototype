@@ -54,10 +54,10 @@ export const DivisionForm: React.FC<DivisionFormProps> = ({
 
     try {
       if (division) {
-        await divisionService.mettreAJourDivision(division.id, { nom, description });
+        await divisionService.mettreAJourDivision(division.id, { nom, code, description });
         addToast('Division modifiée avec succès', 'success');
       } else {
-        await divisionService.creerDivision({ nom, description });
+        await divisionService.creerDivision({ nom, code, description });
         addToast('Division créée avec succès', 'success');
       }
       onSauvegarder();
