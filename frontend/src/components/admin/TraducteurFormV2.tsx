@@ -10,6 +10,7 @@ import { useToast } from '../../contexts/ToastContext';
 import { Traducteur, PaireLinguistique, CategorieTraducteur } from '../../types';
 import { traducteurService } from '../../services/traducteurService';
 import { authService } from '../../services/authService';
+import NotesPanel from '../common/NotesPanel';
 
 interface TraducteurFormProps {
   traducteur?: Traducteur;
@@ -18,7 +19,7 @@ interface TraducteurFormProps {
   onSauvegarder: () => void;
 }
 
-type TabId = 'identite' | 'competences' | 'horaires' | 'avance';
+type TabId = 'identite' | 'competences' | 'horaires' | 'avance' | 'notes';
 
 interface TabConfig {
   id: TabId;
@@ -31,6 +32,7 @@ const TABS: TabConfig[] = [
   { id: 'competences', label: 'Compétences', icon: '🎯' },
   { id: 'horaires', label: 'Horaires', icon: '🕐' },
   { id: 'avance', label: 'Avancé', icon: '⚙️' },
+  { id: 'notes', label: 'Notes', icon: '📝' },
 ];
 
 const DIVISION_OPTIONS = [
@@ -685,8 +687,30 @@ export const TraducteurFormV2: React.FC<TraducteurFormProps> = ({
       case 'competences': return renderCompetencesTab();
       case 'horaires': return renderHorairesTab();
       case 'avance': return renderAvanceTab();
+      case 'notes': return renderNotesTab();
       default: return null;
     }
+  };
+
+  // Onglet Notes (visible uniquement en édition)
+  const renderNotesTab = () => {
+    if (!traducteur) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          <p className="text-4xl mb-2">📝</p>
+          <p>Les notes seront disponibles après la création du traducteur.</p>
+        </div>
+      );
+    }
+
+    return (
+      <NotesPanel
+        entiteType="TRADUCTEUR"
+        entiteId={traducteur.id}
+        titre="Notes sur ce traducteur"
+        className="border-0 shadow-none"
+      />
+    );
   };
 
   return (

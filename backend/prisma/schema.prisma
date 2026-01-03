@@ -506,3 +506,92 @@ enum RoleEquipe {
   MEMBRE
   REVISEUR
 }
+// ============================================
+// NOTES & DOCUMENTATION
+// ============================================
+
+model Note {
+  id            String         @id @default(uuid())
+  titre         String
+  contenu       String         @db.Text  // Markdown supporté
+  categorie     CategorieNote  @default(GENERALE)
+  visibilite    VisibiliteNote @default(EQUIPE)
+  
+  // Polymorphisme - l'entité attachée
+  entiteType    TypeEntiteNote
+  entiteId      String
+  
+  // Métadonnées
+  epingle       Boolean        @default(false)
+  tags          String[]       @default([])
+  ordre         Int            @default(0)
+  
+  // Audit
+  creeParId     String
+  creePar       String         // Nom affiché
+  modifieParId  String?
+  modifiePar    String?
+  creeLe        DateTime       @default(now())
+  modifieLe     DateTime       @updatedAt
+  
+  // Relations
+  piecesJointes PieceJointe[]
+  
+  @@index([entiteType, entiteId])
+  @@index([creeParId])
+  @@index([visibilite])
+  @@index([epingle])
+  @@index([categorie])
+  @@map("notes")
+}
+
+model PieceJointe {
+  id           String   @id @default(uuid())
+  nom          String
+  nomOriginal  String
+  typeMime     String
+  taille       Int      // en bytes
+  chemin       String   // Chemin stockage ou URL
+  noteId       String?
+  
+  // Peut aussi être attaché directement à une entité (sans note)
+  entiteType   TypeEntiteNote?
+  entiteId     String?
+  
+  // Audit
+  creeParId    String
+  creePar      String
+  creeLe       DateTime @default(now())
+  
+  note         Note?    @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  
+  @@index([noteId])
+  @@index([entiteType, entiteId])
+  @@map("pieces_jointes")
+}
+
+enum TypeEntiteNote {
+  CLIENT
+  TRADUCTEUR
+  DIVISION
+  EQUIPE_PROJET
+  TACHE
+  SOUS_DOMAINE
+}
+
+enum CategorieNote {
+  GENERALE
+  CONTACT
+  PROCEDURE
+  TERMINOLOGIE
+  PREFERENCE
+  HISTORIQUE
+  ALERTE
+}
+
+enum VisibiliteNote {
+  PRIVE        // Visible seulement par l'auteur
+  EQUIPE       // Visible par CONSEILLER, GESTIONNAIRE, ADMIN
+  TRADUCTEUR   // Visible aussi par les traducteurs concernés
+  PUBLIC       // Visible par tous
+}
