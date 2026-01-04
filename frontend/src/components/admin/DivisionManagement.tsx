@@ -112,6 +112,21 @@ export const DivisionManagement: React.FC = () => {
     setError(null);
   };
 
+  // Supprimer une division
+  const handleSupprimer = async (division: Division) => {
+    if (!confirm(`Supprimer la division "${division.nom}" (${division.code}) ?\n\nCette action est irréversible.`)) {
+      return;
+    }
+    
+    try {
+      await divisionService.supprimerDivision(division.id);
+      setSuccess(`Division "${division.nom}" supprimée`);
+      await chargerDivisions();
+    } catch (err: any) {
+      setError(err.response?.data?.erreur || err.response?.data?.message || 'Erreur lors de la suppression');
+    }
+  };
+
   if (loading) {
     return <LoadingSpinner message="Chargement des divisions..." />;
   }
@@ -269,6 +284,13 @@ export const DivisionManagement: React.FC = () => {
                         }`}
                       >
                         {division.actif ? '🚫 Désactiver' : '✅ Activer'}
+                      </button>
+                      <button
+                        onClick={() => handleSupprimer(division)}
+                        className="px-2 py-1 text-xs text-red-600 hover:bg-red-50 rounded"
+                        title="Supprimer définitivement"
+                      >
+                        🗑️ Supprimer
                       </button>
                     </div>
                   </td>

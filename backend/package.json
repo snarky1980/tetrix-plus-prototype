@@ -12,7 +12,8 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
-    "grant-divisions": "tsx scripts/grant-default-divisions.ts"
+    "grant-divisions": "tsx scripts/grant-default-divisions.ts",
+    "seed:equipes-conseiller": "tsx scripts/seed-equipes-conseiller.ts"
   },
   "dependencies": {
     "@prisma/client": "^5.22.0",

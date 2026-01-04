@@ -1,4 +1,5 @@
 import { PrismaClient, TypeEntiteNote, CategorieNote, VisibiliteNote, Role, Note, PieceJointe } from '.prisma/client';
+import * as equipeConseillerService from './equipeConseillerService';
 
 const prisma = new PrismaClient();
 
@@ -19,6 +20,7 @@ export interface CreerNoteInput {
   entiteId: string;
   epingle?: boolean;
   tags?: string[];
+  equipeConseillerId?: string; // Pour partage avec une équipe conseiller spécifique
 }
 
 export interface ModifierNoteInput {
@@ -28,6 +30,7 @@ export interface ModifierNoteInput {
   visibilite?: VisibiliteNote;
   epingle?: boolean;
   tags?: string[];
+  equipeConseillerId?: string;
 }
 
 export interface FiltresNotes {
@@ -45,6 +48,7 @@ export interface FiltresNotes {
 
 /**
  * Détermine si un utilisateur peut voir une note selon sa visibilité et son rôle
+ * Version synchrone - ne gère pas EQUIPE_CONSEILLER (utilisez peutVoirNoteAsync pour cela)
  */
 export function peutVoirNote(
   note: Note,
@@ -77,8 +81,59 @@ export function peutVoirNote(
       // Seulement ADMIN, CONSEILLER, GESTIONNAIRE
       return ['ADMIN', 'CONSEILLER', 'GESTIONNAIRE'].includes(role);
     
+    case 'EQUIPE_CONSEILLER':
+      // Géré par peutVoirNoteAsync - retourne false ici par précaution
+      // L'auteur a déjà été vérifié au-dessus
+      return false;
+    
     case 'PRIVE':
       // Seulement l'auteur (déjà vérifié au-dessus)
+      return false;
+    
+    default:
+      return false;
+  }
+}
+
+/**
+ * Détermine si un utilisateur peut voir une note selon sa visibilité et son rôle
+ * Version asynchrone - gère EQUIPE_CONSEILLER
+ */
+export async function peutVoirNoteAsync(
+  note: Note & { equipeConseillerId?: string | null },
+  utilisateurId: string,
+  role: Role,
+  traducteurId?: string
+): Promise<boolean> {
+  // L'auteur peut toujours voir ses notes
+  if (note.creeParId === utilisateurId) {
+    return true;
+  }
+
+  switch (note.visibilite) {
+    case 'PUBLIC':
+      return true;
+    
+    case 'TRADUCTEUR':
+      if (['ADMIN', 'CONSEILLER', 'GESTIONNAIRE'].includes(role)) {
+        return true;
+      }
+      if (role === 'TRADUCTEUR' && traducteurId) {
+        return note.entiteType === 'TRADUCTEUR' && note.entiteId === traducteurId;
+      }
+      return false;
+    
+    case 'EQUIPE':
+      return ['ADMIN', 'CONSEILLER', 'GESTIONNAIRE'].includes(role);
+    
+    case 'EQUIPE_CONSEILLER':
+      // Vérifier si l'utilisateur est membre de l'équipe conseiller associée
+      if (note.equipeConseillerId) {
+        return equipeConseillerService.estMembreEquipe(utilisateurId, note.equipeConseillerId);
+      }
+      return false;
+    
+    case 'PRIVE':
       return false;
     
     default:
@@ -143,6 +198,11 @@ export async function creerNote(
   // Vérifier que l'entité existe
   await verifierEntiteExiste(input.entiteType, input.entiteId);
 
+  // Validation: EQUIPE_CONSEILLER nécessite un equipeConseillerId
+  if (input.visibilite === 'EQUIPE_CONSEILLER' && !input.equipeConseillerId) {
+    throw new Error('Une équipe conseiller doit être spécifiée pour la visibilité EQUIPE_CONSEILLER');
+  }
+
   const note = await prisma.note.create({
     data: {
       titre: input.titre,
@@ -151,6 +211,7 @@ export async function creerNote(
       visibilite: input.visibilite || 'EQUIPE',
       entiteType: input.entiteType,
       entiteId: input.entiteId,
+      equipeConseillerId: input.equipeConseillerId,
       epingle: input.epingle || false,
       tags: input.tags || [],
       creeParId: utilisateurId,
@@ -200,10 +261,14 @@ export async function obtenirNotesEntite(
     ],
   });
 
-  // Filtrer selon les permissions
-  return notes.filter(note => 
-    peutVoirNote(note, utilisateurId, role, traducteurId)
-  );
+  // Filtrer selon les permissions (async pour gérer EQUIPE_CONSEILLER)
+  const notesVisibles: NoteAvecPiecesJointes[] = [];
+  for (const note of notes) {
+    if (await peutVoirNoteAsync(note, utilisateurId, role, traducteurId)) {
+      notesVisibles.push(note);
+    }
+  }
+  return notesVisibles;
 }
 
 /**
@@ -249,9 +314,14 @@ export async function rechercherNotes(
     take: 100, // Limite de sécurité
   });
 
-  return notes.filter(note =>
-    peutVoirNote(note, utilisateurId, role, traducteurId)
-  );
+  // Filtrer selon les permissions (async pour gérer EQUIPE_CONSEILLER)
+  const notesVisibles: NoteAvecPiecesJointes[] = [];
+  for (const note of notes) {
+    if (await peutVoirNoteAsync(note, utilisateurId, role, traducteurId)) {
+      notesVisibles.push(note);
+    }
+  }
+  return notesVisibles;
 }
 
 /**
@@ -479,6 +549,7 @@ export async function obtenirStatistiquesNotes(
 
   const parVisibilite: Record<VisibiliteNote, number> = {
     PRIVE: 0,
+    EQUIPE_CONSEILLER: 0,
     EQUIPE: 0,
     TRADUCTEUR: 0,
     PUBLIC: 0,

@@ -71,6 +71,7 @@ export const ClientDomaineManagement: React.FC = () => {
   const [domaineSelectionne, setDomaineSelectionne] = useState<{ id: string; nom: string } | undefined>();
   const [sousDomaineSelectionne, setSousDomaineSelectionne] = useState<SousDomaine | undefined>();
   const [divisionSelectionnee, setDivisionSelectionnee] = useState<Division | undefined>();
+  const [specialisationSelectionnee, setSpecialisationSelectionnee] = useState<Specialisation | undefined>();
 
   // Confirmation suppression
   const [confirmDelete, setConfirmDelete] = useState<{ 
@@ -152,11 +153,21 @@ export const ClientDomaineManagement: React.FC = () => {
         case 'client':
           await clientService.supprimerClient(confirmDelete.id);
           break;
+        case 'domaine':
+          // Supprimer tous les sous-domaines du domaine
+          const sdsASupprimer = sousDomaines.filter(sd => sd.domaineParent === confirmDelete.id);
+          for (const sd of sdsASupprimer) {
+            await sousDomaineService.supprimerSousDomaine(sd.id);
+          }
+          break;
         case 'sous-domaine':
           await sousDomaineService.supprimerSousDomaine(confirmDelete.id);
           break;
         case 'division':
           await divisionService.supprimerDivision(confirmDelete.id);
+          break;
+        case 'specialisation':
+          await referentielService.supprimerSpecialisation(confirmDelete.id);
           break;
       }
       await chargerDonnees();
@@ -250,14 +261,25 @@ export const ClientDomaineManagement: React.FC = () => {
     {
       header: 'Actions',
       accessor: 'id',
-      render: (_: string, row: { id: string; nom: string }) => (
-        <Button 
-          variant="outline" 
-          onClick={() => { setDomaineSelectionne(row); setModalDomaine(true); }} 
-          className="py-1 px-2 text-xs"
-        >
-          Modifier
-        </Button>
+      render: (_: string, row: { id: string; nom: string; sousDomainesNoms: string[] }) => (
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => { setDomaineSelectionne(row); setModalDomaine(true); }} 
+            className="py-1 px-2 text-xs"
+          >
+            Modifier
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={() => setConfirmDelete({ isOpen: true, type: 'domaine', id: row.id, nom: row.nom })} 
+            className="py-1 px-2 text-xs"
+            disabled={row.sousDomainesNoms && row.sousDomainesNoms.length > 0}
+            title={row.sousDomainesNoms?.length > 0 ? 'Supprimer d\'abord tous les sous-domaines' : 'Supprimer ce domaine'}
+          >
+            Supprimer
+          </Button>
+        </div>
       ),
     },
   ];
@@ -314,6 +336,29 @@ export const ClientDomaineManagement: React.FC = () => {
       accessor: 'actif',
       render: (val: boolean) => (
         <Badge variant={val ? 'success' : 'default'}>{val ? 'Active' : 'Inactive'}</Badge>
+      ),
+    },
+    {
+      header: 'Actions',
+      accessor: 'id',
+      render: (_: string, row: Specialisation) => (
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => { setSpecialisationSelectionnee(row); setModalSpec(true); }} 
+            className="py-1 px-2 text-xs"
+          >
+            Modifier
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={() => setConfirmDelete({ isOpen: true, type: 'specialisation', id: row.nom, nom: row.nom })} 
+            className="py-1 px-2 text-xs"
+            title={row.utilisationCount && row.utilisationCount > 0 ? 'Sera retirée de tous les traducteurs' : 'Supprimer cette spécialisation'}
+          >
+            Supprimer
+          </Button>
+        </div>
       ),
     },
   ];
@@ -448,7 +493,7 @@ export const ClientDomaineManagement: React.FC = () => {
           '🎯',
           'Aucune spécialisation',
           'Définies sur les traducteurs',
-          () => setModalSpec(true),
+          () => { setSpecialisationSelectionnee(undefined); setModalSpec(true); },
           <p className="text-xs text-gray-400 mt-2 px-2">
             💡 Les spécialisations viennent des profils traducteurs
           </p>
@@ -562,8 +607,9 @@ export const ClientDomaineManagement: React.FC = () => {
 
       <SpecialisationForm
         ouvert={modalSpec}
-        onFermer={() => setModalSpec(false)}
+        onFermer={() => { setModalSpec(false); setSpecialisationSelectionnee(undefined); }}
         onSauvegarder={chargerDonnees}
+        specialisation={specialisationSelectionnee}
       />
 
       <LangueForm

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { Button } from '../ui/Button';
@@ -7,6 +7,7 @@ import { cn } from '../../lib/cn';
 import { UserSettingsButton } from '../settings/UserSettingsButton';
 import { PortalSwitcherCompact } from '../navigation/PortalSwitcher';
 import NotificationBell from '../common/NotificationBell';
+import { TraducteursDisponiblesModal } from '../notifications/TraducteursDisponiblesModal';
 
 interface AppLayoutProps {
   titre: string;
@@ -19,6 +20,7 @@ interface AppLayoutProps {
 export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, actionsDroite, children, compact = false }) => {
   const { utilisateur, deconnexion } = useAuth();
   const { compteurs } = useNotifications();
+  const [modalDisponiblesOuvert, setModalDisponiblesOuvert] = useState(false);
   
   // Badges selon le rôle
   const isConseiller = ['CONSEILLER', 'GESTIONNAIRE', 'ADMIN'].includes(utilisateur?.role || '');
@@ -49,7 +51,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
             {isConseiller && compteurs.traducteursCherchentTravail > 0 && (
               <div 
                 className="flex items-center gap-1.5 bg-green-600 text-white px-2 py-0.5 rounded-full text-xs cursor-pointer hover:bg-green-700 transition-colors"
-                title={`${compteurs.traducteursCherchentTravail} traducteur(s) cherche(nt) du travail`}
+                title={`${compteurs.traducteursCherchentTravail} traducteur(s) cherche(nt) du travail - Cliquer pour voir`}
+                onClick={() => setModalDisponiblesOuvert(true)}
               >
                 <span>✋</span>
                 <NotificationBadge 
@@ -98,6 +101,14 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ titre, actionsGauche, acti
             <span>Accessibilité: contrastes élevés et focus visibles.</span>
           </div>
         </footer>
+      )}
+      
+      {/* Modal des traducteurs disponibles */}
+      {isConseiller && (
+        <TraducteursDisponiblesModal 
+          ouvert={modalDisponiblesOuvert}
+          onFermer={() => setModalDisponiblesOuvert(false)}
+        />
       )}
     </div>
   );

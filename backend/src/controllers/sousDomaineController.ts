@@ -86,3 +86,45 @@ export const mettreAJourSousDomaine = async (
     res.status(500).json({ erreur: 'Erreur lors de la mise à jour du sous-domaine' });
   }
 };
+
+/**
+ * Supprimer un sous-domaine
+ * DELETE /api/sous-domaines/:id
+ */
+export const supprimerSousDomaine = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    // Vérifier si des traducteurs utilisent ce sous-domaine
+    const traducteurs = await prisma.traducteur.findMany({
+      where: {
+        domaines: {
+          has: id, // Vérifie si le sous-domaine est dans le tableau
+        },
+      },
+    });
+
+    if (traducteurs.length > 0) {
+      res.status(400).json({ 
+        erreur: `Impossible de supprimer ce sous-domaine car ${traducteurs.length} traducteur(s) l'utilisent` 
+      });
+      return;
+    }
+
+    await prisma.sousDomaine.delete({
+      where: { id },
+    });
+
+    res.status(204).send();
+  } catch (error: any) {
+    if (error.code === 'P2025') {
+      res.status(404).json({ erreur: 'Sous-domaine non trouvé' });
+    } else {
+      console.error('Erreur suppression sous-domaine:', error);
+      res.status(500).json({ erreur: 'Erreur lors de la suppression du sous-domaine' });
+    }
+  }
+};

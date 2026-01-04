@@ -52,7 +52,7 @@ router.get('/paires-linguistiques', verifierRole('ADMIN', 'CONSEILLER', 'GESTION
 
 /**
  * POST /api/referentiel/paires-linguistiques
- * Créer une nouvelle paire linguistique (ajoute à un traducteur par défaut ou crée une entrée de référence)
+ * Créer une nouvelle paire linguistique (crée une entrée de référence)
  */
 router.post('/paires-linguistiques', verifierRole('ADMIN'), async (req, res) => {
   try {
@@ -71,13 +71,33 @@ router.post('/paires-linguistiques', verifierRole('ADMIN'), async (req, res) => 
       return res.status(409).json({ message: 'Cette paire linguistique existe déjà' });
     }
 
+    // Trouver un traducteur de référence (le premier actif)
+    // La paire doit être liée à un traducteur pour exister dans la DB
+    const traducteurRef = await prisma.traducteur.findFirst({
+      where: { actif: true },
+      select: { id: true },
+    });
+
+    if (!traducteurRef) {
+      return res.status(400).json({ message: 'Aucun traducteur actif dans le système' });
+    }
+
+    // Créer la paire pour le traducteur de référence
+    await prisma.paireLinguistique.create({
+      data: {
+        langueSource,
+        langueCible,
+        traducteurId: traducteurRef.id,
+      },
+    });
+
     res.json({
       id: `${langueSource}-${langueCible}`,
       langueSource,
       langueCible,
       actif: true,
-      utilisationCount: 0,
-      message: 'Paire linguistique créée. Assignez-la à un traducteur pour l\'activer.',
+      utilisationCount: 1,
+      message: 'Paire linguistique créée. Vous pouvez maintenant l\'assigner aux traducteurs.',
     });
   } catch (error) {
     console.error('Erreur lors de la création de la paire linguistique:', error);
@@ -125,7 +145,7 @@ router.get('/specialisations', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE
 
 /**
  * POST /api/referentiel/specialisations
- * Créer une nouvelle spécialisation
+ * Créer une nouvelle spécialisation (l'ajoute à un traducteur de référence)
  */
 router.post('/specialisations', verifierRole('ADMIN'), async (req, res) => {
   try {
@@ -148,16 +168,131 @@ router.post('/specialisations', verifierRole('ADMIN'), async (req, res) => {
       return res.status(409).json({ message: 'Cette spécialisation existe déjà' });
     }
 
+    // Trouver un traducteur de référence pour créer la spécialisation
+    const traducteurRef = await prisma.traducteur.findFirst({
+      where: { actif: true },
+      select: { id: true, specialisations: true },
+    });
+
+    if (!traducteurRef) {
+      return res.status(400).json({ message: 'Aucun traducteur actif dans le système' });
+    }
+
+    // Ajouter la spécialisation au traducteur de référence
+    await prisma.traducteur.update({
+      where: { id: traducteurRef.id },
+      data: {
+        specialisations: {
+          push: nom,
+        },
+      },
+    });
+
     res.json({
-      id: `spec-new-${Date.now()}`,
+      id: `spec-${nom}`,
       nom,
       description,
       actif: true,
-      utilisationCount: 0,
-      message: 'Spécialisation créée. Assignez-la à un traducteur pour l\'activer.',
+      utilisationCount: 1,
+      message: 'Spécialisation créée. Vous pouvez maintenant l\'assigner aux traducteurs.',
     });
   } catch (error) {
     console.error('Erreur lors de la création de la spécialisation:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+/**
+ * PUT /api/referentiel/specialisations/:ancienNom
+ * Modifier une spécialisation (renomme pour tous les traducteurs)
+ */
+router.put('/specialisations/:ancienNom', verifierRole('ADMIN'), async (req, res) => {
+  try {
+    const { ancienNom } = req.params;
+    const { nom: nouveauNom } = req.body;
+
+    if (!nouveauNom) {
+      return res.status(400).json({ message: 'Nouveau nom requis' });
+    }
+
+    // Vérifier si le nouveau nom existe déjà (et qu'il est différent de l'ancien)
+    if (nouveauNom !== ancienNom) {
+      const existant = await prisma.traducteur.findFirst({
+        where: {
+          specialisations: {
+            has: nouveauNom,
+          },
+        },
+      });
+
+      if (existant) {
+        return res.status(409).json({ message: 'Une spécialisation avec ce nom existe déjà' });
+      }
+    }
+
+    // Trouver tous les traducteurs avec l'ancienne spécialisation
+    const traducteurs = await prisma.traducteur.findMany({
+      where: {
+        specialisations: {
+          has: ancienNom,
+        },
+      },
+    });
+
+    // Mettre à jour la spécialisation pour tous les traducteurs
+    for (const trad of traducteurs) {
+      const nouvellesSpecs = trad.specialisations.map(s => s === ancienNom ? nouveauNom : s);
+      await prisma.traducteur.update({
+        where: { id: trad.id },
+        data: {
+          specialisations: nouvellesSpecs,
+        },
+      });
+    }
+
+    res.json({
+      id: `spec-${nouveauNom}`,
+      nom: nouveauNom,
+      actif: true,
+      utilisationCount: traducteurs.length,
+      message: `Spécialisation renommée pour ${traducteurs.length} traducteur(s)`,
+    });
+  } catch (error) {
+    console.error('Erreur lors de la modification de la spécialisation:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
+/**
+ * DELETE /api/referentiel/specialisations/:nom
+ * Supprimer une spécialisation (retire de tous les traducteurs)
+ */
+router.delete('/specialisations/:nom', verifierRole('ADMIN'), async (req, res) => {
+  try {
+    const { nom } = req.params;
+
+    // Trouver tous les traducteurs avec cette spécialisation
+    const traducteurs = await prisma.traducteur.findMany({
+      where: {
+        specialisations: {
+          has: nom,
+        },
+      },
+    });
+
+    // Retirer la spécialisation de tous les traducteurs
+    for (const trad of traducteurs) {
+      await prisma.traducteur.update({
+        where: { id: trad.id },
+        data: {
+          specialisations: trad.specialisations.filter(s => s !== nom),
+        },
+      });
+    }
+
+    res.status(204).send();
+  } catch (error) {
+    console.error('Erreur lors de la suppression de la spécialisation:', error);
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });

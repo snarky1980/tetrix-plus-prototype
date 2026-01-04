@@ -87,16 +87,16 @@ export const referentielService = {
   /**
    * Mettre à jour une spécialisation
    */
-  async mettreAJourSpecialisation(id: string, spec: Partial<Specialisation>): Promise<Specialisation> {
-    const { data } = await api.put<Specialisation>(`/referentiel/specialisations/${id}`, spec);
+  async mettreAJourSpecialisation(ancienNom: string, spec: { nom: string }): Promise<Specialisation> {
+    const { data } = await api.put<Specialisation>(`/referentiel/specialisations/${ancienNom}`, spec);
     return data;
   },
 
   /**
    * Supprimer une spécialisation
    */
-  async supprimerSpecialisation(id: string): Promise<void> {
-    await api.delete(`/referentiel/specialisations/${id}`);
+  async supprimerSpecialisation(nom: string): Promise<void> {
+    await api.delete(`/referentiel/specialisations/${nom}`);
   },
 
   // ====== LANGUES ======

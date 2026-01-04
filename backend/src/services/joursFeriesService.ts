@@ -25,7 +25,6 @@ const JOURS_FERIES_2025: JourFerie[] = [
 
 const JOURS_FERIES_2026: JourFerie[] = [
   { date: new Date('2026-01-01'), nom: "Jour de l'An" },
-  { date: new Date('2026-01-02'), nom: "Congé du Jour de l'An (observé)" },
   { date: new Date('2026-04-03'), nom: 'Vendredi saint' },
   { date: new Date('2026-05-18'), nom: 'Fête de la Reine (Victoria Day)' },
   { date: new Date('2026-07-01'), nom: 'Fête du Canada' },

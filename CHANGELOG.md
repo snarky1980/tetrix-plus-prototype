@@ -4,6 +4,61 @@ Toutes les modifications notables du projet sont documentées ici.
 
 ---
 
+## [2.4.0] - 2026-01-04 👥💼
+
+### Ajouté - Système d'Équipes Conseillers
+
+- **Gestion des équipes conseillers**
+  - Création/modification/suppression d'équipes
+  - Codes couleur pour identification visuelle
+  - 6 équipes par défaut : A, B, C, D, G, Anglo
+  - Support multi-appartenance (un conseiller peut être dans plusieurs équipes)
+
+- **Gestion des membres**
+  - Ajout/retrait de membres par équipe
+  - Rôles hiérarchiques : CHEF et MEMBRE
+  - Permissions granulaires (ADMIN/GESTIONNAIRE pour gestion)
+  - Membres éligibles : CONSEILLER, GESTIONNAIRE, ADMIN
+
+- **Partage de notes par équipe**
+  - Nouveau niveau de visibilité : `EQUIPE_CONSEILLER`
+  - Notes visibles uniquement par les membres de l'équipe spécifiée
+  - Vérification asynchrone des permissions d'accès
+  - Intégration complète avec le système de notes existant
+
+- **API Backend**
+  - Service complet : `equipeConseillerService.ts`
+  - 10+ endpoints REST pour gestion CRUD
+  - Validation Zod sur tous les inputs
+  - Support des rôles différents par équipe
+
+- **Interface Admin**
+  - Page dédiée "Équipes Conseillers" dans le portail Admin
+  - Interface moderne avec expansion/collapse
+  - Modaux pour création/édition d'équipes
+  - Gestion visuelle des membres avec badges de rôle
+  - Sélecteur de couleur pour personnalisation
+
+- **Scripts utilitaires**
+  - `seed-equipes-conseiller.ts` : Initialisation des 6 équipes de base
+  - `exemple-multi-equipes.ts` : Démonstration multi-appartenance
+  - Commande npm : `npm run seed:equipes-conseiller`
+
+- **Documentation**
+  - Guide complet : `docs/EQUIPES-CONSEILLERS.md`
+  - Exemples d'utilisation API
+  - Schéma de base de données
+  - Comparaison Équipes Conseillers vs Équipes Projet
+
+### Technique
+- Nouveaux modèles Prisma : `EquipeConseiller`, `EquipeConseillerMembre`
+- Nouveau enum : `RoleEquipeConseiller` (CHEF, MEMBRE)
+- Extension enums : `TypeEntiteNote`, `VisibiliteNote`
+- Migration base de données sans perte de données
+- Tests API validés
+
+---
+
 ## [2.3.0] - 2024-12-19 🔗👥
 
 ### Ajouté - Système de Liaison Traducteur-Réviseur

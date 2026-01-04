@@ -15,6 +15,7 @@ import { DivisionManagement } from '../components/admin/DivisionManagement';
 import JoursFeriesManagement from '../components/admin/JoursFeriesManagement';
 import SessionsAuditManagement from '../components/admin/SessionsAuditManagement';
 import BackupManagement from '../components/admin/BackupManagement';
+import EquipesConseillerPage from '../components/admin/EquipesConseillerPage';
 import { AdminSearchBar } from '../components/admin/AdminSearchBar';
 import { ActivityLog } from '../components/admin/ActivityLog';
 import { SystemAlerts } from '../components/admin/SystemAlerts';
@@ -26,7 +27,7 @@ import { divisionService } from '../services/divisionService';
 import { tacheService } from '../services/tacheService';
 import type { Traducteur, Utilisateur } from '../types';
 
-type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'jours-feries' | 'sessions-audit' | 'backup' | 'systeme';
+type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'equipes-conseiller' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'jours-feries' | 'sessions-audit' | 'backup' | 'systeme';
 
 interface SystemStats {
   traducteurs: { total: number; actifs: number; inactifs: number };
@@ -236,6 +237,8 @@ const DashboardAdmin: React.FC = () => {
         return <TraducteurManagement />;
       case 'equipes-projet':
         return <EquipeProjetManagement />;
+      case 'equipes-conseiller':
+        return <EquipesConseillerPage peutGerer={true} />;
       case 'clients-domaines':
         return <ClientDomaineManagement />;
       case 'utilisateurs':
@@ -347,6 +350,7 @@ const DashboardAdmin: React.FC = () => {
               { id: 'overview' as const, icon: '🏠', label: 'Vue d\'ensemble' },
               { id: 'traducteurs' as const, icon: '👥', label: 'Traducteurs' },
               { id: 'equipes-projet' as const, icon: '🎯', label: 'Équipes-projet' },
+              { id: 'equipes-conseiller' as const, icon: '👔', label: 'Équipes Conseillers' },
               { id: 'utilisateurs' as const, icon: '🔐', label: 'Utilisateurs' },
               { id: 'divisions' as const, icon: '🏛️', label: 'Divisions' },
               { id: 'clients-domaines' as const, icon: '🏢', label: 'Référentiel' },

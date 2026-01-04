@@ -8,21 +8,23 @@ datasource db {
 }
 
 model Utilisateur {
-  id             String           @id @default(uuid())
-  email          String           @unique
-  motDePasse     String
-  nom            String?
-  prenom         String?
-  role           Role             @default(TRADUCTEUR)
-  actif          Boolean          @default(true)
-  creeLe         DateTime         @default(now())
-  modifieLe      DateTime         @updatedAt
-  isPlayground   Boolean          @default(false)
-  playgroundNote String?
-  divisionAccess DivisionAccess[]
-  traducteur     Traducteur?
-  sessions       Session[]
-  auditLogs      AuditLog[]
+  id               String                   @id @default(uuid())
+  email            String                   @unique
+  motDePasse       String
+  nom              String?
+  prenom           String?
+  role             Role                     @default(TRADUCTEUR)
+  actif            Boolean                  @default(true)
+  creeLe           DateTime                 @default(now())
+  modifieLe        DateTime                 @updatedAt
+  isPlayground     Boolean                  @default(false)
+  playgroundNote   String?
+  divisionAccess   DivisionAccess[]
+  equipeProjetAccess EquipeProjetAccess[]
+  traducteur       Traducteur?
+  sessions         Session[]
+  auditLogs        AuditLog[]
+  equipesConseiller EquipeConseillerMembre[]
 
   @@map("utilisateurs")
 }
@@ -157,6 +159,24 @@ model DivisionAccess {
   @@index([utilisateurId])
   @@index([divisionId])
   @@map("division_access")
+}
+
+model EquipeProjetAccess {
+  id             String      @id @default(uuid())
+  utilisateurId  String
+  equipeProjetId String
+  peutLire       Boolean     @default(true)
+  peutEcrire     Boolean     @default(false)
+  peutGerer      Boolean     @default(false)
+  creeLe         DateTime    @default(now())
+  modifieLe      DateTime    @updatedAt
+  equipeProjet   EquipeProjet @relation(fields: [equipeProjetId], references: [id], onDelete: Cascade)
+  utilisateur    Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@unique([utilisateurId, equipeProjetId])
+  @@index([utilisateurId])
+  @@index([equipeProjetId])
+  @@map("equipe_projet_access")
 }
 
 model Traducteur {
@@ -397,23 +417,24 @@ model InteretDemande {
 }
 
 model EquipeProjet {
-  id          String               @id @default(uuid())
-  nom         String               @unique
-  code        String               @unique
+  id          String                 @id @default(uuid())
+  nom         String                 @unique
+  code        String                 @unique
   description String?
-  couleur     String               @default("#3B82F6")
+  couleur     String                 @default("#3B82F6")
   clientId    String?
   clientNom   String?
   objectif    String?
   dateDebut   DateTime?
   dateFin     DateTime?
-  actif       Boolean              @default(true)
-  archive     Boolean              @default(false)
+  actif       Boolean                @default(true)
+  archive     Boolean                @default(false)
   creePar     String
-  creeLe      DateTime             @default(now())
+  creeLe      DateTime               @default(now())
   modifiePar  String?
-  modifieLe   DateTime             @updatedAt
+  modifieLe   DateTime               @updatedAt
   membres     EquipeProjetMembre[]
+  acces       EquipeProjetAccess[]
 
   @@index([actif])
   @@index([archive])
@@ -506,6 +527,53 @@ enum RoleEquipe {
   MEMBRE
   REVISEUR
 }
+
+// ============================================
+// ÉQUIPES CONSEILLERS
+// ============================================
+
+model EquipeConseiller {
+  id          String                   @id @default(uuid())
+  nom         String                   @unique
+  code        String                   @unique
+  description String?
+  couleur     String                   @default("#8B5CF6") // Violet par défaut
+  actif       Boolean                  @default(true)
+  creePar     String
+  creeLe      DateTime                 @default(now())
+  modifiePar  String?
+  modifieLe   DateTime                 @updatedAt
+  membres     EquipeConseillerMembre[]
+
+  @@index([actif])
+  @@map("equipes_conseiller")
+}
+
+model EquipeConseillerMembre {
+  id                 String           @id @default(uuid())
+  equipeConseillerId String
+  utilisateurId      String
+  role               RoleEquipeConseiller @default(MEMBRE)
+  dateAjout          DateTime         @default(now())
+  dateRetrait        DateTime?
+  actif              Boolean          @default(true)
+  ajoutePar          String
+  notes              String?
+  equipeConseiller   EquipeConseiller @relation(fields: [equipeConseillerId], references: [id], onDelete: Cascade)
+  utilisateur        Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@unique([equipeConseillerId, utilisateurId])
+  @@index([equipeConseillerId])
+  @@index([utilisateurId])
+  @@index([actif])
+  @@map("equipes_conseiller_membres")
+}
+
+enum RoleEquipeConseiller {
+  CHEF         // Chef d'équipe
+  MEMBRE       // Membre standard
+}
+
 // ============================================
 // NOTES & DOCUMENTATION
 // ============================================
@@ -520,6 +588,9 @@ model Note {
   // Polymorphisme - l'entité attachée
   entiteType    TypeEntiteNote
   entiteId      String
+  
+  // Partage équipe conseiller (si visibilite = EQUIPE_CONSEILLER)
+  equipeConseillerId String?
   
   // Métadonnées
   epingle       Boolean        @default(false)
@@ -542,6 +613,7 @@ model Note {
   @@index([visibilite])
   @@index([epingle])
   @@index([categorie])
+  @@index([equipeConseillerId])
   @@map("notes")
 }
 
@@ -575,6 +647,7 @@ enum TypeEntiteNote {
   TRADUCTEUR
   DIVISION
   EQUIPE_PROJET
+  EQUIPE_CONSEILLER  // Notes partagées au sein d'une équipe conseiller
   TACHE
   SOUS_DOMAINE
   UTILISATEUR    // Notes personnelles de l'utilisateur
@@ -591,8 +664,9 @@ enum CategorieNote {
 }
 
 enum VisibiliteNote {
-  PRIVE        // Visible seulement par l'auteur
-  EQUIPE       // Visible par CONSEILLER, GESTIONNAIRE, ADMIN
-  TRADUCTEUR   // Visible aussi par les traducteurs concernés
-  PUBLIC       // Visible par tous
+  PRIVE              // Visible seulement par l'auteur
+  EQUIPE_CONSEILLER  // Visible par les membres de l'équipe conseiller
+  EQUIPE             // Visible par CONSEILLER, GESTIONNAIRE, ADMIN
+  TRADUCTEUR         // Visible aussi par les traducteurs concernés
+  PUBLIC             // Visible par tous
 }
