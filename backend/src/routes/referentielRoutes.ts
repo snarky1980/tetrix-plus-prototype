@@ -119,34 +119,30 @@ router.post('/paires-linguistiques', verifierRole('ADMIN'), async (req, res) => 
 
 /**
  * GET /api/referentiel/specialisations
- * Obtenir toutes les spécialisations uniques utilisées
+ * Obtenir toutes les spécialisations depuis la table normalisée
  */
 router.get('/specialisations', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'), async (req, res) => {
   try {
-    const traducteurs = await prisma.traducteur.findMany({
-      select: {
-        specialisations: true,
+    // Utiliser la nouvelle table normalisée
+    const specialisations = await prisma.specialisation.findMany({
+      where: { actif: true },
+      include: {
+        _count: {
+          select: { traducteurSpecialisations: true }
+        }
       },
+      orderBy: { nom: 'asc' },
     });
 
-    // Extraire et compter les spécialisations uniques
-    const specMap = new Map<string, number>();
-    traducteurs.forEach((t) => {
-      t.specialisations.forEach((spec) => {
-        specMap.set(spec, (specMap.get(spec) || 0) + 1);
-      });
-    });
+    const result = specialisations.map(spec => ({
+      id: spec.id,
+      nom: spec.nom,
+      description: spec.description,
+      actif: spec.actif,
+      utilisationCount: spec._count.traducteurSpecialisations,
+    }));
 
-    const specialisations = Array.from(specMap.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([nom, count], index) => ({
-        id: `spec-${index + 1}`,
-        nom,
-        actif: true,
-        utilisationCount: count,
-      }));
-
-    res.json(specialisations);
+    res.json(result);
   } catch (error) {
     console.error('Erreur lors de la récupération des spécialisations:', error);
     res.status(500).json({ message: 'Erreur serveur' });
@@ -155,7 +151,7 @@ router.get('/specialisations', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE
 
 /**
  * POST /api/referentiel/specialisations
- * Créer une nouvelle spécialisation (l'ajoute à un traducteur de référence)
+ * Créer une nouvelle spécialisation dans la table normalisée
  */
 router.post('/specialisations', verifierRole('ADMIN'), async (req, res) => {
   try {
@@ -165,45 +161,26 @@ router.post('/specialisations', verifierRole('ADMIN'), async (req, res) => {
       return res.status(400).json({ message: 'Nom de la spécialisation requis' });
     }
 
-    // Vérifier si elle existe déjà
-    const traducteurs = await prisma.traducteur.findMany({
-      where: {
-        specialisations: {
-          has: nom,
-        },
-      },
+    // Vérifier si elle existe déjà dans la table normalisée
+    const existante = await prisma.specialisation.findUnique({
+      where: { nom },
     });
 
-    if (traducteurs.length > 0) {
+    if (existante) {
       return res.status(409).json({ message: 'Cette spécialisation existe déjà' });
     }
 
-    // Trouver un traducteur de référence pour créer la spécialisation
-    const traducteurRef = await prisma.traducteur.findFirst({
-      where: { actif: true },
-      select: { id: true, specialisations: true },
-    });
-
-    if (!traducteurRef) {
-      return res.status(400).json({ message: 'Aucun traducteur actif dans le système' });
-    }
-
-    // Ajouter la spécialisation au traducteur de référence
-    await prisma.traducteur.update({
-      where: { id: traducteurRef.id },
-      data: {
-        specialisations: {
-          push: nom,
-        },
-      },
+    // Créer dans la table normalisée
+    const nouvelleSpec = await prisma.specialisation.create({
+      data: { nom, description },
     });
 
     res.json({
-      id: `spec-${nom}`,
-      nom,
-      description,
+      id: nouvelleSpec.id,
+      nom: nouvelleSpec.nom,
+      description: nouvelleSpec.description,
       actif: true,
-      utilisationCount: 1,
+      utilisationCount: 0,
       message: 'Spécialisation créée. Vous pouvez maintenant l\'assigner aux traducteurs.',
     });
   } catch (error) {
@@ -213,59 +190,43 @@ router.post('/specialisations', verifierRole('ADMIN'), async (req, res) => {
 });
 
 /**
- * PUT /api/referentiel/specialisations/:ancienNom
- * Modifier une spécialisation (renomme pour tous les traducteurs)
+ * PUT /api/referentiel/specialisations/:id
+ * Modifier une spécialisation dans la table normalisée
  */
-router.put('/specialisations/:ancienNom', verifierRole('ADMIN'), async (req, res) => {
+router.put('/specialisations/:id', verifierRole('ADMIN'), async (req, res) => {
   try {
-    const { ancienNom } = req.params;
-    const { nom: nouveauNom } = req.body;
+    const { id } = req.params;
+    const { nom: nouveauNom, description } = req.body;
 
     if (!nouveauNom) {
       return res.status(400).json({ message: 'Nouveau nom requis' });
     }
 
     // Vérifier si le nouveau nom existe déjà (et qu'il est différent de l'ancien)
-    if (nouveauNom !== ancienNom) {
-      const existant = await prisma.traducteur.findFirst({
-        where: {
-          specialisations: {
-            has: nouveauNom,
-          },
-        },
-      });
-
-      if (existant) {
-        return res.status(409).json({ message: 'Une spécialisation avec ce nom existe déjà' });
-      }
-    }
-
-    // Trouver tous les traducteurs avec l'ancienne spécialisation
-    const traducteurs = await prisma.traducteur.findMany({
-      where: {
-        specialisations: {
-          has: ancienNom,
-        },
-      },
+    const existante = await prisma.specialisation.findFirst({
+      where: { nom: nouveauNom, NOT: { id } },
     });
 
-    // Mettre à jour la spécialisation pour tous les traducteurs
-    for (const trad of traducteurs) {
-      const nouvellesSpecs = trad.specialisations.map(s => s === ancienNom ? nouveauNom : s);
-      await prisma.traducteur.update({
-        where: { id: trad.id },
-        data: {
-          specialisations: nouvellesSpecs,
-        },
-      });
+    if (existante) {
+      return res.status(409).json({ message: 'Une spécialisation avec ce nom existe déjà' });
     }
 
+    // Mettre à jour dans la table normalisée
+    const updated = await prisma.specialisation.update({
+      where: { id },
+      data: { nom: nouveauNom, description },
+      include: {
+        _count: { select: { traducteurSpecialisations: true } }
+      }
+    });
+
     res.json({
-      id: `spec-${nouveauNom}`,
-      nom: nouveauNom,
-      actif: true,
-      utilisationCount: traducteurs.length,
-      message: `Spécialisation renommée pour ${traducteurs.length} traducteur(s)`,
+      id: updated.id,
+      nom: updated.nom,
+      description: updated.description,
+      actif: updated.actif,
+      utilisationCount: updated._count.traducteurSpecialisations,
+      message: 'Spécialisation modifiée avec succès',
     });
   } catch (error) {
     console.error('Erreur lors de la modification de la spécialisation:', error);
@@ -274,31 +235,33 @@ router.put('/specialisations/:ancienNom', verifierRole('ADMIN'), async (req, res
 });
 
 /**
- * DELETE /api/referentiel/specialisations/:nom
- * Supprimer une spécialisation (retire de tous les traducteurs)
+ * DELETE /api/referentiel/specialisations/:id
+ * Supprimer une spécialisation de la table normalisée
  */
-router.delete('/specialisations/:nom', verifierRole('ADMIN'), async (req, res) => {
+router.delete('/specialisations/:id', verifierRole('ADMIN'), async (req, res) => {
   try {
-    const { nom } = req.params;
+    const { id } = req.params;
 
-    // Trouver tous les traducteurs avec cette spécialisation
-    const traducteurs = await prisma.traducteur.findMany({
-      where: {
-        specialisations: {
-          has: nom,
-        },
-      },
+    // Vérifier si elle est utilisée
+    const spec = await prisma.specialisation.findUnique({
+      where: { id },
+      include: {
+        _count: { select: { traducteurSpecialisations: true } }
+      }
     });
 
-    // Retirer la spécialisation de tous les traducteurs
-    for (const trad of traducteurs) {
-      await prisma.traducteur.update({
-        where: { id: trad.id },
-        data: {
-          specialisations: trad.specialisations.filter(s => s !== nom),
-        },
+    if (!spec) {
+      return res.status(404).json({ message: 'Spécialisation non trouvée' });
+    }
+
+    if (spec._count.traducteurSpecialisations > 0) {
+      return res.status(400).json({ 
+        message: `Impossible de supprimer: ${spec._count.traducteurSpecialisations} traducteur(s) utilisent cette spécialisation` 
       });
     }
+
+    // Supprimer de la table normalisée
+    await prisma.specialisation.delete({ where: { id } });
 
     res.status(204).send();
   } catch (error) {
@@ -492,7 +455,9 @@ router.get('/statistiques', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'),
       totalSousDomaines,
       totalDivisions,
       pairesDistinctes,
-      traducteurs,
+      totalSpecialisations,
+      totalDomaines,
+      totalLangues,
     ] = await Promise.all([
       prisma.client.count({ where: { actif: true } }),
       prisma.sousDomaine.count({ where: { actif: true } }),
@@ -500,28 +465,18 @@ router.get('/statistiques', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'),
       prisma.paireLinguistique.findMany({
         distinct: ['langueSource', 'langueCible'],
       }),
-      prisma.traducteur.findMany({
-        select: { specialisations: true },
-      }),
+      // Utiliser les tables normalisées
+      prisma.specialisation.count({ where: { actif: true } }),
+      prisma.domaine.count({ where: { actif: true } }),
+      prisma.langue.count({ where: { actif: true } }),
     ]);
-
-    // Compter les domaines uniques
-    const domainesUniques = await prisma.sousDomaine.findMany({
-      where: { actif: true, domaineParent: { not: null } },
-      distinct: ['domaineParent'],
-    });
-
-    // Compter les spécialisations uniques
-    const specsSet = new Set<string>();
-    traducteurs.forEach((t) => {
-      t.specialisations.forEach((s) => specsSet.add(s));
-    });
 
     res.json({
       totalClients,
-      totalDomaines: domainesUniques.length,
+      totalDomaines,
       totalSousDomaines,
-      totalSpecialisations: specsSet.size,
+      totalSpecialisations,
+      totalLangues,
       totalPaires: pairesDistinctes.length,
       totalDivisions,
     });

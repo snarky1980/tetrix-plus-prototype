@@ -88,6 +88,19 @@ export const obtenirTraducteurs = async (
             actif: true,
           },
         },
+        // Relations normalisées
+        traducteurDomaines: {
+          include: { domaine: true }
+        },
+        traducteurSpecialisations: {
+          include: { specialisation: true }
+        },
+        traducteurDivisions: {
+          include: { division: true }
+        },
+        traducteurClients: {
+          include: { client: true }
+        },
       },
       orderBy: { nom: 'asc' },
     });
@@ -132,6 +145,19 @@ export const obtenirTraducteur = async (
             role: true,
             actif: true,
           },
+        },
+        // Relations normalisées
+        traducteurDomaines: {
+          include: { domaine: true }
+        },
+        traducteurSpecialisations: {
+          include: { specialisation: true }
+        },
+        traducteurDivisions: {
+          include: { division: true }
+        },
+        traducteurClients: {
+          include: { client: true }
         },
       },
     });

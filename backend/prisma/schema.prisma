@@ -8,61 +8,51 @@ datasource db {
 }
 
 model Utilisateur {
-  id               String                   @id @default(uuid())
-  email            String                   @unique
-  motDePasse       String
-  nom              String?
-  prenom           String?
-  role             Role                     @default(TRADUCTEUR)
-  actif            Boolean                  @default(true)
-  creeLe           DateTime                 @default(now())
-  modifieLe        DateTime                 @updatedAt
-  isPlayground     Boolean                  @default(false)
-  playgroundNote   String?
-  divisionAccess   DivisionAccess[]
+  id                 String                   @id @default(uuid())
+  email              String                   @unique
+  motDePasse         String
+  nom                String?
+  prenom             String?
+  role               Role                     @default(TRADUCTEUR)
+  actif              Boolean                  @default(true)
+  creeLe             DateTime                 @default(now())
+  modifieLe          DateTime                 @updatedAt
+  isPlayground       Boolean                  @default(false)
+  playgroundNote     String?
+  auditLogs          AuditLog[]
+  divisionAccess     DivisionAccess[]
   equipeProjetAccess EquipeProjetAccess[]
-  traducteur       Traducteur?
-  sessions         Session[]
-  auditLogs        AuditLog[]
-  equipesConseiller EquipeConseillerMembre[]
+  equipesConseiller  EquipeConseillerMembre[]
+  sessions           Session[]
+  traducteur         Traducteur?
 
   @@map("utilisateurs")
 }
 
 model JourFerie {
-  id          String   @id @default(uuid())
-  date        DateTime @unique
+  id          String        @id @default(uuid())
+  date        DateTime      @unique
   nom         String
   description String?
   type        TypeJourFerie @default(FEDERAL)
-  actif       Boolean  @default(true)
-  creeLe      DateTime @default(now())
-  modifieLe   DateTime @updatedAt
+  actif       Boolean       @default(true)
+  creeLe      DateTime      @default(now())
+  modifieLe   DateTime      @updatedAt
 
   @@index([date])
   @@map("jours_feries")
 }
 
-enum TypeJourFerie {
-  FEDERAL      // Jour férié fédéral
-  PROVINCIAL   // Jour férié provincial (Ontario)
-  ORGANISATIONNEL // Congé spécifique à l'organisation
-}
-
-// ============================================
-// SESSIONS & AUDIT
-// ============================================
-
 model Session {
-  id            String    @id @default(uuid())
+  id            String      @id @default(uuid())
   utilisateurId String
-  token         String    @unique
+  token         String      @unique
   adresseIp     String?
   userAgent     String?
-  actif         Boolean   @default(true)
-  dernierAcces  DateTime  @default(now())
+  actif         Boolean     @default(true)
+  dernierAcces  DateTime    @default(now())
   expireA       DateTime
-  creeLe        DateTime  @default(now())
+  creeLe        DateTime    @default(now())
   utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@index([utilisateurId])
@@ -75,14 +65,14 @@ model AuditLog {
   id            String       @id @default(uuid())
   utilisateurId String?
   action        ActionAudit
-  entite        String       // Ex: "Tache", "Traducteur", "Utilisateur"
-  entiteId      String?      // ID de l'entité concernée
-  details       Json?        // Détails supplémentaires (ancien/nouveau valeur, etc.)
+  entite        String
+  entiteId      String?
+  details       Json?
   adresseIp     String?
   userAgent     String?
   succes        Boolean      @default(true)
   creeLe        DateTime     @default(now())
-  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id], onDelete: SetNull)
+  utilisateur   Utilisateur? @relation(fields: [utilisateurId], references: [id])
 
   @@index([utilisateurId])
   @@index([action])
@@ -91,54 +81,16 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-enum ActionAudit {
-  // Authentification
-  CONNEXION
-  DECONNEXION
-  CONNEXION_ECHOUEE
-  SESSION_EXPIREE
-  SESSION_FORCEE       // Déconnexion forcée par admin
-  
-  // Utilisateurs
-  UTILISATEUR_CREE
-  UTILISATEUR_MODIFIE
-  UTILISATEUR_SUPPRIME
-  MOT_DE_PASSE_CHANGE
-  ROLE_MODIFIE
-  
-  // Tâches
-  TACHE_CREEE
-  TACHE_MODIFIEE
-  TACHE_SUPPRIMEE
-  STATUT_TACHE_CHANGE
-  TACHE_ASSIGNEE
-  
-  // Traducteurs
-  TRADUCTEUR_CREE
-  TRADUCTEUR_MODIFIE
-  TRADUCTEUR_SUPPRIME
-  CAPACITE_MODIFIEE
-  
-  // Administration
-  JOUR_FERIE_CREE
-  JOUR_FERIE_MODIFIE
-  JOUR_FERIE_SUPPRIME
-  REFERENTIEL_MODIFIE
-  
-  // Système
-  EXPORT_DONNEES
-  IMPORT_DONNEES
-}
-
 model Division {
-  id          String           @id @default(uuid())
-  nom         String           @unique
-  code        String           @unique
-  description String?
-  actif       Boolean          @default(true)
-  creeLe      DateTime         @default(now())
-  modifieLe   DateTime         @updatedAt
-  acces       DivisionAccess[]
+  id                   String                 @id @default(uuid())
+  nom                  String                 @unique
+  code                 String                 @unique
+  description          String?
+  actif                Boolean                @default(true)
+  creeLe               DateTime               @default(now())
+  modifieLe            DateTime               @updatedAt
+  acces                DivisionAccess[]
+  traducteurDivisions  TraducteurDivision[]
 
   @@map("divisions")
 }
@@ -162,14 +114,14 @@ model DivisionAccess {
 }
 
 model EquipeProjetAccess {
-  id             String      @id @default(uuid())
+  id             String       @id @default(uuid())
   utilisateurId  String
   equipeProjetId String
-  peutLire       Boolean     @default(true)
-  peutEcrire     Boolean     @default(false)
-  peutGerer      Boolean     @default(false)
-  creeLe         DateTime    @default(now())
-  modifieLe      DateTime    @updatedAt
+  peutLire       Boolean      @default(true)
+  peutEcrire     Boolean      @default(false)
+  peutGerer      Boolean      @default(false)
+  creeLe         DateTime     @default(now())
+  modifieLe      DateTime     @updatedAt
   equipeProjet   EquipeProjet @relation(fields: [equipeProjetId], references: [id], onDelete: Cascade)
   utilisateur    Utilisateur  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
@@ -180,36 +132,39 @@ model EquipeProjetAccess {
 }
 
 model Traducteur {
-  id                       String               @id @default(uuid())
-  nom                      String
-  domaines                 String[]
-  clientsHabituels         String[]
-  capaciteHeuresParJour    Float                @default(7.5)
-  actif                    Boolean              @default(true)
-  utilisateurId            String               @unique
-  creeLe                   DateTime             @default(now())
-  modifieLe                DateTime             @updatedAt
-  classification           String
-  horaire                  String?
-  heureDinerDebut          String?              @default("12:00")
-  heureDinerFin            String?              @default("13:00")
-  notes                    String?
-  specialisations          String[]             @default([])
-  disponiblePourTravail    Boolean              @default(false)
-  commentaireDisponibilite String?
-  // Ciblage de la recherche de travail
-  ciblageDisponibilite     Json?                // { divisions: [], categories: [], domaines: [], specialisations: [], equipeProjetId: null }
-  categorie                CategorieTraducteur  @default(TR01)
-  necessiteRevision        Boolean              @default(true)
-  divisions                String[]             @default([])
-  ajustementsTemps         AjustementTemps[]
-  equipesProjet            EquipeProjetMembre[]
-  interetsDemandes         InteretDemande[]
-  reviseursDe              LiaisonReviseur[]    @relation("TraducteurReviseur")
-  revisePar                LiaisonReviseur[]    @relation("TraducteurRevise")
-  pairesLinguistiques      PaireLinguistique[]
-  taches                   Tache[]
-  utilisateur              Utilisateur          @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  id                         String                       @id @default(uuid())
+  nom                        String
+  domaines                   String[]                     // DEPRECATED: utiliser traducteurDomaines
+  clientsHabituels           String[]                     // DEPRECATED: utiliser traducteurClients
+  capaciteHeuresParJour      Float                        @default(7.5)
+  actif                      Boolean                      @default(true)
+  utilisateurId              String                       @unique
+  creeLe                     DateTime                     @default(now())
+  modifieLe                  DateTime                     @updatedAt
+  classification             String
+  horaire                    String?
+  heureDinerDebut            String?                      @default("12:00")
+  heureDinerFin              String?                      @default("13:00")
+  notes                      String?
+  specialisations            String[]                     @default([]) // DEPRECATED: utiliser traducteurSpecialisations
+  disponiblePourTravail      Boolean                      @default(false)
+  commentaireDisponibilite   String?
+  ciblageDisponibilite       Json?
+  categorie                  CategorieTraducteur          @default(TR01)
+  necessiteRevision          Boolean                      @default(true)
+  divisions                  String[]                     @default([]) // DEPRECATED: utiliser traducteurDivisions
+  ajustementsTemps           AjustementTemps[]
+  equipesProjet              EquipeProjetMembre[]
+  interetsDemandes           InteretDemande[]
+  reviseursDe                LiaisonReviseur[]            @relation("TraducteurReviseur")
+  revisePar                  LiaisonReviseur[]            @relation("TraducteurRevise")
+  pairesLinguistiques        PaireLinguistique[]
+  taches                     Tache[]
+  traducteurClients          TraducteurClient[]
+  traducteurDivisions        TraducteurDivision[]
+  traducteurDomaines         TraducteurDomaine[]
+  traducteurSpecialisations  TraducteurSpecialisation[]
+  utilisateur                Utilisateur                  @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
 
   @@index([actif])
   @@index([disponiblePourTravail])
@@ -232,13 +187,14 @@ model PaireLinguistique {
 }
 
 model Client {
-  id           String   @id @default(uuid())
-  nom          String   @unique
-  sousDomaines String[]
-  actif        Boolean  @default(true)
-  creeLe       DateTime @default(now())
-  modifieLe    DateTime @updatedAt
-  taches       Tache[]
+  id                 String               @id @default(uuid())
+  nom                String               @unique
+  sousDomaines       String[]             // DEPRECATED
+  actif              Boolean              @default(true)
+  creeLe             DateTime             @default(now())
+  modifieLe          DateTime             @updatedAt
+  taches             Tache[]
+  traducteurClients  TraducteurClient[]
 
   @@map("clients")
 }
@@ -250,6 +206,8 @@ model SousDomaine {
   actif         Boolean  @default(true)
   creeLe        DateTime @default(now())
   modifieLe     DateTime @updatedAt
+  domaineId     String?
+  clientId      String?
   taches        Tache[]
 
   @@map("sous_domaines")
@@ -374,25 +332,25 @@ model LiaisonReviseur {
 }
 
 model DemandeRessource {
-  id               String           @id @default(uuid())
-  conseillerId     String
-  titre            String
-  description      String?
-  heuresEstimees   Float?
-  langueSource     String?
-  langueCible      String?
-  division         String?          // DEPRECATED - utiliser divisions[]
-  divisions        String[]         @default([])  // Filtrer par divisions
-  categories       String[]         @default([])  // TR01, TR02, TR03
-  specialisations  String[]         @default([])  // Spécialités recherchées
-  domaines         String[]         @default([])  // Domaines de compétence
-  equipeProjetId   String?                        // Équipe-projet spécifique
-  urgence          Urgence          @default(NORMALE)
-  actif            Boolean          @default(true)
-  creeLe           DateTime         @default(now())
-  modifieLe        DateTime         @updatedAt
-  expireLe         DateTime?
-  interets         InteretDemande[]
+  id              String           @id @default(uuid())
+  conseillerId    String
+  titre           String
+  description     String?
+  heuresEstimees  Float?
+  langueSource    String?
+  langueCible     String?
+  division        String?
+  divisions       String[]         @default([])
+  categories      String[]         @default([])
+  specialisations String[]         @default([])
+  domaines        String[]         @default([])
+  equipeProjetId  String?
+  urgence         Urgence          @default(NORMALE)
+  actif           Boolean          @default(true)
+  creeLe          DateTime         @default(now())
+  modifieLe       DateTime         @updatedAt
+  expireLe        DateTime?
+  interets        InteretDemande[]
 
   @@index([conseillerId])
   @@index([actif])
@@ -400,15 +358,14 @@ model DemandeRessource {
   @@map("demandes_ressources")
 }
 
-// Manifestation d'intérêt d'un traducteur pour une demande de ressource
 model InteretDemande {
-  id           String          @id @default(uuid())
+  id           String           @id @default(uuid())
   demandeId    String
   traducteurId String
-  message      String?         // Message optionnel du traducteur
-  creeLe       DateTime        @default(now())
+  message      String?
+  creeLe       DateTime         @default(now())
   demande      DemandeRessource @relation(fields: [demandeId], references: [id], onDelete: Cascade)
-  traducteur   Traducteur      @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur       @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
 
   @@unique([demandeId, traducteurId])
   @@index([demandeId])
@@ -417,24 +374,24 @@ model InteretDemande {
 }
 
 model EquipeProjet {
-  id          String                 @id @default(uuid())
-  nom         String                 @unique
-  code        String                 @unique
+  id          String               @id @default(uuid())
+  nom         String               @unique
+  code        String               @unique
   description String?
-  couleur     String                 @default("#3B82F6")
+  couleur     String               @default("#3B82F6")
   clientId    String?
   clientNom   String?
   objectif    String?
   dateDebut   DateTime?
   dateFin     DateTime?
-  actif       Boolean                @default(true)
-  archive     Boolean                @default(false)
+  actif       Boolean              @default(true)
+  archive     Boolean              @default(false)
   creePar     String
-  creeLe      DateTime               @default(now())
+  creeLe      DateTime             @default(now())
   modifiePar  String?
-  modifieLe   DateTime               @updatedAt
-  membres     EquipeProjetMembre[]
+  modifieLe   DateTime             @updatedAt
   acces       EquipeProjetAccess[]
+  membres     EquipeProjetMembre[]
 
   @@index([actif])
   @@index([archive])
@@ -460,6 +417,220 @@ model EquipeProjetMembre {
   @@index([traducteurId])
   @@index([actif])
   @@map("equipes_projet_membres")
+}
+
+model EquipeConseiller {
+  id          String                   @id @default(uuid())
+  nom         String                   @unique
+  code        String                   @unique
+  description String?
+  couleur     String                   @default("#8B5CF6")
+  actif       Boolean                  @default(true)
+  creePar     String
+  creeLe      DateTime                 @default(now())
+  modifiePar  String?
+  modifieLe   DateTime                 @updatedAt
+  membres     EquipeConseillerMembre[]
+
+  @@index([actif])
+  @@map("equipes_conseiller")
+}
+
+model EquipeConseillerMembre {
+  id                 String               @id @default(uuid())
+  equipeConseillerId String
+  utilisateurId      String
+  role               RoleEquipeConseiller @default(MEMBRE)
+  dateAjout          DateTime             @default(now())
+  dateRetrait        DateTime?
+  actif              Boolean              @default(true)
+  ajoutePar          String
+  notes              String?
+  equipeConseiller   EquipeConseiller     @relation(fields: [equipeConseillerId], references: [id], onDelete: Cascade)
+  utilisateur        Utilisateur          @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+
+  @@unique([equipeConseillerId, utilisateurId])
+  @@index([equipeConseillerId])
+  @@index([utilisateurId])
+  @@index([actif])
+  @@map("equipes_conseiller_membres")
+}
+
+model Note {
+  id                 String         @id @default(uuid())
+  titre              String
+  contenu            String
+  categorie          CategorieNote  @default(GENERALE)
+  visibilite         VisibiliteNote @default(EQUIPE)
+  entiteType         TypeEntiteNote
+  entiteId           String
+  epingle            Boolean        @default(false)
+  tags               String[]       @default([])
+  ordre              Int            @default(0)
+  creeParId          String
+  creePar            String
+  modifieParId       String?
+  modifiePar         String?
+  creeLe             DateTime       @default(now())
+  modifieLe          DateTime       @updatedAt
+  equipeConseillerId String?
+  piecesJointes      PieceJointe[]
+
+  @@index([entiteType, entiteId])
+  @@index([creeParId])
+  @@index([visibilite])
+  @@index([epingle])
+  @@index([categorie])
+  @@index([equipeConseillerId])
+  @@map("notes")
+}
+
+model PieceJointe {
+  id          String          @id @default(uuid())
+  nom         String
+  nomOriginal String
+  typeMime    String
+  taille      Int
+  chemin      String
+  noteId      String?
+  entiteType  TypeEntiteNote?
+  entiteId    String?
+  creeParId   String
+  creePar     String
+  creeLe      DateTime        @default(now())
+  note        Note?           @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@index([noteId])
+  @@index([entiteType, entiteId])
+  @@map("pieces_jointes")
+}
+
+model Domaine {
+  id                  String                @id @default(dbgenerated("(gen_random_uuid())::text"))
+  nom                 String                @unique
+  description         String?
+  actif               Boolean               @default(true)
+  creeLe              DateTime              @default(now())
+  modifieLe           DateTime              @default(now())
+  traducteurDomaines  TraducteurDomaine[]
+
+  @@index([actif])
+  @@map("domaines")
+}
+
+model Langue {
+  id        String   @id @default(dbgenerated("(gen_random_uuid())::text"))
+  code      String   @unique
+  nom       String   @unique
+  actif     Boolean  @default(true)
+  creeLe    DateTime @default(now())
+  modifieLe DateTime @default(now())
+
+  @@index([actif])
+  @@map("langues")
+}
+
+model Specialisation {
+  id                         String                       @id @default(dbgenerated("(gen_random_uuid())::text"))
+  nom                        String                       @unique
+  description                String?
+  actif                      Boolean                      @default(true)
+  creeLe                     DateTime                     @default(now())
+  modifieLe                  DateTime                     @default(now())
+  traducteurSpecialisations  TraducteurSpecialisation[]
+
+  @@index([actif])
+  @@map("specialisations")
+}
+
+model TraducteurClient {
+  id           String     @id @default(dbgenerated("(gen_random_uuid())::text"))
+  traducteurId String
+  clientId     String
+  creeLe       DateTime   @default(now())
+  client       Client     @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, clientId])
+  @@index([clientId])
+  @@index([traducteurId])
+  @@map("traducteur_clients")
+}
+
+model TraducteurDivision {
+  id           String     @id @default(dbgenerated("(gen_random_uuid())::text"))
+  traducteurId String
+  divisionId   String
+  creeLe       DateTime   @default(now())
+  division     Division   @relation(fields: [divisionId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, divisionId])
+  @@index([divisionId])
+  @@index([traducteurId])
+  @@map("traducteur_divisions")
+}
+
+model TraducteurDomaine {
+  id           String     @id @default(dbgenerated("(gen_random_uuid())::text"))
+  traducteurId String
+  domaineId    String
+  creeLe       DateTime   @default(now())
+  domaine      Domaine    @relation(fields: [domaineId], references: [id], onDelete: Cascade)
+  traducteur   Traducteur @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, domaineId])
+  @@index([domaineId])
+  @@index([traducteurId])
+  @@map("traducteur_domaines")
+}
+
+model TraducteurSpecialisation {
+  id               String          @id @default(dbgenerated("(gen_random_uuid())::text"))
+  traducteurId     String
+  specialisationId String
+  creeLe           DateTime        @default(now())
+  specialisation   Specialisation  @relation(fields: [specialisationId], references: [id], onDelete: Cascade)
+  traducteur       Traducteur      @relation(fields: [traducteurId], references: [id], onDelete: Cascade)
+
+  @@unique([traducteurId, specialisationId])
+  @@index([specialisationId])
+  @@index([traducteurId])
+  @@map("traducteur_specialisations")
+}
+
+enum TypeJourFerie {
+  FEDERAL
+  PROVINCIAL
+  ORGANISATIONNEL
+}
+
+enum ActionAudit {
+  CONNEXION
+  DECONNEXION
+  CONNEXION_ECHOUEE
+  SESSION_EXPIREE
+  SESSION_FORCEE
+  UTILISATEUR_CREE
+  UTILISATEUR_MODIFIE
+  UTILISATEUR_SUPPRIME
+  MOT_DE_PASSE_CHANGE
+  ROLE_MODIFIE
+  TACHE_CREEE
+  TACHE_MODIFIEE
+  TACHE_SUPPRIMEE
+  STATUT_TACHE_CHANGE
+  TACHE_ASSIGNEE
+  TRADUCTEUR_CREE
+  TRADUCTEUR_MODIFIE
+  TRADUCTEUR_SUPPRIME
+  CAPACITE_MODIFIEE
+  JOUR_FERIE_CREE
+  JOUR_FERIE_MODIFIE
+  JOUR_FERIE_SUPPRIME
+  REFERENTIEL_MODIFIE
+  EXPORT_DONNEES
+  IMPORT_DONNEES
 }
 
 enum TypeNotification {
@@ -528,118 +699,9 @@ enum RoleEquipe {
   REVISEUR
 }
 
-// ============================================
-// ÉQUIPES CONSEILLERS
-// ============================================
-
-model EquipeConseiller {
-  id          String                   @id @default(uuid())
-  nom         String                   @unique
-  code        String                   @unique
-  description String?
-  couleur     String                   @default("#8B5CF6") // Violet par défaut
-  actif       Boolean                  @default(true)
-  creePar     String
-  creeLe      DateTime                 @default(now())
-  modifiePar  String?
-  modifieLe   DateTime                 @updatedAt
-  membres     EquipeConseillerMembre[]
-
-  @@index([actif])
-  @@map("equipes_conseiller")
-}
-
-model EquipeConseillerMembre {
-  id                 String           @id @default(uuid())
-  equipeConseillerId String
-  utilisateurId      String
-  role               RoleEquipeConseiller @default(MEMBRE)
-  dateAjout          DateTime         @default(now())
-  dateRetrait        DateTime?
-  actif              Boolean          @default(true)
-  ajoutePar          String
-  notes              String?
-  equipeConseiller   EquipeConseiller @relation(fields: [equipeConseillerId], references: [id], onDelete: Cascade)
-  utilisateur        Utilisateur      @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
-
-  @@unique([equipeConseillerId, utilisateurId])
-  @@index([equipeConseillerId])
-  @@index([utilisateurId])
-  @@index([actif])
-  @@map("equipes_conseiller_membres")
-}
-
 enum RoleEquipeConseiller {
-  CHEF         // Chef d'équipe
-  MEMBRE       // Membre standard
-}
-
-// ============================================
-// NOTES & DOCUMENTATION
-// ============================================
-
-model Note {
-  id            String         @id @default(uuid())
-  titre         String
-  contenu       String         @db.Text  // Markdown supporté
-  categorie     CategorieNote  @default(GENERALE)
-  visibilite    VisibiliteNote @default(EQUIPE)
-  
-  // Polymorphisme - l'entité attachée
-  entiteType    TypeEntiteNote
-  entiteId      String
-  
-  // Partage équipe conseiller (si visibilite = EQUIPE_CONSEILLER)
-  equipeConseillerId String?
-  
-  // Métadonnées
-  epingle       Boolean        @default(false)
-  tags          String[]       @default([])
-  ordre         Int            @default(0)
-  
-  // Audit
-  creeParId     String
-  creePar       String         // Nom affiché
-  modifieParId  String?
-  modifiePar    String?
-  creeLe        DateTime       @default(now())
-  modifieLe     DateTime       @updatedAt
-  
-  // Relations
-  piecesJointes PieceJointe[]
-  
-  @@index([entiteType, entiteId])
-  @@index([creeParId])
-  @@index([visibilite])
-  @@index([epingle])
-  @@index([categorie])
-  @@index([equipeConseillerId])
-  @@map("notes")
-}
-
-model PieceJointe {
-  id           String   @id @default(uuid())
-  nom          String
-  nomOriginal  String
-  typeMime     String
-  taille       Int      // en bytes
-  chemin       String   // Chemin stockage ou URL
-  noteId       String?
-  
-  // Peut aussi être attaché directement à une entité (sans note)
-  entiteType   TypeEntiteNote?
-  entiteId     String?
-  
-  // Audit
-  creeParId    String
-  creePar      String
-  creeLe       DateTime @default(now())
-  
-  note         Note?    @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  
-  @@index([noteId])
-  @@index([entiteType, entiteId])
-  @@map("pieces_jointes")
+  CHEF
+  MEMBRE
 }
 
 enum TypeEntiteNote {
@@ -647,10 +709,10 @@ enum TypeEntiteNote {
   TRADUCTEUR
   DIVISION
   EQUIPE_PROJET
-  EQUIPE_CONSEILLER  // Notes partagées au sein d'une équipe conseiller
   TACHE
   SOUS_DOMAINE
-  UTILISATEUR    // Notes personnelles de l'utilisateur
+  UTILISATEUR
+  EQUIPE_CONSEILLER
 }
 
 enum CategorieNote {
@@ -664,9 +726,9 @@ enum CategorieNote {
 }
 
 enum VisibiliteNote {
-  PRIVE              // Visible seulement par l'auteur
-  EQUIPE_CONSEILLER  // Visible par les membres de l'équipe conseiller
-  EQUIPE             // Visible par CONSEILLER, GESTIONNAIRE, ADMIN
-  TRADUCTEUR         // Visible aussi par les traducteurs concernés
-  PUBLIC             // Visible par tous
+  PRIVE
+  EQUIPE
+  TRADUCTEUR
+  PUBLIC
+  EQUIPE_CONSEILLER
 }

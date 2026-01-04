@@ -39,6 +39,70 @@ export interface DivisionAccess {
   utilisateur?: Utilisateur;
 }
 
+// ============================================
+// TYPES RÉFÉRENTIELS NORMALISÉS
+// ============================================
+
+export interface Langue {
+  id: string;
+  code: string;
+  nom: string;
+  actif: boolean;
+  creeLe: string;
+  modifieLe: string;
+}
+
+export interface Specialisation {
+  id: string;
+  nom: string;
+  description?: string;
+  actif: boolean;
+  creeLe: string;
+  modifieLe: string;
+}
+
+export interface Domaine {
+  id: string;
+  nom: string;
+  description?: string;
+  actif: boolean;
+  creeLe: string;
+  modifieLe: string;
+}
+
+// Tables de jonction (many-to-many)
+export interface TraducteurSpecialisation {
+  id: string;
+  traducteurId: string;
+  specialisationId: string;
+  specialisation: Specialisation;
+}
+
+export interface TraducteurDomaine {
+  id: string;
+  traducteurId: string;
+  domaineId: string;
+  domaine: Domaine;
+}
+
+export interface TraducteurDivision {
+  id: string;
+  traducteurId: string;
+  divisionId: string;
+  division: Division;
+}
+
+export interface TraducteurClient {
+  id: string;
+  traducteurId: string;
+  clientId: string;
+  client: Client;
+}
+
+// ============================================
+// FIN TYPES RÉFÉRENTIELS NORMALISÉS
+// ============================================
+
 export interface LoginResponse {
   token: string;
   utilisateur: Utilisateur;
@@ -56,13 +120,14 @@ export type CategorieTraducteur = 'TR01' | 'TR02' | 'TR03';
 export interface Traducteur {
   id: string;
   nom: string;
+  // Champs legacy (String[]) - DÉPRÉCIÉ, utiliser les relations normalisées
   divisions: string[]; // Droit, Science et technologie, CISR, etc. - Un traducteur peut appartenir à plusieurs divisions
   horaire?: string; // Optionnel: "9h-17h", "8h30-16h30"
   heureDinerDebut?: string; // Heure de début du dîner (ex: "12:00")
   heureDinerFin?: string; // Heure de fin du dîner (ex: "13:00")
-  domaines: string[];
-  clientsHabituels: string[];
-  specialisations: string[]; // Immigration, juridique, médical, etc.
+  domaines: string[]; // DÉPRÉCIÉ - utiliser traducteurDomaines
+  clientsHabituels: string[]; // DÉPRÉCIÉ - utiliser traducteurClients
+  specialisations: string[]; // DÉPRÉCIÉ - utiliser traducteurSpecialisations
   notes?: string; // Notes diverses (ex: en congé le mercredi)
   capaciteHeuresParJour: number;
   actif: boolean;
@@ -73,6 +138,12 @@ export interface Traducteur {
   commentaireDisponibilite?: string; // Commentaire optionnel sur la disponibilité
   categorie: CategorieTraducteur; // TR01, TR02, TR03
   necessiteRevision?: boolean; // Si TR02, indique si nécessite révision
+  
+  // Relations normalisées (PRÉFÉRÉ)
+  traducteurSpecialisations?: TraducteurSpecialisation[];
+  traducteurDomaines?: TraducteurDomaine[];
+  traducteurDivisions?: TraducteurDivision[];
+  traducteurClients?: TraducteurClient[];
 }
 
 // Types pour les clients et domaines

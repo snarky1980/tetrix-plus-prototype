@@ -9,7 +9,17 @@ const TABLES_EXPORT_ORDER = [
   'utilisateurs',
   'divisions',
   'divisionAccess',
+  'equipeProjetAccess',
+  // Nouveaux référentiels normalisés
+  'langues',
+  'specialisations',
+  'domaines',
+  // Traducteurs et relations
   'traducteurs',
+  'traducteurSpecialisations',
+  'traducteurDomaines',
+  'traducteurDivisions',
+  'traducteurClients',
   'pairesLinguistiques',
   'liaisonReviseurs',
   'clients',
@@ -21,8 +31,12 @@ const TABLES_EXPORT_ORDER = [
   'joursFeries',
   'equipesProjet',
   'equipeProjetMembres',
+  'equipesConseiller',
+  'equipesConseillerMembres',
   'demandesRessources',
   'interetsDemandes',
+  'notes',
+  'piecesJointes',
   'sessions',
   'auditLogs',
 ] as const;
@@ -130,8 +144,34 @@ class BackupService {
       case 'divisionAccess':
         return prisma.divisionAccess.findMany();
 
+      case 'equipeProjetAccess':
+        return prisma.equipeProjetAccess.findMany();
+
+      // Nouveaux référentiels normalisés
+      case 'langues':
+        return prisma.langue.findMany();
+
+      case 'specialisations':
+        return prisma.specialisation.findMany();
+
+      case 'domaines':
+        return prisma.domaine.findMany();
+
       case 'traducteurs':
         return prisma.traducteur.findMany();
+
+      // Tables de jonction normalisées
+      case 'traducteurSpecialisations':
+        return prisma.traducteurSpecialisation.findMany();
+
+      case 'traducteurDomaines':
+        return prisma.traducteurDomaine.findMany();
+
+      case 'traducteurDivisions':
+        return prisma.traducteurDivision.findMany();
+
+      case 'traducteurClients':
+        return prisma.traducteurClient.findMany();
 
       case 'pairesLinguistiques':
         return prisma.paireLinguistique.findMany();
@@ -166,11 +206,23 @@ class BackupService {
       case 'equipeProjetMembres':
         return prisma.equipeProjetMembre.findMany();
 
+      case 'equipesConseiller':
+        return prisma.equipeConseiller.findMany();
+
+      case 'equipesConseillerMembres':
+        return prisma.equipeConseillerMembre.findMany();
+
       case 'demandesRessources':
         return prisma.demandeRessource.findMany();
 
       case 'interetsDemandes':
         return prisma.interetDemande.findMany();
+
+      case 'notes':
+        return prisma.note.findMany();
+
+      case 'piecesJointes':
+        return prisma.pieceJointe.findMany();
 
       case 'sessions':
         return prisma.session.findMany();
@@ -208,7 +260,17 @@ class BackupService {
       case 'utilisateurs': return prisma.utilisateur.count();
       case 'divisions': return prisma.division.count();
       case 'divisionAccess': return prisma.divisionAccess.count();
+      case 'equipeProjetAccess': return prisma.equipeProjetAccess.count();
+      // Nouveaux référentiels normalisés
+      case 'langues': return prisma.langue.count();
+      case 'specialisations': return prisma.specialisation.count();
+      case 'domaines': return prisma.domaine.count();
       case 'traducteurs': return prisma.traducteur.count();
+      // Tables de jonction normalisées
+      case 'traducteurSpecialisations': return prisma.traducteurSpecialisation.count();
+      case 'traducteurDomaines': return prisma.traducteurDomaine.count();
+      case 'traducteurDivisions': return prisma.traducteurDivision.count();
+      case 'traducteurClients': return prisma.traducteurClient.count();
       case 'pairesLinguistiques': return prisma.paireLinguistique.count();
       case 'liaisonReviseurs': return prisma.liaisonReviseur.count();
       case 'clients': return prisma.client.count();
@@ -220,8 +282,12 @@ class BackupService {
       case 'joursFeries': return prisma.jourFerie.count();
       case 'equipesProjet': return prisma.equipeProjet.count();
       case 'equipeProjetMembres': return prisma.equipeProjetMembre.count();
+      case 'equipesConseiller': return prisma.equipeConseiller.count();
+      case 'equipesConseillerMembres': return prisma.equipeConseillerMembre.count();
       case 'demandesRessources': return prisma.demandeRessource.count();
       case 'interetsDemandes': return prisma.interetDemande.count();
+      case 'notes': return prisma.note.count();
+      case 'piecesJointes': return prisma.pieceJointe.count();
       case 'sessions': return prisma.session.count();
       case 'auditLogs': return prisma.auditLog.count();
       default: return 0;
@@ -375,7 +441,17 @@ class BackupService {
       case 'utilisateurs': await prisma.utilisateur.deleteMany(); break;
       case 'divisions': await prisma.division.deleteMany(); break;
       case 'divisionAccess': await prisma.divisionAccess.deleteMany(); break;
+      case 'equipeProjetAccess': await prisma.equipeProjetAccess.deleteMany(); break;
+      // Nouveaux référentiels normalisés
+      case 'langues': await prisma.langue.deleteMany(); break;
+      case 'specialisations': await prisma.specialisation.deleteMany(); break;
+      case 'domaines': await prisma.domaine.deleteMany(); break;
       case 'traducteurs': await prisma.traducteur.deleteMany(); break;
+      // Tables de jonction normalisées
+      case 'traducteurSpecialisations': await prisma.traducteurSpecialisation.deleteMany(); break;
+      case 'traducteurDomaines': await prisma.traducteurDomaine.deleteMany(); break;
+      case 'traducteurDivisions': await prisma.traducteurDivision.deleteMany(); break;
+      case 'traducteurClients': await prisma.traducteurClient.deleteMany(); break;
       case 'pairesLinguistiques': await prisma.paireLinguistique.deleteMany(); break;
       case 'liaisonReviseurs': await prisma.liaisonReviseur.deleteMany(); break;
       case 'clients': await prisma.client.deleteMany(); break;
@@ -387,8 +463,12 @@ class BackupService {
       case 'joursFeries': await prisma.jourFerie.deleteMany(); break;
       case 'equipesProjet': await prisma.equipeProjet.deleteMany(); break;
       case 'equipeProjetMembres': await prisma.equipeProjetMembre.deleteMany(); break;
+      case 'equipesConseiller': await prisma.equipeConseiller.deleteMany(); break;
+      case 'equipesConseillerMembres': await prisma.equipeConseillerMembre.deleteMany(); break;
       case 'demandesRessources': await prisma.demandeRessource.deleteMany(); break;
       case 'interetsDemandes': await prisma.interetDemande.deleteMany(); break;
+      case 'notes': await prisma.note.deleteMany(); break;
+      case 'piecesJointes': await prisma.pieceJointe.deleteMany(); break;
       case 'sessions': await prisma.session.deleteMany(); break;
       case 'auditLogs': await prisma.auditLog.deleteMany(); break;
     }
@@ -425,9 +505,67 @@ class BackupService {
         }
         break;
 
+      case 'equipeProjetAccess':
+        for (const record of processedRecords) {
+          await prisma.equipeProjetAccess.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      // Nouveaux référentiels normalisés
+      case 'langues':
+        for (const record of processedRecords) {
+          await prisma.langue.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'specialisations':
+        for (const record of processedRecords) {
+          await prisma.specialisation.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'domaines':
+        for (const record of processedRecords) {
+          await prisma.domaine.create({ data: record as any });
+          imported++;
+        }
+        break;
+
       case 'traducteurs':
         for (const record of processedRecords) {
           await prisma.traducteur.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      // Tables de jonction normalisées
+      case 'traducteurSpecialisations':
+        for (const record of processedRecords) {
+          await prisma.traducteurSpecialisation.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'traducteurDomaines':
+        for (const record of processedRecords) {
+          await prisma.traducteurDomaine.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'traducteurDivisions':
+        for (const record of processedRecords) {
+          await prisma.traducteurDivision.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'traducteurClients':
+        for (const record of processedRecords) {
+          await prisma.traducteurClient.create({ data: record as any });
           imported++;
         }
         break;
@@ -509,6 +647,20 @@ class BackupService {
         }
         break;
 
+      case 'equipesConseiller':
+        for (const record of processedRecords) {
+          await prisma.equipeConseiller.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'equipesConseillerMembres':
+        for (const record of processedRecords) {
+          await prisma.equipeConseillerMembre.create({ data: record as any });
+          imported++;
+        }
+        break;
+
       case 'demandesRessources':
         for (const record of processedRecords) {
           await prisma.demandeRessource.create({ data: record as any });
@@ -519,6 +671,20 @@ class BackupService {
       case 'interetsDemandes':
         for (const record of processedRecords) {
           await prisma.interetDemande.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'notes':
+        for (const record of processedRecords) {
+          await prisma.note.create({ data: record as any });
+          imported++;
+        }
+        break;
+
+      case 'piecesJointes':
+        for (const record of processedRecords) {
+          await prisma.pieceJointe.create({ data: record as any });
           imported++;
         }
         break;

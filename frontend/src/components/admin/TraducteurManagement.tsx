@@ -14,10 +14,10 @@ import { traducteurService } from '../../services/traducteurService';
 import { exporterTraducteurs } from '../../utils/exportUtils';
 
 // Labels pour les catégories
-const CATEGORIE_LABELS: Record<CategorieTraducteur, { label: string; color: string }> = {
-  'TR01': { label: 'TR-01', color: 'bg-emerald-100 text-emerald-800' },
-  'TR02': { label: 'TR-02', color: 'bg-amber-100 text-amber-800' },
-  'TR03': { label: 'TR-03', color: 'bg-sky-100 text-sky-800' },
+const CATEGORIE_LABELS: Record<CategorieTraducteur, { label: string; color: string; tooltip: string }> = {
+  'TR01': { label: 'TR-01', color: 'bg-emerald-100 text-emerald-800', tooltip: 'Traducteur junior – travail à réviser' },
+  'TR02': { label: 'TR-02', color: 'bg-amber-100 text-amber-800', tooltip: 'Traducteur intermédiaire' },
+  'TR03': { label: 'TR-03', color: 'bg-sky-100 text-sky-800', tooltip: 'Traducteur conseiller – réviseur' },
 };
 
 export const TraducteurManagement: React.FC = () => {
@@ -196,9 +196,12 @@ export const TraducteurManagement: React.FC = () => {
         <td className="px-4 py-3">
           <div className="flex flex-col gap-1">
             {catInfo ? (
-              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit ${catInfo.color}`}>
+              <span 
+                title={catInfo.tooltip}
+                className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full w-fit cursor-help ${catInfo.color}`}
+              >
                 {catInfo.label}
-                {t.necessiteRevision && <span title="Nécessite révision" className="text-amber-600">⚠</span>}
+                {t.necessiteRevision && <span title="Travail à réviser" className="text-amber-600">⚠</span>}
               </span>
             ) : (
               <span className="text-xs text-gray-400">—</span>
