@@ -1,7 +1,7 @@
 import api from './api';
 
 export interface PaireLangue {
-  id: string;
+  id: string; // UUID réel de la paire linguistique
   langueSource: string;
   langueCible: string;
   actif: boolean;
@@ -45,6 +45,7 @@ export const referentielService = {
   
   /**
    * Obtenir toutes les paires linguistiques utilisées dans le système
+   * Retourne des UUIDs réels (une paire représentative par combinaison)
    */
   async obtenirPairesLinguistiques(): Promise<PaireLangue[]> {
     const { data } = await api.get<PaireLangue[]>('/referentiel/paires-linguistiques');

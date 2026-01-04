@@ -287,11 +287,15 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
             <h3 className="text-sm font-semibold text-gray-600 mb-2">📎 Informations optionnelles</h3>
             
             {/* Paire linguistique */}
-            {formData.traducteurId && pairesDisponibles.length > 0 && (
-              <div>
-                <label className="block text-sm font-medium mb-1 text-gray-700">
-                  Paire linguistique <span className="text-gray-500 text-xs">(optionnel)</span>
-                </label>
+            <div>
+              <label className="block text-sm font-medium mb-1 text-gray-700">
+                Paire linguistique <span className="text-gray-500 text-xs">(optionnel)</span>
+              </label>
+              {!formData.traducteurId ? (
+                <p className="text-sm text-gray-500 italic">Sélectionnez d'abord un traducteur</p>
+              ) : pairesDisponibles.length === 0 ? (
+                <p className="text-sm text-gray-500 italic">Aucune paire linguistique assignée à ce traducteur</p>
+              ) : (
                 <Select
                   value={formData.paireLinguistiqueId}
                   onChange={(e) => setFormData({ ...formData, paireLinguistiqueId: e.target.value })}
@@ -303,8 +307,8 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
                     </option>
                   ))}
                 </Select>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Compte de mots */}
             <div>

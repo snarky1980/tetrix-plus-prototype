@@ -19,16 +19,21 @@ export interface TraducteurPreview {
 }
 
 export interface TachePreview {
+  traducteurNom: string;
   numeroProjet: string;
-  titre?: string;
-  client?: string;
-  traducteurNom?: string;
-  heuresTotal: number;
-  dateDebut?: string;
+  typeTache: string;
   dateEcheance: string;
-  modeDistribution?: string;
+  dateDebut: string;
+  priorite: string;
+  modeDistribution: string;
   langueSource?: string;
   langueCible?: string;
+  compteMots?: number;
+  client?: string;
+  domaine?: string;
+  sousDomaine?: string;
+  specialisation?: string;
+  titre?: string;
   traducteurId?: string;
   valid: boolean;
   errors: string[];
@@ -127,14 +132,19 @@ export const COLONNES_TRADUCTEURS = [
  * Colonnes attendues pour l'import tâches
  */
 export const COLONNES_TACHES = [
+  { nom: 'traducteur', description: 'Nom du traducteur assigné', obligatoire: true },
   { nom: 'numéro', description: 'Numéro de projet unique', obligatoire: true },
-  { nom: 'titre', description: 'Titre ou description', obligatoire: false },
-  { nom: 'client', description: 'Nom du client/ministère', obligatoire: false },
-  { nom: 'traducteur', description: 'Nom du traducteur assigné', obligatoire: false },
-  { nom: 'heures', description: 'Nombre d\'heures total', obligatoire: true },
-  { nom: 'début', description: 'Date de début (YYYY-MM-DD)', obligatoire: false },
-  { nom: 'échéance', description: 'Date d\'échéance (YYYY-MM-DD)', obligatoire: true },
-  { nom: 'mode', description: 'JAT, PEPS, ÉQUILIBRÉ ou MANUEL', obligatoire: false },
+  { nom: 'type de tâche', description: 'TRADUCTION, REVISION, RELECTURE, ENCADREMENT, AUTRE', obligatoire: true },
+  { nom: 'échéance', description: 'Date et heure d\'échéance (YYYY-MM-DD 00:00)', obligatoire: true },
+  { nom: 'début tâche', description: 'Date et heure de début (YYYY-MM-DD 00:00)', obligatoire: true },
+  { nom: 'priorité', description: 'REGULIER ou URGENT', obligatoire: true },
+  { nom: 'mode', description: 'JAT, PEPS, ÉQUILIBRÉ ou MANUEL', obligatoire: true },
   { nom: 'source', description: 'Langue source (ex: EN)', obligatoire: false },
   { nom: 'cible', description: 'Langue cible (ex: FR)', obligatoire: false },
+  { nom: 'compte de mots', description: 'Nombre de mots', obligatoire: false },
+  { nom: 'client', description: 'Nom du client/ministère', obligatoire: false },
+  { nom: 'domaine', description: 'Domaine de spécialisation', obligatoire: false },
+  { nom: 'sous-domaine', description: 'Sous-domaine', obligatoire: false },
+  { nom: 'spécialisation', description: 'Spécialisation détaillée', obligatoire: false },
+  { nom: 'titre ou description', description: 'Titre ou description de la tâche', obligatoire: false },
 ];

@@ -13,35 +13,44 @@ router.use(authentifier);
 /**
  * GET /api/referentiel/paires-linguistiques
  * Obtenir toutes les paires linguistiques uniques utilisées dans le système
+ * Retourne des UUIDs réels (une paire représentative par combinaison)
  */
 router.get('/paires-linguistiques', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'), async (req, res) => {
   try {
-    const paires = await prisma.paireLinguistique.findMany({
-      distinct: ['langueSource', 'langueCible'],
+    // Récupérer toutes les paires avec leur vrai UUID
+    const toutesPaires = await prisma.paireLinguistique.findMany({
       select: {
+        id: true,
         langueSource: true,
         langueCible: true,
       },
     });
 
-    // Compter le nombre de traducteurs par paire
-    const pairesAvecStats = await Promise.all(
-      paires.map(async (p) => {
-        const count = await prisma.paireLinguistique.count({
-          where: {
-            langueSource: p.langueSource,
-            langueCible: p.langueCible,
-          },
-        });
-        return {
-          id: `${p.langueSource}-${p.langueCible}`,
+    // Grouper par combinaison langue et compter, garder un UUID représentatif
+    const pairesMap = new Map<string, { id: string; langueSource: string; langueCible: string; count: number }>();
+    
+    toutesPaires.forEach((p) => {
+      const key = `${p.langueSource}-${p.langueCible}`;
+      const existing = pairesMap.get(key);
+      if (existing) {
+        existing.count++;
+      } else {
+        pairesMap.set(key, {
+          id: p.id, // UUID réel
           langueSource: p.langueSource,
           langueCible: p.langueCible,
-          actif: true,
-          utilisationCount: count,
-        };
-      })
-    );
+          count: 1,
+        });
+      }
+    });
+
+    const pairesAvecStats = Array.from(pairesMap.values()).map((p) => ({
+      id: p.id,
+      langueSource: p.langueSource,
+      langueCible: p.langueCible,
+      actif: true,
+      utilisationCount: p.count,
+    }));
 
     res.json(pairesAvecStats);
   } catch (error) {
@@ -52,7 +61,8 @@ router.get('/paires-linguistiques', verifierRole('ADMIN', 'CONSEILLER', 'GESTION
 
 /**
  * POST /api/referentiel/paires-linguistiques
- * Créer une nouvelle paire linguistique (crée une entrée de référence)
+ * Créer une nouvelle paire linguistique de référence
+ * Crée une paire pour un traducteur de référence et retourne le vrai UUID
  */
 router.post('/paires-linguistiques', verifierRole('ADMIN'), async (req, res) => {
   try {
@@ -83,7 +93,7 @@ router.post('/paires-linguistiques', verifierRole('ADMIN'), async (req, res) => 
     }
 
     // Créer la paire pour le traducteur de référence
-    await prisma.paireLinguistique.create({
+    const nouvellePaire = await prisma.paireLinguistique.create({
       data: {
         langueSource,
         langueCible,
@@ -92,7 +102,7 @@ router.post('/paires-linguistiques', verifierRole('ADMIN'), async (req, res) => 
     });
 
     res.json({
-      id: `${langueSource}-${langueCible}`,
+      id: nouvellePaire.id, // UUID réel
       langueSource,
       langueCible,
       actif: true,

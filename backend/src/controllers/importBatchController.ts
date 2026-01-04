@@ -22,16 +22,21 @@ interface TraducteurImport {
 }
 
 interface TacheImport {
+  traducteurNom: string;
   numeroProjet: string;
-  titre?: string;
-  client?: string;
-  traducteurNom?: string;
-  heuresTotal: number;
-  dateDebut?: string;
+  typeTache: string;
   dateEcheance: string;
-  modeDistribution?: string;
+  dateDebut: string;
+  priorite: string;
+  modeDistribution: string;
   langueSource?: string;
   langueCible?: string;
+  compteMots?: number;
+  client?: string;
+  domaine?: string;
+  sousDomaine?: string;
+  specialisation?: string;
+  titre?: string;
 }
 
 /**
@@ -84,32 +89,78 @@ function mapToTraducteur(row: Record<string, string>): TraducteurImport | null {
 
 /**
  * Mapper les colonnes flexibles vers TacheImport
+ * Ordre des colonnes: Traducteur*, Numéro*, Type de tâche*, Échéance*, Début Tâche*, Priorité*, Mode*, Source, Cible, Compte de mots, Domaine, Sous-domaine, Spécialisation, Titre ou description
  */
 function mapToTache(row: Record<string, string>): TacheImport | null {
-  // Numéro de projet obligatoire
+  // A: Traducteur obligatoire
+  const traducteurNom = row['traducteur'] || row['translator'] || row['assigné'] || row['assigne'];
+  if (!traducteurNom) return null;
+  
+  // B: Numéro de projet obligatoire
   const numeroProjet = row['numéro'] || row['numero'] || row['project'] || row['no'] || row['#'] || row['id'] || row['numéro de projet'];
   if (!numeroProjet) return null;
   
-  // Heures obligatoires
-  const heuresStr = row['heures'] || row['hours'] || row['h'] || row['durée'] || row['duree'];
-  const heuresTotal = parseFloat(heuresStr) || 0;
-  if (heuresTotal <= 0) return null;
+  // C: Type de tâche obligatoire
+  const typeTache = row['type de tâche'] || row['type de tache'] || row['type'] || row['typetache'];
+  if (!typeTache) return null;
   
-  // Échéance obligatoire
-  const dateEcheance = row['échéance'] || row['echeance'] || row['deadline'] || row['date limite'] || row['fin'];
+  // D: Échéance obligatoire (Date et heure YYYY-MM-DD 00:00)
+  const dateEcheance = row['échéance'] || row['echeance'] || row['échéance date et heure'] || row['deadline'] || row['date limite'] || row['fin'];
   if (!dateEcheance) return null;
   
+  // E: Début tâche obligatoire (Date et heure YYYY-MM-DD 00:00)
+  const dateDebut = row['début tâche'] || row['début tache'] || row['debut tâche'] || row['debut tache'] || row['début tâche date et heure'] || row['début'] || row['debut'] || row['start'] || row['date début'];
+  if (!dateDebut) return null;
+  
+  // F: Priorité obligatoire
+  const priorite = row['priorité'] || row['priorite'] || row['priority'];
+  if (!priorite) return null;
+  
+  // G: Mode obligatoire
+  const modeDistribution = row['mode'] || row['distribution'] || row['répartition'];
+  if (!modeDistribution) return null;
+  
+  // H: Source (optionnel)
+  const langueSource = row['source'] || row['langue source'] || row['de'];
+  
+  // I: Cible (optionnel)
+  const langueCible = row['cible'] || row['langue cible'] || row['vers'] || row['à'];
+  
+  // J: Compte de mots (optionnel)
+  const compteMotsStr = row['compte de mots'] || row['compteMots'] || row['compte_mots'] || row['mots'] || row['words'];
+  const compteMots = compteMotsStr ? parseInt(compteMotsStr, 10) || undefined : undefined;
+  
+  // K: Client (optionnel)
+  const client = row['client'] || row['ministère'] || row['ministere'] || row['org'];
+  
+  // L: Domaine (optionnel)
+  const domaine = row['domaine'] || row['domain'];
+  
+  // M: Sous-domaine (optionnel)
+  const sousDomaine = row['sous-domaine'] || row['sous domaine'] || row['sousdomaine'] || row['subdomain'];
+  
+  // N: Spécialisation (optionnel)
+  const specialisation = row['spécialisation'] || row['specialisation'];
+  
+  // O: Titre ou description (optionnel)
+  const titre = row['titre ou description'] || row['titre'] || row['title'] || row['description'] || row['objet'];
+
   return {
+    traducteurNom,
     numeroProjet,
-    titre: row['titre'] || row['title'] || row['description'] || row['objet'],
-    client: row['client'] || row['ministère'] || row['ministere'] || row['org'],
-    traducteurNom: row['traducteur'] || row['translator'] || row['assigné'] || row['assigne'],
-    heuresTotal,
-    dateDebut: row['début'] || row['debut'] || row['start'] || row['date début'],
+    typeTache: typeTache.toUpperCase(),
     dateEcheance,
-    modeDistribution: row['mode'] || row['distribution'] || row['répartition'],
-    langueSource: row['source'] || row['langue source'] || row['de'],
-    langueCible: row['cible'] || row['langue cible'] || row['vers'] || row['à'],
+    dateDebut,
+    priorite: priorite.toUpperCase(),
+    modeDistribution: modeDistribution.toUpperCase(),
+    langueSource,
+    langueCible,
+    compteMots,
+    client,
+    domaine,
+    sousDomaine,
+    specialisation,
+    titre,
   };
 }
 
@@ -316,11 +367,15 @@ export const previewTaches = async (req: Request, res: Response) => {
       const tache = mapToTache(row);
       if (!tache) {
         taches.push({
+          traducteurNom: row['traducteur'] || '(vide)',
           numeroProjet: row['numéro'] || row['numero'] || '(vide)',
-          heuresTotal: 0,
+          typeTache: '',
           dateEcheance: '',
+          dateDebut: '',
+          priorite: '',
+          modeDistribution: '',
           valid: false,
-          errors: ['Données obligatoires manquantes (numéro, heures, échéance)']
+          errors: ['Données obligatoires manquantes (traducteur, numéro, type, échéance, début, priorité, mode)']
         });
         continue;
       }
@@ -333,30 +388,50 @@ export const previewTaches = async (req: Request, res: Response) => {
         errors.push(`Numéro de projet "${tache.numeroProjet}" existe déjà`);
       }
       
-      // Vérifier traducteur si spécifié
-      if (tache.traducteurNom) {
-        traducteurId = traducteursByNom.get(tache.traducteurNom.toLowerCase());
-        if (!traducteurId) {
-          // Chercher par correspondance partielle
-          for (const [nom, id] of traducteursByNom) {
-            if (nom.includes(tache.traducteurNom.toLowerCase()) || 
-                tache.traducteurNom.toLowerCase().includes(nom)) {
-              traducteurId = id;
-              break;
-            }
-          }
-          if (!traducteurId) {
-            errors.push(`Traducteur "${tache.traducteurNom}" non trouvé`);
+      // Vérifier traducteur - toujours présent car obligatoire dans mapToTache
+      traducteurId = traducteursByNom.get(tache.traducteurNom!.toLowerCase());
+      if (!traducteurId) {
+        // Chercher par correspondance partielle
+        for (const [nom, id] of traducteursByNom) {
+          if (nom.includes(tache.traducteurNom!.toLowerCase()) || 
+              tache.traducteurNom!.toLowerCase().includes(nom)) {
+            traducteurId = id;
+            break;
           }
         }
-      } else {
-        errors.push('Traducteur obligatoire');
+        if (!traducteurId) {
+          errors.push(`Traducteur "${tache.traducteurNom}" non trouvé`);
+        }
       }
       
-      // Valider la date
+      // Valider la date d'échéance
       const dateEcheance = parseDate(tache.dateEcheance);
       if (!dateEcheance) {
         errors.push(`Date d'échéance invalide: "${tache.dateEcheance}"`);
+      }
+      
+      // Valider la date de début
+      const dateDebutParsed = parseDate(tache.dateDebut);
+      if (!dateDebutParsed) {
+        errors.push(`Date de début invalide: "${tache.dateDebut}"`);
+      }
+      
+      // Valider le type de tâche (selon enum TypeTache Prisma)
+      const typesValides = ['TRADUCTION', 'REVISION', 'RELECTURE', 'ENCADREMENT', 'AUTRE'];
+      if (!typesValides.includes(tache.typeTache)) {
+        errors.push(`Type de tâche invalide: "${tache.typeTache}". Valeurs acceptées: ${typesValides.join(', ')}`);
+      }
+      
+      // Valider la priorité (seulement REGULIER ou URGENT)
+      const prioritesValides = ['URGENT', 'REGULIER'];
+      if (!prioritesValides.includes(tache.priorite)) {
+        errors.push(`Priorité invalide: "${tache.priorite}". Valeurs acceptées: REGULIER, URGENT`);
+      }
+      
+      // Valider le mode de distribution
+      const modesValides = ['JAT', 'PEPS', 'EQUILIBRE', 'ÉQUILIBRÉ', 'MANUEL'];
+      if (!modesValides.includes(tache.modeDistribution)) {
+        errors.push(`Mode de distribution invalide: "${tache.modeDistribution}". Valeurs acceptées: JAT, PEPS, ÉQUILIBRÉ, MANUEL`);
       }
       
       taches.push({
@@ -397,10 +472,22 @@ export const importTaches = async (req: Request, res: Response) => {
     let created = 0;
     let errors: string[] = [];
     
-    // Récupérer tous les clients pour mapping par nom
-    const clients = await prisma.client.findMany({ select: { id: true, nom: true } });
+    // Récupérer les sous-domaines pour mapping
+    const sousDomaines = await prisma.sousDomaine.findMany({ 
+      select: { id: true, nom: true }
+    });
+    const sousDomainesByNom = new Map(sousDomaines.map(sd => [sd.nom.toLowerCase(), sd.id]));
+    
+    // Récupérer les clients pour mapping
+    const clients = await prisma.client.findMany({
+      select: { id: true, nom: true }
+    });
     const clientsByNom = new Map(clients.map(c => [c.nom.toLowerCase(), c.id]));
-    const clientDefaut = clients[0]; // Fallback
+    
+    // Récupérer les paires linguistiques avec leurs traducteurs
+    const pairesLing = await prisma.paireLinguistique.findMany({
+      select: { id: true, langueSource: true, langueCible: true, traducteurId: true }
+    });
     
     for (const tache of taches) {
       try {
@@ -411,12 +498,7 @@ export const importTaches = async (req: Request, res: Response) => {
         }
         
         const dateEcheance = parseDate(tache.dateEcheance)!;
-        
-        // Valider les heures (max 200h selon les règles métier)
-        if (tache.heuresTotal <= 0 || tache.heuresTotal > 200) {
-          errors.push(`${tache.numeroProjet}: Heures doivent être entre 0.1 et 200`);
-          continue;
-        }
+        const dateDebut = parseDate(tache.dateDebut);
         
         // Mapper mode distribution
         let modeDistribution: 'JAT' | 'PEPS' | 'EQUILIBRE' | 'MANUEL' = 'JAT';
@@ -425,25 +507,60 @@ export const importTaches = async (req: Request, res: Response) => {
         else if (mode.includes('EQUI') || mode.includes('BALANCE')) modeDistribution = 'EQUILIBRE';
         else if (mode.includes('MAN')) modeDistribution = 'MANUEL';
         
-        // Mapper client par nom si spécifié
-        let clientId: string | undefined = clientDefaut?.id;
+        // Mapper type de tâche
+        let typeTache: 'TRADUCTION' | 'REVISION' | 'RELECTURE' | 'ENCADREMENT' | 'AUTRE' = 'TRADUCTION';
+        const typeStr = (tache.typeTache || '').toUpperCase();
+        if (typeStr.includes('REVIS')) typeTache = 'REVISION';
+        else if (typeStr.includes('RELECT')) typeTache = 'RELECTURE';
+        else if (typeStr.includes('ENCAD')) typeTache = 'ENCADREMENT';
+        else if (typeStr.includes('AUTRE')) typeTache = 'AUTRE';
+        
+        // Mapper priorité (seulement REGULIER ou URGENT)
+        let priorite: 'URGENT' | 'REGULIER' = 'REGULIER';
+        const prioStr = (tache.priorite || '').toUpperCase();
+        if (prioStr.includes('URGENT')) priorite = 'URGENT';
+        
+        // Chercher le sous-domaine
+        let sousDomaineId: string | undefined;
+        if (tache.sousDomaine) {
+          sousDomaineId = sousDomainesByNom.get(tache.sousDomaine.toLowerCase());
+        }
+        
+        // Chercher le client par nom
+        let clientId: string | undefined;
         if (tache.client) {
-          const foundClientId = clientsByNom.get(tache.client.toLowerCase());
-          if (foundClientId) {
-            clientId = foundClientId;
-          }
+          clientId = clientsByNom.get(tache.client.toLowerCase());
+        }
+        
+        // Chercher la paire linguistique du traducteur assigné
+        let paireLinguistiqueId: string | undefined;
+        if (tache.langueSource && tache.langueCible) {
+          // IMPORTANT: Chercher uniquement parmi les paires du traducteur assigné
+          const paire = pairesLing.find(p => 
+            p.traducteurId === tache.traducteurId &&
+            p.langueSource.toUpperCase() === tache.langueSource!.toUpperCase() &&
+            p.langueCible.toUpperCase() === tache.langueCible!.toUpperCase()
+          );
+          if (paire) paireLinguistiqueId = paire.id;
         }
         
         await prisma.tache.create({
           data: {
             numeroProjet: tache.numeroProjet,
             description: tache.titre || tache.numeroProjet,
-            heuresTotal: tache.heuresTotal,
+            specialisation: tache.specialisation,
+            compteMots: tache.compteMots,
+            heuresTotal: 0, // Sera calculé selon les ajustements
             dateEcheance,
+            dateDebutEffective: dateDebut || undefined,
+            priorite,
             statut: 'PLANIFIEE',
+            typeTache,
             modeDistribution,
             traducteurId: tache.traducteurId,
             clientId,
+            sousDomaineId,
+            paireLinguistiqueId,
             creePar: utilisateurId
           }
         });
@@ -513,9 +630,9 @@ Tremblay, Jean\tjean.tremblay@tetrix.com\tDroit 1\tTR-03\t7.5\t8h30-16h30\tDroit
   }
   
   if (type === 'taches') {
-    const template = `numéro\ttitre\tclient\ttraducteur\theures\tdébut\téchéance\tmode\tsource\tcible
-PROJ-001\tTraduction rapport\tCISR\tDupont, Marie\t10\t2026-01-06\t2026-01-15\tJAT\tEN\tFR
-PROJ-002\tRévision contrat\tJustice\t\t5\t2026-01-07\t2026-01-10\tPEPS\tEN\tFR`;
+    const template = `traducteur\tnuméro\ttype de tâche\téchéance\tdébut tâche\tpriorité\tmode\tsource\tcible\tcompte de mots\tclient\tdomaine\tsous-domaine\tspécialisation\ttitre ou description
+Dupont, Marie\tPROJ-001\tTRADUCTION\t2026-01-15 00:00\t2026-01-06 00:00\tREGULIER\tJAT\tEN\tFR\t5000\tCISR\tJuridique\tContrats\t\tTraduction rapport annuel
+Tremblay, Jean\tPROJ-002\tREVISION\t2026-01-10 00:00\t2026-01-07 00:00\tURGENT\tPEPS\tEN\tFR\t2000\tJustice\t\t\t\tRévision contrat`;
     
     res.setHeader('Content-Type', 'text/tab-separated-values');
     res.setHeader('Content-Disposition', 'attachment; filename=template-taches.tsv');

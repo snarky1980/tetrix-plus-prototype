@@ -262,7 +262,7 @@ export function useFormulaireTache(options: UseFormulaireTacheOptions): UseFormu
     }
   }, [tacheId, chargerTache]);
 
-  // Mise à jour des paires linguistiques selon le traducteur
+  // Mise à jour des paires linguistiques selon le traducteur sélectionné
   useEffect(() => {
     if (formData.traducteurId) {
       const trad = traducteurs.find(t => t.id === formData.traducteurId);
@@ -270,6 +270,8 @@ export function useFormulaireTache(options: UseFormulaireTacheOptions): UseFormu
       if (!tacheId) {
         setFormData(prev => ({ ...prev, paireLinguistiqueId: '' }));
       }
+    } else {
+      setPairesDisponibles([]);
     }
   }, [formData.traducteurId, traducteurs, tacheId]);
 

@@ -300,11 +300,11 @@ PROJ-002\tRévision rapport\tJustice\t\t5\t2026-01-07\t2026-01-10\tPEPS`;
                       </>
                     ) : (
                       <>
-                        <th className="px-3 py-2 text-left">N° Projet</th>
-                        <th className="px-3 py-2 text-left">Titre</th>
-                        <th className="px-3 py-2 text-left">Heures</th>
-                        <th className="px-3 py-2 text-left">Échéance</th>
                         <th className="px-3 py-2 text-left">Traducteur</th>
+                        <th className="px-3 py-2 text-left">N° Projet</th>
+                        <th className="px-3 py-2 text-left">Type</th>
+                        <th className="px-3 py-2 text-left">Échéance</th>
+                        <th className="px-3 py-2 text-left">Priorité</th>
                       </>
                     )}
                     <th className="px-3 py-2 text-left">Statut</th>
@@ -332,11 +332,11 @@ PROJ-002\tRévision rapport\tJustice\t\t5\t2026-01-07\t2026-01-10\tPEPS`;
                         </>
                       ) : (
                         <>
+                          <td className="px-3 py-2">{(item as TachePreview).traducteurNom}</td>
                           <td className="px-3 py-2 font-medium">{(item as TachePreview).numeroProjet}</td>
-                          <td className="px-3 py-2">{(item as TachePreview).titre || '-'}</td>
-                          <td className="px-3 py-2">{(item as TachePreview).heuresTotal}h</td>
+                          <td className="px-3 py-2">{(item as TachePreview).typeTache || '-'}</td>
                           <td className="px-3 py-2">{(item as TachePreview).dateEcheance}</td>
-                          <td className="px-3 py-2">{(item as TachePreview).traducteurNom || '-'}</td>
+                          <td className="px-3 py-2">{(item as TachePreview).priorite || '-'}</td>
                         </>
                       )}
                       <td className="px-3 py-2">

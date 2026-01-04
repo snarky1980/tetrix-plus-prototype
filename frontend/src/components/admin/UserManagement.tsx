@@ -600,7 +600,7 @@ const UserForm: React.FC<{
   );
 };
 
-// Modal de gestion des permissions de divisions
+// Modal de gestion des permissions de divisions et équipes projet
 const DivisionPermissionsModal: React.FC<{
   utilisateur?: Utilisateur;
   ouvert: boolean;
@@ -609,8 +609,19 @@ const DivisionPermissionsModal: React.FC<{
 }> = ({ utilisateur, ouvert, onFermer, onSauvegarder }) => {
   const { addToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'divisions' | 'equipesProjet'>('divisions');
+  
+  // Données divisions
   const [divisions, setDivisions] = useState<any[]>([]);
-  const [permissions, setPermissions] = useState<Map<string, {
+  const [permissionsDivisions, setPermissionsDivisions] = useState<Map<string, {
+    peutLire: boolean;
+    peutEcrire: boolean;
+    peutGerer: boolean;
+  }>>(new Map());
+  
+  // Données équipes projet
+  const [equipesProjet, setEquipesProjet] = useState<any[]>([]);
+  const [permissionsEquipesProjet, setPermissionsEquipesProjet] = useState<Map<string, {
     peutLire: boolean;
     peutEcrire: boolean;
     peutGerer: boolean;
@@ -627,24 +638,41 @@ const DivisionPermissionsModal: React.FC<{
     
     setLoading(true);
     try {
-      const [divisionsData, permissionsData] = await Promise.all([
+      const [divisionsData, permissionsDivisionsData, equipesProjetData, permissionsEquipesProjetData] = await Promise.all([
         import('../../services/divisionService').then(m => m.divisionService.obtenirDivisions()),
         import('../../services/divisionAccessService').then(m => 
           m.divisionAccessService.obtenirPermissions(utilisateur.id)
         ),
+        import('../../services/equipeProjetService').then(m => m.equipeProjetService.lister()).catch(() => []),
+        import('../../services/equipeProjetAccessService').then(m => 
+          m.equipeProjetAccessService.obtenirPermissions(utilisateur.id)
+        ).catch(() => []),
       ]);
       
       setDivisions(divisionsData);
+      setEquipesProjet(equipesProjetData);
       
-      const permMap = new Map();
-      permissionsData.forEach((perm: any) => {
-        permMap.set(perm.divisionId, {
+      // Map des permissions divisions
+      const permDivMap = new Map();
+      permissionsDivisionsData.forEach((perm: any) => {
+        permDivMap.set(perm.divisionId, {
           peutLire: perm.peutLire,
           peutEcrire: perm.peutEcrire,
           peutGerer: perm.peutGerer,
         });
       });
-      setPermissions(permMap);
+      setPermissionsDivisions(permDivMap);
+      
+      // Map des permissions équipes projet
+      const permEqMap = new Map();
+      permissionsEquipesProjetData.forEach((perm: any) => {
+        permEqMap.set(perm.equipeProjetId, {
+          peutLire: perm.peutLire,
+          peutEcrire: perm.peutEcrire,
+          peutGerer: perm.peutGerer,
+        });
+      });
+      setPermissionsEquipesProjet(permEqMap);
     } catch (err) {
       console.error('Erreur chargement permissions:', err);
       addToast('Erreur lors du chargement des permissions', 'error');
@@ -653,15 +681,14 @@ const DivisionPermissionsModal: React.FC<{
     }
   };
 
-  const togglePermission = (divisionId: string, type: 'peutLire' | 'peutEcrire' | 'peutGerer') => {
-    const newPermissions = new Map(permissions);
+  const togglePermissionDivision = (divisionId: string, type: 'peutLire' | 'peutEcrire' | 'peutGerer') => {
+    const newPermissions = new Map(permissionsDivisions);
     const current = newPermissions.get(divisionId) || {
       peutLire: false,
       peutEcrire: false,
       peutGerer: false,
     };
     
-    // Si on désactive peutLire, désactiver aussi les autres
     if (type === 'peutLire' && current.peutLire) {
       newPermissions.set(divisionId, {
         peutLire: false,
@@ -669,7 +696,6 @@ const DivisionPermissionsModal: React.FC<{
         peutGerer: false,
       });
     } else {
-      // Si on active peutEcrire ou peutGerer, activer aussi peutLire
       const newValue = !current[type];
       newPermissions.set(divisionId, {
         ...current,
@@ -678,7 +704,33 @@ const DivisionPermissionsModal: React.FC<{
       });
     }
     
-    setPermissions(newPermissions);
+    setPermissionsDivisions(newPermissions);
+  };
+
+  const togglePermissionEquipeProjet = (equipeId: string, type: 'peutLire' | 'peutEcrire' | 'peutGerer') => {
+    const newPermissions = new Map(permissionsEquipesProjet);
+    const current = newPermissions.get(equipeId) || {
+      peutLire: false,
+      peutEcrire: false,
+      peutGerer: false,
+    };
+    
+    if (type === 'peutLire' && current.peutLire) {
+      newPermissions.set(equipeId, {
+        peutLire: false,
+        peutEcrire: false,
+        peutGerer: false,
+      });
+    } else {
+      const newValue = !current[type];
+      newPermissions.set(equipeId, {
+        ...current,
+        [type]: newValue,
+        peutLire: type !== 'peutLire' && newValue ? true : current.peutLire,
+      });
+    }
+    
+    setPermissionsEquipesProjet(newPermissions);
   };
 
   const handleSauvegarder = async () => {
@@ -686,15 +738,28 @@ const DivisionPermissionsModal: React.FC<{
     
     setLoading(true);
     try {
-      const permissionsArray = Array.from(permissions.entries())
-        .filter(([_, perm]) => perm.peutLire) // Sauvegarder seulement celles où peutLire est true
+      // Sauvegarder les permissions divisions
+      const permissionsDivisionsArray = Array.from(permissionsDivisions.entries())
+        .filter(([_, perm]) => perm.peutLire)
         .map(([divisionId, perm]) => ({
           divisionId,
           ...perm,
         }));
       
       await import('../../services/divisionAccessService').then(m =>
-        m.divisionAccessService.definirPermissions(utilisateur.id, permissionsArray)
+        m.divisionAccessService.definirPermissions(utilisateur.id, permissionsDivisionsArray)
+      );
+      
+      // Sauvegarder les permissions équipes projet
+      const permissionsEquipesProjetArray = Array.from(permissionsEquipesProjet.entries())
+        .filter(([_, perm]) => perm.peutLire)
+        .map(([equipeProjetId, perm]) => ({
+          equipeProjetId,
+          ...perm,
+        }));
+      
+      await import('../../services/equipeProjetAccessService').then(m =>
+        m.equipeProjetAccessService.definirPermissions(utilisateur.id, permissionsEquipesProjetArray)
       );
       
       addToast('Permissions mises à jour avec succès', 'success');
@@ -712,72 +777,169 @@ const DivisionPermissionsModal: React.FC<{
 
   return (
     <Modal
-      titre={`Permissions de divisions - ${utilisateur.email}`}
+      titre={`Permissions - ${utilisateur.email}`}
       ouvert={ouvert}
       onFermer={onFermer}
       wide
     >
       <div className="space-y-4">
-        <p className="text-sm text-muted mb-4">
-          Définissez les divisions auxquelles cet utilisateur a accès et les actions qu'il peut effectuer.
-        </p>
+        {/* Onglets */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => setActiveTab('divisions')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'divisions'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted hover:text-foreground'
+            }`}
+          >
+            🏛️ Divisions ({divisions.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('equipesProjet')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'equipesProjet'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted hover:text-foreground'
+            }`}
+          >
+            🎯 Équipes projet ({equipesProjet.length})
+          </button>
+        </div>
 
         {loading ? (
           <div className="text-center py-8">
             <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <div className="space-y-2">
-            <div className="grid grid-cols-4 gap-2 px-4 py-2 bg-surface-100 rounded font-medium text-sm">
-              <div>Division</div>
-              <div className="text-center">Lecture</div>
-              <div className="text-center">Écriture</div>
-              <div className="text-center">Gestion</div>
-            </div>
-            
-            {divisions.map((division) => {
-              const perm = permissions.get(division.id) || {
-                peutLire: false,
-                peutEcrire: false,
-                peutGerer: false,
-              };
-              
-              return (
-                <div
-                  key={division.id}
-                  className="grid grid-cols-4 gap-2 px-4 py-3 border border-border rounded hover:bg-surface-50 transition-colors"
-                >
-                  <div className="font-medium">{division.nom}</div>
-                  <div className="text-center">
-                    <input
-                      type="checkbox"
-                      checked={perm.peutLire}
-                      onChange={() => togglePermission(division.id, 'peutLire')}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <input
-                      type="checkbox"
-                      checked={perm.peutEcrire}
-                      onChange={() => togglePermission(division.id, 'peutEcrire')}
-                      disabled={!perm.peutLire}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
-                  <div className="text-center">
-                    <input
-                      type="checkbox"
-                      checked={perm.peutGerer}
-                      onChange={() => togglePermission(division.id, 'peutGerer')}
-                      disabled={!perm.peutLire}
-                      className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                    />
-                  </div>
+          <>
+            {/* Onglet Divisions */}
+            {activeTab === 'divisions' && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted mb-4">
+                  Définissez les divisions auxquelles cet utilisateur a accès.
+                </p>
+                <div className="grid grid-cols-4 gap-2 px-4 py-2 bg-surface-100 rounded font-medium text-sm">
+                  <div>Division</div>
+                  <div className="text-center">Lecture</div>
+                  <div className="text-center">Écriture</div>
+                  <div className="text-center">Gestion</div>
                 </div>
-              );
-            })}
-          </div>
+                
+                {divisions.length === 0 ? (
+                  <div className="text-center py-4 text-muted">Aucune division disponible</div>
+                ) : (
+                  divisions.map((division) => {
+                    const perm = permissionsDivisions.get(division.id) || {
+                      peutLire: false,
+                      peutEcrire: false,
+                      peutGerer: false,
+                    };
+                    
+                    return (
+                      <div
+                        key={division.id}
+                        className="grid grid-cols-4 gap-2 px-4 py-3 border border-border rounded hover:bg-surface-50 transition-colors"
+                      >
+                        <div className="font-medium">{division.nom}</div>
+                        <div className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={perm.peutLire}
+                            onChange={() => togglePermissionDivision(division.id, 'peutLire')}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={perm.peutEcrire}
+                            onChange={() => togglePermissionDivision(division.id, 'peutEcrire')}
+                            disabled={!perm.peutLire}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={perm.peutGerer}
+                            onChange={() => togglePermissionDivision(division.id, 'peutGerer')}
+                            disabled={!perm.peutLire}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+
+            {/* Onglet Équipes Projet */}
+            {activeTab === 'equipesProjet' && (
+              <div className="space-y-2">
+                <p className="text-sm text-muted mb-4">
+                  Définissez les équipes de projet auxquelles cet utilisateur a accès.
+                </p>
+                <div className="grid grid-cols-4 gap-2 px-4 py-2 bg-surface-100 rounded font-medium text-sm">
+                  <div>Équipe projet</div>
+                  <div className="text-center">Lecture</div>
+                  <div className="text-center">Écriture</div>
+                  <div className="text-center">Gestion</div>
+                </div>
+                
+                {equipesProjet.length === 0 ? (
+                  <div className="text-center py-4 text-muted">Aucune équipe de projet disponible</div>
+                ) : (
+                  equipesProjet.map((equipe) => {
+                    const perm = permissionsEquipesProjet.get(equipe.id) || {
+                      peutLire: false,
+                      peutEcrire: false,
+                      peutGerer: false,
+                    };
+                    
+                    return (
+                      <div
+                        key={equipe.id}
+                        className="grid grid-cols-4 gap-2 px-4 py-3 border border-border rounded hover:bg-surface-50 transition-colors"
+                      >
+                        <div className="font-medium">
+                          {equipe.nom}
+                          <span className="ml-2 text-xs text-muted">({equipe.code})</span>
+                        </div>
+                        <div className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={perm.peutLire}
+                            onChange={() => togglePermissionEquipeProjet(equipe.id, 'peutLire')}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={perm.peutEcrire}
+                            onChange={() => togglePermissionEquipeProjet(equipe.id, 'peutEcrire')}
+                            disabled={!perm.peutLire}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                        <div className="text-center">
+                          <input
+                            type="checkbox"
+                            checked={perm.peutGerer}
+                            onChange={() => togglePermissionEquipeProjet(equipe.id, 'peutGerer')}
+                            disabled={!perm.peutLire}
+                            className="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                          />
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </>
         )}
 
         <div className="flex justify-end gap-2 mt-6 pt-4 border-t">
