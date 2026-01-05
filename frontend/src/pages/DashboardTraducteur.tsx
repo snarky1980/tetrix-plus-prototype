@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
-import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { FormField } from '../components/ui/FormField';
-import { StatCard } from '../components/ui/StatCard';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/Spinner';
+import { InfoTooltip } from '../components/ui/Tooltip';
 import { MultiSelectDropdown } from '../components/ui/MultiSelectDropdown';
 import { TacheCard } from '../components/taches/TacheCard';
 import { DemandesRessourcesTraducteur } from '../components/notifications/DemandesRessourcesTraducteur';
@@ -59,10 +58,6 @@ const DashboardTraducteur: React.FC = () => {
     // Vue
     viewMode,
     setViewMode,
-    customStartDate,
-    setCustomStartDate,
-    customEndDate,
-    setCustomEndDate,
     
     // Disponibilité
     disponibiliteActive,
@@ -101,9 +96,6 @@ const DashboardTraducteur: React.FC = () => {
     setParametresForm,
     savingParametres,
     sauvegarderParametres,
-    
-    // Refresh
-    refresh,
   } = useDashboardTraducteur(traducteurIdParam);
 
   // ============ Titre dynamique ============
@@ -231,115 +223,95 @@ const DashboardTraducteur: React.FC = () => {
 
   // ============ Rendu des sections ============
   const renderOverview = () => (
-    <div className="space-y-6">
-      {/* Statut de disponibilité */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                disponibiliteActive ? 'bg-green-500' : 'bg-gray-300'
-              }`}>
-                <span className="text-2xl">{disponibiliteActive ? '✋' : '😴'}</span>
-              </div>
-              <div>
-                <h3 className="font-bold text-lg">
-                  {disponibiliteActive ? 'Je cherche du travail' : 'Statut normal'}
-                </h3>
-                <p className="text-sm text-muted">
-                  {disponibiliteActive 
-                    ? 'Les conseillers sont notifiés que vous êtes disponible'
-                    : 'Activez pour signaler que vous avez besoin de tâches'}
-                </p>
-              </div>
+    <div className="space-y-4">
+      {/* Statut de disponibilité - compact */}
+      <div className={`p-3 rounded-lg border ${
+        disponibiliteActive 
+          ? 'bg-green-50 border-green-200' 
+          : 'bg-gray-50 border-gray-200'
+      }`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">{disponibiliteActive ? '✋' : '😴'}</span>
+            <div>
+              <span className="font-medium text-sm">
+                {disponibiliteActive ? 'Je cherche du travail' : 'Statut normal'}
+              </span>
+              <p className="text-xs text-gray-500">
+                {disponibiliteActive 
+                  ? 'Les conseillers voient que vous êtes disponible'
+                  : 'Activez pour signaler votre disponibilité'}
+              </p>
             </div>
-            <button
-              onClick={toggleDisponibilite}
-              disabled={savingDisponibilite}
-              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
-                disponibiliteActive ? 'bg-green-500' : 'bg-gray-300'
-              } ${savingDisponibilite ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-              role="switch"
-              aria-checked={disponibiliteActive}
-            >
-              <span
-                className={`inline-block h-6 w-6 transform rounded-full bg-white shadow-md transition-transform ${
-                  disponibiliteActive ? 'translate-x-7' : 'translate-x-1'
-                }`}
-              />
-            </button>
           </div>
-          
-          {disponibiliteActive && (
-            <div className="mt-4 pt-4 border-t border-blue-200 space-y-4">
-              {/* Commentaire */}
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={commentaireDisponibilite}
-                  onChange={e => setCommentaireDisponibilite(e.target.value)}
-                  placeholder="Commentaire optionnel pour les conseillers..."
-                  className="flex-1"
-                  maxLength={200}
+          <button
+            onClick={toggleDisponibilite}
+            disabled={savingDisponibilite}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              disponibiliteActive ? 'bg-green-500' : 'bg-gray-300'
+            } ${savingDisponibilite ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+            role="switch"
+            aria-checked={disponibiliteActive}
+          >
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                disponibiliteActive ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+        
+        {disponibiliteActive && (
+          <div className="mt-3 pt-3 border-t border-green-200 space-y-3">
+            <Input
+              type="text"
+              value={commentaireDisponibilite}
+              onChange={e => setCommentaireDisponibilite(e.target.value)}
+              placeholder="Commentaire optionnel..."
+              className="text-sm"
+              maxLength={200}
+            />
+            
+            {/* Ciblage compact */}
+            <div className="p-2 bg-white/60 rounded border border-green-100">
+              <div className="text-xs font-medium text-green-800 mb-2">🎯 Ciblage (optionnel)</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                <MultiSelectDropdown
+                  label="Divisions"
+                  options={toutesLesDivisions}
+                  selected={ciblageDisponibilite.divisions}
+                  onChange={(val) => setCiblageDisponibilite({ ...ciblageDisponibilite, divisions: val })}
+                  placeholder="Toutes"
+                  minWidth="100%"
                 />
-              </div>
-              
-              {/* Section ciblage */}
-              <div className="p-3 bg-white/50 rounded-lg border border-blue-100">
-                <h5 className="text-sm font-medium text-blue-800 mb-3 flex items-center gap-2">
-                  🎯 Ciblage (optionnel)
-                  <span className="text-xs font-normal text-blue-600">Restreindre qui verra votre disponibilité</span>
-                </h5>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                  <MultiSelectDropdown
-                    label="Divisions"
-                    options={toutesLesDivisions}
-                    selected={ciblageDisponibilite.divisions}
-                    onChange={(val) => setCiblageDisponibilite({ ...ciblageDisponibilite, divisions: val })}
-                    placeholder="Toutes divisions"
-                    minWidth="100%"
-                  />
-                  
-                  <MultiSelectDropdown
-                    label="Catégories de tâches"
-                    options={categorieOptions}
-                    selected={ciblageDisponibilite.categories}
-                    onChange={(val) => setCiblageDisponibilite({ ...ciblageDisponibilite, categories: val })}
-                    placeholder="Toutes catégories"
-                    minWidth="100%"
-                  />
-                  
-                  {equipesProjet.length > 0 && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Équipe-projet</label>
-                      <Select
-                        value={ciblageDisponibilite.equipeProjetId}
-                        onChange={e => setCiblageDisponibilite({ ...ciblageDisponibilite, equipeProjetId: e.target.value })}
-                      >
-                        <option value="">Toutes équipes</option>
-                        {equipesProjet.map(eq => (
-                          <option key={eq.id} value={eq.id}>{eq.nom} ({eq.code})</option>
-                        ))}
-                      </Select>
-                    </div>
-                  )}
-                </div>
-                
-                {/* Résumé du ciblage */}
-                {(ciblageDisponibilite.divisions.length > 0 || ciblageDisponibilite.categories.length > 0 || ciblageDisponibilite.equipeProjetId) && (
-                  <div className="mt-2 text-xs text-blue-700 bg-blue-100 p-2 rounded">
-                    <strong>Ciblage actif :</strong>{' '}
-                    {ciblageDisponibilite.divisions.length > 0 && `${ciblageDisponibilite.divisions.length} division(s)`}
-                    {ciblageDisponibilite.categories.length > 0 && ` • ${ciblageDisponibilite.categories.join(', ')}`}
-                    {ciblageDisponibilite.equipeProjetId && ` • Équipe: ${equipesProjet.find(e => e.id === ciblageDisponibilite.equipeProjetId)?.code}`}
+                <MultiSelectDropdown
+                  label="Catégories"
+                  options={categorieOptions}
+                  selected={ciblageDisponibilite.categories}
+                  onChange={(val) => setCiblageDisponibilite({ ...ciblageDisponibilite, categories: val })}
+                  placeholder="Toutes"
+                  minWidth="100%"
+                />
+                {equipesProjet.length > 0 && (
+                  <div>
+                    <label className="block text-xs font-medium mb-1">Équipe</label>
+                    <Select
+                      value={ciblageDisponibilite.equipeProjetId}
+                      onChange={e => setCiblageDisponibilite({ ...ciblageDisponibilite, equipeProjetId: e.target.value })}
+                      className="text-sm py-1"
+                    >
+                      <option value="">Toutes</option>
+                      {equipesProjet.map(eq => (
+                        <option key={eq.id} value={eq.id}>{eq.code}</option>
+                      ))}
+                    </Select>
                   </div>
                 )}
               </div>
-              
-              {/* Bouton sauvegarder */}
-              <div className="flex justify-end">
+              <div className="flex justify-end mt-2">
                 <Button
                   variant="secondaire"
+                  size="sm"
                   onClick={sauvegarderCiblageDisponibilite}
                   disabled={savingDisponibilite}
                 >
@@ -347,442 +319,369 @@ const DashboardTraducteur: React.FC = () => {
                 </Button>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </div>
 
-      {/* Demandes de ressources actives des conseillers */}
+      {/* Demandes de ressources actives */}
       <DemandesRessourcesTraducteur />
 
-      {/* Statistiques principales */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatCard 
-          title="Capacité" 
-          value={formatHeures(stats.capacite)} 
-          icon="📊" 
-          variant="info"
-          suffix="h"
-          subtitle={`sur ${viewMode === '1' ? '1 jour' : `${viewMode} jours`}`}
-        />
-        <StatCard 
-          title="Tâches assignées" 
-          value={formatHeures(stats.taches)} 
-          icon="📝" 
-          variant="warning"
-          suffix="h"
-          subtitle={`${stats.nbTaches} tâche(s)`}
-        />
-        <StatCard 
-          title="Temps bloqué" 
-          value={formatHeures(stats.blocages)} 
-          icon="🚫" 
-          variant="default"
-          suffix="h"
-          subtitle={`${blocages.length} blocage(s)`}
-        />
-        <StatCard 
-          title="Disponible" 
-          value={formatHeures(stats.libre)} 
-          icon="✅" 
-          variant={percentageUtilise >= 100 ? 'danger' : percentageUtilise >= 75 ? 'warning' : 'success'}
-          suffix="h"
-          subtitle={`${(100 - percentageUtilise).toFixed(0)}% libre`}
-        />
+      {/* Stats cliquables en grille - style Admin */}
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+        {[
+          { label: 'Capacité', value: `${formatHeures(stats.capacite)}h`, sub: viewMode === '1' ? '1 jour' : `${viewMode} jours`, color: 'blue', tooltip: 'Votre capacité de travail sur la période sélectionnée.', action: () => {} },
+          { label: 'Tâches', value: `${formatHeures(stats.taches)}h`, sub: `${stats.nbTaches} tâche(s)`, color: 'amber', tooltip: 'Heures de tâches qui vous sont assignées.', action: () => setSection('taches') },
+          { label: 'Blocages', value: `${formatHeures(stats.blocages)}h`, sub: `${blocages.length} bloc.`, color: 'red', tooltip: 'Temps bloqué (réunions, formations, etc.).', action: () => setSection('blocages') },
+          { label: 'Disponible', value: `${formatHeures(stats.libre)}h`, color: percentageUtilise >= 100 ? 'red' : percentageUtilise >= 75 ? 'orange' : 'green', tooltip: 'Heures encore disponibles pour de nouvelles tâches.', action: () => {} },
+          { label: 'En cours', value: stats.tachesEnCours, color: 'blue', tooltip: 'Tâches actuellement en cours de réalisation.', action: () => setSection('taches') },
+          { label: 'Terminées', value: stats.tachesTerminees, color: 'green', tooltip: 'Tâches complétées.', action: () => setSection('statistiques') },
+        ].map((stat, i) => (
+          <button
+            key={i}
+            onClick={stat.action}
+            className={`p-2 rounded border bg-${stat.color}-50 border-${stat.color}-200 hover:bg-${stat.color}-100 hover:border-${stat.color}-300 transition-colors text-left cursor-pointer`}
+          >
+            <div className="text-xs text-gray-500 flex items-center gap-1">
+              {stat.label}
+              {stat.tooltip && <InfoTooltip content={stat.tooltip} size="sm" />}
+            </div>
+            <div className="text-lg font-bold">{stat.value}</div>
+            {stat.sub && <div className="text-xs text-gray-400">{stat.sub}</div>}
+          </button>
+        ))}
       </div>
 
       {/* Barre de progression globale */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium">Utilisation globale</span>
-            <span className="text-sm font-bold">{percentageUtilise.toFixed(0)}%</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-3">
-            <div 
-              className={`h-3 rounded-full transition-all ${
-                percentageUtilise >= 100 ? 'bg-red-600' : 
-                percentageUtilise >= 75 ? 'bg-orange-500' : 
-                percentageUtilise >= 50 ? 'bg-yellow-500' : 'bg-green-500'
-              }`}
-              style={{ width: `${Math.min(percentageUtilise, 100)}%` }}
-            />
-          </div>
-          <div className="flex justify-between mt-2 text-xs text-muted">
-            <span>📝 Tâches: {stats.taches.toFixed(1)}h</span>
-            <span>🚫 Blocages: {stats.blocages.toFixed(1)}h</span>
-            <span>✅ Libre: {stats.libre.toFixed(1)}h</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white border rounded-lg p-3">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium">Utilisation globale</span>
+          <span className="text-sm font-bold">{percentageUtilise.toFixed(0)}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div 
+            className={`h-2 rounded-full transition-all ${
+              percentageUtilise >= 100 ? 'bg-red-600' : 
+              percentageUtilise >= 75 ? 'bg-orange-500' : 
+              percentageUtilise >= 50 ? 'bg-yellow-500' : 'bg-green-500'
+            }`}
+            style={{ width: `${Math.min(percentageUtilise, 100)}%` }}
+          />
+        </div>
+        <div className="flex justify-between mt-2 text-xs text-gray-500">
+          <span>📝 {stats.taches.toFixed(1)}h tâches</span>
+          <span>🚫 {stats.blocages.toFixed(1)}h blocages</span>
+          <span>✅ {stats.libre.toFixed(1)}h disponible</span>
+        </div>
+      </div>
 
-      {/* Sélecteur de période et calendrier */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>📅 Ma planification</CardTitle>
-            <div className="flex items-center gap-2">
-              <Select
-                value={viewMode}
-                onChange={(e) => setViewMode(e.target.value as ViewMode)}
-                className="w-auto"
-              >
-                <option value="1">Aujourd'hui</option>
-                <option value="7">7 jours</option>
-                <option value="14">14 jours</option>
-                <option value="30">30 jours</option>
-                <option value="custom">Personnalisé</option>
-              </Select>
-              <Button variant="secondaire" onClick={() => setOuvrirBlocage(true)}>
-                + Bloquer du temps
-              </Button>
-            </div>
-          </div>
-          
-          {viewMode === 'custom' && (
-            <div className="flex gap-2 mt-3">
-              <Input
-                type="date"
-                value={customStartDate}
-                onChange={e => setCustomStartDate(e.target.value)}
-                className="w-auto"
-              />
-              <span className="self-center">à</span>
-              <Input
-                type="date"
-                value={customEndDate}
-                onChange={e => setCustomEndDate(e.target.value)}
-                className="w-auto"
-              />
-              <Button onClick={refresh}>Appliquer</Button>
-            </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          {renderCalendrier()}
-          {errorPlanif && <p className="text-xs text-red-600 mt-2">{errorPlanif}</p>}
-        </CardContent>
-      </Card>
-
-      {/* Tâches à venir (aperçu) */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>📋 Mes prochaines tâches</CardTitle>
-            <Button variant="outline" onClick={() => setSection('taches')}>
-              Voir tout →
+      {/* Calendrier compact */}
+      <div className="bg-white border rounded-lg p-3">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-medium text-gray-700">📅 Ma planification</span>
+          <div className="flex items-center gap-2">
+            <Select
+              value={viewMode}
+              onChange={(e) => setViewMode(e.target.value as ViewMode)}
+              className="text-sm py-1"
+            >
+              <option value="7">7 jours</option>
+              <option value="14">14 jours</option>
+              <option value="30">30 jours</option>
+            </Select>
+            <Button variant="outline" size="sm" onClick={() => setOuvrirBlocage(true)}>
+              + Blocage
             </Button>
           </div>
-        </CardHeader>
-        <CardContent>
-          {loadingTaches ? (
-            <LoadingSpinner message="Chargement..." />
-          ) : mesTaches.length === 0 ? (
-            <EmptyState
-              icon="📋"
-              title="Aucune tâche"
-              description="Vous n'avez pas de tâches assignées actuellement"
-            />
-          ) : (
-            <div className="space-y-2">
-              {mesTaches.slice(0, 3).map(tache => (
-                <TacheCard 
-                  key={tache.id} 
-                  tache={tache} 
-                  compact 
-                  onTerminer={demanderTerminerTache}
-                />
-              ))}
-              {mesTaches.length > 3 && (
-                <p className="text-center text-sm text-muted pt-2">
-                  + {mesTaches.length - 3} autres tâches
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+        {renderCalendrier()}
+        {errorPlanif && <p className="text-xs text-red-600 mt-2">{errorPlanif}</p>}
+      </div>
+
+      {/* Tâches à venir - compact */}
+      <div className="bg-white border rounded-lg p-3">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-sm font-medium text-gray-700">📋 Mes prochaines tâches</span>
+          <Button size="sm" variant="outline" onClick={() => setSection('taches')}>
+            Voir tout ({mesTaches.length})
+          </Button>
+        </div>
+        {loadingTaches ? (
+          <LoadingSpinner message="Chargement..." />
+        ) : mesTaches.length === 0 ? (
+          <div className="text-center py-4 text-gray-500 text-sm">
+            Aucune tâche assignée
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {mesTaches.slice(0, 3).map(tache => (
+              <TacheCard 
+                key={tache.id} 
+                tache={tache} 
+                compact 
+                onTerminer={demanderTerminerTache}
+              />
+            ))}
+            {mesTaches.length > 3 && (
+              <p className="text-center text-xs text-gray-500 pt-1">
+                + {mesTaches.length - 3} autres
+              </p>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 
   const renderTaches = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>📋 Toutes mes tâches ({mesTaches.length})</CardTitle>
-            <div className="flex gap-2 flex-wrap">
-              <div className="flex items-center gap-1 text-xs">
-                <span className="w-3 h-3 bg-gray-400 rounded-full"></span>
-                <span>Planifiées: {stats.tachesPlanifiees}</span>
-              </div>
-              <div className="flex items-center gap-1 text-xs">
-                <span className="w-3 h-3 bg-blue-500 rounded-full"></span>
-                <span>En cours: {stats.tachesEnCours}</span>
-              </div>
-              {stats.tachesEnRetard > 0 && (
-                <div className="flex items-center gap-1 text-xs text-red-600 font-medium">
-                  <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-                  <span>En retard: {stats.tachesEnRetard}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-1 text-xs">
-                <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                <span>Terminées: {stats.tachesTerminees}</span>
-              </div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {loadingTaches ? (
-            <LoadingSpinner message="Chargement des tâches..." />
-          ) : mesTaches.length === 0 ? (
-            <EmptyState
-              icon="📋"
-              title="Aucune tâche assignée"
-              description="Vous n'avez actuellement aucune tâche assignée"
-            />
-          ) : (
-            <div className="space-y-3">
-              {mesTaches.map(tache => (
-                <TacheCard 
-                  key={tache.id} 
-                  tache={tache} 
-                  onTerminer={demanderTerminerTache}
-                />
-              ))}
-            </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex gap-2 flex-wrap text-xs">
+          <span className="flex items-center gap-1 px-2 py-1 bg-gray-100 rounded">
+            <span className="w-2 h-2 bg-gray-400 rounded-full"></span>
+            Planifiées: {stats.tachesPlanifiees}
+          </span>
+          <span className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded">
+            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+            En cours: {stats.tachesEnCours}
+          </span>
+          {stats.tachesEnRetard > 0 && (
+            <span className="flex items-center gap-1 px-2 py-1 bg-red-100 text-red-700 rounded font-medium">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+              En retard: {stats.tachesEnRetard}
+            </span>
           )}
-        </CardContent>
-      </Card>
+          <span className="flex items-center gap-1 px-2 py-1 bg-green-100 text-green-700 rounded">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            Terminées: {stats.tachesTerminees}
+          </span>
+        </div>
+        <span className="text-xs text-gray-500">{mesTaches.length} tâche(s)</span>
+      </div>
+
+      {loadingTaches ? (
+        <LoadingSpinner message="Chargement des tâches..." />
+      ) : mesTaches.length === 0 ? (
+        <EmptyState
+          icon="📋"
+          title="Aucune tâche assignée"
+          description="Vous n'avez actuellement aucune tâche assignée"
+        />
+      ) : (
+        <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+          {mesTaches.map(tache => (
+            <TacheCard 
+              key={tache.id} 
+              tache={tache} 
+              onTerminer={demanderTerminerTache}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 
   const renderBlocages = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle>🚫 Mes blocages</CardTitle>
-            <Button onClick={() => setOuvrirBlocage(true)}>
-              + Nouveau blocage
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {blocages.length === 0 ? (
-            <EmptyState
-              icon="🚫"
-              title="Aucun blocage"
-              description="Vous n'avez pas de blocage de temps prévu"
-              action={{
-                label: 'Créer un blocage',
-                onClick: () => setOuvrirBlocage(true)
-              }}
-            />
-          ) : (
-            <div className="space-y-2">
-              {blocages.map((blocage: any) => (
-                <div 
-                  key={blocage.id} 
-                  className="flex items-center justify-between p-4 bg-gray-50 border rounded-lg hover:bg-gray-100 transition-colors"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="text-2xl">🚫</div>
-                    <div>
-                      <div className="font-medium">
-                        {new Date(blocage.date).toLocaleDateString('fr-CA', { 
-                          weekday: 'long', 
-                          day: 'numeric', 
-                          month: 'long' 
-                        })}
-                      </div>
-                      <div className="text-sm text-muted">
-                        {blocage.heureDebut} - {blocage.heureFin} 
-                        <span className="mx-2">•</span>
-                        {blocage.heures}h
-                      </div>
-                      {blocage.motif && (
-                        <div className="text-sm text-gray-600 mt-1">
-                          💬 {blocage.motif}
-                        </div>
-                      )}
-                    </div>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-gray-600">{blocages.length} blocage(s)</span>
+        <Button size="sm" onClick={() => setOuvrirBlocage(true)}>
+          + Nouveau blocage
+        </Button>
+      </div>
+
+      {blocages.length === 0 ? (
+        <EmptyState
+          icon="🚫"
+          title="Aucun blocage"
+          description="Vous n'avez pas de blocage de temps prévu"
+          action={{
+            label: 'Créer un blocage',
+            onClick: () => setOuvrirBlocage(true)
+          }}
+        />
+      ) : (
+        <div className="space-y-2">
+          {blocages.map((blocage: any) => (
+            <div 
+              key={blocage.id} 
+              className="flex items-center justify-between p-3 bg-white border rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-xl">🚫</span>
+                <div>
+                  <div className="font-medium text-sm">
+                    {new Date(blocage.date).toLocaleDateString('fr-CA', { 
+                      weekday: 'short', 
+                      day: 'numeric', 
+                      month: 'short' 
+                    })}
                   </div>
-                  <Button 
-                    variant="danger" 
-                    onClick={() => demanderSuppressionBlocage(blocage.id)}
-                  >
-                    Supprimer
-                  </Button>
+                  <div className="text-xs text-gray-500">
+                    {blocage.heureDebut} - {blocage.heureFin} • {blocage.heures}h
+                  </div>
+                  {blocage.motif && (
+                    <div className="text-xs text-gray-600 mt-0.5">💬 {blocage.motif}</div>
+                  )}
                 </div>
-              ))}
+              </div>
+              <Button 
+                variant="danger" 
+                size="sm"
+                onClick={() => demanderSuppressionBlocage(blocage.id)}
+              >
+                Supprimer
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 
   const renderParametres = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>⚙️ Mes paramètres</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {/* Informations personnelles */}
-            <div className="p-4 bg-gray-50 rounded-lg">
-              <h3 className="font-semibold mb-3">👤 Informations</h3>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                  <span className="text-muted">Nom:</span>
-                  <span className="ml-2 font-medium">{traducteur?.nom || '-'}</span>
-                </div>
-                <div>
-                  <span className="text-muted">Division(s):</span>
-                  <span className="ml-2 font-medium">{traducteur?.divisions?.join(', ') || '-'}</span>
-                </div>
-                <div>
-                  <span className="text-muted">Catégorie:</span>
-                  <span className="ml-2 font-medium">{traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : '-'}</span>
-                </div>
-                <div>
-                  <span className="text-muted">Capacité/jour:</span>
-                  <span className="ml-2 font-medium">{traducteur?.capaciteHeuresParJour || 7.5}h</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Horaire de travail */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h3 className="font-semibold mb-3">🕐 Horaire de travail</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField label="Heure de début">
-                  <Input
-                    type="time"
-                    value={parametresForm.horaireDebut}
-                    onChange={e => setParametresForm(prev => ({ ...prev, horaireDebut: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Heure de fin">
-                  <Input
-                    type="time"
-                    value={parametresForm.horaireFin}
-                    onChange={e => setParametresForm(prev => ({ ...prev, horaireFin: e.target.value }))}
-                  />
-                </FormField>
-              </div>
-              
-              <h4 className="font-medium mt-4 mb-2">🍽️ Pause midi</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <FormField label="Début pause">
-                  <Input
-                    type="time"
-                    value={parametresForm.pauseMidiDebut}
-                    onChange={e => setParametresForm(prev => ({ ...prev, pauseMidiDebut: e.target.value }))}
-                  />
-                </FormField>
-                <FormField label="Fin pause">
-                  <Input
-                    type="time"
-                    value={parametresForm.pauseMidiFin}
-                    onChange={e => setParametresForm(prev => ({ ...prev, pauseMidiFin: e.target.value }))}
-                  />
-                </FormField>
-              </div>
-              
-              <div className="mt-4">
-                <Button onClick={sauvegarderParametres} disabled={savingParametres}>
-                  {savingParametres ? 'Enregistrement...' : 'Enregistrer les modifications'}
-                </Button>
-              </div>
-            </div>
-
-            {/* Spécialisations */}
-            {traducteur?.specialisations && traducteur.specialisations.length > 0 && (
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <h3 className="font-semibold mb-3">📝 Spécialisations</h3>
-                <div className="flex flex-wrap gap-2">
-                  {traducteur.specialisations.map((spec, i) => (
-                    <span key={i} className="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-sm">
-                      {spec}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Domaines */}
-            {traducteur?.domaines && traducteur.domaines.length > 0 && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <h3 className="font-semibold mb-3">📂 Domaines</h3>
-                <div className="flex flex-wrap gap-2">
-                  {traducteur.domaines.map((dom, i) => (
-                    <span key={i} className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-sm">
-                      {dom}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Paires linguistiques */}
-            {traducteur?.pairesLinguistiques && traducteur.pairesLinguistiques.length > 0 && (
-              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                <h3 className="font-semibold mb-3">🌐 Paires linguistiques</h3>
-                <div className="flex flex-wrap gap-2">
-                  {traducteur.pairesLinguistiques.map((pl, i) => (
-                    <span key={i} className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm">
-                      {pl.langueSource} → {pl.langueCible}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+    <div className="space-y-4">
+      {/* Informations personnelles */}
+      <div className="p-3 bg-gray-50 rounded-lg border">
+        <h3 className="font-semibold text-sm mb-2">👤 Informations</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+          <div>
+            <span className="text-gray-500">Nom:</span>
+            <span className="ml-1 font-medium">{traducteur?.nom || '-'}</span>
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <span className="text-gray-500">Division(s):</span>
+            <span className="ml-1 font-medium">{traducteur?.divisions?.join(', ') || '-'}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Catégorie:</span>
+            <span className="ml-1 font-medium">{traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : '-'}</span>
+          </div>
+          <div>
+            <span className="text-gray-500">Capacité/jour:</span>
+            <span className="ml-1 font-medium">{traducteur?.capaciteHeuresParJour || 7.5}h</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Horaire de travail */}
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <h3 className="font-semibold text-sm mb-3">🕐 Horaire de travail</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <FormField label="Début">
+            <Input
+              type="time"
+              value={parametresForm.horaireDebut}
+              onChange={e => setParametresForm(prev => ({ ...prev, horaireDebut: e.target.value }))}
+              className="text-sm py-1"
+            />
+          </FormField>
+          <FormField label="Fin">
+            <Input
+              type="time"
+              value={parametresForm.horaireFin}
+              onChange={e => setParametresForm(prev => ({ ...prev, horaireFin: e.target.value }))}
+              className="text-sm py-1"
+            />
+          </FormField>
+          <FormField label="Pause début">
+            <Input
+              type="time"
+              value={parametresForm.pauseMidiDebut}
+              onChange={e => setParametresForm(prev => ({ ...prev, pauseMidiDebut: e.target.value }))}
+              className="text-sm py-1"
+            />
+          </FormField>
+          <FormField label="Pause fin">
+            <Input
+              type="time"
+              value={parametresForm.pauseMidiFin}
+              onChange={e => setParametresForm(prev => ({ ...prev, pauseMidiFin: e.target.value }))}
+              className="text-sm py-1"
+            />
+          </FormField>
+        </div>
+        <div className="mt-3">
+          <Button size="sm" onClick={sauvegarderParametres} disabled={savingParametres}>
+            {savingParametres ? 'Enregistrement...' : 'Enregistrer'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Spécialisations et domaines */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {traducteur?.specialisations && traducteur.specialisations.length > 0 && (
+          <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <h3 className="font-semibold text-sm mb-2">📝 Spécialisations</h3>
+            <div className="flex flex-wrap gap-1">
+              {traducteur.specialisations.map((spec, i) => (
+                <span key={i} className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded text-xs">
+                  {spec}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {traducteur?.domaines && traducteur.domaines.length > 0 && (
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+            <h3 className="font-semibold text-sm mb-2">📂 Domaines</h3>
+            <div className="flex flex-wrap gap-1">
+              {traducteur.domaines.map((dom, i) => (
+                <span key={i} className="px-2 py-0.5 bg-green-100 text-green-700 rounded text-xs">
+                  {dom}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Paires linguistiques */}
+      {traducteur?.pairesLinguistiques && traducteur.pairesLinguistiques.length > 0 && (
+        <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
+          <h3 className="font-semibold text-sm mb-2">🌐 Paires linguistiques</h3>
+          <div className="flex flex-wrap gap-1">
+            {traducteur.pairesLinguistiques.map((pl, i) => (
+              <span key={i} className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                {pl.langueSource} → {pl.langueCible}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 
   const renderStatistiques = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>📊 Mes statistiques</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="p-4 bg-blue-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-blue-600">{mesTaches.length}</div>
-              <div className="text-sm text-muted">Tâches totales</div>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-green-600">{stats.tachesTerminees}</div>
-              <div className="text-sm text-muted">Terminées</div>
-            </div>
-            <div className="p-4 bg-orange-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-orange-600">
-                {mesTaches.reduce((sum, t) => sum + t.heuresTotal, 0).toFixed(0)}h
-              </div>
-              <div className="text-sm text-muted">Heures totales</div>
-            </div>
-            <div className="p-4 bg-purple-50 rounded-lg text-center">
-              <div className="text-3xl font-bold text-purple-600">
-                {mesTaches.filter(t => t.compteMots).reduce((sum, t) => sum + (t.compteMots || 0), 0).toLocaleString()}
-              </div>
-              <div className="text-sm text-muted">Mots traduits</div>
-            </div>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="p-4 bg-blue-50 rounded-lg text-center border border-blue-100">
+          <div className="text-3xl font-bold text-blue-600">{mesTaches.length}</div>
+          <div className="text-sm text-gray-600">Tâches totales</div>
+        </div>
+        <div className="p-4 bg-green-50 rounded-lg text-center border border-green-100">
+          <div className="text-3xl font-bold text-green-600">{stats.tachesTerminees}</div>
+          <div className="text-sm text-gray-600">Terminées</div>
+        </div>
+        <div className="p-4 bg-orange-50 rounded-lg text-center border border-orange-100">
+          <div className="text-3xl font-bold text-orange-600">
+            {mesTaches.reduce((sum, t) => sum + t.heuresTotal, 0).toFixed(0)}h
           </div>
-          
-          <EmptyState
-            icon="📈"
-            title="Statistiques détaillées à venir"
-            description="Des graphiques et analyses avancées seront disponibles prochainement"
-          />
-        </CardContent>
-      </Card>
+          <div className="text-sm text-gray-600">Heures totales</div>
+        </div>
+        <div className="p-4 bg-purple-50 rounded-lg text-center border border-purple-100">
+          <div className="text-3xl font-bold text-purple-600">
+            {mesTaches.filter(t => t.compteMots).reduce((sum, t) => sum + (t.compteMots || 0), 0).toLocaleString()}
+          </div>
+          <div className="text-sm text-gray-600">Mots traduits</div>
+        </div>
+      </div>
+      
+      <EmptyState
+        icon="📈"
+        title="Statistiques détaillées à venir"
+        description="Des graphiques et analyses avancées seront disponibles prochainement"
+      />
     </div>
   );
 
@@ -811,103 +710,126 @@ const DashboardTraducteur: React.FC = () => {
     );
   }
 
+  const renderContent = () => {
+    switch (section) {
+      case 'taches':
+        return renderTaches();
+      case 'blocages':
+        return renderBlocages();
+      case 'parametres':
+        return renderParametres();
+      case 'statistiques':
+        return renderStatistiques();
+      case 'overview':
+      default:
+        return renderOverview();
+    }
+  };
+
   return (
-    <AppLayout titre="">
-      <div className="space-y-6">
+    <AppLayout titre="Mon espace">
+      <div className="space-y-4">
         {/* Bannière mode admin */}
         {isViewingAsAdmin && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-2xl">👁️</span>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">👁️</span>
               <div>
-                <p className="font-medium text-amber-800">Mode visualisation administrateur</p>
-                <p className="text-sm text-amber-600">Vous consultez le portail de {traducteur.nom}</p>
+                <p className="font-medium text-amber-800 text-sm">Mode visualisation administrateur</p>
+                <p className="text-xs text-amber-600">Vous consultez le portail de {traducteur.nom}</p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => navigate('/admin')}>
-              ← Retour à l'admin
+            <Button variant="outline" size="sm" onClick={() => navigate('/admin')}>
+              ← Retour
             </Button>
           </div>
         )}
 
-        {/* En-tête avec navigation */}
-        <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
+        {/* En-tête compact style Admin */}
+        <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold">{isViewingAsAdmin ? traducteur.nom : `Bonjour, ${traducteur?.nom || 'Traducteur'}`} 👋</h1>
-              <p className="text-muted mt-1">
-                {traducteur?.divisions?.join(', ')} • {traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : ''} • 
-                Horaire: {traducteur?.horaire || '9h-17h'}
+              <h1 className="text-xl font-bold">{isViewingAsAdmin ? traducteur.nom : `Bonjour, ${traducteur?.nom || 'Traducteur'}`} 👋</h1>
+              <p className="text-sm text-muted">
+                {traducteur?.divisions?.join(', ')} • {traducteur?.categorie ? `TR-0${traducteur.categorie.slice(-1)}` : ''} • {traducteur?.horaire || '9h-17h'}
               </p>
             </div>
-            <div className={`px-4 py-2 rounded-full ${
-              disponibiliteActive 
-                ? 'bg-green-100 text-green-700' 
-                : 'bg-gray-100 text-gray-600'
-            }`}>
-              {disponibiliteActive ? '✋ Cherche du travail' : '📋 En service'}
+            
+            {/* Actions rapides */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                disponibiliteActive 
+                  ? 'bg-green-100 text-green-700' 
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {disponibiliteActive ? '✋ Disponible' : '📋 En service'}
+              </div>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => setOuvrirBlocage(true)}
+                className="gap-1.5"
+              >
+                <span>🚫</span> Blocage
+              </Button>
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/mes-notes')}
+                className="gap-1.5"
+              >
+                <span>📝</span> Notes
+              </Button>
             </div>
-          </div>
-          
-          {/* Menu de navigation */}
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-            <Button 
-              variant={section === 'overview' ? 'primaire' : 'outline'}
-              onClick={() => setSection('overview')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">🏠</span>
-              <span className="text-sm">Vue d'ensemble</span>
-            </Button>
-            <Button 
-              variant={section === 'taches' ? 'primaire' : 'outline'}
-              onClick={() => setSection('taches')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">📋</span>
-              <span className="text-sm">Mes tâches</span>
-            </Button>
-            <Button 
-              variant={section === 'blocages' ? 'primaire' : 'outline'}
-              onClick={() => setSection('blocages')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">🚫</span>
-              <span className="text-sm">Blocages</span>
-            </Button>
-            <Button 
-              variant={section === 'statistiques' ? 'primaire' : 'outline'}
-              onClick={() => setSection('statistiques')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">📊</span>
-              <span className="text-sm">Statistiques</span>
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => navigate('/mes-notes')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">📝</span>
-              <span className="text-sm">Mes notes</span>
-            </Button>
-            <Button 
-              variant={section === 'parametres' ? 'primaire' : 'outline'}
-              onClick={() => setSection('parametres')}
-              className="flex flex-col items-center gap-2 h-auto py-4"
-            >
-              <span className="text-2xl">⚙️</span>
-              <span className="text-sm">Paramètres</span>
-            </Button>
           </div>
         </div>
 
-        {/* Contenu de la section */}
-        {section === 'overview' && renderOverview()}
-        {section === 'taches' && renderTaches()}
-        {section === 'blocages' && renderBlocages()}
-        {section === 'parametres' && renderParametres()}
-        {section === 'statistiques' && renderStatistiques()}
+        {/* Stats en barre horizontale */}
+        <div className="bg-white border rounded-lg px-4 py-2 shadow-sm flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded font-semibold">{stats.nbTaches} tâche(s)</span>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">{stats.tachesEnCours} en cours</span>
+            {stats.tachesEnRetard > 0 && (
+              <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded">{stats.tachesEnRetard} en retard</span>
+            )}
+            <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded">{stats.libre.toFixed(0)}h disponible</span>
+            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded">{percentageUtilise.toFixed(0)}% utilisé</span>
+          </div>
+          <div className={`text-xs flex items-center gap-1 ${percentageUtilise >= 100 ? 'text-red-600' : percentageUtilise >= 75 ? 'text-orange-600' : 'text-green-600'}`}>
+            {percentageUtilise >= 100 ? '⚠️ Complet' : percentageUtilise >= 75 ? '🔶 Chargé' : '✅ OK'}
+          </div>
+        </div>
+
+        {/* Navigation par onglets */}
+        <div className="bg-white border rounded-lg shadow-sm">
+          <div className="px-4 py-2 border-b bg-gray-50/50 flex flex-wrap items-center gap-1">
+            {[
+              { id: 'overview' as Section, icon: '🏠', label: 'Vue d\'ensemble' },
+              { id: 'taches' as Section, icon: '📋', label: 'Mes tâches' },
+              { id: 'blocages' as Section, icon: '🚫', label: 'Blocages' },
+              { id: 'statistiques' as Section, icon: '📊', label: 'Statistiques' },
+              { id: 'parametres' as Section, icon: '⚙️', label: 'Paramètres' },
+            ].map(item => (
+              <button
+                key={item.id}
+                onClick={() => setSection(item.id)}
+                className={`px-3 py-1.5 rounded text-sm font-medium whitespace-nowrap transition-colors flex items-center gap-1.5 ${
+                  section === item.id
+                    ? 'bg-primary text-white'
+                    : 'text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <span>{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Contenu de la section */}
+          <div className="p-4">
+            {renderContent()}
+          </div>
+        </div>
       </div>
 
       {/* Modal de blocage */}

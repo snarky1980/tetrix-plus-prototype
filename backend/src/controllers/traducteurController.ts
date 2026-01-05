@@ -513,10 +513,19 @@ export const mettreAJourDisponibilite = async (
       }
     }
 
+    // Déterminer si on doit mettre à jour disponibleDepuis
+    // (seulement si le traducteur passe de non-disponible à disponible)
+    const passeADisponible = disponiblePourTravail === true && !traducteur.disponiblePourTravail;
+    const passeANonDisponible = disponiblePourTravail === false && traducteur.disponiblePourTravail;
+
     const traducteurMisAJour = await prisma.traducteur.update({
       where: { id },
       data: {
         disponiblePourTravail: disponiblePourTravail ?? traducteur.disponiblePourTravail,
+        // Mettre à jour disponibleDepuis uniquement si passage à disponible
+        ...(passeADisponible && { disponibleDepuis: new Date() }),
+        // Effacer disponibleDepuis si passage à non-disponible
+        ...(passeANonDisponible && { disponibleDepuis: null }),
         commentaireDisponibilite: commentaireDisponibilite !== undefined 
           ? commentaireDisponibilite 
           : traducteur.commentaireDisponibilite,

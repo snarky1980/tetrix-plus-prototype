@@ -101,6 +101,20 @@ export const TraducteursDisponiblesModal: React.FC<TraducteursDisponiblesModalPr
                     </div>
                     
                     <div className="space-y-1 text-sm">
+                      {/* Dates de disponibilité */}
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500 mb-2">
+                        {traducteur.disponibleDepuis && (
+                          <span title="Date de demande de travail">
+                            📅 Demande: {new Date(traducteur.disponibleDepuis).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                        {traducteur.modifieLe && traducteur.modifieLe !== traducteur.disponibleDepuis && (
+                          <span title="Dernière modification">
+                            ✏️ Modif: {new Date(traducteur.modifieLe).toLocaleDateString('fr-CA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                      
                       {/* Divisions */}
                       {traducteur.divisions && traducteur.divisions.length > 0 && (
                         <div className="flex items-center gap-2">

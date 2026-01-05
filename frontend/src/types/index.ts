@@ -135,9 +135,11 @@ export interface Traducteur {
   utilisateur?: { email: string; actif: boolean }; // Données de l'utilisateur (peuplé par API)
   pairesLinguistiques: PaireLinguistique[];
   disponiblePourTravail: boolean; // Traducteur cherche activement du travail
+  disponibleDepuis?: string; // Date/heure où le traducteur s'est déclaré disponible
   commentaireDisponibilite?: string; // Commentaire optionnel sur la disponibilité
   categorie: CategorieTraducteur; // TR01, TR02, TR03
   necessiteRevision?: boolean; // Si TR02, indique si nécessite révision
+  modifieLe?: string; // Date de dernière modification
   
   // Relations normalisées (PRÉFÉRÉ)
   traducteurSpecialisations?: TraducteurSpecialisation[];

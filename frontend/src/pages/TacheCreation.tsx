@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
@@ -7,6 +7,11 @@ import { FormulaireTache } from '../components/taches/FormulaireTache';
 
 const TacheCreation: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Récupérer le traducteur pré-sélectionné depuis l'URL
+  const traducteurId = searchParams.get('traducteurId') || undefined;
+  const traducteurNom = searchParams.get('traducteurNom') || undefined;
 
   return (
     <AppLayout titre="Créer une tâche">
@@ -35,6 +40,21 @@ const TacheCreation: React.FC = () => {
         </div>
       </div>
 
+      {/* Indicateur de traducteur pré-sélectionné */}
+      {traducteurNom && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center justify-between">
+          <span className="text-sm text-green-700">
+            ✋ Tâche pour <strong>{traducteurNom}</strong> (disponible)
+          </span>
+          <button 
+            onClick={() => navigate('/conseiller/creation-tache')}
+            className="text-xs text-green-600 hover:text-green-800 hover:underline"
+          >
+            Changer
+          </button>
+        </div>
+      )}
+
       {/* Card avec formulaire */}
       <Card className="max-w-5xl mx-auto">
         <CardHeader>
@@ -42,6 +62,7 @@ const TacheCreation: React.FC = () => {
         </CardHeader>
         <CardContent>
           <FormulaireTache
+            traducteurIdInitial={traducteurId}
             onSuccess={() => {
               navigate('/conseiller');
             }}

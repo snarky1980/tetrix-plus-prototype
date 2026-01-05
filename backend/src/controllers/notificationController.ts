@@ -122,6 +122,8 @@ export const obtenirTraducteursDisponibles = async (
         capaciteHeuresParJour: true,
         commentaireDisponibilite: true,
         ciblageDisponibilite: true,
+        disponibleDepuis: true,
+        modifieLe: true,
         pairesLinguistiques: {
           select: {
             langueSource: true,

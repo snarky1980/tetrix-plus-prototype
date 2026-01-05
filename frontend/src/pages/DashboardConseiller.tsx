@@ -6,6 +6,7 @@ import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { LoadingSpinner } from '../components/ui/Spinner';
 import { InfoTooltip } from '../components/ui/Tooltip';
+import { MultiSelectDropdown } from '../components/ui/MultiSelectDropdown';
 import { TacheCard } from '../components/taches/TacheCard';
 import { DemandesRessources } from '../components/notifications/DemandesRessources';
 import { ImportBatchModal } from '../components/admin/ImportBatchModal';
@@ -14,6 +15,7 @@ import { usePageTitle } from '../hooks/usePageTitle';
 import { usePlanificationGlobal } from '../hooks/usePlanification';
 import { tacheService } from '../services/tacheService';
 import { traducteurService } from '../services/traducteurService';
+import { divisionService } from '../services/divisionService';
 import type { Tache, Traducteur } from '../types';
 
 type Section = 'overview' | 'taches' | 'demandes';
@@ -35,6 +37,15 @@ const DashboardConseiller: React.FC = () => {
   const [filtreStatut, setFiltreStatut] = useState('');
   const [recherche, setRecherche] = useState('');
   const [showImportModal, setShowImportModal] = useState(false);
+  
+  // Filtres pour traducteurs disponibles
+  const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
+  const [filtresDivisions, setFiltresDivisions] = useState<string[]>([]);
+  const [filtresCategories, setFiltresCategories] = useState<string[]>([]);
+  const [filtresPaires, setFiltresPaires] = useState<string[]>([]);
+  const [filtresSpecialisations, setFiltresSpecialisations] = useState<string[]>([]);
+  const [triTraducteurs, setTriTraducteurs] = useState<'nom' | 'capacite' | 'anciennete'>('nom');
+  const categoriesOptions = ['TR01', 'TR02', 'TR03'];
 
   // Planification des 7 prochains jours
   const aujourdHui = useMemo(() => new Date(), []);
@@ -63,9 +74,10 @@ const DashboardConseiller: React.FC = () => {
   const chargerDonnees = async () => {
     setLoading(true);
     try {
-      const [tachesData, traducteursData] = await Promise.all([
+      const [tachesData, traducteursData, divisionsData] = await Promise.all([
         tacheService.obtenirTaches({}),
-        traducteurService.obtenirTraducteurs({}).catch(() => [])
+        traducteurService.obtenirTraducteurs({}).catch(() => []),
+        divisionService.obtenirDivisions().catch(() => [])
       ]);
       
       // Trier par date de création (plus récent d'abord)
@@ -75,6 +87,10 @@ const DashboardConseiller: React.FC = () => {
       setTaches(tachesTries);
       setTachesFiltered(tachesTries);
       setTraducteurs(traducteursData);
+      
+      // Extraire les divisions pour les filtres
+      const divisionNames = divisionsData.map((d: any) => d.nom).filter(Boolean).sort();
+      setToutesLesDivisions(divisionNames);
     } catch (err) {
       console.error('Erreur chargement données:', err);
     } finally {
@@ -123,6 +139,60 @@ const DashboardConseiller: React.FC = () => {
 
   const traducteursDispo = traducteurs.filter(t => t.disponiblePourTravail);
   const traducteursActifs = traducteurs.filter(t => t.actif);
+  
+  // Extraction des options de filtres depuis les traducteurs
+  const optionsPaires = useMemo(() => {
+    const paires = new Set<string>();
+    traducteursDispo.forEach(tr => {
+      tr.pairesLinguistiques?.forEach(p => paires.add(`${p.langueSource}→${p.langueCible}`));
+    });
+    return Array.from(paires).sort();
+  }, [traducteursDispo]);
+  
+  const optionsSpecialisations = useMemo(() => {
+    const specs = new Set<string>();
+    traducteursDispo.forEach(tr => {
+      tr.specialisations?.forEach(s => specs.add(s));
+    });
+    return Array.from(specs).sort();
+  }, [traducteursDispo]);
+  
+  // Filtrage et tri des traducteurs disponibles
+  const traducteursFiltres = useMemo(() => {
+    let resultat = traducteursDispo.filter(tr => {
+      // Filtre par divisions (OR logic)
+      if (filtresDivisions.length > 0 && !tr.divisions?.some(d => filtresDivisions.includes(d))) return false;
+      // Filtre par catégorie/classification
+      if (filtresCategories.length > 0 && !filtresCategories.includes(tr.categorie || '')) return false;
+      // Filtre par paires linguistiques
+      if (filtresPaires.length > 0) {
+        const trPaires = tr.pairesLinguistiques?.map(p => `${p.langueSource}→${p.langueCible}`) || [];
+        if (!filtresPaires.some(fp => trPaires.includes(fp))) return false;
+      }
+      // Filtre par spécialisations
+      if (filtresSpecialisations.length > 0) {
+        if (!filtresSpecialisations.some(fs => tr.specialisations?.includes(fs))) return false;
+      }
+      return true;
+    });
+    
+    // Tri
+    resultat.sort((a, b) => {
+      switch (triTraducteurs) {
+        case 'capacite':
+          return (b.capaciteHeuresParJour || 7.5) - (a.capaciteHeuresParJour || 7.5);
+        case 'anciennete':
+          // Trier par modifieLe (plus ancien en premier = disponible depuis plus longtemps)
+          const dateA = (a as any).modifieLe ? new Date((a as any).modifieLe).getTime() : 0;
+          const dateB = (b as any).modifieLe ? new Date((b as any).modifieLe).getTime() : 0;
+          return dateA - dateB;
+        default:
+          return a.nom.localeCompare(b.nom);
+      }
+    });
+    
+    return resultat;
+  }, [traducteursDispo, filtresDivisions, filtresCategories, filtresPaires, filtresSpecialisations, triTraducteurs]);
 
   // Tâches urgentes (échéance dans les 3 prochains jours)
   const tachesUrgentes = taches.filter(t => {
@@ -187,35 +257,180 @@ const DashboardConseiller: React.FC = () => {
         </div>
       )}
 
-      {/* Traducteurs disponibles */}
+      {/* Traducteurs disponibles - Section améliorée avec filtres */}
       {traducteursDispo.length > 0 && (
-        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-green-700">✋ {traducteursDispo.length} traducteur(s) disponible(s) pour du travail</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {traducteursDispo.slice(0, 8).map(tr => (
-              <div key={tr.id} className="inline-flex items-center gap-1.5 px-2 py-1.5 bg-white rounded border border-green-200 text-xs">
-                <span className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0">
-                  {tr.nom.charAt(0)}
+        <div className="bg-green-50 border border-green-200 rounded-lg overflow-hidden">
+          {/* En-tête avec filtres */}
+          <div className="px-3 py-2 border-b border-green-200 bg-green-100/50">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-medium text-green-700 flex items-center gap-1.5">
+                ✋ Traducteurs disponibles 
+                <span className="px-1.5 py-0.5 bg-green-200 rounded text-xs">
+                  {traducteursFiltres.length}{filtresDivisions.length > 0 || filtresCategories.length > 0 || filtresPaires.length > 0 || filtresSpecialisations.length > 0 ? `/${traducteursDispo.length}` : ''}
                 </span>
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{tr.nom}</div>
-                  {tr.divisions && tr.divisions.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 mt-0.5">
-                      {tr.divisions.slice(0, 2).map((d, i) => (
-                        <span key={i} className="px-1 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">{d}</span>
-                      ))}
-                      {tr.divisions.length > 2 && (
-                        <span className="text-[10px] text-green-500">+{tr.divisions.length - 2}</span>
+              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Filtres */}
+                <MultiSelectDropdown
+                  label=""
+                  options={toutesLesDivisions}
+                  selected={filtresDivisions}
+                  onChange={setFiltresDivisions}
+                  placeholder="Divisions"
+                  minWidth="160px"
+                />
+                <MultiSelectDropdown
+                  label=""
+                  options={categoriesOptions}
+                  selected={filtresCategories}
+                  onChange={setFiltresCategories}
+                  placeholder="Catégorie"
+                  minWidth="130px"
+                />
+                {optionsPaires.length > 0 && (
+                  <MultiSelectDropdown
+                    label=""
+                    options={optionsPaires}
+                    selected={filtresPaires}
+                    onChange={setFiltresPaires}
+                    placeholder="🌐 Langues"
+                    minWidth="140px"
+                  />
+                )}
+                {optionsSpecialisations.length > 0 && (
+                  <MultiSelectDropdown
+                    label=""
+                    options={optionsSpecialisations}
+                    selected={filtresSpecialisations}
+                    onChange={setFiltresSpecialisations}
+                    placeholder="🎯 Spéc."
+                    minWidth="150px"
+                  />
+                )}
+                {/* Tri */}
+                <select
+                  value={triTraducteurs}
+                  onChange={(e) => setTriTraducteurs(e.target.value as any)}
+                  className="text-xs px-2 py-1 border border-green-300 rounded bg-white"
+                  title="Trier par"
+                >
+                  <option value="nom">↕ Nom</option>
+                  <option value="capacite">↕ Capacité</option>
+                  <option value="anciennete">↕ Ancienneté</option>
+                </select>
+                {/* Reset */}
+                {(filtresDivisions.length > 0 || filtresCategories.length > 0 || filtresPaires.length > 0 || filtresSpecialisations.length > 0) && (
+                  <button
+                    onClick={() => { setFiltresDivisions([]); setFiltresCategories([]); setFiltresPaires([]); setFiltresSpecialisations([]); }}
+                    className="p-1 text-green-600 hover:text-green-800 hover:bg-green-200 rounded"
+                    title="Réinitialiser les filtres"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          {/* Liste des traducteurs */}
+          <div className="p-3">
+            {traducteursFiltres.length === 0 ? (
+              <div className="text-center py-3 text-gray-500 text-sm">
+                Aucun traducteur ne correspond aux filtres
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                {traducteursFiltres.map(tr => {
+                  const disponibleDepuis = tr.disponibleDepuis || (tr as any).modifieLe;
+                  const modifieLe = (tr as any).modifieLe;
+                  
+                  // Formater les dates avec heure
+                  const formatDateHeure = (dateStr: string | undefined) => {
+                    if (!dateStr) return null;
+                    const date = new Date(dateStr);
+                    return date.toLocaleDateString('fr-CA', { 
+                      day: 'numeric', 
+                      month: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+                  };
+                  
+                  // Calculer le nombre de jours depuis
+                  const joursDepuis = disponibleDepuis 
+                    ? Math.floor((aujourdHui.getTime() - new Date(disponibleDepuis).getTime()) / 86400000)
+                    : null;
+                    
+                  return (
+                    <div 
+                      key={tr.id} 
+                      className="p-2 bg-white rounded border border-green-200 text-xs hover:shadow-md hover:border-green-400 transition-all cursor-pointer group"
+                      onClick={() => navigate(`/conseiller/creation-tache?traducteurId=${tr.id}&traducteurNom=${encodeURIComponent(tr.nom)}`)}
+                      title="Cliquer pour créer une tâche pour ce traducteur"
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        <div className="w-7 h-7 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-[10px] flex-shrink-0 group-hover:bg-green-600">
+                          {tr.nom.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate flex items-center gap-1" title={tr.nom}>
+                            {tr.nom}
+                            <span className="opacity-0 group-hover:opacity-100 text-green-600 transition-opacity">→</span>
+                          </div>
+                          <div className="text-gray-500 text-[10px] flex items-center gap-1">
+                            {tr.categorie || '-'} • {tr.capaciteHeuresParJour || 7.5}h/j
+                            {joursDepuis !== null && joursDepuis >= 0 && (
+                              <span className={`px-1 py-0.5 rounded ${joursDepuis <= 1 ? 'bg-green-200 text-green-800' : joursDepuis <= 7 ? 'bg-yellow-100 text-yellow-700' : 'bg-orange-100 text-orange-700'}`} title={`Disponible depuis: ${formatDateHeure(disponibleDepuis)}`}>
+                                {joursDepuis === 0 ? 'Auj.' : joursDepuis === 1 ? '1j' : `${joursDepuis}j`}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      {/* Dates de disponibilité */}
+                      <div className="text-[10px] text-gray-400 mb-1 flex flex-wrap gap-x-2">
+                        {disponibleDepuis && (
+                          <span title="Date de demande de travail">📅 Demande: {formatDateHeure(disponibleDepuis)}</span>
+                        )}
+                        {modifieLe && modifieLe !== disponibleDepuis && (
+                          <span title="Dernière modification">✏️ Modif: {formatDateHeure(modifieLe)}</span>
+                        )}
+                      </div>
+                      {/* Divisions */}
+                      {tr.divisions && tr.divisions.length > 0 && (
+                        <div className="flex flex-wrap gap-0.5 mb-1">
+                          {tr.divisions.slice(0, 3).map((d, i) => (
+                            <span key={i} className="px-1 py-0.5 bg-green-100 text-green-700 rounded text-[10px]">{d}</span>
+                          ))}
+                          {tr.divisions.length > 3 && (
+                            <span className="text-[10px] text-green-500">+{tr.divisions.length - 3}</span>
+                          )}
+                        </div>
+                      )}
+                      {/* Paires linguistiques */}
+                      {tr.pairesLinguistiques && tr.pairesLinguistiques.length > 0 && (
+                        <div className="text-[10px] text-gray-500 truncate">
+                          🌐 {tr.pairesLinguistiques.slice(0, 2).map((p: any) => `${p.langueSource}→${p.langueCible}`).join(', ')}
+                          {tr.pairesLinguistiques.length > 2 && ` +${tr.pairesLinguistiques.length - 2}`}
+                        </div>
+                      )}
+                      {/* Spécialisations */}
+                      {tr.specialisations && tr.specialisations.length > 0 && (
+                        <div className="text-[10px] text-purple-600 truncate">
+                          🎯 {tr.specialisations.slice(0, 2).join(', ')}
+                          {tr.specialisations.length > 2 && ` +${tr.specialisations.length - 2}`}
+                        </div>
+                      )}
+                      {/* Commentaire de disponibilité */}
+                      {(tr as any).commentaireDisponibilite && (
+                        <div className="mt-1 text-green-700 bg-green-100 p-1 rounded text-[10px] truncate" title={(tr as any).commentaireDisponibilite}>
+                          💬 {(tr as any).commentaireDisponibilite}
+                        </div>
                       )}
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            ))}
-            {traducteursDispo.length > 8 && (
-              <span className="text-xs text-green-600 self-center">+{traducteursDispo.length - 8}</span>
             )}
           </div>
         </div>

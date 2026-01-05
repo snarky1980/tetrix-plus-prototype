@@ -50,6 +50,7 @@ export interface RepartitionManuelle {
 
 interface UseFormulaireTacheOptions {
   tacheId?: string;
+  traducteurIdInitial?: string;
   onSuccess?: (tacheId: string) => void;
   onCancel?: () => void;
 }
@@ -114,7 +115,7 @@ interface UseFormulaireTacheResult {
 let tacheVersion: number = 0;
 
 export function useFormulaireTache(options: UseFormulaireTacheOptions): UseFormulaireTacheResult {
-  const { tacheId, onSuccess, onCancel } = options;
+  const { tacheId, traducteurIdInitial, onSuccess, onCancel } = options;
   
   // États de navigation
   const [etape, setEtape] = useState(1);
@@ -146,7 +147,7 @@ export function useFormulaireTache(options: UseFormulaireTacheOptions): UseFormu
   const today = new Date().toISOString().split('T')[0];
   const [formData, setFormData] = useState<FormulaireTacheFormData>({
     numeroProjet: '',
-    traducteurId: '',
+    traducteurId: traducteurIdInitial || '',
     clientId: '',
     domaine: '',
     sousDomaineId: '',

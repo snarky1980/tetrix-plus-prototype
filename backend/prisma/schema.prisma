@@ -148,6 +148,7 @@ model Traducteur {
   notes                      String?
   specialisations            String[]                     @default([]) // DEPRECATED: utiliser traducteurSpecialisations
   disponiblePourTravail      Boolean                      @default(false)
+  disponibleDepuis           DateTime?                    // Date/heure où le traducteur s'est déclaré disponible
   commentaireDisponibilite   String?
   ciblageDisponibilite       Json?
   categorie                  CategorieTraducteur          @default(TR01)

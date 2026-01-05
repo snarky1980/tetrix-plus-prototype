@@ -48,8 +48,8 @@ interface UseDashboardGestionnaireResult {
   
   // Données
   divisions: Division[];
-  divisionSelectionnee: string;
-  setDivisionSelectionnee: React.Dispatch<React.SetStateAction<string>>;
+  divisionsSelectionnees: string[];
+  setDivisionsSelectionnees: React.Dispatch<React.SetStateAction<string[]>>;
   traducteurs: Traducteur[];
   planificationData: any[];
   blocagesListe: any[];
@@ -83,6 +83,7 @@ interface UseDashboardGestionnaireResult {
   tauxUtilisation: number;
   
   // Actions
+  chargerTraducteurs: () => Promise<void>;
   chargerPlanification: () => Promise<void>;
   chargerBlocages: () => Promise<void>;
   handleCreerBlocage: (e: React.FormEvent) => Promise<void>;
@@ -106,7 +107,7 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
 
   // États de données
   const [divisions, setDivisions] = useState<Division[]>([]);
-  const [divisionSelectionnee, setDivisionSelectionnee] = useState<string>('');
+  const [divisionsSelectionnees, setDivisionsSelectionnees] = useState<string[]>([]);
   const [traducteurs, setTraducteurs] = useState<Traducteur[]>([]);
   const [planificationData, setPlanificationData] = useState<any[]>([]);
   const [blocagesListe, setBlocagesListe] = useState<any[]>([]);
@@ -165,13 +166,14 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
           const divisionIds = utilisateur.divisionAccess.map(da => da.divisionId);
           const divisionsAutorisees = data.filter((d: any) => divisionIds.includes(d.id));
           setDivisions(divisionsAutorisees);
+          // Sélectionner toutes les divisions par défaut
           if (divisionsAutorisees.length > 0) {
-            setDivisionSelectionnee(divisionsAutorisees[0].id);
+            setDivisionsSelectionnees(divisionsAutorisees.map((d: Division) => d.id));
           }
         } else {
           setDivisions(data);
           if (data.length > 0) {
-            setDivisionSelectionnee(data[0].id);
+            setDivisionsSelectionnees(data.map((d: Division) => d.id));
           }
         }
       } catch (err) {
@@ -183,27 +185,36 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
     chargerDivisions();
   }, [utilisateur]);
 
-  // Chargement des traducteurs par division
+  // Fonction de chargement des traducteurs par divisions sélectionnées
+  const chargerTraducteurs = useCallback(async () => {
+    if (divisionsSelectionnees.length === 0) {
+      setTraducteurs([]);
+      return;
+    }
+    try {
+      const data = await traducteurService.obtenirTraducteurs();
+      // Récupérer les noms/codes des divisions sélectionnées
+      const divisionsObjs = divisions.filter(d => divisionsSelectionnees.includes(d.id));
+      const divisionNames = divisionsObjs.flatMap(d => [d.nom, d.code].filter(Boolean));
+      
+      // Filtrer les traducteurs qui appartiennent à au moins une division sélectionnée
+      const filtres = data.filter((t: Traducteur) => 
+        t.divisions?.some(td => divisionNames.includes(td))
+      );
+      setTraducteurs(filtres);
+    } catch (err) {
+      console.error('Erreur chargement traducteurs:', err);
+    }
+  }, [divisionsSelectionnees, divisions]);
+
+  // Chargement automatique des traducteurs quand les divisions changent
   useEffect(() => {
-    const chargerTraducteurs = async () => {
-      if (!divisionSelectionnee) return;
-      try {
-        const data = await traducteurService.obtenirTraducteurs();
-        const divisionObj = divisions.find(d => d.id === divisionSelectionnee);
-        const filtres = divisionObj 
-          ? data.filter(t => t.divisions?.includes(divisionObj.nom) || (divisionObj.code && t.divisions?.includes(divisionObj.code))) 
-          : data;
-        setTraducteurs(filtres);
-      } catch (err) {
-        console.error('Erreur chargement traducteurs:', err);
-      }
-    };
     chargerTraducteurs();
-  }, [divisionSelectionnee, divisions]);
+  }, [chargerTraducteurs]);
 
   // Chargement de la planification
   const chargerPlanification = useCallback(async () => {
-    if (!divisionSelectionnee || traducteurs.length === 0) return;
+    if (divisionsSelectionnees.length === 0 || traducteurs.length === 0) return;
     setLoadingPlanif(true);
     try {
       const planifPromises = traducteurs.map(tr =>
@@ -218,7 +229,7 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
     } finally {
       setLoadingPlanif(false);
     }
-  }, [divisionSelectionnee, traducteurs, periodeActuelle]);
+  }, [divisionsSelectionnees, traducteurs, periodeActuelle]);
 
   useEffect(() => {
     chargerPlanification();
@@ -349,8 +360,8 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
     
     // Données
     divisions,
-    divisionSelectionnee,
-    setDivisionSelectionnee,
+    divisionsSelectionnees,
+    setDivisionsSelectionnees,
     traducteurs,
     planificationData,
     blocagesListe,
@@ -376,6 +387,7 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
     tauxUtilisation,
     
     // Actions
+    chargerTraducteurs,
     chargerPlanification,
     chargerBlocages,
     handleCreerBlocage,

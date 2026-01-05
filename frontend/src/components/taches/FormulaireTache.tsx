@@ -59,6 +59,8 @@ const calculerHeureFin = (heureDebut: string, duree: number): string => {
 interface FormulaireTacheProps {
   /** ID de la tâche à éditer (undefined pour création) */
   tacheId?: string;
+  /** ID du traducteur pré-sélectionné (pour création depuis liste dispo) */
+  traducteurIdInitial?: string;
   /** Callback appelé après création/modification réussie */
   onSuccess?: (tacheId: string) => void;
   /** Callback appelé lors de l'annulation */
@@ -69,6 +71,7 @@ interface FormulaireTacheProps {
 
 export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
   tacheId,
+  traducteurIdInitial,
   onSuccess,
   onCancel,
   compact: _compact = false,
@@ -110,7 +113,7 @@ export const FormulaireTache: React.FC<FormulaireTacheProps> = ({
     handleDelete,
     formatNumeroProjet,
     traducteurSelectionne,
-  } = useFormulaireTache({ tacheId, onSuccess, onCancel });
+  } = useFormulaireTache({ tacheId, traducteurIdInitial, onSuccess, onCancel });
 
   // Fonctions locales pour la répartition manuelle
   const ajouterRepartitionManuelle = () => {

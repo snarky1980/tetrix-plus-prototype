@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { LoadingSpinner } from '../ui/Spinner';
 import { MultiSelectDropdown } from '../ui/MultiSelectDropdown';
-import { notificationService, DemandeRessource, TraducteurDisponible, InteretDemande } from '../../services/notificationService';
+import { notificationService, DemandeRessource, InteretDemande } from '../../services/notificationService';
 import { traducteurService } from '../../services/traducteurService';
 import { divisionService } from '../../services/divisionService';
 import { equipeProjetService } from '../../services/equipeProjetService';
@@ -28,7 +28,6 @@ interface DemandesRessourcesProps {
 export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ showAll: _showAll }) => {
   const { rafraichirCompteurs } = useNotifications();
   const [demandes, setDemandes] = useState<DemandeRessource[]>([]);
-  const [traducteursDispo, setTraducteursDispo] = useState<TraducteurDisponible[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -37,16 +36,11 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ showAll:
   const [interetsParDemande, setInteretsParDemande] = useState<Record<string, InteretDemande[]>>({});
   const [loadingInterets, setLoadingInterets] = useState<Set<string>>(new Set());
   
-  // Options de filtres - toutes les divisions/classifications de tous les traducteurs
+  // Options de filtres pour ciblage des demandes
   const [toutesLesDivisions, setToutesLesDivisions] = useState<string[]>([]);
-  const [toutesLesClassifications, setToutesLesClassifications] = useState<string[]>([]);
   const [toutesLesSpecialisations, setToutesLesSpecialisations] = useState<string[]>([]);
   const [tousLesDomaines, setTousLesDomaines] = useState<string[]>([]);
   const [equipesProjet, setEquipesProjet] = useState<Array<{ id: string; nom: string; code: string }>>([]);
-  
-  // Filtres pour les traducteurs disponibles (multi-sélection)
-  const [filtresDivisions, setFiltresDivisions] = useState<string[]>([]);
-  const [filtresClassifications, setFiltresClassifications] = useState<string[]>([]);
   
   const initialFormData = {
     titre: '',
@@ -72,27 +66,23 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ showAll:
   const chargerDonnees = async () => {
     setLoading(true);
     try {
-      const [demandesData, traducteursData, tousTraducteurs, divisionsData, equipesData] = await Promise.all([
+      const [demandesData, tousTraducteurs, divisionsData, equipesData] = await Promise.all([
         notificationService.obtenirDemandesRessources(),
-        notificationService.obtenirTraducteursDisponibles(),
         traducteurService.obtenirTraducteurs({ actif: true }),
         divisionService.obtenirDivisions().catch(() => []),
         equipeProjetService.lister({ actif: true }).catch(() => []),
       ]);
       setDemandes(demandesData);
-      setTraducteursDispo(traducteursData);
       setEquipesProjet(equipesData);
       
       // Extraire toutes les divisions depuis le service divisions (plus fiable)
       const divisionNames = divisionsData.map((d: any) => d.nom).filter(Boolean).sort();
       setToutesLesDivisions(divisionNames);
       
-      // Extraire toutes les classifications (catégories) et spécialisations des traducteurs
-      const classifications = Array.from(new Set(tousTraducteurs.map((t: any) => t.categorie).filter(Boolean))).sort() as string[];
+      // Extraire toutes les spécialisations et domaines des traducteurs (pour ciblage demandes)
       const specialisations = Array.from(new Set(tousTraducteurs.flatMap((t: any) => t.specialisations || []))).filter(Boolean).sort() as string[];
       const domaines = Array.from(new Set(tousTraducteurs.flatMap((t: any) => t.domaines || []))).filter(Boolean).sort() as string[];
       
-      setToutesLesClassifications(classifications);
       setToutesLesSpecialisations(specialisations);
       setTousLesDomaines(domaines);
     } catch (error) {
@@ -221,116 +211,12 @@ export const DemandesRessources: React.FC<DemandesRessourcesProps> = ({ showAll:
     return urgenceOptions.find(u => u.value === urgence)?.color || '';
   };
 
-  // Filtrer les traducteurs (multi-sélection avec OR logic)
-  const traducteursFiltres = useMemo(() => {
-    return traducteursDispo.filter(tr => {
-      // Si des divisions sont sélectionnées, le traducteur doit avoir AU MOINS UNE des divisions
-      if (filtresDivisions.length > 0 && !tr.divisions.some(d => filtresDivisions.includes(d))) return false;
-      // Si des classifications sont sélectionnées, le traducteur doit avoir AU MOINS UNE
-      if (filtresClassifications.length > 0 && !filtresClassifications.includes(tr.classification)) return false;
-      return true;
-    });
-  }, [traducteursDispo, filtresDivisions, filtresClassifications]);
-
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return (
     <div className="space-y-4">
-      {/* Traducteurs disponibles */}
-      {traducteursDispo.length > 0 && (
-        <Card className="border-green-200 bg-green-50">
-          <CardHeader className="py-2">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <span>✋</span>
-                Traducteurs cherchant du travail ({traducteursFiltres.length}/{traducteursDispo.length})
-              </CardTitle>
-              {/* Filtres dropdown inline - affiche TOUTES les divisions et classifications */}
-              <div className="flex items-center gap-2">
-                <MultiSelectDropdown
-                  label=""
-                  options={toutesLesDivisions}
-                  selected={filtresDivisions}
-                  onChange={setFiltresDivisions}
-                  placeholder="Divisions"
-                  minWidth="140px"
-                />
-                <MultiSelectDropdown
-                  label=""
-                  options={toutesLesClassifications}
-                  selected={filtresClassifications}
-                  onChange={setFiltresClassifications}
-                  placeholder="Classifications"
-                  minWidth="140px"
-                />
-                {(filtresDivisions.length > 0 || filtresClassifications.length > 0) && (
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => { setFiltresDivisions([]); setFiltresClassifications([]); }}
-                  >
-                    ✕
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2">
-            {traducteursFiltres.length === 0 ? (
-              <div className="text-center py-3 text-gray-500 text-sm">
-                Aucun traducteur ne correspond aux filtres
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                {traducteursFiltres.map(tr => (
-                  <div key={tr.id} className="p-2 bg-white rounded border border-green-200 text-xs">
-                    <div className="flex items-center gap-2 mb-1">
-                      <div className="w-7 h-7 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs">
-                        {tr.nom.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{tr.nom}</div>
-                        <div className="text-gray-500 truncate">{tr.classification} • {tr.divisions.join(', ')}</div>
-                      </div>
-                    </div>
-                    <div className="text-gray-500">
-                      {tr.pairesLinguistiques.map(p => `${p.langueSource}→${p.langueCible}`).join(', ')} • {tr.capaciteHeuresParJour}h/j
-                    </div>
-                    {tr.commentaireDisponibilite && (
-                      <div className="mt-1 text-green-700 bg-green-100 p-1 rounded text-xs truncate" title={tr.commentaireDisponibilite}>
-                        💬 {tr.commentaireDisponibilite}
-                      </div>
-                    )}
-                    {/* Affichage du ciblage du traducteur */}
-                    {tr.ciblage && ((tr.ciblage.divisions?.length ?? 0) > 0 || (tr.ciblage.categories?.length ?? 0) > 0 || tr.ciblage.equipeProjetId) && (
-                      <div className="mt-1 flex flex-wrap gap-1">
-                        {tr.ciblage.divisions?.map(d => (
-                          <span key={d} className="px-1 py-0.5 bg-blue-100 text-blue-700 rounded text-[10px]">
-                            🏢 {d}
-                          </span>
-                        ))}
-                        {tr.ciblage.categories?.map(c => (
-                          <span key={c} className="px-1 py-0.5 bg-purple-100 text-purple-700 rounded text-[10px]">
-                            {c}
-                          </span>
-                        ))}
-                        {tr.ciblage.equipeProjetId && (
-                          <span className="px-1 py-0.5 bg-cyan-100 text-cyan-700 rounded text-[10px]">
-                            👥 Équipe
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* Demandes de ressources */}
       <Card>
         <CardHeader className="py-2">
