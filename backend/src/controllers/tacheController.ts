@@ -386,9 +386,8 @@ export const creerTache = async (
               tacheId: nouvelleTache.id,
               date: parseOttawaDateISO(ajust.date),
               heures: ajust.heures,
-              // TODO: Activer après application de la migration SQL
-              // heureDebut: ajust.heureDebut || null,
-              // heureFin: ajust.heureFin || null,
+              heureDebut: ajust.heureDebut || null,
+              heureFin: ajust.heureFin || null,
               type: 'TACHE',
               creePar: req.utilisateur!.id,
             },
@@ -474,6 +473,10 @@ export const mettreAJourTache = async (
     const heuresCible = heuresTotal || existante.heuresTotal;
     // Garder en string pour JAT, convertir en Date uniquement pour l'insertion en base
     const echeanceCible = dateEcheance || existante.dateEcheance;
+    
+    // Détecter si l'échéance a une heure significative
+    const { date: echeanceParsee } = normalizeToOttawaWithTime(echeanceCible, true, 'dateEcheance');
+    const echeanceAHeureSignificative = hasSignificantTime(echeanceParsee);
 
     if (repartition && Array.isArray(repartition) && repartition.length > 0) {
       const { valide, erreurs } = await validerRepartition(existante.traducteurId, repartition, heuresCible, id, echeanceCible);
@@ -486,7 +489,9 @@ export const mettreAJourTache = async (
     } else if (repartitionAuto) {
       try {
         // Passer string ou Date, normalizeToOttawa gère les deux
-        repartitionEffective = await repartitionJusteATemps(existante.traducteurId, heuresCible, echeanceCible);
+        repartitionEffective = await repartitionJusteATemps(existante.traducteurId, heuresCible, echeanceCible, {
+          modeTimestamp: echeanceAHeureSignificative
+        });
       } catch (e: any) {
         console.error('[Erreur JAT edition]', e.message, '| traducteurId:', existante.traducteurId, '| heuresTotal:', heuresCible, '| dateEcheance:', echeanceCible);
         res.status(400).json({ erreur: e.message || 'Erreur JAT' });
@@ -556,6 +561,8 @@ export const mettreAJourTache = async (
               tacheId: id,
               date: parseOttawaDateISO(ajust.date),
               heures: ajust.heures,
+              heureDebut: ajust.heureDebut || null,
+              heureFin: ajust.heureFin || null,
               type: 'TACHE',
               creePar: req.utilisateur!.id,
             },

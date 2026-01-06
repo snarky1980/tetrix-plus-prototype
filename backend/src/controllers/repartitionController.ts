@@ -1,11 +1,11 @@
 import { Response } from 'express';
 import { AuthRequest } from '../middleware/auth';
 import { repartitionJusteATemps, repartitionEquilibree, repartitionPEPS, suggererHeuresManuel, suggererRepartitionOptimale, RepartitionItem } from '../services/repartitionService';
-import { todayOttawa, formatOttawaISO, parseOttawaDateISO } from '../utils/dateTimeOttawa';
+import { todayOttawa, formatOttawaISO, parseOttawaDateISO, hasSignificantTime, parseOttawaDateTimeISO } from '../utils/dateTimeOttawa';
 
 /**
  * Preview répartition Juste-à-Temps sans persistance
- * GET /api/repartition/jat-preview?traducteurId=...&heuresTotal=...&dateEcheance=YYYY-MM-DD
+ * GET /api/repartition/jat-preview?traducteurId=...&heuresTotal=...&dateEcheance=YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss
  */
 export const previewJAT = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -19,10 +19,17 @@ export const previewJAT = async (req: AuthRequest, res: Response): Promise<void>
       res.status(400).json({ erreur: 'heuresTotal doit être > 0' });
       return;
     }
+    
+    // Détecter si l'échéance contient une heure significative (ex: 14:00)
+    const dateEcheanceStr = dateEcheance as string;
+    const echeanceAHeureSignificative = dateEcheanceStr.includes('T') && 
+      hasSignificantTime(parseOttawaDateTimeISO(dateEcheanceStr));
+    
     const repartition = await repartitionJusteATemps(
       traducteurId as string,
       heures,
-      dateEcheance as string
+      dateEcheanceStr,
+      { modeTimestamp: echeanceAHeureSignificative }
     );
     
     // Vérifier s'il y a des dates dans le passé

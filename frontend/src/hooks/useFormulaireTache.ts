@@ -239,7 +239,9 @@ export function useFormulaireTache(options: UseFormulaireTacheOptions): UseFormu
           .filter((a: any) => a.type === 'TACHE')
           .map((a: any) => ({
             date: a.date.split('T')[0],
-            heures: a.heures
+            heures: a.heures,
+            heureDebut: a.heureDebut || undefined,
+            heureFin: a.heureFin || undefined
           }));
         if (repartitions.length > 0) {
           setFormData(prev => ({ ...prev, typeRepartition: 'MANUEL' }));

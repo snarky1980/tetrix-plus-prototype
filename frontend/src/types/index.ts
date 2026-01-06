@@ -206,6 +206,8 @@ export interface AjustementTemps {
   id: string;
   date: string;
   heures: number;
+  heureDebut?: string;
+  heureFin?: string;
   type: TypeAjustement;
   traducteurId: string;
   tacheId?: string;

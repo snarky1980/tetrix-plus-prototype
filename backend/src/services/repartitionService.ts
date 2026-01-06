@@ -17,8 +17,10 @@ import {
   validateDateRange,
   parseHoraireTraducteur,
   capaciteNetteJour,
-  parseOttawaDateISO
+  parseOttawaDateISO,
+  OTTAWA_TIMEZONE
 } from '../utils/dateTimeOttawa';
+import { toZonedTime } from 'date-fns-tz';
 import { capaciteDisponiblePlageHoraire } from './capaciteService';
 import { JoursFeriesService } from './joursFeriesService';
 
@@ -90,8 +92,9 @@ function calculerPlageHoraireJAT(
   // Déterminer l'heure de fin effective
   let heureFin: number;
   if (estJourEcheance && deadlineDateTime) {
-    // Jour J: l'heure de fin est l'heure de deadline
-    heureFin = deadlineDateTime.getHours() + deadlineDateTime.getMinutes() / 60;
+    // Jour J: l'heure de fin est l'heure de deadline (en timezone Ottawa)
+    const ottawaDeadline = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
+    heureFin = ottawaDeadline.getHours() + ottawaDeadline.getMinutes() / 60;
   } else {
     // Autres jours: l'heure de fin est la fin de l'horaire
     heureFin = horaire.heureFin;
@@ -138,9 +141,18 @@ function calculerPlageHoraireEquilibree(
   heuresAllouees: number,
   horaire: { heureDebut: number; heureFin: number },
   heuresDejaUtilisees: number,
-  dateJour: Date
+  dateJour: Date,
+  deadlineDateTime?: Date  // Optionnel: si présent, limiter heureFin à l'heure de la deadline
 ): { heureDebut: string; heureFin: string } {
   // Stratégie: Allouer le plus tôt possible, en évitant la pause midi
+  
+  // Déterminer l'heure de fin max (horaire ou deadline si plus tôt)
+  let heureFinMax = horaire.heureFin;
+  if (deadlineDateTime) {
+    const deadlineOttawa = toZonedTime(deadlineDateTime, OTTAWA_TIMEZONE);
+    const heureDeadline = deadlineOttawa.getHours() + deadlineOttawa.getMinutes() / 60;
+    heureFinMax = Math.min(heureFinMax, heureDeadline);
+  }
   
   // Commencer au début de l'horaire
   let debut = horaire.heureDebut;
@@ -171,8 +183,8 @@ function calculerPlageHoraireEquilibree(
     fin += 1;
   }
   
-  // S'assurer qu'on ne dépasse pas la fin de l'horaire
-  fin = Math.min(fin, horaire.heureFin);
+  // S'assurer qu'on ne dépasse pas la fin de l'horaire ou la deadline
+  fin = Math.min(fin, heureFinMax);
   
   return {
     heureDebut: formatHeure(debut),
@@ -526,12 +538,17 @@ export async function repartitionEquilibree(
     const dateJour = parseOttawaDateISO(alloc.iso);
     const utilisees = heuresParJour[alloc.iso] || 0;
     
-    // Calculer les plages horaires (le plus tôt possible)
+    // Déterminer si c'est le jour de la deadline avec heure précise
+    const estJourEcheance = alloc.iso === dateFinJourSeul;
+    const deadlineDateTime = estJourEcheance && finHasTime ? dateFin : undefined;
+    
+    // Calculer les plages horaires (le plus tôt possible, avec deadline si applicable)
     const plages = calculerPlageHoraireEquilibree(
       alloc.heuresAllouees,
       horaire,
       utilisees,
-      dateJour
+      dateJour,
+      deadlineDateTime
     );
     
     return {
@@ -595,8 +612,8 @@ export async function repartitionPEPS(
     if (libre <= 0) continue;
     const alloue = Math.min(libre, restant);
     
-    // Calculer les plages horaires (PEPS = le plus tôt possible, comme ÉQUILIBRÉ)
-    const plages = calculerPlageHoraireEquilibree(alloue, horaire, utilisees, jour);
+    // Calculer les plages horaires (PEPS = le plus tôt possible, avec deadline si applicable)
+    const plages = calculerPlageHoraireEquilibree(alloue, horaire, utilisees, jour, deadlineDateTime);
     
     resultat.push({ 
       date: iso, 
@@ -747,7 +764,9 @@ export async function validerRepartition(
       if (dateObjISO === deadlineISO) {
         // Si l'échéance a une heure précise ET que la répartition a des heures précises
         if (deadlineHasTime && r.heureFin) {
-          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
+          // IMPORTANT: Utiliser toZonedTime pour extraire l'heure d'Ottawa (pas UTC!)
+          const deadlineOttawa = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
+          const heureEcheance = deadlineOttawa.getHours() + deadlineOttawa.getMinutes() / 60;
           const heureFin = parseHeureString(r.heureFin);
           if (heureFin > heureEcheance + 0.01) { // tolérance 0.01h pour floating point
             erreurs.push(`Le ${r.date}, heure de fin ${r.heureFin} dépasse l'heure d'échéance ${formatHeure(heureEcheance)}. Distribution au-delà de l'échéance interdite.`);
@@ -761,7 +780,9 @@ export async function validerRepartition(
           // Or si l'échéance est par exemple à 14h00 le même jour, on ne peut pas travailler toute la journée
           // Cette situation devrait être gérée par l'algorithme qui doit fournir heureDebut/heureFin
           // Pour la validation, on va accepter mais logger un avertissement
-          const heureEcheance = deadlineDate.getHours() + deadlineDate.getMinutes() / 60;
+          // IMPORTANT: Utiliser toZonedTime pour extraire l'heure d'Ottawa (pas UTC!)
+          const deadlineOttawa = toZonedTime(deadlineDate, OTTAWA_TIMEZONE);
+          const heureEcheance = deadlineOttawa.getHours() + deadlineOttawa.getMinutes() / 60;
           console.warn(`[Validation] ${r.date}: échéance à ${formatHeure(heureEcheance)} mais répartition sans heures précises. Accepté mais risque de dépassement.`);
         }
       }
