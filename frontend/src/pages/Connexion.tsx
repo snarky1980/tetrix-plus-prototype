@@ -94,7 +94,7 @@ const Connexion: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="votre@email.gc.ca"
+                placeholder="votre@tetrix.com"
                 className="pl-10"
                 error={!!erreur}
               />
