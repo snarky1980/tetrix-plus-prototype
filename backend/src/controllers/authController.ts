@@ -71,6 +71,7 @@ export const connexion = async (req: Request, res: Response): Promise<void> => {
         email: utilisateur.email,
         role: utilisateur.role,
         traducteurId: utilisateur.traducteur?.id,
+        isPlayground: utilisateur.isPlayground,
       },
     });
   } catch (error) {
