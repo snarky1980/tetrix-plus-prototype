@@ -24,6 +24,7 @@ async function creerCompte() {
         prenom: 'Lewis-Andray',
         role: 'TRADUCTEUR',
         actif: true,
+        isPlayground: true,
       }
     });
     console.log('✅ Utilisateur créé:', utilisateur.email);
