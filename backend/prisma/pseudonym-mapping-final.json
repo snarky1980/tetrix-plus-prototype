@@ -796,12 +796,5 @@
     "pseudonymName": "McCarthie, Stéphanya",
     "realEmail": "stephanie.mccarthy@tetrix.com",
     "pseudonymEmail": "stephanya.mccarthie@tetrix.com"
-  },
-  {
-    "traducteurId": "6ae3752c-002f-44fb-bcf0-af64933a8c1b",
-    "realName": "Jean Exemple",
-    "pseudonymName": "Jéhan Exomple",
-    "realEmail": "traducteur@tetrix.com",
-    "pseudonymEmail": "traducteur@tetrix.com"
   }
 ]

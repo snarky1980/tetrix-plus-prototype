@@ -13,10 +13,10 @@ interface PortalConfig {
   color: string;
 }
 
-// ID du traducteur playground (traducteur@tetrix.com)
-const DEV_TRADUCTEUR_ID = '906142de-dc63-4368-8c8d-73ca9a331c13';
-// ID du traducteur pour playground-traducteur@tetrix.com
-const PLAYGROUND_TRADUCTEUR_ID = '4e9a8b30-7a6b-4c06-a2cb-8505a5721e27';
+// ID du traducteur pour traducteur@tetrix.com (Jean Exemple)
+const DEV_TRADUCTEUR_ID = '70915392-5946-47b8-a0e3-53d5e4b8e9cc';
+// ID du traducteur pour playground-traducteur@tetrix.com (Playground, Test)
+const PLAYGROUND_TRADUCTEUR_ID = '620bd3d8-42e8-4db2-ae5a-b58811c9ec2f';
 
 const PORTALS: PortalConfig[] = [
   {
