@@ -59,6 +59,12 @@ export const verifierRole = (...rolesAutorises: Role[]) => {
       return;
     }
 
+    // Les comptes Playground ont accès à TOUTES les routes (sandbox mode)
+    if (req.utilisateur.isPlayground) {
+      next();
+      return;
+    }
+
     if (!rolesAutorises.includes(req.utilisateur.role)) {
       res.status(403).json({ 
         erreur: 'Accès refusé : permissions insuffisantes' 
@@ -78,8 +84,14 @@ export const verifierAccesTraducteur = (
   res: Response,
   next: NextFunction
 ): void => {
-  const { role } = req.utilisateur!;
+  const { role, isPlayground } = req.utilisateur!;
   const traducteurId = req.params.traducteurId || req.body.traducteurId;
+
+  // Les comptes Playground ont accès à tous les traducteurs (sandbox mode)
+  if (isPlayground) {
+    next();
+    return;
+  }
 
   // Admin et Conseiller peuvent accéder à tous les traducteurs
   if (role === 'ADMIN' || role === 'CONSEILLER') {
@@ -114,7 +126,13 @@ export const verifierAccesDivision = (
         return;
       }
 
-      const { role, id: utilisateurId } = req.utilisateur;
+      const { role, id: utilisateurId, isPlayground } = req.utilisateur;
+
+      // Les comptes Playground ont accès à toutes les divisions (sandbox mode)
+      if (isPlayground) {
+        next();
+        return;
+      }
 
       // Les admins ont accès à tout
       if (role === 'ADMIN') {

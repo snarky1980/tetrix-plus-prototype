@@ -50,6 +50,11 @@ const RouteProtegee: React.FC<{
     return <Navigate to="/connexion" replace />;
   }
 
+  // Les comptes Playground ont accès à TOUTES les routes (sandbox mode)
+  if (utilisateur?.isPlayground) {
+    return children;
+  }
+
   if (rolesAutorises && utilisateur && !rolesAutorises.includes(utilisateur.role)) {
     return <Navigate to="/" replace />;
   }
@@ -65,6 +70,11 @@ const RedirectionDashboard: React.FC = () => {
 
   if (!utilisateur) {
     return <Navigate to="/connexion" replace />;
+  }
+
+  // Les comptes Playground ont accès à tous les portails - afficher le sélecteur
+  if (utilisateur.isPlayground) {
+    return <PortalSelector />;
   }
 
   // Les ADMIN et CONSEILLER ont accès à plusieurs portails - afficher le sélecteur
