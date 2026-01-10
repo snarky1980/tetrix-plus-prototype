@@ -7,6 +7,7 @@ import {
   desactiverTraducteur,
   bloquerTemps,
   obtenirBlocages,
+  obtenirBlocagesBatch,
   supprimerBlocage,
   mettreAJourDisponibilite,
 } from '../controllers/traducteurController';
@@ -115,6 +116,14 @@ router.post('/:id/bloquer-temps', verifierRole('ADMIN', 'CONSEILLER'), bloquerTe
  * Accessible par : Admin, Conseiller
  */
 router.get('/:id/blocages', verifierRole('ADMIN', 'CONSEILLER'), obtenirBlocages);
+
+/**
+ * POST /api/traducteurs/blocages/batch
+ * Obtenir les blocages pour plusieurs traducteurs en une seule requête
+ * Body: { traducteurIds: string[], dateDebut?: string, dateFin?: string }
+ * Accessible par : Admin, Conseiller, Gestionnaire
+ */
+router.post('/blocages/batch', verifierRole('ADMIN', 'CONSEILLER', 'GESTIONNAIRE'), obtenirBlocagesBatch);
 
 /**
  * DELETE /api/traducteurs/blocages/:blocageId

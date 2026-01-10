@@ -21,19 +21,18 @@ import { ActivityLog } from '../components/admin/ActivityLog';
 import { SystemAlerts } from '../components/admin/SystemAlerts';
 import { SystemSettings } from '../components/admin/SystemSettings';
 import { ImportBatchModal } from '../components/admin/ImportBatchModal';
-import { traducteurService } from '../services/traducteurService';
-import { utilisateurService } from '../services/utilisateurService';
-import { divisionService } from '../services/divisionService';
-import { tacheService } from '../services/tacheService';
-import type { Traducteur, Utilisateur } from '../types';
+import statistiquesService from '../services/statistiquesService';
+import type { AdminOverviewStats } from '../services/statistiquesService';
 
 type Section = 'overview' | 'traducteurs' | 'equipes-projet' | 'equipes-conseiller' | 'clients-domaines' | 'utilisateurs' | 'divisions' | 'jours-feries' | 'sessions-audit' | 'backup' | 'systeme';
 
-interface SystemStats {
-  traducteurs: { total: number; actifs: number; inactifs: number };
-  utilisateurs: { total: number; parRole: Record<string, number> };
-  divisions: number;
-  taches: { total: number; enCours: number; terminees: number };
+/** Type local pour les traducteurs disponibles (léger) */
+interface TraducteurDispo {
+  id: string;
+  nom: string;
+  divisions: string[];
+  commentaireDisponibilite?: string;
+  disponibleDepuis?: string;
 }
 
 /**
@@ -48,19 +47,19 @@ const DashboardAdmin: React.FC = () => {
   const [section, setSection] = useState<Section>('overview');
   const [loading, setLoading] = useState(true);
   const [importModalType, setImportModalType] = useState<'traducteurs' | 'taches' | null>(null);
-  const [systemStats, setSystemStats] = useState<SystemStats>({
-    traducteurs: { total: 0, actifs: 0, inactifs: 0 },
-    utilisateurs: { total: 0, parRole: {} },
-    divisions: 0,
-    taches: { total: 0, enCours: 0, terminees: 0 }
-  });
-  const [traducteursDispo, setTraducteursDispo] = useState<Traducteur[]>([]);
+  const [systemStats, setSystemStats] = useState<AdminOverviewStats | null>(null);
+  const [traducteursDispo, setTraducteursDispo] = useState<TraducteurDispo[]>([]);
 
-  // Planification des 7 prochains jours
-  const aujourdHui = useMemo(() => new Date(), []);
-  const fin = useMemo(() => new Date(aujourdHui.getTime() + 6 * 86400000), [aujourdHui]);
-  const dateISO = (d: Date) => d.toISOString().split('T')[0];
-  const { planificationGlobale } = usePlanificationGlobal({ dateDebut: dateISO(aujourdHui), dateFin: dateISO(fin) });
+  // Planification des 7 prochains jours - dates stables
+  const planifParams = useMemo(() => {
+    const today = new Date();
+    const end = new Date(today.getTime() + 6 * 86400000);
+    return {
+      dateDebut: today.toISOString().split('T')[0],
+      dateFin: end.toISOString().split('T')[0]
+    };
+  }, []);
+  const { planificationGlobale } = usePlanificationGlobal(planifParams);
 
 
   // Stats de capacité
@@ -77,49 +76,13 @@ const DashboardAdmin: React.FC = () => {
     return { total: libre + presque + plein, libre, presque, plein };
   }, [planificationGlobale]);
 
-  // Fonction de chargement des stats système
+  // Chargement des stats système via endpoint optimisé (COUNT côté serveur)
   const chargerStats = async () => {
     setLoading(true);
     try {
-      const [traducteurs, utilisateurs, divisions, taches] = await Promise.all([
-        traducteurService.obtenirTraducteurs({}).catch(() => []),
-        utilisateurService.obtenirUtilisateurs().catch(() => []),
-        divisionService.obtenirDivisions().catch(() => []),
-        tacheService.obtenirTaches({}).catch(() => [])
-      ]);
-
-      // Stats traducteurs
-      const tradActifs = (traducteurs as Traducteur[]).filter(t => t.actif).length;
-      const tradsDispo = (traducteurs as Traducteur[]).filter(t => t.disponiblePourTravail);
-      setTraducteursDispo(tradsDispo);
-
-      // Stats utilisateurs par rôle
-      const parRole: Record<string, number> = {};
-      (utilisateurs as Utilisateur[]).forEach(u => {
-        parRole[u.role] = (parRole[u.role] || 0) + 1;
-      });
-
-      // Stats tâches
-      const tachesEnCours = (taches as any[]).filter(t => t.statut === 'EN_COURS' || t.statut === 'PLANIFIEE').length;
-      const tachesTerminees = (taches as any[]).filter(t => t.statut === 'TERMINEE').length;
-
-      setSystemStats({
-        traducteurs: {
-          total: traducteurs.length,
-          actifs: tradActifs,
-          inactifs: traducteurs.length - tradActifs
-        },
-        utilisateurs: {
-          total: utilisateurs.length,
-          parRole
-        },
-        divisions: divisions.length,
-        taches: {
-          total: taches.length,
-          enCours: tachesEnCours,
-          terminees: tachesTerminees
-        }
-      });
+      const stats = await statistiquesService.obtenirAdminOverview();
+      setSystemStats(stats);
+      setTraducteursDispo(stats.traducteursDisponibles);
     } catch (err) {
       console.error('Erreur chargement stats:', err);
     } finally {
@@ -132,15 +95,25 @@ const DashboardAdmin: React.FC = () => {
     chargerStats();
   }, []);
 
-  const renderOverview = () => (
+  const renderOverview = () => {
+    // Valeurs par défaut si stats pas encore chargées
+    const stats = systemStats ?? {
+      traducteurs: { total: 0, actifs: 0, inactifs: 0, disponibles: 0 },
+      utilisateurs: { total: 0, parRole: {} },
+      divisions: 0,
+      taches: { total: 0, enCours: 0, terminees: 0 },
+      traducteursDisponibles: []
+    };
+
+    return (
     <div className="space-y-4">
       {/* Stats compactes en ligne - cliquables */}
       <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {[
-          { label: 'Traducteurs', value: systemStats.traducteurs.total, sub: `${systemStats.traducteurs.actifs} actifs`, color: 'blue', tooltip: 'Nombre total de profils traducteurs dans le système. Les traducteurs actifs peuvent recevoir des tâches.', action: () => setSection('traducteurs') },
-          { label: 'Utilisateurs', value: systemStats.utilisateurs.total, sub: `${Object.keys(systemStats.utilisateurs.parRole).length} rôles`, color: 'gray', tooltip: 'Comptes utilisateurs (Admin, Conseiller, Gestionnaire, Traducteur) pouvant se connecter au système.', action: () => setSection('utilisateurs') },
-          { label: 'Divisions', value: systemStats.divisions, color: 'purple', tooltip: 'Unités organisationnelles (ex: CISR, Droit, Finance). Les traducteurs sont assignés à une ou plusieurs divisions.', action: () => setSection('divisions') },
-          { label: 'Tâches', value: systemStats.taches.total, sub: `${systemStats.taches.enCours} en cours`, color: 'amber', tooltip: 'Travaux de traduction planifiés. Inclut les tâches en attente, en cours et terminées.', action: () => navigate('/conseiller') },
+          { label: 'Traducteurs', value: stats.traducteurs.total, sub: `${stats.traducteurs.actifs} actifs`, color: 'blue', tooltip: 'Nombre total de profils traducteurs dans le système. Les traducteurs actifs peuvent recevoir des tâches.', action: () => setSection('traducteurs') },
+          { label: 'Utilisateurs', value: stats.utilisateurs.total, sub: `${Object.keys(stats.utilisateurs.parRole).length} rôles`, color: 'gray', tooltip: 'Comptes utilisateurs (Admin, Conseiller, Gestionnaire, Traducteur) pouvant se connecter au système.', action: () => setSection('utilisateurs') },
+          { label: 'Divisions', value: stats.divisions, color: 'purple', tooltip: 'Unités organisationnelles (ex: CISR, Droit, Finance). Les traducteurs sont assignés à une ou plusieurs divisions.', action: () => setSection('divisions') },
+          { label: 'Tâches', value: stats.taches.total, sub: `${stats.taches.enCours} en cours`, color: 'amber', tooltip: 'Travaux de traduction planifiés. Inclut les tâches en attente, en cours et terminées.', action: () => navigate('/conseiller') },
           { label: 'Dispo.', value: capaciteStats.libre, sub: '7 jours', color: 'green', tooltip: 'Créneaux de disponibilité sur les 7 prochains jours. Indique la capacité restante pour nouvelles tâches.', action: () => navigate('/planification-globale') },
           { label: 'Saturé', value: capaciteStats.plein, color: 'red', tooltip: 'Créneaux complètement occupés. Ces traducteurs ne peuvent pas accepter de travail supplémentaire.', action: () => navigate('/planification-globale') },
         ].map((stat, i) => (
@@ -197,7 +170,7 @@ const DashboardAdmin: React.FC = () => {
       <div className="bg-white border rounded-lg p-3">
         <div className="text-xs font-medium text-gray-500 mb-2">Utilisateurs par rôle</div>
         <div className="flex flex-wrap gap-2">
-          {Object.entries(systemStats.utilisateurs.parRole).map(([role, count]) => {
+          {Object.entries(stats.utilisateurs.parRole).map(([role, count]) => {
             const colors: Record<string, string> = {
               ADMIN: 'bg-red-100 text-red-700',
               CONSEILLER: 'bg-blue-100 text-blue-700',
@@ -230,6 +203,7 @@ const DashboardAdmin: React.FC = () => {
       </div>
     </div>
   );
+  };
 
   const renderContent = () => {
     switch (section) {
@@ -331,11 +305,11 @@ const DashboardAdmin: React.FC = () => {
         {/* Stats en barre horizontale style Conseiller */}
         <div className="bg-white border rounded-lg px-4 py-2 shadow-sm flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-3 text-sm">
-            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded font-semibold">{systemStats.traducteurs.total} traducteurs</span>
-            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">{systemStats.traducteurs.actifs} actifs</span>
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{systemStats.utilisateurs.total} utilisateurs</span>
-            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded">{systemStats.divisions} divisions</span>
-            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded">{systemStats.taches.enCours} tâches en cours</span>
+            <span className="px-2 py-0.5 bg-primary/10 text-primary rounded font-semibold">{systemStats?.traducteurs?.total ?? '...'} traducteurs</span>
+            <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">{systemStats?.traducteurs?.actifs ?? '...'} actifs</span>
+            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded">{systemStats?.utilisateurs?.total ?? '...'} utilisateurs</span>
+            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded">{systemStats?.divisions ?? '...'} divisions</span>
+            <span className="px-2 py-0.5 bg-orange-100 text-orange-700 rounded">{systemStats?.taches?.enCours ?? '...'} tâches en cours</span>
           </div>
           <div className="text-xs text-green-600 flex items-center gap-1">
             <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>

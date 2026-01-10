@@ -71,13 +71,26 @@ export interface DashboardStats {
 
 // ============ Hook ============
 
+// Traducteur par défaut pour les comptes Playground (Jéhan Exomple)
+const PLAYGROUND_DEFAULT_TRADUCTEUR_ID = '70915392-5946-47b8-a0e3-53d5e4b8e9cc';
+
 export function useDashboardTraducteur(traducteurIdOverride?: string) {
   const { utilisateur } = useAuth();
-  // Permet à l'admin de voir le portail d'un autre traducteur
-  const traducteurId = traducteurIdOverride || utilisateur?.traducteurId;
-  const isViewingAsAdmin = !!traducteurIdOverride && utilisateur?.role === 'ADMIN';
   
-  const todayDate = todayOttawa();
+  // Pour les comptes Playground sans traducteurId, utiliser Jéhan Exomple par défaut
+  const isPlayground = utilisateur?.isPlayground === true;
+  const effectiveTraducteurId = traducteurIdOverride 
+    || utilisateur?.traducteurId 
+    || (isPlayground ? PLAYGROUND_DEFAULT_TRADUCTEUR_ID : undefined);
+  
+  const traducteurId = effectiveTraducteurId;
+  const isViewingAsAdmin = !!traducteurIdOverride && utilisateur?.role === 'ADMIN';
+  const isViewingAsPlayground = isPlayground && !utilisateur?.traducteurId;
+  
+  // Stabiliser la date d'aujourd'hui pour éviter des re-renders infinis
+  // (todayOttawa() crée un nouvel objet Date à chaque appel)
+  const todayStr = useMemo(() => formatOttawaISO(todayOttawa()), []);
+  const todayDate = useMemo(() => todayOttawa(), [todayStr]);
   const today = formatOttawaISO(todayDate);
 
   // ============ États de vue ============

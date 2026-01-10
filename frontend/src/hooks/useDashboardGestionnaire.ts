@@ -96,8 +96,9 @@ interface UseDashboardGestionnaireResult {
 
 export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
   const { utilisateur } = useAuth();
-  const todayDate = todayOttawa();
-  const today = formatOttawaISO(todayDate);
+  // Stabiliser la date d'aujourd'hui pour éviter des re-renders infinis
+  const today = useMemo(() => formatOttawaISO(todayOttawa()), []);
+  const todayDate = useMemo(() => todayOttawa(), [today]);
   
   // États de navigation
   const [section, setSection] = useState<Section>('overview');
@@ -235,19 +236,34 @@ export function useDashboardGestionnaire(): UseDashboardGestionnaireResult {
     chargerPlanification();
   }, [chargerPlanification]);
 
-  // Chargement des blocages
+  // Chargement des blocages (optimisé avec batch)
   const chargerBlocages = useCallback(async () => {
     if (traducteurs.length === 0) return;
     try {
-      const blocagesPromises = traducteurs.map(tr =>
-        traducteurService.obtenirBlocages(tr.id, { dateDebut: periodeActuelle.debut, dateFin: periodeActuelle.fin })
-          .then(blocages => blocages.map((b: any) => ({ ...b, traducteur: tr })))
-          .catch(() => [])
+      // Utiliser l'endpoint batch pour éviter le problème N+1
+      const traducteurIds = traducteurs.map(tr => tr.id);
+      const response = await traducteurService.obtenirBlocagesBatch(
+        traducteurIds,
+        { dateDebut: periodeActuelle.debut, dateFin: periodeActuelle.fin }
       );
-      const resultats = await Promise.all(blocagesPromises);
-      const allBlocages = resultats.flat().sort((a, b) => 
+      
+      // Vérifier que la réponse contient les données attendues
+      const blocagesParTraducteur = response?.blocagesParTraducteur || {};
+      
+      // Convertir en liste plate avec traducteur attaché
+      const allBlocages: any[] = [];
+      for (const tr of traducteurs) {
+        const blocages = blocagesParTraducteur[tr.id] || [];
+        for (const b of blocages) {
+          allBlocages.push({ ...b, traducteur: tr });
+        }
+      }
+      
+      // Trier par date
+      allBlocages.sort((a, b) => 
         new Date(a.date).getTime() - new Date(b.date).getTime()
       );
+      
       setBlocagesListe(allBlocages);
     } catch (err) {
       console.error('Erreur chargement blocages:', err);

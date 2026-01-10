@@ -446,4 +446,96 @@ router.get('/productivite', authentifier, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/statistiques/admin/overview
+ * Stats légères pour le dashboard admin - utilise COUNT au lieu de charger tous les objets
+ * Retourne: comptages traducteurs/utilisateurs/divisions/tâches sans inclure toutes les relations
+ */
+router.get('/admin/overview', authentifier, async (req, res) => {
+  try {
+    const utilisateur = (req as any).utilisateur;
+    
+    // Seuls ADMIN et Playground peuvent accéder
+    if (utilisateur.role !== 'ADMIN' && !utilisateur.isPlayground) {
+      return res.status(403).json({ message: 'Accès non autorisé' });
+    }
+
+    // Exécuter tous les counts en parallèle - beaucoup plus rapide que charger toutes les données
+    const [
+      traducteursTotal,
+      traducteursActifs,
+      traducteursDispo,
+      utilisateursTotal,
+      utilisateursParRole,
+      divisionsTotal,
+      tachesTotal,
+      tachesEnCours,
+      tachesTerminees
+    ] = await Promise.all([
+      // Traducteurs
+      prisma.traducteur.count(),
+      prisma.traducteur.count({ where: { actif: true } }),
+      prisma.traducteur.count({ where: { disponiblePourTravail: true } }),
+      
+      // Utilisateurs
+      prisma.utilisateur.count(),
+      prisma.utilisateur.groupBy({
+        by: ['role'],
+        _count: { role: true }
+      }),
+      
+      // Divisions
+      prisma.division.count({ where: { actif: true } }),
+      
+      // Tâches
+      prisma.tache.count(),
+      prisma.tache.count({ where: { statut: { in: ['EN_COURS', 'PLANIFIEE'] } } }),
+      prisma.tache.count({ where: { statut: 'TERMINEE' } })
+    ]);
+
+    // Formater les rôles
+    const parRole: Record<string, number> = {};
+    utilisateursParRole.forEach(r => {
+      parRole[r.role] = r._count.role;
+    });
+
+    // Charger la liste des traducteurs disponibles (léger - sans relations)
+    const traducteursDispoListe = await prisma.traducteur.findMany({
+      where: { disponiblePourTravail: true },
+      select: {
+        id: true,
+        nom: true,
+        divisions: true,
+        commentaireDisponibilite: true,
+        disponibleDepuis: true
+      },
+      orderBy: { disponibleDepuis: 'desc' },
+      take: 10 // Limiter à 10 pour la perf
+    });
+
+    res.json({
+      traducteurs: {
+        total: traducteursTotal,
+        actifs: traducteursActifs,
+        inactifs: traducteursTotal - traducteursActifs,
+        disponibles: traducteursDispo
+      },
+      utilisateurs: {
+        total: utilisateursTotal,
+        parRole
+      },
+      divisions: divisionsTotal,
+      taches: {
+        total: tachesTotal,
+        enCours: tachesEnCours,
+        terminees: tachesTerminees
+      },
+      traducteursDisponibles: traducteursDispoListe
+    });
+  } catch (error) {
+    console.error('Erreur stats admin overview:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
+
 export default router;

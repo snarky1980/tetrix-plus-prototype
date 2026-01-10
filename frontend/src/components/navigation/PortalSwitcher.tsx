@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useTransition } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -99,6 +99,8 @@ export const PortalSwitcherCompact: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [pendingPortal, setPendingPortal] = useState<Portal | null>(null);
 
   if (!utilisateur) return null;
 
@@ -156,28 +158,48 @@ export const PortalSwitcherCompact: React.FC = () => {
                   }
                 }
                 
+                const isCurrentlyPending = isPending && pendingPortal === portal.id;
+                const isSelected = currentPortal === portal.id;
+                
                 return (
                   <button
                     key={portal.id}
+                    disabled={isPending}
                     onClick={() => {
-                      navigate(targetPath);
-                      setIsOpen(false);
+                      if (isSelected) {
+                        setIsOpen(false);
+                        return;
+                      }
+                      setPendingPortal(portal.id);
+                      startTransition(() => {
+                        navigate(targetPath);
+                        setIsOpen(false);
+                      });
                     }}
                     className={`
                       w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all
-                      ${currentPortal === portal.id 
+                      ${isSelected 
                         ? 'bg-blue-50 border-2 border-blue-200' 
                         : 'hover:bg-gray-50 border-2 border-transparent'
                       }
+                      ${isPending && !isCurrentlyPending ? 'opacity-50' : ''}
                     `}
                   >
-                    <span className="text-2xl">{portal.icon}</span>
+                    <span className={`text-2xl ${isCurrentlyPending ? 'animate-pulse' : ''}`}>
+                      {isCurrentlyPending ? '⏳' : portal.icon}
+                    </span>
                     <div className="flex-1">
-                      <div className="font-semibold text-gray-900">{portal.label}</div>
+                      <div className="font-semibold text-gray-900">
+                        {portal.label}
+                        {isCurrentlyPending && <span className="ml-2 text-sm text-blue-600">Chargement...</span>}
+                      </div>
                       <div className="text-xs text-gray-500">{portal.description}</div>
                     </div>
-                    {currentPortal === portal.id && (
+                    {isSelected && !isCurrentlyPending && (
                       <span className="text-blue-600">✓</span>
+                    )}
+                    {isCurrentlyPending && (
+                      <span className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
                     )}
                   </button>
                 );
@@ -199,7 +221,7 @@ export const PortalSelector: React.FC = () => {
 
   if (!utilisateur) return null;
 
-  const accessiblePortals = getAccessiblePortals(utilisateur.role);
+  const accessiblePortals = getAccessiblePortals(utilisateur.role, utilisateur.isPlayground);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">

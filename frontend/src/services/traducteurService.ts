@@ -134,4 +134,20 @@ export const traducteurService = {
     const { data } = await api.get(`/traducteurs/${id}/blocages`, { params });
     return data;
   },
+
+  /**
+   * Obtenir les blocages de plusieurs traducteurs en batch (optimisation N+1)
+   * Retourne les blocages groupés par traducteurId
+   */
+  async obtenirBlocagesBatch(
+    traducteurIds: string[],
+    params?: { dateDebut?: string; dateFin?: string }
+  ): Promise<{ blocages: any[]; blocagesParTraducteur: Record<string, any[]> }> {
+    const { data } = await api.post('/traducteurs/blocages/batch', {
+      traducteurIds,
+      dateDebut: params?.dateDebut,
+      dateFin: params?.dateFin,
+    });
+    return data;
+  },
 };

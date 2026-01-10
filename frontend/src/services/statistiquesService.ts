@@ -56,9 +56,42 @@ export interface StatsQuery {
   langueCible?: string;
 }
 
+/** Stats légères pour le dashboard admin */
+export interface AdminOverviewStats {
+  traducteurs: {
+    total: number;
+    actifs: number;
+    inactifs: number;
+    disponibles: number;
+  };
+  utilisateurs: {
+    total: number;
+    parRole: Record<string, number>;
+  };
+  divisions: number;
+  taches: {
+    total: number;
+    enCours: number;
+    terminees: number;
+  };
+  traducteursDisponibles: Array<{
+    id: string;
+    nom: string;
+    divisions: string[];
+    commentaireDisponibilite?: string;
+    disponibleDepuis?: string;
+  }>;
+}
+
 const statistiquesService = {
   async obtenirProductivite(params: StatsQuery): Promise<StatsProductivite> {
     const response = await api.get('/statistiques/productivite', { params });
+    return response.data;
+  },
+
+  /** Stats admin légères - utilise COUNT côté serveur */
+  async obtenirAdminOverview(): Promise<AdminOverviewStats> {
+    const response = await api.get('/statistiques/admin/overview');
     return response.data;
   },
 };

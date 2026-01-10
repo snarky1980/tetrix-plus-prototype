@@ -123,8 +123,11 @@ export const obtenirTraducteur = async (
   try {
     const { id } = req.params;
 
-    // Si l'utilisateur est un traducteur, vérifier qu'il accède à ses propres données
-    if (req.utilisateur?.role === 'TRADUCTEUR') {
+    // Les comptes Playground ont accès à tous les traducteurs (mode démo)
+    const isPlayground = req.utilisateur?.isPlayground === true;
+
+    // Si l'utilisateur est un traducteur (non Playground), vérifier qu'il accède à ses propres données
+    if (req.utilisateur?.role === 'TRADUCTEUR' && !isPlayground) {
       const traducteurUser = await prisma.traducteur.findFirst({
         where: { utilisateurId: req.utilisateur.id },
       });
@@ -476,6 +479,83 @@ export const supprimerBlocage = async (
   } catch (error: any) {
     console.error('Erreur lors de la suppression du blocage:', error);
     res.status(500).json({ message: 'Erreur lors de la suppression du blocage', error: error.message });
+  }
+};
+
+/**
+ * Obtenir les blocages pour plusieurs traducteurs en batch
+ * POST /api/traducteurs/blocages/batch
+ * Body: { traducteurIds: string[], dateDebut?: string, dateFin?: string }
+ * 
+ * Optimisation: évite le problème N+1 en récupérant tous les blocages en une seule requête
+ */
+export const obtenirBlocagesBatch = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { traducteurIds, dateDebut, dateFin } = req.body;
+
+    if (!traducteurIds || !Array.isArray(traducteurIds) || traducteurIds.length === 0) {
+      res.status(400).json({ erreur: 'traducteurIds requis (tableau non vide)' });
+      return;
+    }
+
+    // Limiter le nombre de traducteurs pour éviter les abus
+    if (traducteurIds.length > 200) {
+      res.status(400).json({ erreur: 'Maximum 200 traducteurs par requête' });
+      return;
+    }
+
+    const where: any = {
+      traducteurId: { in: traducteurIds },
+      type: 'BLOCAGE',
+    };
+
+    if (dateDebut || dateFin) {
+      where.date = {};
+      if (dateDebut) {
+        where.date.gte = new Date(dateDebut as string);
+      }
+      if (dateFin) {
+        where.date.lte = new Date(dateFin as string);
+      }
+    }
+
+    const blocages = await prisma.ajustementTemps.findMany({
+      where,
+      orderBy: { date: 'asc' },
+      include: {
+        traducteur: {
+          select: {
+            id: true,
+            nom: true,
+            capaciteHeuresParJour: true,
+          },
+        },
+        tache: {
+          select: {
+            description: true,
+            specialisation: true,
+          },
+        },
+      },
+    });
+
+    // Grouper par traducteurId pour faciliter l'utilisation côté frontend
+    const blocagesParTraducteur: Record<string, any[]> = {};
+    for (const blocage of blocages) {
+      const tid = blocage.traducteurId;
+      if (!blocagesParTraducteur[tid]) {
+        blocagesParTraducteur[tid] = [];
+      }
+      blocagesParTraducteur[tid].push(blocage);
+    }
+
+    res.json({ blocages, blocagesParTraducteur });
+  } catch (error) {
+    console.error('Erreur récupération blocages batch:', error);
+    res.status(500).json({ erreur: 'Erreur lors de la récupération des blocages' });
   }
 };
 
