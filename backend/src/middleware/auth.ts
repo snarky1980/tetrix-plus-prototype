@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { config } from '../config/env';
 import { Role } from '@prisma/client';
 import { playgroundGuard } from './playgroundGuard';
+import { sessionService } from '../services/sessionService';
 
 // Extension du type Request pour inclure l'utilisateur authentifié
 export interface AuthRequest extends Request {
@@ -16,13 +17,14 @@ export interface AuthRequest extends Request {
 
 /**
  * Middleware d'authentification JWT
- * Vérifie le token et ajoute les infos utilisateur à la requête
+ * Vérifie le token ET la validité de la session en base
+ * Permet la révocation immédiate des tokens compromis
  */
-export const authentifier = (
+export const authentifier = async (
   req: AuthRequest,
   res: Response,
   next: NextFunction
-): void => {
+): Promise<void> => {
   try {
     const authHeader = req.headers.authorization;
 
@@ -32,12 +34,24 @@ export const authentifier = (
     }
 
     const token = authHeader.substring(7);
+    
+    // 1. Vérifier la signature JWT
     const decoded = jwt.verify(token, config.jwtSecret) as {
       id: string;
       email: string;
       role: Role;
       isPlayground?: boolean;
     };
+
+    // 2. Vérifier que la session est active en base (révocation possible)
+    const sessionValide = await sessionService.verifierSession(token);
+    if (!sessionValide) {
+      res.status(401).json({ erreur: 'Session expirée ou révoquée' });
+      return;
+    }
+
+    // 3. Mettre à jour le dernier accès (fire-and-forget pour ne pas bloquer)
+    sessionService.mettreAJourDernierAcces(token).catch(() => {});
 
     req.utilisateur = decoded;
     

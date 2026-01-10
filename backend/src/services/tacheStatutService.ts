@@ -46,25 +46,22 @@ function parseHoraire(horaire: string | null): { debut: number; fin: number } {
 }
 
 /**
+ * Type pour les tâches avec leurs relations chargées
+ */
+interface TacheAvecRelations {
+  id: string;
+  traducteur: { horaire: string | null };
+  ajustementsTemps: Array<{ date: Date; heureDebut: string | null }>;
+}
+
+/**
  * Calcule l'heure de début d'une tâche basée sur:
  * 1. Le premier ajustement avec heureDebut défini
  * 2. Sinon, l'horaire du traducteur
+ * 
+ * OPTIMISÉ: Utilise les données déjà chargées au lieu de refaire une requête DB
  */
-async function calculerHeureDebutTache(tacheId: string): Promise<Date | null> {
-  const tache = await prisma.tache.findUnique({
-    where: { id: tacheId },
-    include: {
-      traducteur: { select: { horaire: true } },
-      ajustementsTemps: {
-        where: { type: 'TACHE' },
-        orderBy: { date: 'asc' },
-        take: 1
-      }
-    }
-  });
-  
-  if (!tache) return null;
-  
+function calculerHeureDebutTacheFromData(tache: TacheAvecRelations): Date | null {
   const premierAjustement = tache.ajustementsTemps[0];
   if (!premierAjustement) return null;
   
@@ -84,6 +81,27 @@ async function calculerHeureDebutTache(tacheId: string): Promise<Date | null> {
   dateDebut.setHours(Math.floor(debut), (debut % 1) * 60, 0, 0);
   
   return dateDebut;
+}
+
+/**
+ * Version async pour compatibilité (charge les données si nécessaire)
+ * @deprecated Préférer calculerHeureDebutTacheFromData avec données pré-chargées
+ */
+async function calculerHeureDebutTache(tacheId: string): Promise<Date | null> {
+  const tache = await prisma.tache.findUnique({
+    where: { id: tacheId },
+    include: {
+      traducteur: { select: { horaire: true } },
+      ajustementsTemps: {
+        where: { type: 'TACHE' },
+        orderBy: { date: 'asc' },
+        take: 1
+      }
+    }
+  });
+  
+  if (!tache) return null;
+  return calculerHeureDebutTacheFromData(tache);
 }
 
 /**
@@ -182,7 +200,8 @@ export async function traiterTachesPlanifiees(): Promise<{ traitees: number; err
   
   for (const tache of tachesPlanifiees) {
     try {
-      const heureDebut = await calculerHeureDebutTache(tache.id);
+      // OPTIMISÉ: Utiliser les données déjà chargées au lieu de refaire une requête
+      const heureDebut = calculerHeureDebutTacheFromData(tache);
       
       if (heureDebut && maintenant >= heureDebut) {
         // Passer la tâche EN_COURS

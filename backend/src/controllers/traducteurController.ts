@@ -20,15 +20,23 @@ const synchroniserClients = async (clientsHabituels: string[]): Promise<void> =>
 };
 
 /**
- * Récupérer la liste des traducteurs avec filtres
+ * Récupérer la liste des traducteurs avec filtres et pagination optionnelle
  * GET /api/traducteurs
+ * 
+ * Query params:
+ * - page: numéro de page (si spécifié, active la pagination)
+ * - limit: nombre de résultats par page (défaut: 50, max: 100)
+ * - paginated: si 'true', force le format paginé même sans page
+ * - division, classification, client, domaine, specialisation, langueSource, langueCible, actif: filtres
+ * 
+ * Rétro-compatibilité: sans 'page' ni 'paginated', retourne un tableau simple
  */
 export const obtenirTraducteurs = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { division, classification, client, domaine, specialisation, langueSource, langueCible, actif } = req.query;
+    const { division, classification, client, domaine, specialisation, langueSource, langueCible, actif, page, limit, paginated } = req.query;
 
     const where: any = {};
 
@@ -78,6 +86,14 @@ export const obtenirTraducteurs = async (
       };
     }
 
+    // Déterminer si pagination activée
+    const usePagination = page !== undefined || paginated === 'true';
+    
+    // Pagination (ou pas de limite)
+    const limitNumber = Math.min(100, Math.max(1, parseInt(limit as string) || 50));
+    const pageNumber = Math.max(1, parseInt(page as string) || 1);
+    const skip = usePagination ? (pageNumber - 1) * limitNumber : 0;
+
     const traducteurs = await prisma.traducteur.findMany({
       where,
       include: {
@@ -103,9 +119,27 @@ export const obtenirTraducteurs = async (
         },
       },
       orderBy: { nom: 'asc' },
+      skip,
+      take: usePagination ? limitNumber : undefined,
     });
 
-    res.json(traducteurs);
+    // Format de réponse selon mode
+    if (usePagination) {
+      const total = await prisma.traducteur.count({ where });
+      res.json({
+        data: traducteurs,
+        pagination: {
+          page: pageNumber,
+          limit: limitNumber,
+          total,
+          totalPages: Math.ceil(total / limitNumber),
+          hasMore: skip + traducteurs.length < total
+        }
+      });
+    } else {
+      // Rétro-compatibilité: retourner tableau simple
+      res.json(traducteurs);
+    }
   } catch (error) {
     console.error('Erreur récupération traducteurs:', error);
     res.status(500).json({ erreur: 'Erreur lors de la récupération des traducteurs' });

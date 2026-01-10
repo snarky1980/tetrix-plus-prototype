@@ -1,4 +1,5 @@
 import prisma from '../config/database';
+import cache, { CACHE_KEYS } from '../utils/cache';
 
 export interface CreateDivisionData {
   nom: string;
@@ -15,14 +16,43 @@ export interface UpdateDivisionData {
 
 /**
  * Service pour la gestion des divisions
+ * Utilise le cache pour les requêtes fréquentes
  */
 export class DivisionService {
   /**
-   * Obtenir toutes les divisions
+   * Obtenir toutes les divisions (avec cache pour liste complète)
    */
   static async obtenirDivisions(actif?: boolean) {
     const where = actif !== undefined ? { actif } : {};
 
+    // Utiliser le cache seulement pour la liste complète sans filtre
+    if (actif === undefined) {
+      return cache.getOrSet(
+        CACHE_KEYS.DIVISIONS_ALL,
+        async () => prisma.division.findMany({
+          where,
+          include: {
+            acces: {
+              include: {
+                utilisateur: {
+                  select: {
+                    id: true,
+                    email: true,
+                    nom: true,
+                    prenom: true,
+                    role: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { nom: 'asc' },
+        }),
+        300 // 5 minutes
+      );
+    }
+
+    // Avec filtre, pas de cache
     return await prisma.division.findMany({
       where,
       include: {
@@ -44,6 +74,13 @@ export class DivisionService {
         nom: 'asc',
       },
     });
+  }
+
+  /**
+   * Invalider le cache des divisions (à appeler après création/modification/suppression)
+   */
+  static invalidateCache() {
+    cache.invalidate(CACHE_KEYS.DIVISIONS_ALL);
   }
 
   /**
@@ -89,13 +126,18 @@ export class DivisionService {
       throw new Error('Ce code de division est déjà utilisé');
     }
 
-    return await prisma.division.create({
+    const division = await prisma.division.create({
       data: {
         nom: data.nom,
         code: data.code,
         description: data.description,
       },
     });
+
+    // Invalider le cache
+    this.invalidateCache();
+    
+    return division;
   }
 
   /**
@@ -116,10 +158,15 @@ export class DivisionService {
       }
     }
 
-    return await prisma.division.update({
+    const division = await prisma.division.update({
       where: { id },
       data,
     });
+
+    // Invalider le cache
+    this.invalidateCache();
+    
+    return division;
   }
 
   /**

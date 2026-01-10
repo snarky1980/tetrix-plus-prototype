@@ -8,15 +8,23 @@ import { enregistrerCreation, enregistrerModifications, enregistrerChangementRep
 import { terminerTache as terminerTacheService } from '../services/tacheStatutService';
 
 /**
- * Obtenir les tâches avec filtres
+ * Obtenir les tâches avec filtres et pagination optionnelle
  * GET /api/taches
+ * 
+ * Query params:
+ * - page: numéro de page (si spécifié, active la pagination)
+ * - limit: nombre de résultats par page (défaut: 50, max: 100)
+ * - paginated: si 'true', force le format paginé même sans page
+ * - traducteurId, statut, dateDebut, dateFin, date, sort: filtres existants
+ * 
+ * Rétro-compatibilité: sans 'page' ni 'paginated', retourne un tableau simple
  */
 export const obtenirTaches = async (
   req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const { traducteurId, statut, dateDebut, dateFin, date, limit, sort } = req.query;
+    const { traducteurId, statut, dateDebut, dateFin, date, limit, page, paginated, sort } = req.query;
 
     const where: any = {};
 
@@ -57,8 +65,13 @@ export const obtenirTaches = async (
       orderBy = { [field]: direction || 'asc' };
     }
 
-    // Gestion de la limite
-    const limitNumber = limit ? parseInt(limit as string) : undefined;
+    // Déterminer si pagination activée
+    const usePagination = page !== undefined || paginated === 'true';
+    
+    // Pagination (ou limite simple)
+    const limitNumber = Math.min(100, Math.max(1, parseInt(limit as string) || 50));
+    const pageNumber = Math.max(1, parseInt(page as string) || 1);
+    const skip = usePagination ? (pageNumber - 1) * limitNumber : 0;
 
     const taches = await prisma.tache.findMany({
       where,
@@ -79,10 +92,27 @@ export const obtenirTaches = async (
         },
       },
       orderBy,
-      take: limitNumber,
+      skip,
+      take: usePagination ? limitNumber : (limit ? limitNumber : undefined),
     });
 
-    res.json(taches);
+    // Format de réponse selon mode
+    if (usePagination) {
+      const total = await prisma.tache.count({ where });
+      res.json({
+        data: taches,
+        pagination: {
+          page: pageNumber,
+          limit: limitNumber,
+          total,
+          totalPages: Math.ceil(total / limitNumber),
+          hasMore: skip + taches.length < total
+        }
+      });
+    } else {
+      // Rétro-compatibilité: retourner tableau simple
+      res.json(taches);
+    }
   } catch (error) {
     console.error('Erreur récupération tâches:', error);
     res.status(500).json({ erreur: 'Erreur lors de la récupération des tâches' });
